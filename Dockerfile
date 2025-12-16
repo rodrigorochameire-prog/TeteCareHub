@@ -31,10 +31,8 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
 
-# Instala apenas dependencias de producao
-RUN pnpm install --prod
-
-# --- COPIA ARQUIVOS FINAIS ---
+# --- MUDANÇA AQUI: Removemos o "--prod" para instalar o Vite também ---
+RUN pnpm install
 
 # Copia a pasta dist
 COPY --from=builder /app/dist ./dist
@@ -44,7 +42,7 @@ COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/server ./server
 COPY --from=builder /app/shared ./shared
 
-# EM VEZ DE COPIAR, CRIA A PASTA STORAGE VAZIA
+# Cria a pasta storage vazia
 RUN mkdir -p storage
 
 # Expose port
