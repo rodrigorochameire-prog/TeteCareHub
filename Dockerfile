@@ -12,24 +12,27 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
 
-# Instala todas as dependências
+# Instala dependências
 RUN pnpm install
 
 # Copia todo o código fonte
 COPY . .
 
 # --- VARIÁVEIS PARA O FRONTEND (Build) ---
+# Necessárias para que o Vite "asse" as configurações no Javascript
 ARG VITE_STRIPE_PUBLISHABLE_KEY
 ARG VITE_ANALYTICS_ENDPOINT
 ARG VITE_ANALYTICS_WEBSITE_ID
 ARG VITE_OAUTH_PORTAL_URL
 ARG VITE_APP_ID
+ARG VITE_API_URL
 
 ENV VITE_STRIPE_PUBLISHABLE_KEY=$VITE_STRIPE_PUBLISHABLE_KEY
 ENV VITE_ANALYTICS_ENDPOINT=$VITE_ANALYTICS_ENDPOINT
 ENV VITE_ANALYTICS_WEBSITE_ID=$VITE_ANALYTICS_WEBSITE_ID
 ENV VITE_OAUTH_PORTAL_URL=$VITE_OAUTH_PORTAL_URL
 ENV VITE_APP_ID=$VITE_APP_ID
+ENV VITE_API_URL=$VITE_API_URL
 # -----------------------------------------
 
 # Constrói o site
@@ -49,14 +52,20 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
 
-# Instala dependências (forçando mode development para baixar o Vite)
+# Instala dependências (incluindo devDependencies como 'vite' e 'drizzle-kit')
+# Forçamos development para garantir que as ferramentas de banco funcionem
 RUN NODE_ENV=development pnpm install
 
-# Copia os arquivos construídos na etapa anterior
+# Copia os arquivos do site construído
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/server ./server
 COPY --from=builder /app/shared ./shared
+
+# --- AQUI ESTAVA FALTANDO: Copia a configuração do banco ---
+# Sem isso, o db:push não sabe como criar as tabelas
+COPY --from=builder /app/drizzle.config.ts ./
+# -----------------------------------------------------------
 
 # Cria pasta de storage
 RUN mkdir -p storage
@@ -64,9 +73,9 @@ RUN mkdir -p storage
 # Expõe a porta
 EXPOSE 3000
 
-# Define ambiente de produção
 ENV NODE_ENV=production
 
-# --- COMANDO MÁGICO FINAL ---
-# Executa o "db:push" para criar as tabelas e depois inicia o servidor
+# --- COMANDO FINAL ---
+# 1. Empurra as tabelas para o banco (db:push)
+# 2. Inicia o servidor (start)
 CMD ["sh", "-c", "pnpm db:push && pnpm start"]
