@@ -107,7 +107,7 @@ export const appRouter = router({
         
         // Create session token
         const sessionToken = await sdk.createSessionToken(String(user.id), {
-          name: user.name || user.email,
+          name: user.name || user.email || undefined,
           expiresInMs: 365 * 24 * 60 * 60 * 1000, // 1 year
         });
         
@@ -2572,7 +2572,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
       }))
       .mutation(async ({ input, ctx }) => {
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-          apiVersion: "2025-11-17.clover",
+          apiVersion: "2025-12-15.clover",
         });
 
         const product = PRODUCTS[input.productKey as keyof typeof PRODUCTS];

@@ -27,20 +27,13 @@ export default function ResetPassword() {
   const resetPasswordMutation = trpc.auth.resetPassword.useMutation({
     onSuccess: () => {
       setSuccess(true);
-      toast({
-        title: "Senha redefinida!",
-        description: "Sua senha foi alterada com sucesso. Você já pode fazer login.",
-      });
+      toast.success("Senha redefinida! Sua senha foi alterada com sucesso. Você já pode fazer login.");
       setTimeout(() => {
         setLocation("/login");
       }, 3000);
     },
     onError: (error) => {
-      toast({
-        title: "Erro ao redefinir senha",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(`Erro ao redefinir senha: ${error.message}`);
     },
   });
 

@@ -15,17 +15,10 @@ export default function ForgotPassword() {
   const requestResetMutation = trpc.auth.requestPasswordReset.useMutation({
     onSuccess: () => {
       setSubmitted(true);
-      toast({
-        title: "Email enviado!",
-        description: "Se o email existir em nossa base, você receberá instruções para redefinir sua senha.",
-      });
+      toast.success("Email enviado! Se o email existir em nossa base, você receberá instruções para redefinir sua senha.");
     },
     onError: (error) => {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message);
     },
   });
 
