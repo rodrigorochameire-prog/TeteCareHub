@@ -6,20 +6,20 @@ RUN npm install -g pnpm@9.15.4
 
 WORKDIR /app
 
-# Copia os arquivos de configuração e patches PRIMEIRO
+# Copia arquivos de dependencias e patches
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
 
-# Instala todas as dependências (sem frozen-lockfile para evitar erros de versão)
+# Instala dependencias sem travar versao (evita erros de lockfile)
 RUN pnpm install
 
-# Copy source code
+# Copia todo o codigo fonte
 COPY . .
 
-# Build application
+# Constroi o site
 RUN pnpm build
 
-# Production stage
+# Production stage (Fase final)
 FROM node:22-alpine
 
 # Install pnpm
@@ -27,18 +27,19 @@ RUN npm install -g pnpm@9.15.4
 
 WORKDIR /app
 
-# Copy package files
+# Copia arquivos essenciais
 COPY package.json pnpm-lock.yaml ./
-
-# IMPORTANTE: Copia os patches também para o estágio de produção
 COPY patches ./patches
 
-# Install production dependencies only (sem frozen-lockfile)
+# Instala apenas dependencias de producao
 RUN pnpm install --prod
 
-# Copy built application from builder
+# --- AQUI ESTAVA O ERRO, REMOVEMOS A LINHA DO CLIENT/DIST ---
+
+# Copia a pasta dist (onde o site realmente foi criado)
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/client/dist ./client/dist
+
+# Copia outras pastas necessarias
 COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/server ./server
 COPY --from=builder /app/shared ./shared
