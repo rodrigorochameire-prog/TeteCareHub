@@ -42,7 +42,9 @@ export function getSessionCookieOptions(
   return {
     httpOnly: true,
     path: "/",
-    sameSite: "none",
+    // FIX: "lax" é mais seguro e robusto que "none" para a maioria das apps modernas
+    // "none" exige estritamente secure: true, o que falha se o proxy não for detectado
+    sameSite: "lax",
     secure: isSecureRequest(req),
   };
 }
