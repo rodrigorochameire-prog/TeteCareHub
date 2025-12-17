@@ -652,7 +652,7 @@ export default function TutorCalendar() {
                   </div>
 
                   <div>
-                    <Label htmlFor="edit-date">Data e Hora *</Label>
+                    <Label htmlFor="edit-date">Data e Hora de Início *</Label>
                     <Input
                       id="edit-date"
                       type="datetime-local"
@@ -671,6 +671,31 @@ export default function TutorCalendar() {
                       }
                       className="rounded-xl mt-1.5"
                     />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="edit-end-date">Data e Hora de Término (Opcional)</Label>
+                    <Input
+                      id="edit-end-date"
+                      type="datetime-local"
+                      value={
+                        editForm.endDate
+                          ? new Date(
+                              editForm.endDate.getTime() -
+                                editForm.endDate.getTimezoneOffset() * 60000
+                            )
+                              .toISOString()
+                              .slice(0, 16)
+                          : ""
+                      }
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, endDate: e.target.value ? new Date(e.target.value) : undefined })
+                      }
+                      className="rounded-xl mt-1.5"
+                    />
+                    <p className="text-sm text-muted-foreground mt-1.5">
+                      Para eventos que duram vários dias (ex: hospedagem, viagem)
+                    </p>
                   </div>
 
                   <div>
