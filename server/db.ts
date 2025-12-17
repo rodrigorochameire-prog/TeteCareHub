@@ -2742,6 +2742,8 @@ export async function getAllCalendarEvents(startDate: Date, endDate: Date) {
         notes: booking.notes,
         status: booking.status,
         bookingId: booking.id,
+        checkInDate: checkInDate,
+        checkOutDate: checkOutDate,
       },
       {
         id: `checkout-${booking.id}`,
@@ -2754,6 +2756,8 @@ export async function getAllCalendarEvents(startDate: Date, endDate: Date) {
         notes: booking.notes,
         status: booking.status,
         bookingId: booking.id,
+        checkInDate: checkInDate,
+        checkOutDate: checkOutDate,
       },
     ];
   });

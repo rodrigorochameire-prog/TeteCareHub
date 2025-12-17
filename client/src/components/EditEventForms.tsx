@@ -242,9 +242,23 @@ function EditMedicationForm({ eventData, onSuccess, onClose }: any) {
 
 // Edit Booking Form
 function EditBookingForm({ eventData, onSuccess, onClose }: any) {
-  const [checkInDate, setCheckInDate] = useState(eventData.checkInDate || "");
-  const [checkOutDate, setCheckOutDate] = useState(eventData.checkOutDate || "");
+  // Convert date objects to YYYY-MM-DD format for input fields
+  const formatDateForInput = (date: any) => {
+    if (!date) return "";
+    const d = new Date(date);
+    return d.toISOString().split('T')[0];
+  };
+
+  const [checkInDate, setCheckInDate] = useState(formatDateForInput(eventData.checkInDate));
+  const [checkOutDate, setCheckOutDate] = useState(formatDateForInput(eventData.checkOutDate));
   const [notes, setNotes] = useState(eventData.notes || "");
+
+  // Update dates when eventData changes
+  useEffect(() => {
+    setCheckInDate(formatDateForInput(eventData.checkInDate));
+    setCheckOutDate(formatDateForInput(eventData.checkOutDate));
+    setNotes(eventData.notes || "");
+  }, [eventData]);
 
   // Calculate number of days
   const numberOfDays = checkInDate && checkOutDate
