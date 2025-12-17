@@ -581,7 +581,7 @@ export const changeHistory = mysqlTable("change_history", {
   oldValue: text("old_value"),
   newValue: text("new_value"),
   changedBy: int("changed_by").notNull(), // user ID
-  changedByRole: mysqlEnum("changed_by_role", ["admin", "tutor"]).notNull(),
+  changedByRole: mysqlEnum("changed_by_role", ["admin", "tutor", "user"]).notNull(),
   changeType: mysqlEnum("change_type", ["create", "update", "delete"]).notNull(),
   ipAddress: varchar("ip_address", { length: 45 }),
   userAgent: text("user_agent"),

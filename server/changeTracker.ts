@@ -13,7 +13,7 @@ const database = drizzle(connection);
 
 export type ResourceType = "medication" | "food" | "preventive" | "pet_data" | "calendar";
 export type ChangeType = "create" | "update" | "delete";
-export type UserRole = "admin" | "tutor";
+export type UserRole = "admin" | "tutor" | "user";
 
 interface LogChangeOptions {
   resourceType: ResourceType;
