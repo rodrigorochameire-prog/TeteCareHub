@@ -365,6 +365,13 @@
       "when": 1765758700000,
       "tag": "0051_add_user_to_changed_by_role",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "5",
+      "when": 1734475000000,
+      "tag": "0052_fix_duplicate_columns",
+      "breakpoints": true
     }
   ]
 }
