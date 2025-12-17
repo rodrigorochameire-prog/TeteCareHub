@@ -581,6 +581,7 @@ function CreateEventForm({
     title: "",
     description: "",
     eventDate: new Date().toISOString().slice(0, 16),
+    endDate: "",
     eventType: "general" as EventType,
     petId: null as number | null,
     location: "",
@@ -602,7 +603,17 @@ function CreateEventForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    // Validate end date if provided
+    if (formData.endDate) {
+      const start = new Date(formData.eventDate);
+      const end = new Date(formData.endDate);
+      if (end < start) {
+        alert("Data de término deve ser posterior à data de início");
+        return;
+      }
+    }
+
     // Validate period dates if provided
     if (formData.checkInDate && formData.checkOutDate) {
       const checkIn = new Date(formData.checkInDate);
@@ -612,10 +623,11 @@ function CreateEventForm({
         return;
       }
     }
-    
+
     onSubmit({
       ...formData,
       eventDate: new Date(formData.eventDate),
+      endDate: formData.endDate ? new Date(formData.endDate) : undefined,
       checkInDate: formData.checkInDate ? new Date(formData.checkInDate) : undefined,
       checkOutDate: formData.checkOutDate ? new Date(formData.checkOutDate) : undefined,
     } as any);
@@ -696,7 +708,7 @@ function CreateEventForm({
       </div>
 
       <div>
-        <Label htmlFor="eventDate">Data e Hora *</Label>
+        <Label htmlFor="eventDate">Data e Hora de Início *</Label>
         <Input
           id="eventDate"
           type="datetime-local"
@@ -705,6 +717,21 @@ function CreateEventForm({
           required
           className="rounded-xl"
         />
+      </div>
+
+      <div>
+        <Label htmlFor="endDate">Data e Hora de Término (Opcional)</Label>
+        <Input
+          id="endDate"
+          type="datetime-local"
+          value={formData.endDate}
+          onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+          min={formData.eventDate}
+          className="rounded-xl"
+        />
+        <p className="text-sm text-muted-foreground mt-1.5">
+          Para eventos que duram vários dias (ex: viagem, hospedagem, tratamento)
+        </p>
       </div>
 
       <div>
