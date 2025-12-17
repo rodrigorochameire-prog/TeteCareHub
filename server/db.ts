@@ -1046,32 +1046,37 @@ export async function getVaccinesDueSoon(daysAhead: number = 30) {
 
 export async function createSubscriptionPlan(data: InsertSubscriptionPlan) {
   const db = await getDb();
-  const [plan] = await db!.insert(subscriptionPlans).values(data);
+  if (!db) throw new Error("Database not available");
+  const [plan] = await db.insert(subscriptionPlans).values(data);
   return plan;
 }
 
 export async function updateSubscriptionPlan(id: number, data: Partial<InsertSubscriptionPlan>) {
   const db = await getDb();
-  await db!.update(subscriptionPlans).set(data).where(eq(subscriptionPlans.id, id));
+  if (!db) throw new Error("Database not available");
+  await db.update(subscriptionPlans).set(data).where(eq(subscriptionPlans.id, id));
 }
 
 export async function listSubscriptionPlans(activeOnly = false) {
   const db = await getDb();
+  if (!db) return [];
   if (activeOnly) {
-    return db!.select().from(subscriptionPlans).where(eq(subscriptionPlans.isActive, true));
+    return db.select().from(subscriptionPlans).where(eq(subscriptionPlans.isActive, true));
   }
-  return db!.select().from(subscriptionPlans);
+  return db.select().from(subscriptionPlans);
 }
 
 export async function getSubscriptionPlanById(id: number) {
   const db = await getDb();
-  const [plan] = await db!.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+  if (!db) return null;
+  const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, id));
   return plan;
 }
 
 export async function deleteSubscriptionPlan(id: number) {
   const db = await getDb();
-  await db!.delete(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+  if (!db) throw new Error("Database not available");
+  await db.delete(subscriptionPlans).where(eq(subscriptionPlans.id, id));
 }
 
 // ============================================

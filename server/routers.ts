@@ -4661,16 +4661,45 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         // Upload media to S3 if provided
         if (input.mediaData && input.mediaData.length > 0) {
           const { storagePut } = await import("./storage");
-          
+
           for (const base64Data of input.mediaData) {
-            const buffer = Buffer.from(base64Data.split(",")[1], "base64");
-            const randomSuffix = Math.random().toString(36).substring(7);
-            const ext = base64Data.includes("image/png") ? "png" : base64Data.includes("image/jpeg") ? "jpg" : "mp4";
-            const key = `wall-posts/${ctx.user.id}/${Date.now()}-${randomSuffix}.${ext}`;
-            
-            const { url } = await storagePut(key, buffer, base64Data.split(";")[0].split(":")[1]);
-            mediaUrls.push(url);
-            mediaKeys.push(key);
+            try {
+              // Validate base64 format
+              if (!base64Data || typeof base64Data !== 'string') {
+                throw new Error("Invalid image data format");
+              }
+
+              // Extract base64 content - handle both formats: "data:image/png;base64,..." or just base64 string
+              const parts = base64Data.split(",");
+              const base64Content = parts.length > 1 ? parts[1] : parts[0];
+
+              if (!base64Content) {
+                throw new Error("Empty image data");
+              }
+
+              const buffer = Buffer.from(base64Content, "base64");
+
+              // Detect content type
+              const contentTypeMatch = base64Data.match(/data:([^;]+)/);
+              const contentType = contentTypeMatch ? contentTypeMatch[1] : "image/jpeg";
+
+              // Determine file extension
+              let ext = "jpg";
+              if (contentType.includes("png")) ext = "png";
+              else if (contentType.includes("gif")) ext = "gif";
+              else if (contentType.includes("webp")) ext = "webp";
+              else if (contentType.includes("mp4") || contentType.includes("video")) ext = "mp4";
+
+              const randomSuffix = Math.random().toString(36).substring(7);
+              const key = `wall-posts/${ctx.user.id}/${Date.now()}-${randomSuffix}.${ext}`;
+
+              const { url } = await storagePut(key, buffer, contentType);
+              mediaUrls.push(url);
+              mediaKeys.push(key);
+            } catch (error: any) {
+              console.error("Error processing wall post image:", error);
+              throw new Error(`Failed to process image: ${error.message}`);
+            }
           }
         }
         

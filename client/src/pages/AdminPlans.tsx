@@ -23,8 +23,12 @@ export default function AdminPlans() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<any>(null);
 
-  const { data: plans, isLoading } = trpc.plans.list.useQuery();
+  const { data: plans, isLoading, error } = trpc.plans.list.useQuery();
   const utils = trpc.useUtils();
+
+  if (error) {
+    console.error("Error loading plans:", error);
+  }
 
   const createPlan = trpc.plans.create.useMutation({
     onSuccess: () => {
@@ -101,6 +105,23 @@ export default function AdminPlans() {
       isActive: !plan.isActive,
     });
   };
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="container py-8">
+          <Card className="border-red-200 bg-red-50/50">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <p className="text-red-600 font-medium mb-2">Erro ao carregar planos</p>
+                <p className="text-sm text-muted-foreground">{error.message}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   if (isLoading) {
     return (

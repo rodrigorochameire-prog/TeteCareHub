@@ -58,7 +58,8 @@ export default function AdminFood() {
   const currentStockKg = foodStats?.currentStockKg || 0;
   const daysRemaining = dailyConsumptionKg > 0 ? Math.floor(currentStockKg / dailyConsumptionKg) : 0;
 
-  const isLowStock = daysRemaining < 7;
+  const isCriticalStock = daysRemaining < 7;
+  const isLowStock = daysRemaining < 25;
 
   if (petsLoading || statsLoading) {
     return (
@@ -138,19 +139,25 @@ export default function AdminFood() {
 
         {/* Stats Cards */}
         <div className="grid gap-6 md:grid-cols-3">
-          <Card className={isLowStock ? "border-red-200 bg-red-50/50" : ""}>
+          <Card className={isCriticalStock ? "border-red-200 bg-red-50/50" : isLowStock ? "border-orange-200 bg-orange-50/50" : ""}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Estoque Atual</CardTitle>
-              <Package className={`w-5 h-5 ${isLowStock ? "text-red-600" : "text-primary"}`} />
+              <Package className={`w-5 h-5 ${isCriticalStock ? "text-red-600" : isLowStock ? "text-orange-600" : "text-primary"}`} />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{currentStockKg.toFixed(1)} kg</div>
               <div className="flex items-center gap-2 mt-2">
-                {isLowStock && (
-                  <>
-                    <AlertTriangle className="w-4 h-4 text-red-600" />
-                    <span className="text-xs text-red-600 font-medium">Estoque baixo!</span>
-                  </>
+                {isCriticalStock && (
+                  <Badge variant="destructive" className="gap-1">
+                    <AlertTriangle className="w-3 h-3" />
+                    Estoque crítico
+                  </Badge>
+                )}
+                {!isCriticalStock && isLowStock && (
+                  <Badge className="gap-1 bg-orange-100 text-orange-800 border-orange-300">
+                    <AlertTriangle className="w-3 h-3" />
+                    Estoque baixo
+                  </Badge>
                 )}
               </div>
             </CardContent>
@@ -169,15 +176,21 @@ export default function AdminFood() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className={isCriticalStock ? "border-red-200 bg-red-50/50" : isLowStock ? "border-orange-200 bg-orange-50/50" : ""}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Dias Restantes</CardTitle>
-              <ShoppingBag className="w-5 h-5 text-primary" />
+              <ShoppingBag className={`w-5 h-5 ${isCriticalStock ? "text-red-600" : isLowStock ? "text-orange-600" : "text-primary"}`} />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{daysRemaining}</div>
+              <div className={`text-3xl font-bold ${isCriticalStock ? "text-red-600" : isLowStock ? "text-orange-600" : ""}`}>
+                {daysRemaining}
+              </div>
               <p className="text-xs text-muted-foreground mt-2">
-                {daysRemaining < 7 ? "Comprar ração em breve" : "Estoque suficiente"}
+                {isCriticalStock
+                  ? "Comprar ração urgente!"
+                  : isLowStock
+                  ? "Programar compra em breve"
+                  : "Estoque suficiente"}
               </p>
             </CardContent>
           </Card>
