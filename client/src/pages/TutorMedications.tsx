@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { Link } from "wouter";
 import { RecentChangeIndicator } from "@/components/RecentChangeIndicator";
 import { PeriodicitySelector, type PeriodicityConfig } from "@/components/PeriodicitySelector";
+import { MedicationTimeEditor } from "@/components/MedicationTimeEditor";
 
 export default function TutorMedications() {
   const [, params] = useRoute("/tutor/pets/:id/medications");
@@ -36,6 +37,7 @@ export default function TutorMedications() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMedicationId, setSelectedMedicationId] = useState<number | null>(null);
   const [customMedication, setCustomMedication] = useState<boolean>(false);
+  const [administrationTimes, setAdministrationTimes] = useState<string[]>([]);
   const [periodicityConfig, setPeriodicityConfig] = useState<PeriodicityConfig>({
     periodicity: "daily",
     customInterval: undefined,
@@ -119,6 +121,8 @@ export default function TutorMedications() {
       endDate: endDate ? new Date(endDate) : undefined,
       dosage,
       frequency: frequency || undefined,
+      // Administration times
+      administrationTimes: administrationTimes.length > 0 ? JSON.stringify(administrationTimes) : undefined,
       // Periodicity fields
       periodicity: periodicityConfig.periodicity,
       customInterval: periodicityConfig.customInterval,
@@ -282,6 +286,13 @@ export default function TutorMedications() {
                 <p className="text-xs text-muted-foreground">
                   Descrição adicional da frequência (opcional)
                 </p>
+              </div>
+
+              <div className="border-t pt-4">
+                <MedicationTimeEditor
+                  times={administrationTimes}
+                  onChange={setAdministrationTimes}
+                />
               </div>
 
               <div className="border-t pt-4">

@@ -1049,6 +1049,7 @@ export const appRouter = router({
         endDate: z.date().optional(),
         dosage: z.string(),
         frequency: z.string().optional(),
+        administrationTimes: z.string().optional(), // JSON string of times array
         // Advanced periodicity fields
         periodicity: z.enum(["daily", "weekly", "monthly", "custom"]).optional(),
         customInterval: z.number().optional(),
@@ -1122,7 +1123,11 @@ export const appRouter = router({
       .input(z.object({
         id: z.number(),
         petId: z.number(),
+        dosage: z.string().optional(),
+        frequency: z.string().optional(),
+        startDate: z.date().optional(),
         endDate: z.date().optional(),
+        administrationTimes: z.string().optional(),
         isActive: z.boolean().optional(),
         notes: z.string().optional(),
       }))

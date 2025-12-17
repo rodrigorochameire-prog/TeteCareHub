@@ -243,6 +243,7 @@ export const petMedications = mysqlTable("pet_medications", {
   progressionInterval: int("progressionInterval"), // adjust every X doses
   targetDosage: varchar("targetDosage", { length: 200 }), // target dosage to reach
   currentDoseCount: int("currentDoseCount").default(0).notNull(), // track dose number for progression
+  administrationTimes: text("administrationTimes"), // JSON array of times in HH:MM format
   isActive: boolean("isActive").default(true).notNull(),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
