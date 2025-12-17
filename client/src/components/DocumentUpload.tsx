@@ -38,8 +38,22 @@ const CATEGORIES = [
   { value: "other", label: "Outro" },
 ];
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/jpg"];
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+const ALLOWED_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/jpg",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+  "application/msword", // .doc
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+  "application/vnd.ms-excel", // .xls
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
+  "text/plain", // .txt
+  "text/csv", // .csv
+];
 
 export function DocumentUpload({ petId, onUploadSuccess }: DocumentUploadProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -100,12 +114,12 @@ export function DocumentUpload({ petId, onUploadSuccess }: DocumentUploadProps) 
 
   const validateAndSetFile = (file: File) => {
     if (!ALLOWED_TYPES.includes(file.type)) {
-      toast.error("Tipo de arquivo não permitido. Use PDF, JPG ou PNG.");
+      toast.error("Tipo de arquivo não permitido. Use PDF, imagens (JPG, PNG, WEBP), documentos do Office (DOC, DOCX, XLS, XLSX) ou arquivos de texto (TXT, CSV).");
       return;
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      toast.error("Arquivo muito grande. Tamanho máximo: 10MB");
+      toast.error("Arquivo muito grande. Tamanho máximo: 25MB");
       return;
     }
 
@@ -178,7 +192,7 @@ export function DocumentUpload({ petId, onUploadSuccess }: DocumentUploadProps) 
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf,.jpg,.jpeg,.png"
+              accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,.doc,.docx,.xls,.xlsx,.txt,.csv"
               onChange={handleFileSelect}
               className="hidden"
             />
@@ -211,7 +225,7 @@ export function DocumentUpload({ petId, onUploadSuccess }: DocumentUploadProps) 
                   Arraste um arquivo ou clique para selecionar
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  PDF, JPG ou PNG até 10MB
+                  PDF, Imagens, Office ou Texto até 25MB
                 </p>
               </div>
             )}

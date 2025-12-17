@@ -88,30 +88,48 @@ export function WallFeed({ petId }: WallFeedProps) {
       toast.error("Adicione texto ou fotos ao post");
       return;
     }
-    
-    const mediaData: string[] = [];
-    
-    for (const file of selectedFiles) {
-      const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve) => {
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
+
+    try {
+      const mediaData: string[] = [];
+
+      for (const file of selectedFiles) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          toast.error(`Arquivo ${file.name} não é uma imagem válida`);
+          return;
+        }
+
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          toast.error(`Arquivo ${file.name} é muito grande (máx. 10MB)`);
+          return;
+        }
+
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve, reject) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = () => reject(new Error("Erro ao ler arquivo"));
+          reader.readAsDataURL(file);
+        });
+        mediaData.push(base64);
+      }
+
+      await createPostMutation.mutateAsync({
+        petId,
+        content: newPostContent || undefined,
+        mediaData: mediaData.length > 0 ? mediaData : undefined,
+        postType: mediaData.length > 0 ? "photo" : "text",
+        targetType,
+        targetId,
       });
-      mediaData.push(base64);
+
+      // Reset target after post
+      setTargetType("general");
+      setTargetId(undefined);
+    } catch (error) {
+      toast.error("Erro ao processar as imagens");
+      console.error("Upload error:", error);
     }
-    
-    await createPostMutation.mutateAsync({
-      petId,
-      content: newPostContent || undefined,
-      mediaData: mediaData.length > 0 ? mediaData : undefined,
-      postType: mediaData.length > 0 ? "photo" : "text",
-      targetType,
-      targetId,
-    });
-    
-    // Reset target after post
-    setTargetType("general");
-    setTargetId(undefined);
   };
   
   const handleAddComment = (postId: number) => {
