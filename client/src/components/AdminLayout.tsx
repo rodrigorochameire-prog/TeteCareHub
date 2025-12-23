@@ -58,37 +58,29 @@ const navigationSections = [
       { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
       { name: "Pets", href: "/admin/pets", icon: Dog },
       { name: "Aprovações", href: "/admin/pet-approval", icon: CheckCircle2 },
-    ],
-  },
-  {
-    title: "Comunicação",
-    icon: MessageCircle,
-    items: [
-      { name: "Logs Diários", href: "/admin/logs", icon: FileText },
-      { name: "Mural", href: "/admin/wall", icon: MessageSquare },
-      { name: "Chat", href: "/admin/chat", icon: MessageCircle },
-      { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageSquare },
+      { name: "Calendário", href: "/admin/health-calendar", icon: Calendar },
     ],
   },
   {
     title: "Saúde",
     icon: Heart,
     items: [
-      { name: "Vacinas", href: "/admin/vaccines-unified", icon: Syringe },
-      { name: "Medicamentos", href: "/admin/medications-unified", icon: Pill },
-      { name: "Preventivos", href: "/admin/preventives-unified", icon: Shield },
-      { name: "Comportamento", href: "/admin/behavior", icon: Brain },
+      { name: "Central de Saúde", href: "/admin/health", icon: Heart },
       { name: "Ração", href: "/admin/food", icon: UtensilsCrossed },
-      { name: "Notificações", href: "/admin/health-notifications", icon: Bell },
+    ],
+  },
+  {
+    title: "Comunicação",
+    icon: MessageCircle,
+    items: [
+      { name: "Central de Comunicação", href: "/admin/communication", icon: MessageCircle },
     ],
   },
   {
     title: "Pacotes & Financeiro",
     icon: Wallet,
     items: [
-      { name: "Planos", href: "/admin/plans", icon: Package },
-      { name: "Créditos", href: "/admin/credits", icon: CreditCard },
-      { name: "Finanças", href: "/admin/finances", icon: TrendingUp },
+      { name: "Central de Pacotes", href: "/admin/packages", icon: Wallet },
     ],
   },
   {
@@ -97,7 +89,6 @@ const navigationSections = [
     items: [
       { name: "Tutores", href: "/admin/tutors", icon: Users },
       { name: "Usuários", href: "/admin/users", icon: UserCog },
-      { name: "Calendário", href: "/admin/health-calendar", icon: Calendar },
       { name: "Documentos", href: "/admin/documents", icon: FileText },
       { name: "Auditoria", href: "/admin/audit-logs", icon: ScrollText },
       { name: "Cogestão", href: "/admin/comanagement", icon: GitMerge },

@@ -54,6 +54,9 @@ const AdminNotificationTemplates = lazy(() => import("./pages/AdminNotificationT
 const AdminTutorNotificationPreferences = lazy(() => import("./pages/AdminTutorNotificationPreferences"));
 const AdminWall = lazy(() => import("./pages/AdminWall"));
 const AdminChat = lazy(() => import("./pages/AdminChat"));
+const AdminHealth = lazy(() => import("./pages/AdminHealth"));
+const AdminCommunication = lazy(() => import("./pages/AdminCommunication"));
+const AdminPackages = lazy(() => import("./pages/AdminPackages"));
 
 // Tutor Pages
 const TutorDashboard = lazy(() => import("./pages/TutorDashboard"));
@@ -103,6 +106,9 @@ function Router() {
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/pets" component={AdminPets} />
       <Route path="/admin/pets/:id" component={AdminPetDetail} />
+      <Route path="/admin/health" component={AdminHealth} />
+      <Route path="/admin/communication" component={AdminCommunication} />
+      <Route path="/admin/packages" component={AdminPackages} />
       <Route path="/admin/tutors" component={AdminTutors} />
       <Route path="/admin/tutors-by-pet" component={TutorsByPet} />
       <Route path="/admin/vaccines" component={AdminVaccines} />
