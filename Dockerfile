@@ -3,8 +3,8 @@
 # ============================
 FROM node:22-alpine AS builder
 
-# Instala o pnpm
-RUN npm install -g pnpm@9.15.4
+# Garante a versão do pnpm do repo (packageManager)
+RUN corepack enable && corepack prepare pnpm@10.4.1 --activate
 
 WORKDIR /app
 
@@ -12,8 +12,8 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
 
-# Instala dependências
-RUN pnpm install
+# Instala dependências (reprodutível)
+RUN pnpm install --frozen-lockfile
 
 # Copia todo o código fonte
 COPY . .
@@ -43,8 +43,8 @@ RUN pnpm build
 # ============================
 FROM node:22-alpine
 
-# Instala o pnpm
-RUN npm install -g pnpm@9.15.4
+# Garante a versão do pnpm do repo (packageManager)
+RUN corepack enable && corepack prepare pnpm@10.4.1 --activate
 
 WORKDIR /app
 
@@ -52,9 +52,9 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
 
-# Instala dependências (incluindo devDependencies como 'vite' e 'drizzle-kit')
+# Instala dependências (inclui devDependencies p/ tsx/drizzle em runtime)
 # Forçamos development para garantir que as ferramentas de banco funcionem
-RUN NODE_ENV=development pnpm install
+RUN NODE_ENV=development pnpm install --frozen-lockfile
 
 # Copia os arquivos do site construído
 COPY --from=builder /app/dist ./dist
