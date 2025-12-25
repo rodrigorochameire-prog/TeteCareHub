@@ -8,8 +8,16 @@ import { drizzle } from "drizzle-orm/mysql2";
 import { changeHistory } from "../drizzle/schema";
 import mysql from "mysql2/promise";
 
-const connection = mysql.createPool(process.env.DATABASE_URL!);
-const database = drizzle(connection);
+let _database: ReturnType<typeof drizzle> | null = null;
+
+function getChangeTrackerDb() {
+  if (_database) return _database;
+  const url = process.env.DATABASE_URL;
+  if (!url) return null;
+  const connection = mysql.createPool(url);
+  _database = drizzle(connection);
+  return _database;
+}
 
 export type ResourceType = "medication" | "food" | "preventive" | "pet_data" | "calendar";
 export type ChangeType = "create" | "update" | "delete";
@@ -33,6 +41,8 @@ interface LogChangeOptions {
  * Log a change to the change history
  */
 export async function logChange(options: LogChangeOptions): Promise<void> {
+  const database = getChangeTrackerDb();
+  if (!database) return;
   try {
     await database.insert(changeHistory).values({
       resourceType: options.resourceType,
@@ -76,6 +86,8 @@ export async function getResourceHistory(
   resourceType: ResourceType,
   resourceId: number
 ): Promise<any[]> {
+  const database = getChangeTrackerDb();
+  if (!database) return [];
   const { eq, and } = await import("drizzle-orm");
   
   return database
@@ -94,6 +106,8 @@ export async function getResourceHistory(
  * Get change history for a specific pet (all resources)
  */
 export async function getPetHistory(petId: number): Promise<any[]> {
+  const database = getChangeTrackerDb();
+  if (!database) return [];
   const { eq } = await import("drizzle-orm");
   
   return database
@@ -107,6 +121,8 @@ export async function getPetHistory(petId: number): Promise<any[]> {
  * Get recent changes across all resources
  */
 export async function getRecentChanges(limit: number = 50): Promise<any[]> {
+  const database = getChangeTrackerDb();
+  if (!database) return [];
   return database
     .select()
     .from(changeHistory)
@@ -118,6 +134,8 @@ export async function getRecentChanges(limit: number = 50): Promise<any[]> {
  * Get changes by user
  */
 export async function getChangesByUser(userId: number): Promise<any[]> {
+  const database = getChangeTrackerDb();
+  if (!database) return [];
   const { eq } = await import("drizzle-orm");
   
   return database
@@ -136,6 +154,21 @@ export async function getCollaborationStats(): Promise<{
   tutorChanges: number;
   byResourceType: Record<ResourceType, number>;
 }> {
+  const database = getChangeTrackerDb();
+  if (!database) {
+    return {
+      totalChanges: 0,
+      adminChanges: 0,
+      tutorChanges: 0,
+      byResourceType: {
+        medication: 0,
+        food: 0,
+        preventive: 0,
+        pet_data: 0,
+        calendar: 0,
+      },
+    };
+  }
   const { eq } = await import("drizzle-orm");
   
   const allChanges = await database.select().from(changeHistory);
@@ -188,6 +221,20 @@ export async function getActivityByDay(days: number = 30): Promise<{
   adminChanges: number;
   tutorChanges: number;
 }[]> {
+  const database = getChangeTrackerDb();
+  if (!database) {
+    const result = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      result.push({
+        date: date.toISOString().split("T")[0],
+        adminChanges: 0,
+        tutorChanges: 0,
+      });
+    }
+    return result;
+  }
   const { sql, desc } = await import("drizzle-orm");
   
   const startDate = new Date();

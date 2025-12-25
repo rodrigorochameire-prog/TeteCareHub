@@ -36,6 +36,9 @@ async function startServer() {
   // Isso faz com que req.protocol seja 'https' e cookies secure funcionem
   app.set("trust proxy", 1);
 
+  // Healthcheck (Railway / balanceadores)
+  app.get("/healthz", (_req, res) => res.status(200).send("ok"));
+
   const server = createServer(app);
   
   // Stripe webhook MUST be registered BEFORE express.json() for signature verification
@@ -69,15 +72,21 @@ async function startServer() {
     serveStatic(app);
   }
 
-  const preferredPort = parseInt(process.env.PORT || "3000");
-  const port = await findAvailablePort(preferredPort);
+  const preferredPort = parseInt(process.env.PORT || "3000", 10);
+  const port =
+    process.env.NODE_ENV === "development"
+      ? await findAvailablePort(preferredPort)
+      : preferredPort;
 
-  if (port !== preferredPort) {
+  const host = process.env.HOST || "0.0.0.0";
+
+  if (process.env.NODE_ENV === "development" && port !== preferredPort) {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+  // Em produção (Railway) precisamos escutar exatamente em PORT e em 0.0.0.0
+  server.listen(port, host, () => {
+    console.log(`Server listening on http://${host}:${port}/`);
   });
 }
 
