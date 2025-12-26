@@ -5362,7 +5362,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
      */
     triggerLowCreditsAlerts: adminProcedure
       .mutation(async () => {
-        const { sendLowCreditsAlerts } = await import("../jobs/lowCreditsAlerts");
+        const { sendLowCreditsAlerts } = await import("../notificationService");
         const result = await sendLowCreditsAlerts();
         return result;
       }),
