@@ -15,7 +15,7 @@ import { triggerVaccineNotificationsManually } from "./jobs/vaccineNotifications
 import Stripe from "stripe";
 import { PRODUCTS } from "./products";
 import { searchRouter } from "./searchRouter";
-import { getStripe } from "./stripeWebhook";
+// getStripe is imported dynamically to avoid esbuild bundling issues
 // emailAuth functions are imported dynamically where needed to avoid circular dependencies
 import { pets, petTutors, users } from "../drizzle/schema";
 import { eq, desc, sql } from "drizzle-orm";
@@ -3011,6 +3011,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         productKey: z.string(),
       }))
       .mutation(async ({ input, ctx }) => {
+        const { getStripe } = await import("./stripeWebhook");
         const stripe = getStripe();
 
         const product = PRODUCTS[input.productKey as keyof typeof PRODUCTS];
