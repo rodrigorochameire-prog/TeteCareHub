@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "NODE_ENV=development tsx watch server/_core/index.ts",
     "build": "vite build",
+    "build:server": "esbuild api/index.ts --platform=node --bundle --format=esm --outdir=.vercel/output/functions/api/index.func --packages=external --loader:.ts=ts --loader:.tsx=tsx --target=node20",
     "build:vercel": "vite build && esbuild api/index.ts --platform=node --packages=external --bundle --format=esm --outdir=.vercel/output/functions/api/index.func",
     "start": "NODE_ENV=production node dist/index.js",
     "vercel:dev": "vercel dev",
