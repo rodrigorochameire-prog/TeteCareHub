@@ -12,6 +12,8 @@ import { logChange } from "./changeTracker";
 import { invokeLLM } from "./_core/llm";
 import * as notificationService from "./notificationService";
 import { triggerVaccineNotificationsManually } from "./jobs/vaccineNotifications";
+import { sendCalendarReminders } from "./jobs/calendarReminders";
+import { sendLowCreditsAlerts } from "./jobs/lowCreditsAlerts";
 import Stripe from "stripe";
 import { PRODUCTS } from "./products";
 import { searchRouter } from "./searchRouter";
@@ -5352,7 +5354,6 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
      */
     triggerCalendarReminders: adminProcedure
       .mutation(async () => {
-        const { sendCalendarReminders } = await import("../jobs/calendarReminders");
         const result = await sendCalendarReminders();
         return result;
       }),
@@ -5362,7 +5363,6 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
      */
     triggerLowCreditsAlerts: adminProcedure
       .mutation(async () => {
-        const { sendLowCreditsAlerts } = await import("../jobs/lowCreditsAlerts");
         const result = await sendLowCreditsAlerts();
         return result;
       }),
