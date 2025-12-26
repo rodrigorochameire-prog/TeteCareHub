@@ -6,7 +6,7 @@
   "installCommand": "bash scripts/pre-build.sh && npm install",
   "devCommand": "npm run dev",
   "functions": {
-    "api/index.ts": {
+    "api/index.js": {
       "maxDuration": 30,
       "memory": 1024
     }
