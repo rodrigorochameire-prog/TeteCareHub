@@ -5,11 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
-// Auth via tRPC
-const getLoginUrl = () => {
-  const origin = window.location.origin;
-  return `${import.meta.env.VITE_OAUTH_PORTAL_URL}?redirect_uri=${encodeURIComponent(origin + "/api/oauth/callback")}`;
-};
+import { getLoginUrl } from "@/const";
 
 export default function AcceptInvite() {
   const [, params] = useRoute("/accept-invite");

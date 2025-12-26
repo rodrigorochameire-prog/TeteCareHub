@@ -1,0 +1,154 @@
+Excelente! A migração foi concluída com sucesso! 🎉
+
+**RECOMENDAÇÃO: Aguardar período de monitoramento antes de remover a função antiga.**
+
+Por favor, **NÃO remova a função antiga ainda**. Recomendo:
+
+1. **Aguardar 24-48 horas** para monitorar se tudo está funcionando corretamente
+2. **Testar funcionalidades** relacionadas a uploads e acesso de arquivos
+3. **Verificar logs** para garantir que não há erros
+4. **Após período de monitoramento**, remover a função antiga
+
+**Verificações recomendadas durante o monitoramento:**
+
+1. **Testar uploads de arquivos:**
+   - Tutores fazendo upload para `tutors/{tutorId}/arquivo.ext`
+   - Staff fazendo upload para `staff/{tutorId}/arquivo.ext`
+   - Verificar se os uploads funcionam corretamente
+
+2. **Testar acesso a arquivos:**
+   - Tutores acessando seus próprios arquivos
+   - Verificar se conseguem ver/baixar arquivos corretamente
+   - Verificar se não conseguem acessar arquivos de outros tutores
+
+3. **Verificar logs de erro:**
+   - Monitorar se há erros relacionados a `extract_tutor_id_from_path`
+   - Verificar se há problemas de acesso/permissão
+
+4. **Verificar que nenhum código usa a função antiga:**
+   - Verificar se há outras políticas que ainda usam `extract_tutor_id_from_path`
+   - Verificar se há código da aplicação que ainda usa a função antiga
+
+**Após período de monitoramento bem-sucedido:**
+
+Quando estiver pronto para remover a função antiga, execute:
+
+```sql
+-- Verificar se há outras referências à função antiga
+SELECT 
+  p.polname as policy_name,
+  pg_get_expr(p.qual, p.polrelid) as using_expr,
+  pg_get_expr(p.polwithcheck, p.polrelid) as with_check_expr
+FROM pg_policy p
+JOIN pg_class c ON c.oid = p.polrelid
+WHERE c.relname = 'objects'
+  AND c.relnamespace = 'storage'::regnamespace
+  AND (
+    pg_get_expr(p.qual, p.polrelid) LIKE '%extract_tutor_id_from_path(%'
+      AND pg_get_expr(p.qual, p.polrelid) NOT LIKE '%extract_tutor_id_from_path_bigint%'
+    OR pg_get_expr(p.polwithcheck, p.polrelid) LIKE '%extract_tutor_id_from_path(%'
+      AND pg_get_expr(p.polwithcheck, p.polrelid) NOT LIKE '%extract_tutor_id_from_path_bigint%'
+  );
+
+-- Se retornar 0 linhas, pode remover a função antiga:
+DROP FUNCTION IF EXISTS public.extract_tutor_id_from_path(text);
+```
+
+**Resumo do que foi feito:**
+
+✅ Nova função `extract_tutor_id_from_path_bigint` criada (retorna bigint)
+✅ 4 políticas migradas para usar a nova função
+✅ Validações executadas e passaram
+✅ Sistema RLS funcionando corretamente
+⏳ Função antiga mantida temporariamente (para segurança)
+
+**Próximos passos:**
+
+1. Monitorar sistema por 24-48 horas
+2. Testar funcionalidades de upload/acesso
+3. Verificar logs de erro
+4. Após período de monitoramento, remover função antiga (se tudo estiver OK)
+
+Pode aguardar o período de monitoramento antes de remover a função antiga?
+
+
+
+
+
+
+**RECOMENDAÇÃO: Aguardar período de monitoramento antes de remover a função antiga.**
+
+Por favor, **NÃO remova a função antiga ainda**. Recomendo:
+
+1. **Aguardar 24-48 horas** para monitorar se tudo está funcionando corretamente
+2. **Testar funcionalidades** relacionadas a uploads e acesso de arquivos
+3. **Verificar logs** para garantir que não há erros
+4. **Após período de monitoramento**, remover a função antiga
+
+**Verificações recomendadas durante o monitoramento:**
+
+1. **Testar uploads de arquivos:**
+   - Tutores fazendo upload para `tutors/{tutorId}/arquivo.ext`
+   - Staff fazendo upload para `staff/{tutorId}/arquivo.ext`
+   - Verificar se os uploads funcionam corretamente
+
+2. **Testar acesso a arquivos:**
+   - Tutores acessando seus próprios arquivos
+   - Verificar se conseguem ver/baixar arquivos corretamente
+   - Verificar se não conseguem acessar arquivos de outros tutores
+
+3. **Verificar logs de erro:**
+   - Monitorar se há erros relacionados a `extract_tutor_id_from_path`
+   - Verificar se há problemas de acesso/permissão
+
+4. **Verificar que nenhum código usa a função antiga:**
+   - Verificar se há outras políticas que ainda usam `extract_tutor_id_from_path`
+   - Verificar se há código da aplicação que ainda usa a função antiga
+
+**Após período de monitoramento bem-sucedido:**
+
+Quando estiver pronto para remover a função antiga, execute:
+
+```sql
+-- Verificar se há outras referências à função antiga
+SELECT 
+  p.polname as policy_name,
+  pg_get_expr(p.qual, p.polrelid) as using_expr,
+  pg_get_expr(p.polwithcheck, p.polrelid) as with_check_expr
+FROM pg_policy p
+JOIN pg_class c ON c.oid = p.polrelid
+WHERE c.relname = 'objects'
+  AND c.relnamespace = 'storage'::regnamespace
+  AND (
+    pg_get_expr(p.qual, p.polrelid) LIKE '%extract_tutor_id_from_path(%'
+      AND pg_get_expr(p.qual, p.polrelid) NOT LIKE '%extract_tutor_id_from_path_bigint%'
+    OR pg_get_expr(p.polwithcheck, p.polrelid) LIKE '%extract_tutor_id_from_path(%'
+      AND pg_get_expr(p.polwithcheck, p.polrelid) NOT LIKE '%extract_tutor_id_from_path_bigint%'
+  );
+
+-- Se retornar 0 linhas, pode remover a função antiga:
+DROP FUNCTION IF EXISTS public.extract_tutor_id_from_path(text);
+```
+
+**Resumo do que foi feito:**
+
+✅ Nova função `extract_tutor_id_from_path_bigint` criada (retorna bigint)
+✅ 4 políticas migradas para usar a nova função
+✅ Validações executadas e passaram
+✅ Sistema RLS funcionando corretamente
+⏳ Função antiga mantida temporariamente (para segurança)
+
+**Próximos passos:**
+
+1. Monitorar sistema por 24-48 horas
+2. Testar funcionalidades de upload/acesso
+3. Verificar logs de erro
+4. Após período de monitoramento, remover função antiga (se tudo estiver OK)
+
+Pode aguardar o período de monitoramento antes de remover a função antiga?
+
+
+
+
+
+

@@ -1,0 +1,48 @@
+═══════════════════════════════════════════════════════════════
+🤖 PROMPT PARA O AGENTE DE IA DO RAILWAY
+═══════════════════════════════════════════════════════════════
+
+Copie e cole este texto completo no chat do agente:
+
+───────────────────────────────────────────────────────────────
+
+Preciso configurar variáveis de ambiente no Railway para conectar minha aplicação Node.js ao banco de dados PostgreSQL do Supabase.
+
+Por favor, adicione as seguintes variáveis de ambiente no projeto:
+
+VARIÁVEIS OBRIGATÓRIAS:
+
+1. DATABASE_URL
+   Tipo: String de conexão PostgreSQL
+   Formato: postgresql://postgres:[PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres
+   Onde obter: Supabase Dashboard → Settings → Database → Connection string → URI
+
+2. SUPABASE_URL
+   Tipo: URL
+   Formato: https://[PROJECT_REF].supabase.co
+   Onde obter: Supabase Dashboard → Settings → API → Project URL
+
+3. SUPABASE_ANON_KEY
+   Tipo: JWT Token
+   Onde obter: Supabase Dashboard → Settings → API → Project API keys → anon (public)
+
+4. SUPABASE_SERVICE_ROLE_KEY
+   Tipo: JWT Token (SECRET)
+   Onde obter: Supabase Dashboard → Settings → API → Project API keys → service_role (secret)
+
+5. NODE_ENV
+   Valor: production
+
+VARIÁVEIS PARA O FRONTEND (Build-time):
+
+6. VITE_SUPABASE_URL
+   Valor: Mesmo valor do SUPABASE_URL
+
+7. VITE_SUPABASE_ANON_KEY
+   Valor: Mesmo valor do SUPABASE_ANON_KEY
+
+───────────────────────────────────────────────────────────────
+
+Após adicionar as variáveis, me informe quais foram criadas e eu fornecerei os valores específicos do meu projeto Supabase.
+
+───────────────────────────────────────────────────────────────

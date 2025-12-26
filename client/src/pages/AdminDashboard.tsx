@@ -30,18 +30,23 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout>
-      <div className="space-y-8 animate-fade-in">
+      <div className="container py-8 space-y-8">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-4xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-lg text-muted-foreground">
-          Visão geral da creche e gestão de pets
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <Sparkles className="h-8 w-8 text-primary" />
+            Dashboard
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Visão geral da creche e gestão de pets
+          </p>
+        </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="shadow-card hover:shadow-hover transition-smooth border-border/50">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="shadow-card hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total de Pets</CardTitle>
             <div className="p-2 bg-primary/10 rounded-lg">
@@ -71,9 +76,9 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-card hover:shadow-hover transition-smooth border-border/50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Receita Mensal</CardTitle>
+        <Card className="shadow-card hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Receita Mensal</CardTitle>
             <div className="p-2 bg-blue-500/10 rounded-lg">
               <TrendingUp className="h-5 w-5 text-blue-600" />
             </div>
@@ -88,9 +93,9 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-card hover:shadow-hover transition-smooth border-border/50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Vacinas Próximas</CardTitle>
+        <Card className="shadow-card hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Vacinas Próximas</CardTitle>
             <div className="p-2 bg-orange-500/10 rounded-lg">
               <AlertCircle className="h-5 w-5 text-orange-600" />
             </div>
@@ -135,7 +140,7 @@ export default function AdminDashboard() {
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Pets na Creche */}
-        <Card className="shadow-card border-border/50">
+        <Card className="shadow-card">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div>
@@ -164,7 +169,7 @@ export default function AdminDashboard() {
               <div className="space-y-3">
                 {checkedInPets.slice(0, 3).map((pet) => (
                   <Link key={pet.id} href={`/admin/pets/${pet.id}`}>
-                    <div className="flex items-center justify-between p-4 rounded-lg border border-border/50 hover:bg-accent/50 transition-smooth cursor-pointer">
+                    <div className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-accent transition-colors cursor-pointer">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center text-white font-semibold">
                           {pet.name[0]}
@@ -193,7 +198,7 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Vacinas Próximas */}
-        <Card className="shadow-card border-border/50">
+        <Card className="shadow-card">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div>
@@ -221,7 +226,7 @@ export default function AdminDashboard() {
             ) : (
               <div className="space-y-3">
                 {upcomingVaccines.slice(0, 3).map((item: any) => (
-                  <div key={item.vaccination.id} className="p-4 rounded-lg border border-border/50 hover:bg-accent/50 transition-smooth">
+                  <div key={item.vaccination.id} className="p-4 rounded-lg border border-border hover:bg-accent transition-colors">
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <p className="font-medium">{item.pet.name}</p>
@@ -247,7 +252,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Health Statistics Section */}
-      {healthStats && (
+      {healthStats && healthStats.vaccination && healthStats.medications && healthStats.preventives && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -296,7 +301,7 @@ export default function AdminDashboard() {
             </Card>
 
             {/* Active Medications */}
-            <Card className="shadow-card hover:shadow-hover transition-smooth">
+            <Card className="shadow-card hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Medicamentos Ativos</CardTitle>
                 <Pill className="h-4 w-4 text-muted-foreground" />
@@ -324,7 +329,7 @@ export default function AdminDashboard() {
             </Card>
 
             {/* Overdue Treatments */}
-            <Card className="shadow-card hover:shadow-hover transition-smooth">
+            <Card className="shadow-card hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Tratamentos Atrasados</CardTitle>
                 <AlertCircle className="h-4 w-4 text-muted-foreground" />

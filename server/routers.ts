@@ -1863,50 +1863,8 @@ export const appRouter = router({
   }),
 
   // ==================== NOTIFICATIONS ====================
-  notifications: router({
-    getUserNotifications: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getUserNotifications(ctx.user.id);
-    }),
-
-    markAsRead: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        await db.markNotificationAsRead(input.id);
-        return { success: true };
-      }),
-    
-    markAllAsRead: protectedProcedure
-      .mutation(async ({ ctx }) => {
-        await db.markAllNotificationsAsRead(ctx.user.id);
-        return { success: true };
-      }),
-    
-    getUnreadCount: protectedProcedure
-      .query(async ({ ctx }) => {
-        const count = await db.getUnreadNotificationCount(ctx.user.id);
-        return { count };
-      }),
-
-    triggerVaccineAlerts: adminProcedure
-      .mutation(async () => {
-        const result = await triggerVaccineNotificationsManually();
-        return result;
-      }),
-
-    triggerCalendarReminders: adminProcedure
-      .mutation(async () => {
-        const { sendCalendarReminders } = await import("./jobs/calendarReminders");
-        const result = await sendCalendarReminders();
-        return result;
-      }),
-
-    triggerLowCreditsAlerts: adminProcedure
-      .mutation(async () => {
-        const { sendLowCreditsAlerts } = await import("./jobs/lowCreditsAlerts");
-        const result = await sendLowCreditsAlerts();
-        return result;
-      }),
-  }),
+  // Old notifications router removed - using new one below (line ~5329)
+  // All notification endpoints are now in the new notifications router
 
   // ==================== TRANSACTIONS & FINANCES ====================
   finances: router({
@@ -5324,6 +5282,91 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
 
   // Search
   search: searchRouter,
+
+  // Notifications (replacing WebSocket with polling)
+  notifications: router({
+    /**
+     * Get user notifications
+     */
+    list: protectedProcedure
+      .input(z.object({
+        limit: z.number().min(1).max(100).optional().default(50),
+      }))
+      .query(async ({ ctx, input }) => {
+        const notifications = await db.getUserNotifications(ctx.user.id);
+        return notifications.slice(0, input.limit).map(n => ({
+          id: n.id,
+          type: n.type,
+          title: n.title,
+          message: n.message,
+          timestamp: n.created_at,
+          isRead: n.is_read,
+          data: n.resource_type && n.resource_id ? {
+            resourceType: n.resource_type,
+            resourceId: n.resource_id,
+          } : undefined,
+        }));
+      }),
+
+    /**
+     * Get unread count
+     */
+    unreadCount: protectedProcedure
+      .query(async ({ ctx }) => {
+        const count = await db.getUnreadNotificationCount(ctx.user.id);
+        return { count };
+      }),
+
+    /**
+     * Mark notification as read
+     */
+    markAsRead: protectedProcedure
+      .input(z.object({
+        notificationId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.markNotificationAsRead(input.notificationId);
+        return { success: true };
+      }),
+
+    /**
+     * Mark all notifications as read
+     */
+    markAllAsRead: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        await db.markAllNotificationsAsRead(ctx.user.id);
+        return { success: true };
+      }),
+
+    /**
+     * Trigger vaccine alerts manually (admin only)
+     */
+    triggerVaccineAlerts: adminProcedure
+      .mutation(async () => {
+        const result = await triggerVaccineNotificationsManually();
+        return result;
+      }),
+
+    /**
+     * Trigger calendar reminders manually (admin only)
+     */
+    triggerCalendarReminders: adminProcedure
+      .mutation(async () => {
+        const { sendCalendarReminders } = await import("../jobs/calendarReminders");
+        const result = await sendCalendarReminders();
+        return result;
+      }),
+
+    /**
+     * Trigger low credits alerts manually (admin only)
+     */
+    triggerLowCreditsAlerts: adminProcedure
+      .mutation(async () => {
+        const { sendLowCreditsAlerts } = await import("../jobs/lowCreditsAlerts");
+        const result = await sendLowCreditsAlerts();
+        return result;
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

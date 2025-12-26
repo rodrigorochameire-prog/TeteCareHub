@@ -1,0 +1,106 @@
+# 🚀 COMANDOS RÁPIDOS - SUPABASE CLI
+
+## INSTALAÇÃO (escolha uma opção)
+
+### Opção 1: Homebrew
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew install supabase/tap/supabase
+
+### Opção 2: npm
+# Instalar Node.js primeiro: https://nodejs.org/
+npm install -g supabase
+
+### Opção 3: Download Manual
+# Baixar de: https://github.com/supabase/cli/releases
+# Extrair e mover para /usr/local/bin ou ~/.local/bin
+
+---
+
+## CONFIGURAÇÃO
+
+# 1. Login
+supabase login
+
+# 2. Linkar projeto
+supabase link --project-ref siwapjqndevuwsluncnr
+
+# 3. Verificar
+supabase --version
+
+---
+
+## EXECUTAR SCRIPT RLS
+
+# Navegar até o diretório do projeto
+cd "/Users/rodrigorochameire/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/Pessoal/Tuco Care/TeteCareHub"
+
+# Executar script
+supabase db execute -f SQL_RLS_FINAL_COMPLETO.sql
+
+---
+
+## VALIDAÇÃO
+
+# Verificar políticas criadas
+supabase db execute --query "SELECT COUNT(*) FROM pg_policies WHERE schemaname = 'storage' AND tablename = 'objects';"
+
+# Listar todas as políticas
+supabase db execute --query "SELECT policyname FROM pg_policies WHERE schemaname = 'storage' AND tablename = 'objects' ORDER BY policyname;"
+
+
+
+
+
+
+## INSTALAÇÃO (escolha uma opção)
+
+### Opção 1: Homebrew
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew install supabase/tap/supabase
+
+### Opção 2: npm
+# Instalar Node.js primeiro: https://nodejs.org/
+npm install -g supabase
+
+### Opção 3: Download Manual
+# Baixar de: https://github.com/supabase/cli/releases
+# Extrair e mover para /usr/local/bin ou ~/.local/bin
+
+---
+
+## CONFIGURAÇÃO
+
+# 1. Login
+supabase login
+
+# 2. Linkar projeto
+supabase link --project-ref siwapjqndevuwsluncnr
+
+# 3. Verificar
+supabase --version
+
+---
+
+## EXECUTAR SCRIPT RLS
+
+# Navegar até o diretório do projeto
+cd "/Users/rodrigorochameire/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/Pessoal/Tuco Care/TeteCareHub"
+
+# Executar script
+supabase db execute -f SQL_RLS_FINAL_COMPLETO.sql
+
+---
+
+## VALIDAÇÃO
+
+# Verificar políticas criadas
+supabase db execute --query "SELECT COUNT(*) FROM pg_policies WHERE schemaname = 'storage' AND tablename = 'objects';"
+
+# Listar todas as políticas
+supabase db execute --query "SELECT policyname FROM pg_policies WHERE schemaname = 'storage' AND tablename = 'objects' ORDER BY policyname;"
+
+
+
+
+
+

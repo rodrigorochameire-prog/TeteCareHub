@@ -108,15 +108,20 @@ describe("Email/Password Authentication", () => {
     ).rejects.toThrow("Current password is incorrect");
   });
 
-  it("should store passwords as hashed values", async () => {
+  it("should sync user with Supabase Auth", async () => {
     const db = await getDb();
     if (!db) throw new Error("Database not available");
 
     const userResults = await db.select().from(users).where(eq(users.id, testUserId)).limit(1);
     const user = userResults[0];
 
-    expect(user.passwordHash).toBeDefined();
-    expect(user.passwordHash).not.toBe(TEST_USER.password);
-    expect(user.passwordHash?.length).toBeGreaterThan(50); // bcrypt hashes are long
+    // Verify user has auth_id (synced from Supabase)
+    expect(user.auth_id).toBeDefined();
+    expect(user.auth_id).not.toBeNull();
+    
+    // Verify login_method is set correctly
+    expect(user.login_method).toBe("email");
+    
+    // Note: Passwords are managed by Supabase Auth, not stored in our database
   });
 });

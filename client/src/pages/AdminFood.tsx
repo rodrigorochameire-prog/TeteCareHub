@@ -16,9 +16,15 @@ export default function AdminFood() {
   const [stockAmount, setStockAmount] = useState("");
   const [purchaseNotes, setPurchaseNotes] = useState("");
 
-  // Queries
-  const { data: pets, isLoading: petsLoading } = trpc.pets.list.useQuery();
+  const [showPetsList, setShowPetsList] = useState(false);
+  
+  // Queries - Optimized: Use direct query instead of fetching all pets
+  const { data: totalDailyConsumption = 0 } = trpc.food.getTotalDailyConsumption.useQuery();
   const { data: foodStats, isLoading: statsLoading, refetch: refetchStats } = trpc.food.getStats.useQuery();
+  // Only fetch pets list when user wants to see it (lazy load)
+  const { data: pets, isLoading: petsLoading } = trpc.pets.list.useQuery(undefined, {
+    enabled: showPetsList, // Only fetch when user clicks to expand
+  });
 
   // Mutations
   const addStockMutation = trpc.food.addStock.useMutation({
@@ -47,11 +53,7 @@ export default function AdminFood() {
     });
   };
 
-  // Calculate daily consumption
-  const totalDailyConsumption = pets?.reduce((sum, pet) => {
-    return sum + (pet.foodAmount || 0);
-  }, 0) || 0;
-
+  // Calculate daily consumption (already optimized via query)
   const dailyConsumptionKg = totalDailyConsumption / 1000;
 
   // Calculate days remaining
@@ -61,7 +63,7 @@ export default function AdminFood() {
   const isCriticalStock = daysRemaining < 7;
   const isLowStock = daysRemaining < 25;
 
-  if (petsLoading || statsLoading) {
+  if (statsLoading) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-96">
@@ -171,7 +173,7 @@ export default function AdminFood() {
             <CardContent>
               <div className="text-3xl font-bold">{dailyConsumptionKg.toFixed(1)} kg</div>
               <p className="text-xs text-muted-foreground mt-2">
-                {totalDailyConsumption}g total dos {pets?.length || 0} pets
+                {totalDailyConsumption}g total diário
               </p>
             </CardContent>
           </Card>
@@ -199,58 +201,79 @@ export default function AdminFood() {
         {/* Pets Food Configuration */}
         <Card>
           <CardHeader>
-            <CardTitle>Ração Individual por Pet</CardTitle>
-            <CardDescription>
-              Cada pet tem sua própria ração (marca e quantidade) fornecida pelo tutor
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Ração Individual por Pet</CardTitle>
+                <CardDescription>
+                  Cada pet tem sua própria ração (marca e quantidade) fornecida pelo tutor
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPetsList(!showPetsList)}
+              >
+                {showPetsList ? "Ocultar" : "Ver Lista"}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            {pets && pets.length > 0 ? (
-              <div className="space-y-3">
-                {pets.map((pet) => (
-                  <div
-                    key={pet.id}
-                    className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      {pet.photoUrl ? (
-                        <img
-                          src={pet.photoUrl}
-                          alt={pet.name}
-                          className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                          <ShoppingBag className="w-6 h-6 text-primary" />
-                        </div>
-                      )}
-                      <div>
-                        <div className="font-semibold">{pet.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {pet.breed || "Raça não informada"}
+            {showPetsList ? (
+              petsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : pets && pets.length > 0 ? (
+                <div className="space-y-3">
+                  {pets.map((pet: any) => (
+                    <div
+                      key={pet.id}
+                      className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        {pet.photoUrl ? (
+                          <img
+                            src={pet.photoUrl}
+                            alt={pet.name}
+                            className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                            <ShoppingBag className="w-6 h-6 text-primary" />
+                          </div>
+                        )}
+                        <div>
+                          <div className="font-semibold">{pet.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {pet.breed || "Raça não informada"}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <div className="font-bold text-lg">
-                          {pet.foodAmount ? `${pet.foodAmount}g` : "Não configurado"}
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="font-bold text-lg">
+                            {pet.foodAmount ? `${pet.foodAmount}g` : "Não configurado"}
+                          </div>
+                          <div className="text-xs text-muted-foreground">por dia</div>
                         </div>
-                        <div className="text-xs text-muted-foreground">por dia</div>
+                        {pet.foodBrand && (
+                          <Badge variant="outline" className="ml-2">
+                            {pet.foodBrand}
+                          </Badge>
+                        )}
                       </div>
-                      {pet.foodBrand && (
-                        <Badge variant="outline" className="ml-2">
-                          {pet.foodBrand}
-                        </Badge>
-                      )}
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  <ShoppingBag className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Nenhum pet cadastrado ainda</p>
+                </div>
+              )
             ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <ShoppingBag className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Nenhum pet cadastrado ainda</p>
+              <div className="text-center py-8 text-muted-foreground">
+                <p className="text-sm">Clique em "Ver Lista" para exibir os pets</p>
               </div>
             )}
           </CardContent>
