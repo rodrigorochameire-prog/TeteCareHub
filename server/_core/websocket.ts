@@ -6,8 +6,16 @@ import mysql from "mysql2/promise";
 import { users } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 
-const connection = mysql.createPool(process.env.DATABASE_URL!);
-const db = drizzle(connection);
+let _db: ReturnType<typeof drizzle> | null = null;
+
+function getWsDb() {
+  if (_db) return _db;
+  const url = process.env.DATABASE_URL;
+  if (!url) return null;
+  const connection = mysql.createPool(url);
+  _db = drizzle(connection);
+  return _db;
+}
 
 let io: Server | null = null;
 
@@ -41,6 +49,11 @@ export function initializeWebSocket(httpServer: HTTPServer) {
 
       if (!session) {
         return next(new Error("Authentication error: Invalid session token"));
+      }
+
+      const db = getWsDb();
+      if (!db) {
+        return next(new Error("Authentication error: Database not configured"));
       }
 
       // Get user from database to get role

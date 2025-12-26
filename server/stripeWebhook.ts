@@ -4,11 +4,25 @@ import { getDb } from "./db";
 import { users, payments, pets } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-12-15.clover",
-});
+let _stripe: Stripe | null = null;
+
+function getStripeClient() {
+  if (_stripe) return _stripe;
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) return null;
+  _stripe = new Stripe(key, { apiVersion: "2025-12-15.clover" });
+  return _stripe;
+}
 
 export async function handleStripeWebhook(req: Request, res: Response) {
+  const stripe = getStripeClient();
+  if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) {
+    console.error(
+      "[Webhook] Stripe is not configured: set STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET"
+    );
+    return res.status(503).send("Stripe webhook not configured");
+  }
+
   const sig = req.headers["stripe-signature"];
 
   if (!sig) {
@@ -22,7 +36,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
     event = stripe.webhooks.constructEvent(
       req.body,
       sig,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err: any) {
     console.error("[Webhook] Signature verification failed:", err.message);

@@ -1245,8 +1245,8 @@ async function upsertUser(user) {
   if (!user.openId && !user.email) {
     throw new Error("Either openId or email is required for upsert");
   }
-  const db2 = await getDb();
-  if (!db2) {
+  const db = await getDb();
+  if (!db) {
     console.warn("[Database] Cannot upsert user: database not available");
     return;
   }
@@ -1282,92 +1282,92 @@ async function upsertUser(user) {
     if (Object.keys(updateSet).length === 0) {
       updateSet.lastSignedIn = /* @__PURE__ */ new Date();
     }
-    await db2.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+    await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
   } catch (error) {
     console.error("[Database] Failed to upsert user:", error);
     throw error;
   }
 }
 async function getUserByOpenId(openId) {
-  const db2 = await getDb();
-  if (!db2) return void 0;
-  const result = await db2.select().from(users).where(eq(users.openId, openId)).limit(1);
+  const db = await getDb();
+  if (!db) return void 0;
+  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
   return result.length > 0 ? result[0] : void 0;
 }
 async function getAllUsers() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(users).orderBy(desc(users.createdAt));
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(users).orderBy(desc(users.createdAt));
 }
 async function getUsersByRole(role) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(users).where(eq(users.role, role));
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(users).where(eq(users.role, role));
 }
 async function createPet(pet) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(pets).values(pet);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(pets).values(pet);
   return Number(result[0]?.insertId || 0);
 }
 async function updatePet(id, data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.update(pets).set(data).where(eq(pets.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(pets).set(data).where(eq(pets.id, id));
 }
 async function deletePet(id) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.delete(pets).where(eq(pets.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(pets).where(eq(pets.id, id));
 }
 async function getPetById(id) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const result = await db2.select().from(pets).where(eq(pets.id, id)).limit(1);
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(pets).where(eq(pets.id, id)).limit(1);
   return result[0] || null;
 }
 async function getAllPets() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(pets).orderBy(desc(pets.createdAt));
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(pets).orderBy(desc(pets.createdAt));
 }
 async function getPetsByStatus(status) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(pets).where(eq(pets.status, status));
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(pets).where(eq(pets.status, status));
 }
 async function getPetsByApprovalStatus(approvalStatus) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(pets).where(eq(pets.approvalStatus, approvalStatus)).orderBy(desc(pets.createdAt));
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(pets).where(eq(pets.approvalStatus, approvalStatus)).orderBy(desc(pets.createdAt));
 }
 async function getPetsByTutorId(tutorId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const result = await db2.select({ pet: pets }).from(petTutors).innerJoin(pets, eq(petTutors.petId, pets.id)).where(eq(petTutors.tutorId, tutorId));
+  const db = await getDb();
+  if (!db) return [];
+  const result = await db.select({ pet: pets }).from(petTutors).innerJoin(pets, eq(petTutors.petId, pets.id)).where(eq(petTutors.tutorId, tutorId));
   return result.map((r) => r.pet);
 }
 async function addPetTutor(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(petTutors).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(petTutors).values(data);
   return Number(result[0]?.insertId || 0);
 }
 async function removePetTutor(petId, tutorId) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.delete(petTutors).where(and(eq(petTutors.petId, petId), eq(petTutors.tutorId, tutorId)));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(petTutors).where(and(eq(petTutors.petId, petId), eq(petTutors.tutorId, tutorId)));
 }
 async function getPetTutors(petId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const result = await db2.select({ tutor: users, isPrimary: petTutors.isPrimary }).from(petTutors).innerJoin(users, eq(petTutors.tutorId, users.id)).where(eq(petTutors.petId, petId));
+  const db = await getDb();
+  if (!db) return [];
+  const result = await db.select({ tutor: users, isPrimary: petTutors.isPrimary }).from(petTutors).innerJoin(users, eq(petTutors.tutorId, users.id)).where(eq(petTutors.petId, petId));
   return result;
 }
 async function getPetTutorsWithDetails(petId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const result = await db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  const result = await db.select({
     id: users.id,
     name: users.name,
     email: users.email,
@@ -1377,112 +1377,112 @@ async function getPetTutorsWithDetails(petId) {
   return result;
 }
 async function getUserByEmail(email) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const result = await db2.select().from(users).where(eq(users.email, email)).limit(1);
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
   return result[0] || null;
 }
 async function setPrimaryTutor(petId, tutorId) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.update(petTutors).set({ isPrimary: false }).where(eq(petTutors.petId, petId));
-  await db2.update(petTutors).set({ isPrimary: true }).where(and(eq(petTutors.petId, petId), eq(petTutors.tutorId, tutorId)));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(petTutors).set({ isPrimary: false }).where(eq(petTutors.petId, petId));
+  await db.update(petTutors).set({ isPrimary: true }).where(and(eq(petTutors.petId, petId), eq(petTutors.tutorId, tutorId)));
 }
 async function getActivePackages() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(creditPackages).where(eq(creditPackages.isActive, true)).orderBy(creditPackages.displayOrder);
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(creditPackages).where(eq(creditPackages.isActive, true)).orderBy(creditPackages.displayOrder);
 }
 async function getPackageById(id) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const result = await db2.select().from(creditPackages).where(eq(creditPackages.id, id)).limit(1);
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(creditPackages).where(eq(creditPackages.id, id)).limit(1);
   return result[0] || null;
 }
 async function createPackage(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(creditPackages).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(creditPackages).values(data);
   return Number(result[0]?.insertId || 0);
 }
 async function updatePackage(id, data) {
-  const db2 = await getDb();
-  if (!db2) return;
-  await db2.update(creditPackages).set(data).where(eq(creditPackages.id, id));
+  const db = await getDb();
+  if (!db) return;
+  await db.update(creditPackages).set(data).where(eq(creditPackages.id, id));
 }
 async function addDaycareCredit(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(daycareCredits).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(daycareCredits).values(data);
   return Number(result[0]?.insertId || 0);
 }
 async function getPetCredits(petId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(daycareCredits).where(eq(daycareCredits.petId, petId)).orderBy(desc(daycareCredits.purchaseDate));
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(daycareCredits).where(eq(daycareCredits.petId, petId)).orderBy(desc(daycareCredits.purchaseDate));
 }
 async function getTotalCredits(petId) {
-  const db2 = await getDb();
-  if (!db2) return 0;
-  const result = await db2.select({ total: sql`SUM(${daycareCredits.remainingDays})` }).from(daycareCredits).where(eq(daycareCredits.petId, petId));
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select({ total: sql`SUM(${daycareCredits.remainingDays})` }).from(daycareCredits).where(eq(daycareCredits.petId, petId));
   const total = result[0]?.total;
   return total ? Number(total) : 0;
 }
 async function consumeCredit(petId) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const credits = await db2.select().from(daycareCredits).where(and(eq(daycareCredits.petId, petId), sql`${daycareCredits.remainingDays} > 0`)).orderBy(daycareCredits.purchaseDate).limit(1);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const credits = await db.select().from(daycareCredits).where(and(eq(daycareCredits.petId, petId), sql`${daycareCredits.remainingDays} > 0`)).orderBy(daycareCredits.purchaseDate).limit(1);
   if (credits.length === 0) {
     throw new Error("No credits available");
   }
   const credit = credits[0];
-  await db2.update(daycareCredits).set({ remainingDays: credit.remainingDays - 1 }).where(eq(daycareCredits.id, credit.id));
+  await db.update(daycareCredits).set({ remainingDays: credit.remainingDays - 1 }).where(eq(daycareCredits.id, credit.id));
   return credit.id;
 }
 async function addDaycareUsage(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(daycareUsage).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(daycareUsage).values(data);
   return Number(result[0]?.insertId || 0);
 }
 async function getPetUsageHistory(petId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(daycareUsage).where(eq(daycareUsage.petId, petId)).orderBy(desc(daycareUsage.usageDate));
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(daycareUsage).where(eq(daycareUsage.petId, petId)).orderBy(desc(daycareUsage.usageDate));
 }
 async function getVaccineLibrary() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(vaccineLibrary).orderBy(vaccineLibrary.name);
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(vaccineLibrary).orderBy(vaccineLibrary.name);
 }
 async function addVaccineToLibrary(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(vaccineLibrary).values({ ...data, isCommon: false });
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(vaccineLibrary).values({ ...data, isCommon: false });
   return Number(result[0]?.insertId || 0);
 }
 async function addPetVaccination(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(petVaccinations).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(petVaccinations).values(data);
   return Number(result[0]?.insertId || 0);
 }
 async function getPetVaccinations(petId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const result = await db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  const result = await db.select({
     vaccination: petVaccinations,
     vaccine: vaccineLibrary
   }).from(petVaccinations).innerJoin(vaccineLibrary, eq(petVaccinations.vaccineId, vaccineLibrary.id)).where(eq(petVaccinations.petId, petId)).orderBy(desc(petVaccinations.applicationDate));
   return result;
 }
 async function getUpcomingVaccinations(daysAhead = 30) {
-  const db2 = await getDb();
-  if (!db2) return [];
+  const db = await getDb();
+  if (!db) return [];
   const today = /* @__PURE__ */ new Date();
   const futureDate = /* @__PURE__ */ new Date();
   futureDate.setDate(today.getDate() + daysAhead);
-  return await db2.select({
+  return await db.select({
     vaccination: petVaccinations,
     vaccine: vaccineLibrary,
     pet: pets
@@ -1493,69 +1493,69 @@ async function getUpcomingVaccinations(daysAhead = 30) {
   )).orderBy(petVaccinations.nextDueDate);
 }
 async function updatePetVaccination(id, data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
   const updates = {};
   if (data.nextDueDate !== void 0) updates.nextDueDate = data.nextDueDate;
   if (data.veterinarian !== void 0) updates.veterinarian = data.veterinarian;
   if (data.clinic !== void 0) updates.clinic = data.clinic;
   if (data.notes !== void 0) updates.notes = data.notes;
-  await db2.update(petVaccinations).set(updates).where(eq(petVaccinations.id, id));
+  await db.update(petVaccinations).set(updates).where(eq(petVaccinations.id, id));
 }
 async function deletePetVaccination(id) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.delete(petVaccinations).where(eq(petVaccinations.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(petVaccinations).where(eq(petVaccinations.id, id));
 }
 async function getMedicationLibrary() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(medicationLibrary).orderBy(medicationLibrary.type, medicationLibrary.name);
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(medicationLibrary).orderBy(medicationLibrary.type, medicationLibrary.name);
 }
 async function addMedicationToLibrary(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(medicationLibrary).values({ ...data, isCommon: false });
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(medicationLibrary).values({ ...data, isCommon: false });
   return Number(result[0]?.insertId || 0);
 }
 async function addPetMedication(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(petMedications).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(petMedications).values(data);
   return Number(result[0]?.insertId || 0);
 }
 async function updatePetMedication(id, data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.update(petMedications).set(data).where(eq(petMedications.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(petMedications).set(data).where(eq(petMedications.id, id));
 }
 async function deletePetMedication(id) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.delete(petMedications).where(eq(petMedications.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(petMedications).where(eq(petMedications.id, id));
 }
 async function getPetMedications(petId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const result = await db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  const result = await db.select({
     medication: petMedications,
     medicationInfo: medicationLibrary
   }).from(petMedications).innerJoin(medicationLibrary, eq(petMedications.medicationId, medicationLibrary.id)).where(eq(petMedications.petId, petId)).orderBy(desc(petMedications.startDate));
   return result;
 }
 async function getActiveMedications(petId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const result = await db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  const result = await db.select({
     medication: petMedications,
     medicationInfo: medicationLibrary
   }).from(petMedications).innerJoin(medicationLibrary, eq(petMedications.medicationId, medicationLibrary.id)).where(and(eq(petMedications.petId, petId), eq(petMedications.isActive, true))).orderBy(desc(petMedications.startDate));
   return result;
 }
 async function getAllActiveMedications() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const result = await db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  const result = await db.select({
     medication: petMedications,
     medicationInfo: medicationLibrary,
     pet: pets
@@ -1563,41 +1563,41 @@ async function getAllActiveMedications() {
   return result;
 }
 async function addDailyLog(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(dailyLogs).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(dailyLogs).values(data);
   return Number(result[0]?.insertId || 0);
 }
 async function getPetLogs(petId, startDate, endDate) {
-  const db2 = await getDb();
-  if (!db2) return [];
+  const db = await getDb();
+  if (!db) return [];
   if (startDate && endDate) {
-    return await db2.select().from(dailyLogs).where(and(
+    return await db.select().from(dailyLogs).where(and(
       eq(dailyLogs.petId, petId),
       gte(dailyLogs.logDate, startDate),
       lte(dailyLogs.logDate, endDate)
     )).orderBy(desc(dailyLogs.logDate));
   }
-  return await db2.select().from(dailyLogs).where(eq(dailyLogs.petId, petId)).orderBy(desc(dailyLogs.logDate));
+  return await db.select().from(dailyLogs).where(eq(dailyLogs.petId, petId)).orderBy(desc(dailyLogs.logDate));
 }
 async function updateDailyLog(id, data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.update(dailyLogs).set(data).where(eq(dailyLogs.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(dailyLogs).set(data).where(eq(dailyLogs.id, id));
 }
 async function deleteDailyLog(id) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.delete(dailyLogs).where(eq(dailyLogs.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(dailyLogs).where(eq(dailyLogs.id, id));
 }
 async function getLogsByDate(date2) {
-  const db2 = await getDb();
-  if (!db2) return [];
+  const db = await getDb();
+  if (!db) return [];
   const startOfDay = new Date(date2);
   startOfDay.setHours(0, 0, 0, 0);
   const endOfDay = new Date(date2);
   endOfDay.setHours(23, 59, 59, 999);
-  return await db2.select().from(dailyLogs).where(
+  return await db.select().from(dailyLogs).where(
     and(
       gte(dailyLogs.logDate, startOfDay),
       lte(dailyLogs.logDate, endOfDay)
@@ -1605,9 +1605,9 @@ async function getLogsByDate(date2) {
   ).orderBy(desc(dailyLogs.logDate));
 }
 async function getAllTransactions() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const result = await db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  const result = await db.select({
     id: transactions.id,
     petId: transactions.petId,
     type: transactions.type,
@@ -1626,78 +1626,78 @@ async function getAllTransactions() {
   }));
 }
 async function updatePetCredits(petId, amount) {
-  const db2 = await getDb();
-  if (!db2) return;
-  const pet = await db2.select().from(pets).where(eq(pets.id, petId)).limit(1);
+  const db = await getDb();
+  if (!db) return;
+  const pet = await db.select().from(pets).where(eq(pets.id, petId)).limit(1);
   if (pet.length === 0) throw new Error("Pet not found");
   const currentCredits = pet[0]?.credits || 0;
   const newCredits = currentCredits + amount;
-  await db2.update(pets).set({ credits: newCredits }).where(eq(pets.id, petId));
+  await db.update(pets).set({ credits: newCredits }).where(eq(pets.id, petId));
 }
 async function getAllLogs() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(dailyLogs).orderBy(desc(dailyLogs.logDate)).limit(100);
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(dailyLogs).orderBy(desc(dailyLogs.logDate)).limit(100);
 }
 async function addCalendarEvent(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(calendarEvents).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(calendarEvents).values(data);
   return Number(result[0]?.insertId || 0);
 }
 async function updateCalendarEvent(id, data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.update(calendarEvents).set(data).where(eq(calendarEvents.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(calendarEvents).set(data).where(eq(calendarEvents.id, id));
 }
 async function deleteCalendarEvent(id) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.delete(calendarEvents).where(eq(calendarEvents.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(calendarEvents).where(eq(calendarEvents.id, id));
 }
 async function getCalendarEvents(startDate, endDate) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(calendarEvents).where(and(gte(calendarEvents.eventDate, startDate), lte(calendarEvents.eventDate, endDate))).orderBy(calendarEvents.eventDate);
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(calendarEvents).where(and(gte(calendarEvents.eventDate, startDate), lte(calendarEvents.eventDate, endDate))).orderBy(calendarEvents.eventDate);
 }
 async function getPetEvents(petId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(calendarEvents).where(eq(calendarEvents.petId, petId)).orderBy(calendarEvents.eventDate);
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(calendarEvents).where(eq(calendarEvents.petId, petId)).orderBy(calendarEvents.eventDate);
 }
 async function addDocument(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(documents).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(documents).values(data);
   return Number(result[0]?.insertId || 0);
 }
 async function updateDocument(id, data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
   const updateData = {};
   if (data.title !== void 0) updateData.title = data.title;
   if (data.description !== void 0) updateData.description = data.description;
-  await db2.update(documents).set(updateData).where(eq(documents.id, id));
+  await db.update(documents).set(updateData).where(eq(documents.id, id));
 }
 async function deleteDocument(id) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.delete(documents).where(eq(documents.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(documents).where(eq(documents.id, id));
 }
 async function getPetDocuments(petId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(documents).where(eq(documents.petId, petId)).orderBy(desc(documents.createdAt));
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(documents).where(eq(documents.petId, petId)).orderBy(desc(documents.createdAt));
 }
 async function getDocumentsByCategory(petId, category) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(documents).where(and(eq(documents.petId, petId), eq(documents.category, category))).orderBy(desc(documents.createdAt));
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(documents).where(and(eq(documents.petId, petId), eq(documents.category, category))).orderBy(desc(documents.createdAt));
 }
 async function getAllDocuments(petId, category) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  let query = db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  let query = db.select({
     id: documents.id,
     petId: documents.petId,
     petName: pets.name,
@@ -1720,57 +1720,57 @@ async function getAllDocuments(petId, category) {
   return await query.orderBy(desc(documents.createdAt));
 }
 async function createNotification(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(notifications).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(notifications).values(data);
   return Number(result[0]?.insertId || 0);
 }
 async function getUserNotifications(userId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt));
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt));
 }
 async function markNotificationAsRead(id) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.update(notifications).set({ isRead: true }).where(eq(notifications.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(notifications).set({ isRead: true }).where(eq(notifications.id, id));
 }
 async function markAllNotificationsAsRead(userId) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.update(notifications).set({ isRead: true }).where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(notifications).set({ isRead: true }).where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
 }
 async function getUnreadNotificationCount(userId) {
-  const db2 = await getDb();
-  if (!db2) return 0;
-  const result = await db2.select().from(notifications).where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(notifications).where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
   return result.length;
 }
 async function getPendingNotifications() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(notifications).where(eq(notifications.isSent, false)).orderBy(notifications.createdAt);
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(notifications).where(eq(notifications.isSent, false)).orderBy(notifications.createdAt);
 }
 async function addTransaction(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(transactions).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(transactions).values(data);
   return Number(result[0]?.insertId || 0);
 }
 async function getPetTransactions(petId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(transactions).where(eq(transactions.petId, petId)).orderBy(desc(transactions.transactionDate));
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(transactions).where(eq(transactions.petId, petId)).orderBy(desc(transactions.transactionDate));
 }
 async function getTransactionsByDateRange(startDate, endDate) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(transactions).where(and(gte(transactions.transactionDate, startDate), lte(transactions.transactionDate, endDate))).orderBy(desc(transactions.transactionDate));
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(transactions).where(and(gte(transactions.transactionDate, startDate), lte(transactions.transactionDate, endDate))).orderBy(desc(transactions.transactionDate));
 }
 async function getFinancialSummary(startDate, endDate) {
-  const db2 = await getDb();
-  if (!db2) return { credits: 0, debits: 0, balance: 0 };
-  const result = await db2.select({
+  const db = await getDb();
+  if (!db) return { credits: 0, debits: 0, balance: 0 };
+  const result = await db.select({
     type: transactions.type,
     total: sql`SUM(${transactions.amount})`
   }).from(transactions).where(and(gte(transactions.transactionDate, startDate), lte(transactions.transactionDate, endDate))).groupBy(transactions.type);
@@ -1783,38 +1783,38 @@ async function getFinancialSummary(startDate, endDate) {
   };
 }
 async function addPetPhoto(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(petPhotos).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(petPhotos).values(data);
   return result.insertId;
 }
 async function getPetPhotos(petId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(petPhotos).where(eq(petPhotos.petId, petId)).orderBy(desc(petPhotos.takenAt));
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(petPhotos).where(eq(petPhotos.petId, petId)).orderBy(desc(petPhotos.takenAt));
 }
 async function deletePetPhoto(id) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.delete(petPhotos).where(eq(petPhotos.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(petPhotos).where(eq(petPhotos.id, id));
 }
 async function getPhotoById(id) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const result = await db2.select().from(petPhotos).where(eq(petPhotos.id, id)).limit(1);
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(petPhotos).where(eq(petPhotos.id, id)).limit(1);
   return result[0] || null;
 }
 async function getPetsWithLowCredits(threshold = 5) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(pets).where(lte(pets.credits, threshold)).orderBy(pets.credits);
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(pets).where(lte(pets.credits, threshold)).orderBy(pets.credits);
 }
 async function getVaccinesDueSoon(daysAhead = 30) {
-  const db2 = await getDb();
-  if (!db2) return [];
+  const db = await getDb();
+  if (!db) return [];
   const futureDate = /* @__PURE__ */ new Date();
   futureDate.setDate(futureDate.getDate() + daysAhead);
-  return await db2.select({
+  return await db.select({
     vaccination: petVaccinations,
     pet: pets,
     vaccine: vaccineLibrary
@@ -1826,43 +1826,43 @@ async function getVaccinesDueSoon(daysAhead = 30) {
   ).orderBy(petVaccinations.nextDueDate);
 }
 async function createSubscriptionPlan(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const [plan] = await db2.insert(subscriptionPlans).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [plan] = await db.insert(subscriptionPlans).values(data);
   return plan;
 }
 async function updateSubscriptionPlan(id, data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.update(subscriptionPlans).set(data).where(eq(subscriptionPlans.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(subscriptionPlans).set(data).where(eq(subscriptionPlans.id, id));
 }
 async function listSubscriptionPlans(activeOnly = false) {
-  const db2 = await getDb();
-  if (!db2) return [];
+  const db = await getDb();
+  if (!db) return [];
   if (activeOnly) {
-    return db2.select().from(subscriptionPlans).where(eq(subscriptionPlans.isActive, true));
+    return db.select().from(subscriptionPlans).where(eq(subscriptionPlans.isActive, true));
   }
-  return db2.select().from(subscriptionPlans);
+  return db.select().from(subscriptionPlans);
 }
 async function getSubscriptionPlanById(id) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const [plan] = await db2.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+  const db = await getDb();
+  if (!db) return null;
+  const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, id));
   return plan;
 }
 async function deleteSubscriptionPlan(id) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.delete(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(subscriptionPlans).where(eq(subscriptionPlans.id, id));
 }
 async function createSubscription(data) {
-  const db2 = await getDb();
-  const [subscription] = await db2.insert(subscriptions).values(data);
+  const db = await getDb();
+  const [subscription] = await db.insert(subscriptions).values(data);
   return subscription;
 }
 async function getUserActiveSubscription(userId) {
-  const db2 = await getDb();
-  const [subscription] = await db2.select().from(subscriptions).where(
+  const db = await getDb();
+  const [subscription] = await db.select().from(subscriptions).where(
     and(
       eq(subscriptions.userId, userId),
       eq(subscriptions.status, "active")
@@ -1871,20 +1871,20 @@ async function getUserActiveSubscription(userId) {
   return subscription;
 }
 async function getUserSubscriptionHistory(userId) {
-  const db2 = await getDb();
-  return db2.select().from(subscriptions).where(eq(subscriptions.userId, userId)).orderBy(desc(subscriptions.createdAt));
+  const db = await getDb();
+  return db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).orderBy(desc(subscriptions.createdAt));
 }
 async function updateSubscription(id, data) {
-  const db2 = await getDb();
-  await db2.update(subscriptions).set(data).where(eq(subscriptions.id, id));
+  const db = await getDb();
+  await db.update(subscriptions).set(data).where(eq(subscriptions.id, id));
 }
 async function cancelSubscription(id) {
-  const db2 = await getDb();
-  await db2.update(subscriptions).set({ status: "cancelled", autoRenew: false }).where(eq(subscriptions.id, id));
+  const db = await getDb();
+  await db.update(subscriptions).set({ status: "cancelled", autoRenew: false }).where(eq(subscriptions.id, id));
 }
 async function getSubscriptionsByPlan(planId) {
-  const db2 = await getDb();
-  return db2.select().from(subscriptions).where(
+  const db = await getDb();
+  return db.select().from(subscriptions).where(
     and(
       eq(subscriptions.planId, planId),
       eq(subscriptions.status, "active")
@@ -1892,8 +1892,8 @@ async function getSubscriptionsByPlan(planId) {
   );
 }
 async function getAllActiveSubscriptions() {
-  const db2 = await getDb();
-  return db2.select().from(subscriptions).where(eq(subscriptions.status, "active"));
+  const db = await getDb();
+  return db.select().from(subscriptions).where(eq(subscriptions.status, "active"));
 }
 async function getSubscriptionMetrics() {
   const activeSubscriptions = await getAllActiveSubscriptions();
@@ -1916,97 +1916,97 @@ async function getSubscriptionMetrics() {
   };
 }
 async function createFleaTreatment(data) {
-  const db2 = await getDb();
-  const [result] = await db2.insert(fleaTreatments).values(data);
+  const db = await getDb();
+  const [result] = await db.insert(fleaTreatments).values(data);
   return result;
 }
 async function getFleaTreatmentsByPetId(petId) {
-  const db2 = await getDb();
-  return db2.select().from(fleaTreatments).where(eq(fleaTreatments.petId, petId)).orderBy(desc(fleaTreatments.applicationDate));
+  const db = await getDb();
+  return db.select().from(fleaTreatments).where(eq(fleaTreatments.petId, petId)).orderBy(desc(fleaTreatments.applicationDate));
 }
 async function updateFleaTreatment(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
   const updateData = {};
   if (data.applicationDate) updateData.applicationDate = new Date(data.applicationDate);
   if (data.nextDueDate) updateData.nextDueDate = new Date(data.nextDueDate);
   if (data.notes !== void 0) updateData.notes = data.notes;
-  await db2.update(fleaTreatments).set(updateData).where(eq(fleaTreatments.id, data.id));
+  await db.update(fleaTreatments).set(updateData).where(eq(fleaTreatments.id, data.id));
 }
 async function deleteFleaTreatment(id) {
-  const db2 = await getDb();
-  await db2.delete(fleaTreatments).where(eq(fleaTreatments.id, id));
+  const db = await getDb();
+  await db.delete(fleaTreatments).where(eq(fleaTreatments.id, id));
 }
 async function createDewormingTreatment(data) {
-  const db2 = await getDb();
-  const [result] = await db2.insert(dewormingTreatments).values(data);
+  const db = await getDb();
+  const [result] = await db.insert(dewormingTreatments).values(data);
   return result;
 }
 async function getDewormingTreatmentsByPetId(petId) {
-  const db2 = await getDb();
-  return db2.select().from(dewormingTreatments).where(eq(dewormingTreatments.petId, petId)).orderBy(desc(dewormingTreatments.applicationDate));
+  const db = await getDb();
+  return db.select().from(dewormingTreatments).where(eq(dewormingTreatments.petId, petId)).orderBy(desc(dewormingTreatments.applicationDate));
 }
 async function updateDewormingTreatment(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
   const updateData = {};
   if (data.applicationDate) updateData.applicationDate = new Date(data.applicationDate);
   if (data.nextDueDate) updateData.nextDueDate = new Date(data.nextDueDate);
   if (data.notes !== void 0) updateData.notes = data.notes;
-  await db2.update(dewormingTreatments).set(updateData).where(eq(dewormingTreatments.id, data.id));
+  await db.update(dewormingTreatments).set(updateData).where(eq(dewormingTreatments.id, data.id));
 }
 async function deleteDewormingTreatment(id) {
-  const db2 = await getDb();
-  await db2.delete(dewormingTreatments).where(eq(dewormingTreatments.id, id));
+  const db = await getDb();
+  await db.delete(dewormingTreatments).where(eq(dewormingTreatments.id, id));
 }
 async function createBehaviorRecord(data) {
-  const db2 = await getDb();
-  await db2.insert(behaviorRecords).values(data);
-  const [record] = await db2.select().from(behaviorRecords).where(eq(behaviorRecords.id, sql`LAST_INSERT_ID()`)).limit(1);
+  const db = await getDb();
+  await db.insert(behaviorRecords).values(data);
+  const [record] = await db.select().from(behaviorRecords).where(eq(behaviorRecords.id, sql`LAST_INSERT_ID()`)).limit(1);
   return record;
 }
 async function listBehaviorRecords(petId) {
-  const db2 = await getDb();
+  const db = await getDb();
   if (petId) {
-    return db2.select().from(behaviorRecords).where(eq(behaviorRecords.petId, petId)).orderBy(desc(behaviorRecords.date));
+    return db.select().from(behaviorRecords).where(eq(behaviorRecords.petId, petId)).orderBy(desc(behaviorRecords.date));
   }
-  return db2.select().from(behaviorRecords).orderBy(desc(behaviorRecords.date));
+  return db.select().from(behaviorRecords).orderBy(desc(behaviorRecords.date));
 }
 async function deleteBehaviorRecord(id) {
-  const db2 = await getDb();
-  await db2.delete(behaviorRecords).where(eq(behaviorRecords.id, id));
+  const db = await getDb();
+  await db.delete(behaviorRecords).where(eq(behaviorRecords.id, id));
 }
 async function createTrainingProgress(data) {
-  const db2 = await getDb();
-  await db2.insert(trainingProgress).values(data);
-  const [progress] = await db2.select().from(trainingProgress).where(eq(trainingProgress.id, sql`LAST_INSERT_ID()`)).limit(1);
+  const db = await getDb();
+  await db.insert(trainingProgress).values(data);
+  const [progress] = await db.select().from(trainingProgress).where(eq(trainingProgress.id, sql`LAST_INSERT_ID()`)).limit(1);
   return progress;
 }
 async function listTrainingProgress(petId) {
-  const db2 = await getDb();
+  const db = await getDb();
   if (petId) {
-    return db2.select().from(trainingProgress).where(eq(trainingProgress.petId, petId)).orderBy(desc(trainingProgress.updatedAt));
+    return db.select().from(trainingProgress).where(eq(trainingProgress.petId, petId)).orderBy(desc(trainingProgress.updatedAt));
   }
-  return db2.select().from(trainingProgress).orderBy(desc(trainingProgress.updatedAt));
+  return db.select().from(trainingProgress).orderBy(desc(trainingProgress.updatedAt));
 }
 async function updateTrainingProgress(id, currentLevel, notes) {
-  const db2 = await getDb();
-  const updated = await db2.update(trainingProgress).set({ currentLevel, notes, updatedAt: /* @__PURE__ */ new Date() }).where(eq(trainingProgress.id, id));
+  const db = await getDb();
+  const updated = await db.update(trainingProgress).set({ currentLevel, notes, updatedAt: /* @__PURE__ */ new Date() }).where(eq(trainingProgress.id, id));
   return updated;
 }
 async function deleteTrainingProgress(id) {
-  const db2 = await getDb();
-  await db2.delete(trainingProgress).where(eq(trainingProgress.id, id));
+  const db = await getDb();
+  await db.delete(trainingProgress).where(eq(trainingProgress.id, id));
 }
 async function addPhotoComment(photoId, userId, comment) {
-  const db2 = await getDb();
-  await db2.insert(photoComments).values({ photoId, userId, comment });
-  const [newComment] = await db2.select().from(photoComments).where(eq(photoComments.id, sql`LAST_INSERT_ID()`)).limit(1);
+  const db = await getDb();
+  await db.insert(photoComments).values({ photoId, userId, comment });
+  const [newComment] = await db.select().from(photoComments).where(eq(photoComments.id, sql`LAST_INSERT_ID()`)).limit(1);
   return newComment;
 }
 async function getPhotoComments(photoId) {
-  const db2 = await getDb();
-  const comments = await db2.select({
+  const db = await getDb();
+  const comments = await db.select({
     id: photoComments.id,
     photoId: photoComments.photoId,
     userId: photoComments.userId,
@@ -2020,32 +2020,32 @@ async function getPhotoComments(photoId) {
   return comments;
 }
 async function deletePhotoComment(id) {
-  const db2 = await getDb();
-  await db2.delete(photoComments).where(eq(photoComments.id, id));
+  const db = await getDb();
+  await db.delete(photoComments).where(eq(photoComments.id, id));
 }
 async function addPhotoReaction(photoId, userId, reactionType) {
-  const db2 = await getDb();
-  const existing = await db2.select().from(photoReactions).where(and(eq(photoReactions.photoId, photoId), eq(photoReactions.userId, userId))).limit(1);
+  const db = await getDb();
+  const existing = await db.select().from(photoReactions).where(and(eq(photoReactions.photoId, photoId), eq(photoReactions.userId, userId))).limit(1);
   if (existing.length > 0) {
-    await db2.update(photoReactions).set({ reactionType }).where(eq(photoReactions.id, existing[0].id));
+    await db.update(photoReactions).set({ reactionType }).where(eq(photoReactions.id, existing[0].id));
     return existing[0];
   } else {
-    await db2.insert(photoReactions).values({ photoId, userId, reactionType });
-    const [newReaction] = await db2.select().from(photoReactions).where(eq(photoReactions.id, sql`LAST_INSERT_ID()`)).limit(1);
+    await db.insert(photoReactions).values({ photoId, userId, reactionType });
+    const [newReaction] = await db.select().from(photoReactions).where(eq(photoReactions.id, sql`LAST_INSERT_ID()`)).limit(1);
     return newReaction;
   }
 }
 async function removePhotoReaction(photoId, userId) {
-  const db2 = await getDb();
-  await db2.delete(photoReactions).where(and(eq(photoReactions.photoId, photoId), eq(photoReactions.userId, userId)));
+  const db = await getDb();
+  await db.delete(photoReactions).where(and(eq(photoReactions.photoId, photoId), eq(photoReactions.userId, userId)));
 }
 async function getPhotoReactions(photoId) {
-  const db2 = await getDb();
-  return db2.select().from(photoReactions).where(eq(photoReactions.photoId, photoId));
+  const db = await getDb();
+  return db.select().from(photoReactions).where(eq(photoReactions.photoId, photoId));
 }
 async function getPhotoReactionCounts(photoId) {
-  const db2 = await getDb();
-  const reactions = await db2.select().from(photoReactions).where(eq(photoReactions.photoId, photoId));
+  const db = await getDb();
+  const reactions = await db.select().from(photoReactions).where(eq(photoReactions.photoId, photoId));
   const counts = {
     like: 0,
     love: 0,
@@ -2058,14 +2058,14 @@ async function getPhotoReactionCounts(photoId) {
   return counts;
 }
 async function createBooking(data) {
-  const db2 = await getDb();
-  await db2.insert(bookings).values(data);
-  const [booking] = await db2.select().from(bookings).where(eq(bookings.id, sql`LAST_INSERT_ID()`)).limit(1);
+  const db = await getDb();
+  await db.insert(bookings).values(data);
+  const [booking] = await db.select().from(bookings).where(eq(bookings.id, sql`LAST_INSERT_ID()`)).limit(1);
   return booking;
 }
 async function listBookings(filters) {
-  const db2 = await getDb();
-  let query = db2.select().from(bookings);
+  const db = await getDb();
+  let query = db.select().from(bookings);
   if (filters?.petId) {
     query = query.where(eq(bookings.petId, filters.petId));
   }
@@ -2078,34 +2078,34 @@ async function listBookings(filters) {
   return query.orderBy(desc(bookings.bookingDate));
 }
 async function getBookingById(id) {
-  const db2 = await getDb();
-  const [booking] = await db2.select().from(bookings).where(eq(bookings.id, id)).limit(1);
+  const db = await getDb();
+  const [booking] = await db.select().from(bookings).where(eq(bookings.id, id)).limit(1);
   return booking;
 }
 async function updateBookingStatus(id, status) {
-  const db2 = await getDb();
-  await db2.update(bookings).set({ status, updatedAt: /* @__PURE__ */ new Date() }).where(eq(bookings.id, id));
+  const db = await getDb();
+  await db.update(bookings).set({ status, updatedAt: /* @__PURE__ */ new Date() }).where(eq(bookings.id, id));
 }
 async function deleteBooking(id) {
-  const db2 = await getDb();
-  await db2.delete(bookings).where(eq(bookings.id, id));
+  const db = await getDb();
+  await db.delete(bookings).where(eq(bookings.id, id));
 }
 async function getBookingsByDateRange(startDate, endDate) {
-  const db2 = await getDb();
-  return db2.select().from(bookings).where(and(
+  const db = await getDb();
+  return db.select().from(bookings).where(and(
     sql`${bookings.bookingDate} >= ${startDate}`,
     sql`${bookings.bookingDate} <= ${endDate}`
   )).orderBy(bookings.bookingDate);
 }
 async function createReview(data) {
-  const db2 = await getDb();
-  await db2.insert(reviews).values(data);
-  const [review] = await db2.select().from(reviews).where(eq(reviews.id, sql`LAST_INSERT_ID()`)).limit(1);
+  const db = await getDb();
+  await db.insert(reviews).values(data);
+  const [review] = await db.select().from(reviews).where(eq(reviews.id, sql`LAST_INSERT_ID()`)).limit(1);
   return review;
 }
 async function listReviews(filters) {
-  const db2 = await getDb();
-  let query = db2.select().from(reviews);
+  const db = await getDb();
+  let query = db.select().from(reviews);
   if (filters?.petId) {
     query = query.where(eq(reviews.petId, filters.petId));
   }
@@ -2118,33 +2118,33 @@ async function listReviews(filters) {
   return query.orderBy(desc(reviews.createdAt));
 }
 async function getAverageRating() {
-  const db2 = await getDb();
-  const result = await db2.select({ avg: sql`AVG(${reviews.rating})` }).from(reviews);
+  const db = await getDb();
+  const result = await db.select({ avg: sql`AVG(${reviews.rating})` }).from(reviews);
   return result[0]?.avg ? Number(result[0].avg) : 0;
 }
 async function addReviewResponse(reviewId, response) {
-  const db2 = await getDb();
-  await db2.update(reviews).set({ response, respondedAt: /* @__PURE__ */ new Date() }).where(eq(reviews.id, reviewId));
+  const db = await getDb();
+  await db.update(reviews).set({ response, respondedAt: /* @__PURE__ */ new Date() }).where(eq(reviews.id, reviewId));
 }
 async function getWeightHistory(petId) {
-  const db2 = await getDb();
-  const logs = await db2.select({
+  const db = await getDb();
+  const logs = await db.select({
     date: dailyLogs.logDate,
     weight: dailyLogs.weight
   }).from(dailyLogs).where(and(eq(dailyLogs.petId, petId), sql`${dailyLogs.weight} IS NOT NULL`)).orderBy(dailyLogs.logDate).limit(30);
   return logs;
 }
 async function getMoodHistory(petId) {
-  const db2 = await getDb();
-  const logs = await db2.select({
+  const db = await getDb();
+  const logs = await db.select({
     date: dailyLogs.logDate,
     mood: dailyLogs.mood
   }).from(dailyLogs).where(and(eq(dailyLogs.petId, petId), sql`${dailyLogs.mood} IS NOT NULL`)).orderBy(dailyLogs.logDate).limit(30);
   return logs;
 }
 async function getFrequencyStats(petId) {
-  const db2 = await getDb();
-  const stats = await db2.select({
+  const db = await getDb();
+  const stats = await db.select({
     month: sql`DATE_FORMAT(${daycareUsage.checkInTime}, '%Y-%m')`,
     frequency: sql`COUNT(*)`
   }).from(daycareUsage).where(and(
@@ -2154,113 +2154,113 @@ async function getFrequencyStats(petId) {
   return stats;
 }
 async function listAllUsers() {
-  const db2 = await getDb();
-  return db2.select().from(users).orderBy(users.createdAt);
+  const db = await getDb();
+  return db.select().from(users).orderBy(users.createdAt);
 }
 async function getUserById(userId) {
-  const db2 = await getDb();
-  const result = await db2.select().from(users).where(eq(users.id, userId)).limit(1);
+  const db = await getDb();
+  const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   return result[0];
 }
 async function updateUser(userId, data) {
-  const db2 = await getDb();
-  await db2.update(users).set(data).where(eq(users.id, userId));
+  const db = await getDb();
+  await db.update(users).set(data).where(eq(users.id, userId));
 }
 async function updateUserRole(userId, role) {
-  const db2 = await getDb();
-  await db2.update(users).set({ role }).where(eq(users.id, userId));
+  const db = await getDb();
+  await db.update(users).set({ role }).where(eq(users.id, userId));
 }
 async function deleteUser(userId) {
-  const db2 = await getDb();
-  await db2.delete(users).where(eq(users.id, userId));
+  const db = await getDb();
+  await db.delete(users).where(eq(users.id, userId));
 }
 async function getPaymentsByUserId(userId) {
-  const db2 = await getDb();
-  return db2.select().from(payments).where(eq(payments.userId, userId)).orderBy(payments.createdAt);
+  const db = await getDb();
+  return db.select().from(payments).where(eq(payments.userId, userId)).orderBy(payments.createdAt);
 }
 async function createAdminInvite(data) {
-  const db2 = await getDb();
-  const [result] = await db2.insert(adminInvites).values(data);
+  const db = await getDb();
+  const [result] = await db.insert(adminInvites).values(data);
   return result;
 }
 async function getAdminInviteByToken(token) {
-  const db2 = await getDb();
-  const [invite] = await db2.select().from(adminInvites).where(eq(adminInvites.token, token)).limit(1);
+  const db = await getDb();
+  const [invite] = await db.select().from(adminInvites).where(eq(adminInvites.token, token)).limit(1);
   return invite;
 }
 async function listPendingAdminInvites() {
-  const db2 = await getDb();
-  return db2.select().from(adminInvites).where(eq(adminInvites.status, "pending")).orderBy(adminInvites.createdAt);
+  const db = await getDb();
+  return db.select().from(adminInvites).where(eq(adminInvites.status, "pending")).orderBy(adminInvites.createdAt);
 }
 async function updateAdminInviteStatus(token, status) {
-  const db2 = await getDb();
-  await db2.update(adminInvites).set({
+  const db = await getDb();
+  await db.update(adminInvites).set({
     status,
     acceptedAt: status === "accepted" ? /* @__PURE__ */ new Date() : null
   }).where(eq(adminInvites.token, token));
 }
 async function getPreventiveLibrary() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const result = await db2.select().from(preventiveLibrary).orderBy(preventiveLibrary.type, preventiveLibrary.name);
+  const db = await getDb();
+  if (!db) return [];
+  const result = await db.select().from(preventiveLibrary).orderBy(preventiveLibrary.type, preventiveLibrary.name);
   return result;
 }
 async function addPreventiveToLibrary(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(preventiveLibrary).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(preventiveLibrary).values(data);
   return result[0].insertId;
 }
 async function getWhatsAppConfig() {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const result = await db2.select().from(whatsappConfig).limit(1);
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(whatsappConfig).limit(1);
   return result[0] || null;
 }
 async function updateWhatsAppConfig(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
   const existing = await getWhatsAppConfig();
   if (existing) {
-    await db2.update(whatsappConfig).set(data).where(eq(whatsappConfig.id, existing.id));
+    await db.update(whatsappConfig).set(data).where(eq(whatsappConfig.id, existing.id));
   } else {
-    await db2.insert(whatsappConfig).values(data);
+    await db.insert(whatsappConfig).values(data);
   }
 }
 async function getWhatsAppTemplates() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(whatsappTemplates).orderBy(whatsappTemplates.category, whatsappTemplates.name);
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(whatsappTemplates).orderBy(whatsappTemplates.category, whatsappTemplates.name);
 }
 async function createWhatsAppTemplate(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(whatsappTemplates).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(whatsappTemplates).values(data);
   return result[0].insertId;
 }
 async function updateWhatsAppTemplate(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
   const { id, ...updateData } = data;
-  await db2.update(whatsappTemplates).set(updateData).where(eq(whatsappTemplates.id, id));
+  await db.update(whatsappTemplates).set(updateData).where(eq(whatsappTemplates.id, id));
 }
 async function deleteWhatsAppTemplate(id) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.delete(whatsappTemplates).where(eq(whatsappTemplates.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(whatsappTemplates).where(eq(whatsappTemplates.id, id));
 }
 async function getWhatsAppMessageHistory(limit = 50, status) {
-  const db2 = await getDb();
-  if (!db2) return [];
+  const db = await getDb();
+  if (!db) return [];
   if (status) {
-    return await db2.select().from(whatsappMessages).where(eq(whatsappMessages.status, status)).orderBy(desc(whatsappMessages.createdAt)).limit(limit);
+    return await db.select().from(whatsappMessages).where(eq(whatsappMessages.status, status)).orderBy(desc(whatsappMessages.createdAt)).limit(limit);
   }
-  return await db2.select().from(whatsappMessages).orderBy(desc(whatsappMessages.createdAt)).limit(limit);
+  return await db.select().from(whatsappMessages).orderBy(desc(whatsappMessages.createdAt)).limit(limit);
 }
 async function getWhatsAppGroups() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select({
     id: whatsappGroups.id,
     petId: whatsappGroups.petId,
     groupName: whatsappGroups.groupName,
@@ -2272,25 +2272,25 @@ async function getWhatsAppGroups() {
   }).from(whatsappGroups).leftJoin(pets, eq(whatsappGroups.petId, pets.id)).orderBy(whatsappGroups.createdAt);
 }
 async function createWhatsAppGroup(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(whatsappGroups).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(whatsappGroups).values(data);
   return result[0].insertId;
 }
 async function addWhatsAppGroupMember(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.insert(whatsappGroupMembers).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(whatsappGroupMembers).values(data);
 }
 async function removeWhatsAppGroupMember(groupId, memberId) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.update(whatsappGroupMembers).set({ removedAt: /* @__PURE__ */ new Date() }).where(eq(whatsappGroupMembers.id, memberId));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(whatsappGroupMembers).set({ removedAt: /* @__PURE__ */ new Date() }).where(eq(whatsappGroupMembers.id, memberId));
 }
 async function getWhatsAppAutomations() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select({
     id: whatsappAutomations.id,
     name: whatsappAutomations.name,
     triggerType: whatsappAutomations.triggerType,
@@ -2302,32 +2302,32 @@ async function getWhatsAppAutomations() {
   }).from(whatsappAutomations).leftJoin(whatsappTemplates, eq(whatsappAutomations.templateId, whatsappTemplates.id)).orderBy(whatsappAutomations.name);
 }
 async function createWhatsAppAutomation(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(whatsappAutomations).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(whatsappAutomations).values(data);
   return result[0].insertId;
 }
 async function updateWhatsAppAutomation(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
   const { id, ...updateData } = data;
-  await db2.update(whatsappAutomations).set(updateData).where(eq(whatsappAutomations.id, id));
+  await db.update(whatsappAutomations).set(updateData).where(eq(whatsappAutomations.id, id));
 }
 async function deleteWhatsAppAutomation(id) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.delete(whatsappAutomations).where(eq(whatsappAutomations.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(whatsappAutomations).where(eq(whatsappAutomations.id, id));
 }
 async function getWhatsAppStats() {
-  const db2 = await getDb();
-  if (!db2) return {
+  const db = await getDb();
+  if (!db) return {
     total: 0,
     sent: 0,
     delivered: 0,
     read: 0,
     failed: 0
   };
-  const messages = await db2.select().from(whatsappMessages);
+  const messages = await db.select().from(whatsappMessages);
   return {
     total: messages.length,
     sent: messages.filter((m) => m.status === "sent").length,
@@ -2337,40 +2337,40 @@ async function getWhatsAppStats() {
   };
 }
 async function getWhatsAppConversations(status = "all") {
-  const db2 = await getDb();
-  if (!db2) return [];
+  const db = await getDb();
+  if (!db) return [];
   if (status === "all") {
-    return await db2.select().from(whatsappConversations).orderBy(desc(whatsappConversations.lastMessageAt));
+    return await db.select().from(whatsappConversations).orderBy(desc(whatsappConversations.lastMessageAt));
   }
-  return await db2.select().from(whatsappConversations).where(eq(whatsappConversations.status, status)).orderBy(desc(whatsappConversations.lastMessageAt));
+  return await db.select().from(whatsappConversations).where(eq(whatsappConversations.status, status)).orderBy(desc(whatsappConversations.lastMessageAt));
 }
 async function getWhatsAppConversation(id) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const conversation = await db2.select().from(whatsappConversations).where(eq(whatsappConversations.id, id)).limit(1);
+  const db = await getDb();
+  if (!db) return null;
+  const conversation = await db.select().from(whatsappConversations).where(eq(whatsappConversations.id, id)).limit(1);
   return conversation[0] || null;
 }
 async function updateWhatsAppConversationStatus(id, status) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.update(whatsappConversations).set({ status }).where(eq(whatsappConversations.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(whatsappConversations).set({ status }).where(eq(whatsappConversations.id, id));
 }
 async function markWhatsAppConversationAsRead(id) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.update(whatsappConversations).set({ unreadCount: 0 }).where(eq(whatsappConversations.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(whatsappConversations).set({ unreadCount: 0 }).where(eq(whatsappConversations.id, id));
 }
 async function getAllPayments() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(payments).orderBy(desc(payments.createdAt));
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(payments).orderBy(desc(payments.createdAt));
 }
 async function getUpcomingVaccinationReminders(daysAhead = 7) {
-  const db2 = await getDb();
-  if (!db2) return [];
+  const db = await getDb();
+  if (!db) return [];
   const today = /* @__PURE__ */ new Date();
   const futureDate = new Date(today.getTime() + daysAhead * 24 * 60 * 60 * 1e3);
-  const results = await db2.select({
+  const results = await db.select({
     vaccinationId: petVaccinations.id,
     petId: pets.id,
     petName: pets.name,
@@ -2384,11 +2384,11 @@ async function getUpcomingVaccinationReminders(daysAhead = 7) {
   return results;
 }
 async function getEndingMedicationReminders(daysAhead = 7) {
-  const db2 = await getDb();
-  if (!db2) return [];
+  const db = await getDb();
+  if (!db) return [];
   const today = /* @__PURE__ */ new Date();
   const futureDate = new Date(today.getTime() + daysAhead * 24 * 60 * 60 * 1e3);
-  const results = await db2.select({
+  const results = await db.select({
     medicationId: petMedications.id,
     petId: pets.id,
     petName: pets.name,
@@ -2402,11 +2402,11 @@ async function getEndingMedicationReminders(daysAhead = 7) {
   return results;
 }
 async function getUpcomingFleaTreatmentReminders(daysAhead = 7) {
-  const db2 = await getDb();
-  if (!db2) return [];
+  const db = await getDb();
+  if (!db) return [];
   const today = /* @__PURE__ */ new Date();
   const futureDate = new Date(today.getTime() + daysAhead * 24 * 60 * 60 * 1e3);
-  const results = await db2.select({
+  const results = await db.select({
     treatmentId: fleaTreatments.id,
     petId: pets.id,
     petName: pets.name,
@@ -2419,11 +2419,11 @@ async function getUpcomingFleaTreatmentReminders(daysAhead = 7) {
   return results;
 }
 async function getUpcomingDewormingReminders(daysAhead = 7) {
-  const db2 = await getDb();
-  if (!db2) return [];
+  const db = await getDb();
+  if (!db) return [];
   const today = /* @__PURE__ */ new Date();
   const futureDate = new Date(today.getTime() + daysAhead * 24 * 60 * 60 * 1e3);
-  const results = await db2.select({
+  const results = await db.select({
     treatmentId: dewormingTreatments.id,
     petId: pets.id,
     petName: pets.name,
@@ -2449,14 +2449,14 @@ async function getAllUpcomingHealthReminders(daysAhead = 7) {
   };
 }
 async function getVaccinationStatistics() {
-  const db2 = await getDb();
-  if (!db2) return { total: 0, upToDate: 0, overdue: 0, upcoming: 0, rate: 0 };
+  const db = await getDb();
+  if (!db) return { total: 0, upToDate: 0, overdue: 0, upcoming: 0, rate: 0 };
   const today = /* @__PURE__ */ new Date();
   const futureDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1e3);
-  const allPets = await db2.select().from(pets);
+  const allPets = await db.select().from(pets);
   const totalPets = allPets.length;
   if (totalPets === 0) return { total: 0, upToDate: 0, overdue: 0, upcoming: 0, rate: 0 };
-  const allVaccinations = await db2.select({
+  const allVaccinations = await db.select({
     petId: petVaccinations.petId,
     nextDueDate: petVaccinations.nextDueDate
   }).from(petVaccinations);
@@ -2492,10 +2492,10 @@ async function getVaccinationStatistics() {
   };
 }
 async function getActiveMedicationsCount() {
-  const db2 = await getDb();
-  if (!db2) return { total: 0, byPet: [] };
+  const db = await getDb();
+  if (!db) return { total: 0, byPet: [] };
   const today = /* @__PURE__ */ new Date();
-  const activeMeds = await db2.select({
+  const activeMeds = await db.select({
     petId: petMedications.petId,
     petName: pets.name,
     medicationName: medicationLibrary.name,
@@ -2522,16 +2522,16 @@ async function getActiveMedicationsCount() {
   };
 }
 async function getPreventivesThisMonth() {
-  const db2 = await getDb();
-  if (!db2) return { flea: 0, deworming: 0, total: 0 };
+  const db = await getDb();
+  if (!db) return { flea: 0, deworming: 0, total: 0 };
   const now = /* @__PURE__ */ new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-  const fleaCount = await db2.select({ count: sql`count(*)` }).from(fleaTreatments).where(and(
+  const fleaCount = await db.select({ count: sql`count(*)` }).from(fleaTreatments).where(and(
     gte(fleaTreatments.applicationDate, startOfMonth),
     lte(fleaTreatments.applicationDate, endOfMonth)
   ));
-  const dewormingCount = await db2.select({ count: sql`count(*)` }).from(dewormingTreatments).where(and(
+  const dewormingCount = await db.select({ count: sql`count(*)` }).from(dewormingTreatments).where(and(
     gte(dewormingTreatments.applicationDate, startOfMonth),
     lte(dewormingTreatments.applicationDate, endOfMonth)
   ));
@@ -2544,24 +2544,24 @@ async function getPreventivesThisMonth() {
   };
 }
 async function getOverdueTreatments() {
-  const db2 = await getDb();
-  if (!db2) return [];
+  const db = await getDb();
+  if (!db) return [];
   const today = /* @__PURE__ */ new Date();
-  const overdueVaccinations = await db2.select({
+  const overdueVaccinations = await db.select({
     type: sql`'vaccination'`,
     petId: pets.id,
     petName: pets.name,
     itemName: vaccineLibrary.name,
     dueDate: petVaccinations.nextDueDate
   }).from(petVaccinations).innerJoin(pets, eq(petVaccinations.petId, pets.id)).innerJoin(vaccineLibrary, eq(petVaccinations.vaccineId, vaccineLibrary.id)).where(lt(petVaccinations.nextDueDate, today)).orderBy(petVaccinations.nextDueDate);
-  const overdueFlea = await db2.select({
+  const overdueFlea = await db.select({
     type: sql`'flea'`,
     petId: pets.id,
     petName: pets.name,
     itemName: fleaTreatments.productName,
     dueDate: fleaTreatments.nextDueDate
   }).from(fleaTreatments).innerJoin(pets, eq(fleaTreatments.petId, pets.id)).where(lt(fleaTreatments.nextDueDate, today)).orderBy(fleaTreatments.nextDueDate);
-  const overdueDeworming = await db2.select({
+  const overdueDeworming = await db.select({
     type: sql`'deworming'`,
     petId: pets.id,
     petName: pets.name,
@@ -2583,9 +2583,9 @@ async function getHealthDashboardStats() {
   };
 }
 async function getPetVaccinationHistory(petId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const history = await db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  const history = await db.select({
     id: petVaccinations.id,
     vaccineId: petVaccinations.vaccineId,
     vaccineName: vaccineLibrary.name,
@@ -2599,9 +2599,9 @@ async function getPetVaccinationHistory(petId) {
   return history;
 }
 async function getPetMedicationHistory(petId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const history = await db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  const history = await db.select({
     id: petMedications.id,
     medicationId: petMedications.medicationId,
     medicationName: medicationLibrary.name,
@@ -2615,15 +2615,15 @@ async function getPetMedicationHistory(petId) {
   return history;
 }
 async function getPetFleaTreatmentHistory(petId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const history = await db2.select().from(fleaTreatments).where(eq(fleaTreatments.petId, petId)).orderBy(desc(fleaTreatments.applicationDate));
+  const db = await getDb();
+  if (!db) return [];
+  const history = await db.select().from(fleaTreatments).where(eq(fleaTreatments.petId, petId)).orderBy(desc(fleaTreatments.applicationDate));
   return history;
 }
 async function getPetDewormingHistory(petId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const history = await db2.select().from(dewormingTreatments).where(eq(dewormingTreatments.petId, petId)).orderBy(desc(dewormingTreatments.applicationDate));
+  const db = await getDb();
+  if (!db) return [];
+  const history = await db.select().from(dewormingTreatments).where(eq(dewormingTreatments.petId, petId)).orderBy(desc(dewormingTreatments.applicationDate));
   return history;
 }
 async function getPetCompleteHealthHistory(petId) {
@@ -2648,10 +2648,10 @@ async function getPetCompleteHealthHistory(petId) {
   };
 }
 async function getHealthCalendarEvents(startDate, endDate) {
-  const db2 = await getDb();
-  if (!db2) return [];
+  const db = await getDb();
+  if (!db) return [];
   const events = [];
-  const vaccinations = await db2.select({
+  const vaccinations = await db.select({
     id: petVaccinations.id,
     petId: petVaccinations.petId,
     petName: pets.name,
@@ -2678,7 +2678,7 @@ async function getHealthCalendarEvents(startDate, endDate) {
       });
     }
   }
-  const medications = await db2.select({
+  const medications = await db.select({
     id: petMedications.id,
     petId: petMedications.petId,
     petName: pets.name,
@@ -2705,7 +2705,7 @@ async function getHealthCalendarEvents(startDate, endDate) {
       });
     }
   }
-  const fleaResults = await db2.select().from(fleaTreatments).leftJoin(pets, eq(fleaTreatments.petId, pets.id)).where(
+  const fleaResults = await db.select().from(fleaTreatments).leftJoin(pets, eq(fleaTreatments.petId, pets.id)).where(
     and(
       startDate ? gte(fleaTreatments.nextDueDate, startDate) : void 0,
       endDate ? lte(fleaTreatments.nextDueDate, endDate) : void 0
@@ -2723,7 +2723,7 @@ async function getHealthCalendarEvents(startDate, endDate) {
       notes: f.fleaTreatments.notes
     });
   }
-  const dewormingResults = await db2.select().from(dewormingTreatments).leftJoin(pets, eq(dewormingTreatments.petId, pets.id)).where(
+  const dewormingResults = await db.select().from(dewormingTreatments).leftJoin(pets, eq(dewormingTreatments.petId, pets.id)).where(
     and(
       startDate ? gte(dewormingTreatments.nextDueDate, startDate) : void 0,
       endDate ? lte(dewormingTreatments.nextDueDate, endDate) : void 0
@@ -2744,10 +2744,10 @@ async function getHealthCalendarEvents(startDate, endDate) {
   return events;
 }
 async function getAllTutors(page = 1, limit = 20, search) {
-  const db2 = await getDb();
-  if (!db2) return { tutors: [], total: 0 };
+  const db = await getDb();
+  if (!db) return { tutors: [], total: 0 };
   const offset = (page - 1) * limit;
-  let query = db2.select({
+  let query = db.select({
     id: users.id,
     name: users.name,
     email: users.email,
@@ -2766,19 +2766,19 @@ async function getAllTutors(page = 1, limit = 20, search) {
     );
   }
   const tutors = await query.limit(limit).offset(offset).orderBy(desc(users.createdAt));
-  const countResult = await db2.select({ count: count() }).from(users).where(eq(users.role, "user"));
+  const countResult = await db.select({ count: count() }).from(users).where(eq(users.role, "user"));
   return {
     tutors,
     total: countResult[0]?.count || 0
   };
 }
 async function getTutorById(tutorId) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const tutorResult = await db2.select().from(users).where(and(eq(users.id, tutorId), eq(users.role, "user"))).limit(1);
+  const db = await getDb();
+  if (!db) return null;
+  const tutorResult = await db.select().from(users).where(and(eq(users.id, tutorId), eq(users.role, "user"))).limit(1);
   if (tutorResult.length === 0) return null;
   const tutor = tutorResult[0];
-  const linkedPets = await db2.select({
+  const linkedPets = await db.select({
     petId: petTutors.petId,
     petName: pets.name,
     petBreed: pets.breed,
@@ -2792,28 +2792,28 @@ async function getTutorById(tutorId) {
   };
 }
 async function updateTutor(tutorId, data) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  await db2.update(users).set({
+  const db = await getDb();
+  if (!db) return null;
+  await db.update(users).set({
     ...data,
     updatedAt: /* @__PURE__ */ new Date()
   }).where(eq(users.id, tutorId));
   return await getTutorById(tutorId);
 }
 async function linkPetToTutor(petId, tutorId, isPrimary = false) {
-  const db2 = await getDb();
-  if (!db2) return false;
-  const existing = await db2.select().from(petTutors).where(and(eq(petTutors.petId, petId), eq(petTutors.tutorId, tutorId))).limit(1);
+  const db = await getDb();
+  if (!db) return false;
+  const existing = await db.select().from(petTutors).where(and(eq(petTutors.petId, petId), eq(petTutors.tutorId, tutorId))).limit(1);
   if (existing.length > 0) {
     if (isPrimary) {
-      await db2.update(petTutors).set({ isPrimary: true }).where(and(eq(petTutors.petId, petId), eq(petTutors.tutorId, tutorId)));
+      await db.update(petTutors).set({ isPrimary: true }).where(and(eq(petTutors.petId, petId), eq(petTutors.tutorId, tutorId)));
     }
     return true;
   }
   if (isPrimary) {
-    await db2.update(petTutors).set({ isPrimary: false }).where(eq(petTutors.petId, petId));
+    await db.update(petTutors).set({ isPrimary: false }).where(eq(petTutors.petId, petId));
   }
-  await db2.insert(petTutors).values({
+  await db.insert(petTutors).values({
     petId,
     tutorId,
     isPrimary
@@ -2821,21 +2821,21 @@ async function linkPetToTutor(petId, tutorId, isPrimary = false) {
   return true;
 }
 async function unlinkPetFromTutor(petId, tutorId) {
-  const db2 = await getDb();
-  if (!db2) return false;
-  await db2.delete(petTutors).where(and(eq(petTutors.petId, petId), eq(petTutors.tutorId, tutorId)));
+  const db = await getDb();
+  if (!db) return false;
+  await db.delete(petTutors).where(and(eq(petTutors.petId, petId), eq(petTutors.tutorId, tutorId)));
   return true;
 }
 async function getTutorReminderHistory(tutorId) {
-  const db2 = await getDb();
-  if (!db2) return [];
+  const db = await getDb();
+  if (!db) return [];
   return [];
 }
 async function getAllCalendarEvents(startDate, endDate) {
-  const db2 = await getDb();
-  if (!db2) return [];
+  const db = await getDb();
+  if (!db) return [];
   const healthEvents = await getHealthCalendarEvents(startDate, endDate);
-  const bookingsData = await db2.select({
+  const bookingsData = await db.select({
     id: bookings.id,
     petId: bookings.petId,
     petName: pets.name,
@@ -2884,7 +2884,7 @@ async function getAllCalendarEvents(startDate, endDate) {
       }
     ];
   });
-  const paymentsData = await db2.select({
+  const paymentsData = await db.select({
     id: transactions.id,
     petId: transactions.petId,
     petName: pets.name,
@@ -2918,9 +2918,9 @@ async function getAllCalendarEvents(startDate, endDate) {
   return [...healthEvents, ...bookingEvents, ...paymentEvents];
 }
 async function getDailyOccupancy(startDate, endDate) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const bookingsData = await db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  const bookingsData = await db.select({
     id: bookings.id,
     petId: bookings.petId,
     bookingDate: bookings.bookingDate,
@@ -2953,9 +2953,9 @@ async function getDailyOccupancy(startDate, endDate) {
   }));
 }
 async function getCreditConsumption(startDate, endDate) {
-  const db2 = await getDb();
-  if (!db2) return { total: 0, byPet: [] };
-  const usageData = await db2.select({
+  const db = await getDb();
+  if (!db) return { total: 0, byPet: [] };
+  const usageData = await db.select({
     petId: daycareUsage.petId,
     petName: pets.name,
     count: sql`COUNT(*)`
@@ -2981,9 +2981,9 @@ async function getDayEvents(date2) {
   return await getAllCalendarEvents(startOfDay, endOfDay);
 }
 async function createAuditLog(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(auditLogs).values({
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(auditLogs).values({
     userId: data.userId,
     action: data.action,
     resource: data.resource || null,
@@ -2995,9 +2995,9 @@ async function createAuditLog(data) {
   return Number(result[0]?.insertId || 0);
 }
 async function getAuditLogs(filters) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  let query = db2.select().from(auditLogs);
+  const db = await getDb();
+  if (!db) return [];
+  let query = db.select().from(auditLogs);
   const conditions = [];
   if (filters?.userId) conditions.push(eq(auditLogs.userId, filters.userId));
   if (filters?.action) conditions.push(eq(auditLogs.action, filters.action));
@@ -3014,11 +3014,11 @@ async function getAuditLogs(filters) {
   return await query;
 }
 async function getFailedAccessAttempts(days = 7) {
-  const db2 = await getDb();
-  if (!db2) return [];
+  const db = await getDb();
+  if (!db) return [];
   const startDate = /* @__PURE__ */ new Date();
   startDate.setDate(startDate.getDate() - days);
-  return await db2.select().from(auditLogs).where(
+  return await db.select().from(auditLogs).where(
     and(
       eq(auditLogs.success, false),
       gte(auditLogs.timestamp, startDate)
@@ -3026,43 +3026,43 @@ async function getFailedAccessAttempts(days = 7) {
   ).orderBy(desc(auditLogs.timestamp));
 }
 async function getAllNotificationTemplates() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(notificationTemplates).orderBy(notificationTemplates.type);
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(notificationTemplates).orderBy(notificationTemplates.type);
 }
 async function getNotificationTemplateByType(type) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const results = await db2.select().from(notificationTemplates).where(eq(notificationTemplates.type, type)).limit(1);
+  const db = await getDb();
+  if (!db) return null;
+  const results = await db.select().from(notificationTemplates).where(eq(notificationTemplates.type, type)).limit(1);
   return results[0] || null;
 }
 async function createNotificationTemplate(data) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const result = await db2.insert(notificationTemplates).values(data);
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(notificationTemplates).values(data);
   return Number(result.insertId);
 }
 async function updateNotificationTemplate(id, data) {
-  const db2 = await getDb();
-  if (!db2) return false;
-  await db2.update(notificationTemplates).set(data).where(eq(notificationTemplates.id, id));
+  const db = await getDb();
+  if (!db) return false;
+  await db.update(notificationTemplates).set(data).where(eq(notificationTemplates.id, id));
   return true;
 }
 async function deleteNotificationTemplate(id) {
-  const db2 = await getDb();
-  if (!db2) return false;
-  await db2.delete(notificationTemplates).where(eq(notificationTemplates.id, id));
+  const db = await getDb();
+  if (!db) return false;
+  await db.delete(notificationTemplates).where(eq(notificationTemplates.id, id));
   return true;
 }
 async function getTutorNotificationPreferences(tutorId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(tutorNotificationPreferences).where(eq(tutorNotificationPreferences.tutorId, tutorId));
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(tutorNotificationPreferences).where(eq(tutorNotificationPreferences.tutorId, tutorId));
 }
 async function getTutorPreferenceByType(tutorId, type) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const results = await db2.select().from(tutorNotificationPreferences).where(
+  const db = await getDb();
+  if (!db) return null;
+  const results = await db.select().from(tutorNotificationPreferences).where(
     and(
       eq(tutorNotificationPreferences.tutorId, tutorId),
       eq(tutorNotificationPreferences.notificationType, type)
@@ -3071,27 +3071,27 @@ async function getTutorPreferenceByType(tutorId, type) {
   return results[0] || null;
 }
 async function createTutorNotificationPreference(data) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const result = await db2.insert(tutorNotificationPreferences).values(data);
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(tutorNotificationPreferences).values(data);
   return Number(result.insertId);
 }
 async function updateTutorNotificationPreference(id, data) {
-  const db2 = await getDb();
-  if (!db2) return false;
-  await db2.update(tutorNotificationPreferences).set(data).where(eq(tutorNotificationPreferences.id, id));
+  const db = await getDb();
+  if (!db) return false;
+  await db.update(tutorNotificationPreferences).set(data).where(eq(tutorNotificationPreferences.id, id));
   return true;
 }
 async function deleteTutorNotificationPreference(id) {
-  const db2 = await getDb();
-  if (!db2) return false;
-  await db2.delete(tutorNotificationPreferences).where(eq(tutorNotificationPreferences.id, id));
+  const db = await getDb();
+  if (!db) return false;
+  await db.delete(tutorNotificationPreferences).where(eq(tutorNotificationPreferences.id, id));
   return true;
 }
 async function getAllTutorPreferences() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select({
     id: tutorNotificationPreferences.id,
     tutorId: tutorNotificationPreferences.tutorId,
     tutorName: users.name,
@@ -3112,15 +3112,15 @@ async function shouldSendNotification(tutorId, type) {
   return preference.enabled;
 }
 async function createHealthBehaviorLog(data) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const result = await db2.insert(healthBehaviorLogs).values(data);
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(healthBehaviorLogs).values(data);
   return { id: Number(result.insertId) };
 }
 async function getHealthBehaviorLogsByPet(petId, limit = 50) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select({
     id: healthBehaviorLogs.id,
     petId: healthBehaviorLogs.petId,
     petName: pets.name,
@@ -3137,9 +3137,9 @@ async function getHealthBehaviorLogsByPet(petId, limit = 50) {
   }).from(healthBehaviorLogs).leftJoin(pets, eq(healthBehaviorLogs.petId, pets.id)).leftJoin(users, eq(healthBehaviorLogs.recordedBy, users.id)).where(eq(healthBehaviorLogs.petId, petId)).orderBy(desc(healthBehaviorLogs.recordedAt)).limit(limit);
 }
 async function getRecentHealthBehaviorLogs(limit = 20) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select({
     id: healthBehaviorLogs.id,
     petId: healthBehaviorLogs.petId,
     petName: pets.name,
@@ -3155,23 +3155,23 @@ async function getRecentHealthBehaviorLogs(limit = 20) {
   }).from(healthBehaviorLogs).leftJoin(pets, eq(healthBehaviorLogs.petId, pets.id)).leftJoin(users, eq(healthBehaviorLogs.recordedBy, users.id)).orderBy(desc(healthBehaviorLogs.recordedAt)).limit(limit);
 }
 async function getHealthBehaviorLogById(id) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const results = await db2.select().from(healthBehaviorLogs).where(eq(healthBehaviorLogs.id, id)).limit(1);
+  const db = await getDb();
+  if (!db) return null;
+  const results = await db.select().from(healthBehaviorLogs).where(eq(healthBehaviorLogs.id, id)).limit(1);
   return results[0] || null;
 }
 async function deleteHealthBehaviorLog(id) {
-  const db2 = await getDb();
-  if (!db2) return false;
-  await db2.delete(healthBehaviorLogs).where(eq(healthBehaviorLogs.id, id));
+  const db = await getDb();
+  if (!db) return false;
+  await db.delete(healthBehaviorLogs).where(eq(healthBehaviorLogs.id, id));
   return true;
 }
 async function getHealthBehaviorStats(petId, days = 30) {
-  const db2 = await getDb();
-  if (!db2) return null;
+  const db = await getDb();
+  if (!db) return null;
   const startDate = /* @__PURE__ */ new Date();
   startDate.setDate(startDate.getDate() - days);
-  const logs = await db2.select().from(healthBehaviorLogs).where(
+  const logs = await db.select().from(healthBehaviorLogs).where(
     and(
       eq(healthBehaviorLogs.petId, petId),
       gte(healthBehaviorLogs.recordedAt, startDate)
@@ -3201,59 +3201,59 @@ async function getHealthBehaviorStats(petId, days = 30) {
   };
 }
 async function getAllCreditPackages() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(creditPackages).where(eq(creditPackages.isActive, true)).orderBy(creditPackages.displayOrder);
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(creditPackages).where(eq(creditPackages.isActive, true)).orderBy(creditPackages.displayOrder);
 }
 async function getAllCreditPackagesIncludingInactive() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(creditPackages).orderBy(creditPackages.displayOrder);
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(creditPackages).orderBy(creditPackages.displayOrder);
 }
 async function getCreditPackageById(id) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const results = await db2.select().from(creditPackages).where(eq(creditPackages.id, id)).limit(1);
+  const db = await getDb();
+  if (!db) return null;
+  const results = await db.select().from(creditPackages).where(eq(creditPackages.id, id)).limit(1);
   return results[0] || null;
 }
 async function createCreditPackage(data) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const result = await db2.insert(creditPackages).values(data);
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(creditPackages).values(data);
   return { id: Number(result.insertId) || 0 };
 }
 async function updateCreditPackage(id, data) {
-  const db2 = await getDb();
-  if (!db2) return false;
-  await db2.update(creditPackages).set(data).where(eq(creditPackages.id, id));
+  const db = await getDb();
+  if (!db) return false;
+  await db.update(creditPackages).set(data).where(eq(creditPackages.id, id));
   return true;
 }
 async function deleteCreditPackage(id) {
-  const db2 = await getDb();
-  if (!db2) return false;
-  await db2.update(creditPackages).set({ isActive: false }).where(eq(creditPackages.id, id));
+  const db = await getDb();
+  if (!db) return false;
+  await db.update(creditPackages).set({ isActive: false }).where(eq(creditPackages.id, id));
   return true;
 }
 async function getAllEventTypes() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(eventTypes).where(eq(eventTypes.isActive, true)).orderBy(eventTypes.name);
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(eventTypes).where(eq(eventTypes.isActive, true)).orderBy(eventTypes.name);
 }
 async function getAllEventTypesIncludingInactive() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(eventTypes).orderBy(eventTypes.name);
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(eventTypes).orderBy(eventTypes.name);
 }
 async function getEventTypeById(id) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const [result] = await db2.select().from(eventTypes).where(eq(eventTypes.id, id)).limit(1);
+  const db = await getDb();
+  if (!db) return null;
+  const [result] = await db.select().from(eventTypes).where(eq(eventTypes.id, id)).limit(1);
   return result || null;
 }
 async function createEventType(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(eventTypes).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(eventTypes).values(data);
   const insertId = Number(result.insertId) || Number(result[0]?.insertId) || 0;
   if (insertId === 0) {
     throw new Error("Failed to create event type");
@@ -3261,37 +3261,37 @@ async function createEventType(data) {
   return { id: insertId };
 }
 async function updateEventType(id, data) {
-  const db2 = await getDb();
-  if (!db2) return false;
-  await db2.update(eventTypes).set(data).where(eq(eventTypes.id, id));
+  const db = await getDb();
+  if (!db) return false;
+  await db.update(eventTypes).set(data).where(eq(eventTypes.id, id));
   return true;
 }
 async function deleteEventType(id) {
-  const db2 = await getDb();
-  if (!db2) return false;
-  await db2.update(eventTypes).set({ isActive: false }).where(eq(eventTypes.id, id));
+  const db = await getDb();
+  if (!db) return false;
+  await db.update(eventTypes).set({ isActive: false }).where(eq(eventTypes.id, id));
   return true;
 }
 async function getAllAutoScheduleRules() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(medicationAutoScheduleRules).where(eq(medicationAutoScheduleRules.isActive, true));
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(medicationAutoScheduleRules).where(eq(medicationAutoScheduleRules.isActive, true));
 }
 async function getAllAutoScheduleRulesIncludingInactive() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(medicationAutoScheduleRules);
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(medicationAutoScheduleRules);
 }
 async function getAutoScheduleRuleById(id) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const [result] = await db2.select().from(medicationAutoScheduleRules).where(eq(medicationAutoScheduleRules.id, id)).limit(1);
+  const db = await getDb();
+  if (!db) return null;
+  const [result] = await db.select().from(medicationAutoScheduleRules).where(eq(medicationAutoScheduleRules.id, id)).limit(1);
   return result || null;
 }
 async function getAutoScheduleRuleByMedicationId(medicationId) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const [result] = await db2.select().from(medicationAutoScheduleRules).where(
+  const db = await getDb();
+  if (!db) return null;
+  const [result] = await db.select().from(medicationAutoScheduleRules).where(
     and(
       eq(medicationAutoScheduleRules.medicationId, medicationId),
       eq(medicationAutoScheduleRules.isActive, true)
@@ -3300,9 +3300,9 @@ async function getAutoScheduleRuleByMedicationId(medicationId) {
   return result || null;
 }
 async function createAutoScheduleRule(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(medicationAutoScheduleRules).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(medicationAutoScheduleRules).values(data);
   const insertId = Number(result.insertId) || Number(result[0]?.insertId) || 0;
   if (insertId === 0) {
     throw new Error("Failed to create auto-schedule rule");
@@ -3310,27 +3310,27 @@ async function createAutoScheduleRule(data) {
   return { id: insertId };
 }
 async function updateAutoScheduleRule(id, data) {
-  const db2 = await getDb();
-  if (!db2) return false;
-  await db2.update(medicationAutoScheduleRules).set(data).where(eq(medicationAutoScheduleRules.id, id));
+  const db = await getDb();
+  if (!db) return false;
+  await db.update(medicationAutoScheduleRules).set(data).where(eq(medicationAutoScheduleRules.id, id));
   return true;
 }
 async function deleteAutoScheduleRule(id) {
-  const db2 = await getDb();
-  if (!db2) return false;
-  await db2.update(medicationAutoScheduleRules).set({ isActive: false }).where(eq(medicationAutoScheduleRules.id, id));
+  const db = await getDb();
+  if (!db) return false;
+  await db.update(medicationAutoScheduleRules).set({ isActive: false }).where(eq(medicationAutoScheduleRules.id, id));
   return true;
 }
 async function getPetFoodStock(petId) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const [result] = await db2.select().from(petFoodStock).where(eq(petFoodStock.petId, petId)).limit(1);
+  const db = await getDb();
+  if (!db) return null;
+  const [result] = await db.select().from(petFoodStock).where(eq(petFoodStock.petId, petId)).limit(1);
   return result || null;
 }
 async function createPetFoodStock(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(petFoodStock).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(petFoodStock).values(data);
   const insertId = Number(result.insertId) || Number(result[0]?.insertId) || 0;
   if (insertId === 0) {
     throw new Error("Failed to create pet food stock");
@@ -3338,15 +3338,15 @@ async function createPetFoodStock(data) {
   return { id: insertId };
 }
 async function updatePetFoodStock(petId, data) {
-  const db2 = await getDb();
-  if (!db2) return false;
-  await db2.update(petFoodStock).set(data).where(eq(petFoodStock.petId, petId));
+  const db = await getDb();
+  if (!db) return false;
+  await db.update(petFoodStock).set(data).where(eq(petFoodStock.petId, petId));
   return true;
 }
 async function getAllLowStockPets(thresholdDays) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const stocks = await db2.select().from(petFoodStock);
+  const db = await getDb();
+  if (!db) return [];
+  const stocks = await db.select().from(petFoodStock);
   const lowStockPets = stocks.filter((stock) => {
     const daysRemaining = Math.floor(stock.currentStock / stock.dailyConsumption);
     const threshold = thresholdDays || stock.alertThresholdDays;
@@ -3366,15 +3366,15 @@ function calculateRestockDate(currentStock, dailyConsumption, alertThresholdDays
   return restockDate;
 }
 async function createWallPost(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const [result] = await db2.insert(wallPosts).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(wallPosts).values(data);
   return result.insertId;
 }
 async function getWallPosts(limit = 20, offset = 0, petId, userId, targetType) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  let query = db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  let query = db.select({
     id: wallPosts.id,
     petId: wallPosts.petId,
     authorId: wallPosts.authorId,
@@ -3397,9 +3397,9 @@ async function getWallPosts(limit = 20, offset = 0, petId, userId, targetType) {
     query = query.where(eq(wallPosts.targetType, targetType));
   }
   if (userId) {
-    const userInfo = await db2.select().from(users).where(eq(users.id, userId));
+    const userInfo = await db.select().from(users).where(eq(users.id, userId));
     if (userInfo[0]?.role === "user") {
-      const userPets = await db2.select().from(petTutors).where(eq(petTutors.tutorId, userId));
+      const userPets = await db.select().from(petTutors).where(eq(petTutors.tutorId, userId));
       const petIds = userPets.map((pt) => pt.petId);
       query = query.where(
         or(
@@ -3413,9 +3413,9 @@ async function getWallPosts(limit = 20, offset = 0, petId, userId, targetType) {
   return await query;
 }
 async function getWallPostById(id) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const [post] = await db2.select({
+  const db = await getDb();
+  if (!db) return null;
+  const [post] = await db.select({
     id: wallPosts.id,
     petId: wallPosts.petId,
     authorId: wallPosts.authorId,
@@ -3432,20 +3432,20 @@ async function getWallPostById(id) {
   return post || null;
 }
 async function deleteWallPost(id) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.delete(wallPosts).where(eq(wallPosts.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(wallPosts).where(eq(wallPosts.id, id));
 }
 async function addWallComment(postId, authorId, comment) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const [result] = await db2.insert(wallComments).values({ postId, authorId, comment });
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(wallComments).values({ postId, authorId, comment });
   return result.insertId;
 }
 async function getWallComments(postId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select({
     id: wallComments.id,
     postId: wallComments.postId,
     authorId: wallComments.authorId,
@@ -3456,34 +3456,34 @@ async function getWallComments(postId) {
   }).from(wallComments).leftJoin(users, eq(wallComments.authorId, users.id)).where(eq(wallComments.postId, postId)).orderBy(asc(wallComments.createdAt));
 }
 async function deleteWallComment(id) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.delete(wallComments).where(eq(wallComments.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(wallComments).where(eq(wallComments.id, id));
 }
 async function addWallReaction(postId, userId, reactionType) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const existing = await db2.select().from(wallReactions).where(and(eq(wallReactions.postId, postId), eq(wallReactions.userId, userId)));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select().from(wallReactions).where(and(eq(wallReactions.postId, postId), eq(wallReactions.userId, userId)));
   if (existing.length > 0) {
-    await db2.update(wallReactions).set({ reactionType }).where(and(eq(wallReactions.postId, postId), eq(wallReactions.userId, userId)));
+    await db.update(wallReactions).set({ reactionType }).where(and(eq(wallReactions.postId, postId), eq(wallReactions.userId, userId)));
   } else {
-    await db2.insert(wallReactions).values({ postId, userId, reactionType });
+    await db.insert(wallReactions).values({ postId, userId, reactionType });
   }
 }
 async function removeWallReaction(postId, userId) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.delete(wallReactions).where(and(eq(wallReactions.postId, postId), eq(wallReactions.userId, userId)));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(wallReactions).where(and(eq(wallReactions.postId, postId), eq(wallReactions.userId, userId)));
 }
 async function getWallReactions(postId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select().from(wallReactions).where(eq(wallReactions.postId, postId));
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(wallReactions).where(eq(wallReactions.postId, postId));
 }
 async function getWallReactionCounts(postId) {
-  const db2 = await getDb();
-  if (!db2) return {};
-  const reactions = await db2.select().from(wallReactions).where(eq(wallReactions.postId, postId));
+  const db = await getDb();
+  if (!db) return {};
+  const reactions = await db.select().from(wallReactions).where(eq(wallReactions.postId, postId));
   const counts = {};
   reactions.forEach((r) => {
     counts[r.reactionType] = (counts[r.reactionType] || 0) + 1;
@@ -3491,37 +3491,37 @@ async function getWallReactionCounts(postId) {
   return counts;
 }
 async function createConversation(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const [result] = await db2.insert(conversations).values(data);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(conversations).values(data);
   return result.insertId;
 }
 async function getConversations(userId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const allConversations = await db2.select().from(conversations);
+  const db = await getDb();
+  if (!db) return [];
+  const allConversations = await db.select().from(conversations);
   return allConversations.filter((conv) => {
     const participants = conv.participants;
     return participants.includes(userId);
   });
 }
 async function getConversationById(id) {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const [conv] = await db2.select().from(conversations).where(eq(conversations.id, id));
+  const db = await getDb();
+  if (!db) return null;
+  const [conv] = await db.select().from(conversations).where(eq(conversations.id, id));
   return conv || null;
 }
 async function addChatMessage(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const [result] = await db2.insert(chatMessages).values(data);
-  await db2.update(conversations).set({ lastMessageAt: /* @__PURE__ */ new Date() }).where(eq(conversations.id, data.conversationId));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(chatMessages).values(data);
+  await db.update(conversations).set({ lastMessageAt: /* @__PURE__ */ new Date() }).where(eq(conversations.id, data.conversationId));
   return result.insertId;
 }
 async function getChatMessages(conversationId, limit = 50, offset = 0) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return await db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select({
     id: chatMessages.id,
     conversationId: chatMessages.conversationId,
     senderId: chatMessages.senderId,
@@ -3537,17 +3537,17 @@ async function getChatMessages(conversationId, limit = 50, offset = 0) {
   }).from(chatMessages).leftJoin(users, eq(chatMessages.senderId, users.id)).where(eq(chatMessages.conversationId, conversationId)).orderBy(asc(chatMessages.createdAt)).limit(limit).offset(offset);
 }
 async function markMessagesAsRead(conversationId, userId) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.update(chatMessages).set({ isRead: true }).where(and(
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(chatMessages).set({ isRead: true }).where(and(
     eq(chatMessages.conversationId, conversationId),
     not(eq(chatMessages.senderId, userId))
   ));
 }
 async function getTutorsByPet(petId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const tutors = await db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  const tutors = await db.select({
     tutorId: petTutors.tutorId,
     petId: petTutors.petId,
     isPrimary: petTutors.isPrimary,
@@ -3559,9 +3559,9 @@ async function getTutorsByPet(petId) {
   return tutors;
 }
 async function getPetsByTutor(tutorId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const petsList = await db2.select({
+  const db = await getDb();
+  if (!db) return [];
+  const petsList = await db.select({
     petId: petTutors.petId,
     tutorId: petTutors.tutorId,
     isPrimary: petTutors.isPrimary,
@@ -3573,9 +3573,9 @@ async function getPetsByTutor(tutorId) {
   return petsList;
 }
 async function getTutorsWithPets() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const allTutors = await db2.select().from(users).where(eq(users.role, "user"));
+  const db = await getDb();
+  if (!db) return [];
+  const allTutors = await db.select().from(users).where(eq(users.role, "user"));
   const tutorsWithPets = await Promise.all(
     allTutors.map(async (tutor) => {
       const petsList = await getPetsByTutor(tutor.id);
@@ -3589,9 +3589,9 @@ async function getTutorsWithPets() {
   return tutorsWithPets;
 }
 async function getPetsWithTutors() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  const allPets = await db2.select().from(pets);
+  const db = await getDb();
+  if (!db) return [];
+  const allPets = await db.select().from(pets);
   const petsWithTutors = await Promise.all(
     allPets.map(async (pet) => {
       const tutorsList = await getTutorsByPet(pet.id);
@@ -4198,7 +4198,7 @@ __export(adminLogger_exports, {
 import { eq as eq2, desc as desc2 } from "drizzle-orm";
 async function logAdminAction(params) {
   try {
-    const db2 = await getDb();
+    const db = await getDb();
     const logEntry = {
       adminId: params.adminId,
       action: params.action,
@@ -4208,15 +4208,15 @@ async function logAdminAction(params) {
       ipAddress: params.req?.ip || params.req?.headers["x-forwarded-for"] || null,
       userAgent: params.req?.headers["user-agent"] || null
     };
-    await db2.insert(adminLogs).values(logEntry);
+    await db.insert(adminLogs).values(logEntry);
     console.log(`[Admin Log] ${params.action} by admin ${params.adminId}`);
   } catch (error) {
     console.error("[Admin Log] Error logging action:", error);
   }
 }
 async function getAdminLogs(filters) {
-  const db2 = await getDb();
-  let query = db2.select().from(adminLogs);
+  const db = await getDb();
+  let query = db.select().from(adminLogs);
   if (filters?.adminId) {
     query = query.where(eq2(adminLogs.adminId, filters.adminId));
   }
@@ -4250,7 +4250,17 @@ __export(changeTracker_exports, {
 });
 import { drizzle as drizzle2 } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
+function getChangeTrackerDb() {
+  if (_database) return _database;
+  const url = process.env.DATABASE_URL;
+  if (!url) return null;
+  const connection = mysql.createPool(url);
+  _database = drizzle2(connection);
+  return _database;
+}
 async function logChange(options) {
+  const database = getChangeTrackerDb();
+  if (!database) return;
   try {
     await database.insert(changeHistory).values({
       resourceType: options.resourceType,
@@ -4279,6 +4289,8 @@ async function logMultipleChanges(baseOptions, changes) {
   }
 }
 async function getResourceHistory(resourceType, resourceId) {
+  const database = getChangeTrackerDb();
+  if (!database) return [];
   const { eq: eq13, and: and8 } = await import("drizzle-orm");
   return database.select().from(changeHistory).where(
     and8(
@@ -4288,17 +4300,38 @@ async function getResourceHistory(resourceType, resourceId) {
   ).orderBy(changeHistory.createdAt);
 }
 async function getPetHistory(petId) {
+  const database = getChangeTrackerDb();
+  if (!database) return [];
   const { eq: eq13 } = await import("drizzle-orm");
   return database.select().from(changeHistory).where(eq13(changeHistory.petId, petId)).orderBy(changeHistory.createdAt);
 }
 async function getRecentChanges(limit = 50) {
+  const database = getChangeTrackerDb();
+  if (!database) return [];
   return database.select().from(changeHistory).orderBy(changeHistory.createdAt).limit(limit);
 }
 async function getChangesByUser(userId) {
+  const database = getChangeTrackerDb();
+  if (!database) return [];
   const { eq: eq13 } = await import("drizzle-orm");
   return database.select().from(changeHistory).where(eq13(changeHistory.changedBy, userId)).orderBy(changeHistory.createdAt);
 }
 async function getCollaborationStats() {
+  const database = getChangeTrackerDb();
+  if (!database) {
+    return {
+      totalChanges: 0,
+      adminChanges: 0,
+      tutorChanges: 0,
+      byResourceType: {
+        medication: 0,
+        food: 0,
+        preventive: 0,
+        pet_data: 0,
+        calendar: 0
+      }
+    };
+  }
   const { eq: eq13 } = await import("drizzle-orm");
   const allChanges = await database.select().from(changeHistory);
   const adminChanges = allChanges.filter((c) => c.changedByRole === "admin").length;
@@ -4331,6 +4364,20 @@ function hasChanged(oldValue, newValue) {
   return serializeValue(oldValue) !== serializeValue(newValue);
 }
 async function getActivityByDay(days = 30) {
+  const database = getChangeTrackerDb();
+  if (!database) {
+    const result2 = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const date2 = /* @__PURE__ */ new Date();
+      date2.setDate(date2.getDate() - i);
+      result2.push({
+        date: date2.toISOString().split("T")[0],
+        adminChanges: 0,
+        tutorChanges: 0
+      });
+    }
+    return result2;
+  }
   const { sql: sql3, desc: desc4 } = await import("drizzle-orm");
   const startDate = /* @__PURE__ */ new Date();
   startDate.setDate(startDate.getDate() - days);
@@ -4360,13 +4407,12 @@ async function getActivityByDay(days = 30) {
   }
   return result;
 }
-var connection, database;
+var _database;
 var init_changeTracker = __esm({
   "server/changeTracker.ts"() {
     "use strict";
     init_schema();
-    connection = mysql.createPool(process.env.DATABASE_URL);
-    database = drizzle2(connection);
+    _database = null;
   }
 });
 
@@ -4660,9 +4706,9 @@ __export(whatsappService_exports, {
 });
 import { eq as eq3 } from "drizzle-orm";
 async function getWhatsAppConfig2() {
-  const db2 = await getDb();
-  if (!db2) return null;
-  const configs = await db2.select().from(whatsappConfig).limit(1);
+  const db = await getDb();
+  if (!db) return null;
+  const configs = await db.select().from(whatsappConfig).limit(1);
   if (configs.length === 0) return null;
   return configs[0];
 }
@@ -4850,10 +4896,10 @@ async function sendTemplateMessage(phone, templateName, variables, recipientName
   }
 }
 async function logMessage(data) {
-  const db2 = await getDb();
-  if (!db2) return;
+  const db = await getDb();
+  if (!db) return;
   try {
-    await db2.insert(whatsappMessages).values({
+    await db.insert(whatsappMessages).values({
       recipientPhone: data.recipientPhone,
       recipientName: data.recipientName,
       messageContent: data.messageContent,
@@ -4869,8 +4915,8 @@ async function logMessage(data) {
   }
 }
 async function updateMessageStatus(whatsappMessageId, status, errorMessage) {
-  const db2 = await getDb();
-  if (!db2) return;
+  const db = await getDb();
+  if (!db) return;
   try {
     const updateData = { status };
     if (status === "delivered") {
@@ -4880,7 +4926,7 @@ async function updateMessageStatus(whatsappMessageId, status, errorMessage) {
     } else if (status === "failed" && errorMessage) {
       updateData.errorMessage = errorMessage;
     }
-    await db2.update(whatsappMessages).set(updateData).where(eq3(whatsappMessages.whatsappMessageId, whatsappMessageId));
+    await db.update(whatsappMessages).set(updateData).where(eq3(whatsappMessages.whatsappMessageId, whatsappMessageId));
   } catch (error) {
     console.error("Error updating message status:", error);
   }
@@ -4926,15 +4972,15 @@ import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { eq as eq6, and as and4, gt } from "drizzle-orm";
 async function registerUser(input) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const existingUsers = await db2.select().from(users).where(eq6(users.email, input.email.toLowerCase())).limit(1);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existingUsers = await db.select().from(users).where(eq6(users.email, input.email.toLowerCase())).limit(1);
   const existingUser = existingUsers.length > 0 ? existingUsers[0] : null;
   if (existingUser) {
     throw new Error("Email already registered");
   }
   const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
-  const [newUser] = await db2.insert(users).values({
+  const [newUser] = await db.insert(users).values({
     name: input.name,
     email: input.email.toLowerCase(),
     passwordHash,
@@ -4950,9 +4996,9 @@ async function registerUser(input) {
   };
 }
 async function loginUser(input) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const userResults = await db2.select().from(users).where(eq6(users.email, input.email.toLowerCase())).limit(1);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const userResults = await db.select().from(users).where(eq6(users.email, input.email.toLowerCase())).limit(1);
   const user = userResults.length > 0 ? userResults[0] : null;
   if (!user) {
     throw new Error("Invalid email or password");
@@ -4964,7 +5010,7 @@ async function loginUser(input) {
   if (!isValidPassword) {
     throw new Error("Invalid email or password");
   }
-  await db2.update(users).set({ lastSignedIn: /* @__PURE__ */ new Date() }).where(eq6(users.id, user.id));
+  await db.update(users).set({ lastSignedIn: /* @__PURE__ */ new Date() }).where(eq6(users.id, user.id));
   return {
     id: user.id,
     email: user.email,
@@ -4973,9 +5019,9 @@ async function loginUser(input) {
   };
 }
 async function changePassword(userId, oldPassword, newPassword) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const userResults = await db2.select().from(users).where(eq6(users.id, userId)).limit(1);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const userResults = await db.select().from(users).where(eq6(users.id, userId)).limit(1);
   const user = userResults.length > 0 ? userResults[0] : null;
   if (!user || !user.passwordHash) {
     throw new Error("User not found or invalid auth method");
@@ -4985,20 +5031,20 @@ async function changePassword(userId, oldPassword, newPassword) {
     throw new Error("Current password is incorrect");
   }
   const newPasswordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
-  await db2.update(users).set({ passwordHash: newPasswordHash }).where(eq6(users.id, userId));
+  await db.update(users).set({ passwordHash: newPasswordHash }).where(eq6(users.id, userId));
   return { success: true };
 }
 async function generateResetToken(email) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const userResults = await db2.select().from(users).where(eq6(users.email, email.toLowerCase())).limit(1);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const userResults = await db.select().from(users).where(eq6(users.email, email.toLowerCase())).limit(1);
   const user = userResults.length > 0 ? userResults[0] : null;
   if (!user) {
     return { success: true };
   }
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 60 * 60 * 1e3);
-  await db2.insert(passwordResetTokens).values({
+  await db.insert(passwordResetTokens).values({
     userId: user.id,
     token,
     expiresAt
@@ -5006,9 +5052,9 @@ async function generateResetToken(email) {
   return { success: true, token, userId: user.id, email: user.email, name: user.name };
 }
 async function resetPassword(token, newPassword) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const tokenResults = await db2.select().from(passwordResetTokens).where(
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const tokenResults = await db.select().from(passwordResetTokens).where(
     and4(
       eq6(passwordResetTokens.token, token),
       eq6(passwordResetTokens.used, false),
@@ -5020,16 +5066,16 @@ async function resetPassword(token, newPassword) {
     throw new Error("Invalid or expired reset token");
   }
   const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
-  await db2.update(users).set({ passwordHash }).where(eq6(users.id, resetToken.userId));
-  await db2.update(passwordResetTokens).set({ used: true }).where(eq6(passwordResetTokens.id, resetToken.id));
+  await db.update(users).set({ passwordHash }).where(eq6(users.id, resetToken.userId));
+  await db.update(passwordResetTokens).set({ used: true }).where(eq6(passwordResetTokens.id, resetToken.id));
   return { success: true };
 }
 async function generateVerificationToken(userId) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1e3);
-  await db2.insert(emailVerificationTokens).values({
+  await db.insert(emailVerificationTokens).values({
     userId,
     token,
     expiresAt
@@ -5037,9 +5083,9 @@ async function generateVerificationToken(userId) {
   return { token };
 }
 async function verifyEmail(token) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const tokenResults = await db2.select().from(emailVerificationTokens).where(
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const tokenResults = await db.select().from(emailVerificationTokens).where(
     and4(
       eq6(emailVerificationTokens.token, token),
       eq6(emailVerificationTokens.used, false),
@@ -5050,8 +5096,8 @@ async function verifyEmail(token) {
   if (!verificationToken) {
     throw new Error("Invalid or expired verification token");
   }
-  await db2.update(users).set({ emailVerified: true }).where(eq6(users.id, verificationToken.userId));
-  await db2.update(emailVerificationTokens).set({ used: true }).where(eq6(emailVerificationTokens.id, verificationToken.id));
+  await db.update(users).set({ emailVerified: true }).where(eq6(users.id, verificationToken.userId));
+  await db.update(emailVerificationTokens).set({ used: true }).where(eq6(emailVerificationTokens.id, verificationToken.id));
   return { success: true };
 }
 var SALT_ROUNDS;
@@ -5699,8 +5745,8 @@ __export(bookingRequests_db_exports, {
 import { eq as eq7, and as and5, sql as sql2, inArray } from "drizzle-orm";
 async function getAvailability(date2) {
   const MAX_CAPACITY = 10;
-  const db2 = await getDb();
-  const result = await db2.select({ count: sql2`count(*)` }).from(bookings).where(
+  const db = await getDb();
+  const result = await db.select({ count: sql2`count(*)` }).from(bookings).where(
     and5(
       eq7(bookings.bookingDate, new Date(date2)),
       inArray(bookings.status, ["confirmed", "pending"])
@@ -5721,8 +5767,8 @@ async function getAvailabilityForDates(dates) {
   return results;
 }
 async function createBookingRequest(data) {
-  const db2 = await getDb();
-  const result = await db2.insert(bookingRequests).values({
+  const db = await getDb();
+  const result = await db.insert(bookingRequests).values({
     petId: data.petId,
     tutorId: data.tutorId,
     requestedDates: data.requestedDates,
@@ -5730,12 +5776,12 @@ async function createBookingRequest(data) {
     status: "pending"
   });
   const insertId = Number(result[0]?.insertId || 0);
-  const [request] = await db2.select().from(bookingRequests).where(eq7(bookingRequests.id, insertId)).limit(1);
+  const [request] = await db.select().from(bookingRequests).where(eq7(bookingRequests.id, insertId)).limit(1);
   return request;
 }
 async function getTutorBookingRequests(tutorId) {
-  const db2 = await getDb();
-  const requests = await db2.select({
+  const db = await getDb();
+  const requests = await db.select({
     id: bookingRequests.id,
     petId: bookingRequests.petId,
     petName: pets.name,
@@ -5751,8 +5797,8 @@ async function getTutorBookingRequests(tutorId) {
   return requests;
 }
 async function getPendingBookingRequests() {
-  const db2 = await getDb();
-  const requests = await db2.select({
+  const db = await getDb();
+  const requests = await db.select({
     id: bookingRequests.id,
     petId: bookingRequests.petId,
     petName: pets.name,
@@ -5768,8 +5814,8 @@ async function getPendingBookingRequests() {
   return requests;
 }
 async function getAllBookingRequests(status) {
-  const db2 = await getDb();
-  let query = db2.select({
+  const db = await getDb();
+  let query = db.select({
     id: bookingRequests.id,
     petId: bookingRequests.petId,
     petName: pets.name,
@@ -5793,15 +5839,15 @@ async function getAllBookingRequests(status) {
   return requests;
 }
 async function approveBookingRequest(requestId, adminId, adminNotes) {
-  const db2 = await getDb();
-  const [request] = await db2.select().from(bookingRequests).where(eq7(bookingRequests.id, requestId));
+  const db = await getDb();
+  const [request] = await db.select().from(bookingRequests).where(eq7(bookingRequests.id, requestId));
   if (!request) {
     throw new Error("Booking request not found");
   }
   if (request.status !== "pending") {
     throw new Error("Booking request is not pending");
   }
-  const [pet] = await db2.select().from(pets).where(eq7(pets.id, request.petId));
+  const [pet] = await db.select().from(pets).where(eq7(pets.id, request.petId));
   if (!pet) {
     throw new Error("Pet not found");
   }
@@ -5819,12 +5865,12 @@ async function approveBookingRequest(requestId, adminId, adminNotes) {
       `Some dates are no longer available: ${unavailableDates.map((d) => d.date).join(", ")}`
     );
   }
-  const [tutor] = await db2.select({ id: users.id }).from(users).where(eq7(users.openId, request.tutorId));
+  const [tutor] = await db.select({ id: users.id }).from(users).where(eq7(users.openId, request.tutorId));
   if (!tutor) {
     throw new Error("Tutor not found");
   }
   for (const date2 of requestedDates) {
-    await db2.insert(bookings).values({
+    await db.insert(bookings).values({
       petId: request.petId,
       tutorId: tutor.id,
       bookingDate: new Date(date2),
@@ -5833,11 +5879,11 @@ async function approveBookingRequest(requestId, adminId, adminNotes) {
       notes: request.notes
     });
   }
-  await db2.update(pets).set({
+  await db.update(pets).set({
     credits: pet.credits - requiredCredits,
     updatedAt: /* @__PURE__ */ new Date()
   }).where(eq7(pets.id, request.petId));
-  await db2.update(bookingRequests).set({
+  await db.update(bookingRequests).set({
     status: "approved",
     approvedBy: adminId,
     approvedAt: /* @__PURE__ */ new Date(),
@@ -5847,15 +5893,15 @@ async function approveBookingRequest(requestId, adminId, adminNotes) {
   return { success: true, creditsUsed: requiredCredits };
 }
 async function rejectBookingRequest(requestId, adminId, adminNotes) {
-  const db2 = await getDb();
-  const [request] = await db2.select().from(bookingRequests).where(eq7(bookingRequests.id, requestId));
+  const db = await getDb();
+  const [request] = await db.select().from(bookingRequests).where(eq7(bookingRequests.id, requestId));
   if (!request) {
     throw new Error("Booking request not found");
   }
   if (request.status !== "pending") {
     throw new Error("Booking request is not pending");
   }
-  await db2.update(bookingRequests).set({
+  await db.update(bookingRequests).set({
     status: "rejected",
     approvedBy: adminId,
     approvedAt: /* @__PURE__ */ new Date(),
@@ -5865,8 +5911,8 @@ async function rejectBookingRequest(requestId, adminId, adminNotes) {
   return { success: true };
 }
 async function cancelBookingRequest(requestId, tutorId) {
-  const db2 = await getDb();
-  const [request] = await db2.select().from(bookingRequests).where(eq7(bookingRequests.id, requestId));
+  const db = await getDb();
+  const [request] = await db.select().from(bookingRequests).where(eq7(bookingRequests.id, requestId));
   if (!request) {
     throw new Error("Booking request not found");
   }
@@ -5876,15 +5922,15 @@ async function cancelBookingRequest(requestId, tutorId) {
   if (request.status !== "pending") {
     throw new Error("Can only cancel pending requests");
   }
-  await db2.update(bookingRequests).set({
+  await db.update(bookingRequests).set({
     status: "cancelled",
     updatedAt: /* @__PURE__ */ new Date()
   }).where(eq7(bookingRequests.id, requestId));
   return { success: true };
 }
 async function getBookingRequestStats() {
-  const db2 = await getDb();
-  const [stats] = await db2.select({
+  const db = await getDb();
+  const [stats] = await db.select({
     total: sql2`count(*)`,
     pending: sql2`sum(case when ${bookingRequests.status} = 'pending' then 1 else 0 end)`,
     approved: sql2`sum(case when ${bookingRequests.status} = 'approved' then 1 else 0 end)`,
@@ -5923,6 +5969,14 @@ import { Server } from "socket.io";
 import { drizzle as drizzle3 } from "drizzle-orm/mysql2";
 import mysql2 from "mysql2/promise";
 import { eq as eq8 } from "drizzle-orm";
+function getWsDb() {
+  if (_db2) return _db2;
+  const url = process.env.DATABASE_URL;
+  if (!url) return null;
+  const connection = mysql2.createPool(url);
+  _db2 = drizzle3(connection);
+  return _db2;
+}
 function initializeWebSocket(httpServer) {
   io = new Server(httpServer, {
     cors: {
@@ -5940,6 +5994,10 @@ function initializeWebSocket(httpServer) {
       const session = await sdk.verifySession(token);
       if (!session) {
         return next(new Error("Authentication error: Invalid session token"));
+      }
+      const db = getWsDb();
+      if (!db) {
+        return next(new Error("Authentication error: Database not configured"));
       }
       const [user] = await db.select().from(users).where(eq8(users.openId, session.openId)).limit(1);
       if (!user) {
@@ -6015,14 +6073,13 @@ async function isUserConnected(userId) {
   const sockets = await io.in(`user:${userId}`).fetchSockets();
   return sockets.length > 0;
 }
-var connection2, db, io;
+var _db2, io;
 var init_websocket = __esm({
   "server/_core/websocket.ts"() {
     "use strict";
     init_sdk();
     init_schema();
-    connection2 = mysql2.createPool(process.env.DATABASE_URL);
-    db = drizzle3(connection2);
+    _db2 = null;
     io = null;
   }
 });
@@ -6035,17 +6092,17 @@ __export(healthReminders_exports, {
   sendSummaryReminderToOwner: () => sendSummaryReminderToOwner
 });
 async function getPrimaryTutorForPet(petId) {
-  const database2 = await getDb();
-  if (!database2) return null;
+  const database = await getDb();
+  if (!database) return null;
   const { petTutors: petTutors3, users: users2 } = await Promise.resolve().then(() => (init_schema(), schema_exports));
   const { eq: eq13, and: and8 } = await import("drizzle-orm");
-  const tutorRelations = await database2.select({
+  const tutorRelations = await database.select({
     tutorId: petTutors3.tutorId,
     isPrimary: petTutors3.isPrimary
   }).from(petTutors3).where(eq13(petTutors3.petId, petId));
   if (tutorRelations.length === 0) return null;
   const primaryRelation = tutorRelations.find((r) => r.isPrimary) || tutorRelations[0];
-  const tutors = await database2.select({
+  const tutors = await database.select({
     name: users2.name,
     phone: users2.phone
   }).from(users2).where(eq13(users2.id, primaryRelation.tutorId));
@@ -6269,12 +6326,12 @@ __export(pricing_db_exports, {
 });
 import { eq as eq9, and as and6 } from "drizzle-orm";
 async function getServicePrices() {
-  const db2 = await getDb();
-  return db2.select().from(servicePrices).where(eq9(servicePrices.isActive, true));
+  const db = await getDb();
+  return db.select().from(servicePrices).where(eq9(servicePrices.isActive, true));
 }
 async function getServicePrice(serviceType) {
-  const db2 = await getDb();
-  const [price] = await db2.select().from(servicePrices).where(
+  const db = await getDb();
+  const [price] = await db.select().from(servicePrices).where(
     and6(
       eq9(servicePrices.serviceType, serviceType),
       eq9(servicePrices.isActive, true)
@@ -6283,8 +6340,8 @@ async function getServicePrice(serviceType) {
   return price;
 }
 async function getCustomPricingPlan(tutorId) {
-  const db2 = await getDb();
-  const [plan] = await db2.select().from(customPricingPlans).where(
+  const db = await getDb();
+  const [plan] = await db.select().from(customPricingPlans).where(
     and6(
       eq9(customPricingPlans.tutorId, tutorId),
       eq9(customPricingPlans.isActive, true)
@@ -6304,21 +6361,21 @@ async function getEffectivePrice(tutorId, serviceType) {
   return standardPrice?.priceInCents ?? 0;
 }
 async function createCustomPricingPlan(data) {
-  const db2 = await getDb();
-  const result = await db2.insert(customPricingPlans).values(data);
+  const db = await getDb();
+  const result = await db.insert(customPricingPlans).values(data);
   return result[0].insertId;
 }
 async function getAllCustomPricingPlans() {
-  const db2 = await getDb();
-  return db2.select().from(customPricingPlans);
+  const db = await getDb();
+  return db.select().from(customPricingPlans);
 }
 async function updateCustomPricingPlan(id, data) {
-  const db2 = await getDb();
-  await db2.update(customPricingPlans).set(data).where(eq9(customPricingPlans.id, id));
+  const db = await getDb();
+  await db.update(customPricingPlans).set(data).where(eq9(customPricingPlans.id, id));
 }
 async function deactivateCustomPricingPlan(id) {
-  const db2 = await getDb();
-  await db2.update(customPricingPlans).set({ isActive: false }).where(eq9(customPricingPlans.id, id));
+  const db = await getDb();
+  await db.update(customPricingPlans).set({ isActive: false }).where(eq9(customPricingPlans.id, id));
 }
 var init_pricing_db = __esm({
   "server/pricing.db.ts"() {
@@ -6339,8 +6396,8 @@ __export(food_db_exports, {
 });
 import { eq as eq10, desc as desc3 } from "drizzle-orm";
 async function getCurrentStock() {
-  const db2 = await getDb();
-  const [stock] = await db2.select().from(foodStock).limit(1);
+  const db = await getDb();
+  const [stock] = await db.select().from(foodStock).limit(1);
   return stock || { id: 0, currentStockKg: 0, lastUpdated: /* @__PURE__ */ new Date() };
 }
 function kgToGrams(kg) {
@@ -6350,9 +6407,9 @@ function gramsToKg(grams) {
   return grams / 1e3;
 }
 async function getFoodStats() {
-  const db2 = await getDb();
+  const db = await getDb();
   const stock = await getCurrentStock();
-  const recentMovements = await db2.select().from(foodMovements).orderBy(desc3(foodMovements.createdAt)).limit(10);
+  const recentMovements = await db.select().from(foodMovements).orderBy(desc3(foodMovements.createdAt)).limit(10);
   return {
     currentStockKg: gramsToKg(stock.currentStockKg),
     lastUpdated: stock.lastUpdated,
@@ -6363,21 +6420,21 @@ async function getFoodStats() {
   };
 }
 async function addStock(amountKg, notes, createdBy) {
-  const db2 = await getDb();
+  const db = await getDb();
   const stock = await getCurrentStock();
   const amountGrams = kgToGrams(amountKg);
   if (stock.id > 0) {
-    await db2.update(foodStock).set({
+    await db.update(foodStock).set({
       currentStockKg: stock.currentStockKg + amountGrams,
       lastUpdated: /* @__PURE__ */ new Date()
     }).where(eq10(foodStock.id, stock.id));
   } else {
-    await db2.insert(foodStock).values({
+    await db.insert(foodStock).values({
       currentStockKg: amountGrams,
       lastUpdated: /* @__PURE__ */ new Date()
     });
   }
-  await db2.insert(foodMovements).values({
+  await db.insert(foodMovements).values({
     type: "purchase",
     amountKg: amountGrams,
     notes,
@@ -6387,17 +6444,17 @@ async function addStock(amountKg, notes, createdBy) {
   return { success: true };
 }
 async function recordDailyConsumption(amountKg, notes) {
-  const db2 = await getDb();
+  const db = await getDb();
   const stock = await getCurrentStock();
   const amountGrams = kgToGrams(amountKg);
   if (stock.id > 0) {
     const newStock = Math.max(0, stock.currentStockKg - amountGrams);
-    await db2.update(foodStock).set({
+    await db.update(foodStock).set({
       currentStockKg: newStock,
       lastUpdated: /* @__PURE__ */ new Date()
     }).where(eq10(foodStock.id, stock.id));
   }
-  await db2.insert(foodMovements).values({
+  await db.insert(foodMovements).values({
     type: "consumption",
     amountKg: -amountGrams,
     notes,
@@ -6406,8 +6463,8 @@ async function recordDailyConsumption(amountKg, notes) {
   return { success: true };
 }
 async function getFoodMovements(limit = 50) {
-  const db2 = await getDb();
-  return await db2.select().from(foodMovements).orderBy(desc3(foodMovements.createdAt)).limit(limit);
+  const db = await getDb();
+  return await db.select().from(foodMovements).orderBy(desc3(foodMovements.createdAt)).limit(limit);
 }
 var init_food_db = __esm({
   "server/food.db.ts"() {
@@ -6427,9 +6484,9 @@ __export(whatsappSync_exports, {
 import { eq as eq11 } from "drizzle-orm";
 async function sendWhatsAppMessage(params) {
   const { phoneNumber, message, mediaUrl, mediaType } = params;
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const [config] = await db2.select().from((await Promise.resolve().then(() => (init_schema(), schema_exports))).whatsappConfig).where(
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [config] = await db.select().from((await Promise.resolve().then(() => (init_schema(), schema_exports))).whatsappConfig).where(
     eq11((await Promise.resolve().then(() => (init_schema(), schema_exports))).whatsappConfig.isActive, true)
   );
   if (!config || !config.apiKey || !config.phoneNumberId) {
@@ -6467,8 +6524,8 @@ async function sendWhatsAppMessage(params) {
 }
 async function processWhatsAppWebhook(webhookData) {
   try {
-    const db2 = await getDb();
-    if (!db2) throw new Error("Database not available");
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
     const entry = webhookData.entry?.[0];
     const changes = entry?.changes?.[0];
     const value = changes?.value;
@@ -6479,26 +6536,26 @@ async function processWhatsAppWebhook(webhookData) {
       const whatsappMessageId = message.id;
       const fromPhone = message.from;
       const timestamp2 = parseInt(message.timestamp) * 1e3;
-      const [existing] = await db2.select().from(chatMessages).where(
+      const [existing] = await db.select().from(chatMessages).where(
         eq11(chatMessages.whatsappMessageId, whatsappMessageId)
       );
       if (existing) {
         continue;
       }
-      const [user] = await db2.select().from(users).where(
+      const [user] = await db.select().from(users).where(
         eq11(users.phone, fromPhone)
       );
       if (!user) {
         console.log(`Usu\xE1rio n\xE3o encontrado para telefone ${fromPhone}`);
         continue;
       }
-      const allConversations = await db2.select().from(conversations);
+      const allConversations = await db.select().from(conversations);
       let conversation = allConversations.find((conv) => {
         const participants = conv.participants;
         return participants.includes(user.id) && participants.includes(1);
       });
       if (!conversation) {
-        const [newConv] = await db2.insert(conversations).values({
+        const [newConv] = await db.insert(conversations).values({
           participants: [user.id, 1],
           // Tutor e Admin
           lastMessageAt: new Date(timestamp2),
@@ -6532,7 +6589,7 @@ async function processWhatsAppWebhook(webhookData) {
         content = message.document.filename || "";
         mediaUrl = message.document.link || "";
       }
-      await db2.insert(chatMessages).values({
+      await db.insert(chatMessages).values({
         conversationId: conversation.id,
         senderId: user.id,
         content,
@@ -6544,7 +6601,7 @@ async function processWhatsAppWebhook(webhookData) {
         isRead: false,
         createdAt: new Date(timestamp2)
       });
-      await db2.update(conversations).set({ lastMessageAt: new Date(timestamp2) }).where(eq11(conversations.id, conversation.id));
+      await db.update(conversations).set({ lastMessageAt: new Date(timestamp2) }).where(eq11(conversations.id, conversation.id));
     }
     return { success: true, message: "Messages processed" };
   } catch (error) {
@@ -6553,15 +6610,15 @@ async function processWhatsAppWebhook(webhookData) {
   }
 }
 async function syncMessageToWhatsApp(messageId) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const [message] = await db2.select().from(chatMessages).where(
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [message] = await db.select().from(chatMessages).where(
     eq11(chatMessages.id, messageId)
   );
   if (!message || message.source === "whatsapp") {
     return;
   }
-  const [conversation] = await db2.select().from(conversations).where(
+  const [conversation] = await db.select().from(conversations).where(
     eq11(conversations.id, message.conversationId)
   );
   if (!conversation) {
@@ -6569,7 +6626,7 @@ async function syncMessageToWhatsApp(messageId) {
   }
   const participants = conversation.participants;
   const recipientId = participants.find((id) => id !== message.senderId);
-  const [recipient] = await db2.select().from(users).where(
+  const [recipient] = await db.select().from(users).where(
     eq11(users.id, recipientId)
   );
   if (!recipient || !recipient.phone) {
@@ -6581,7 +6638,7 @@ async function syncMessageToWhatsApp(messageId) {
     mediaUrl: message.mediaUrl || void 0,
     mediaType: message.messageType !== "text" ? message.messageType : void 0
   });
-  await db2.update(chatMessages).set({ whatsappMessageId }).where(eq11(chatMessages.id, messageId));
+  await db.update(chatMessages).set({ whatsappMessageId }).where(eq11(chatMessages.id, messageId));
   return whatsappMessageId;
 }
 var init_whatsappSync = __esm({
@@ -6599,7 +6656,21 @@ __export(stripeWebhook_exports, {
 });
 import Stripe2 from "stripe";
 import { eq as eq12 } from "drizzle-orm";
+function getStripeClient() {
+  if (_stripe) return _stripe;
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) return null;
+  _stripe = new Stripe2(key, { apiVersion: "2025-12-15.clover" });
+  return _stripe;
+}
 async function handleStripeWebhook(req, res) {
+  const stripe = getStripeClient();
+  if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) {
+    console.error(
+      "[Webhook] Stripe is not configured: set STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET"
+    );
+    return res.status(503).send("Stripe webhook not configured");
+  }
   const sig = req.headers["stripe-signature"];
   if (!sig) {
     console.error("[Webhook] Missing stripe-signature header");
@@ -6656,13 +6727,13 @@ async function handleCheckoutCompleted(session) {
     console.error("[Webhook] Missing user_id in metadata");
     return;
   }
-  const db2 = await getDb();
-  if (!db2) {
+  const db = await getDb();
+  if (!db) {
     console.error("[Webhook] Database connection failed");
     return;
   }
   if (session.customer) {
-    await db2.update(users).set({ stripeCustomerId: session.customer }).where(eq12(users.id, parseInt(userId)));
+    await db.update(users).set({ stripeCustomerId: session.customer }).where(eq12(users.id, parseInt(userId)));
   }
   console.log(`[Webhook] Checkout completed for user ${userId}, product: ${productKey}`);
 }
@@ -6676,12 +6747,12 @@ async function handlePaymentSucceeded(paymentIntent) {
     console.error("[Webhook] Missing user_id in metadata");
     return;
   }
-  const db2 = await getDb();
-  if (!db2) {
+  const db = await getDb();
+  if (!db) {
     console.error("[Webhook] Database connection failed");
     return;
   }
-  await db2.insert(payments).values({
+  await db.insert(payments).values({
     userId: parseInt(userId),
     stripePaymentIntentId: paymentIntent.id,
     stripeCustomerId: paymentIntent.customer || null,
@@ -6694,11 +6765,11 @@ async function handlePaymentSucceeded(paymentIntent) {
     metadata: JSON.stringify(paymentIntent.metadata)
   });
   if (productType === "credits" && creditsToAdd > 0) {
-    const userPets = await db2.select().from(pets).where(eq12(pets.id, parseInt(userId)));
+    const userPets = await db.select().from(pets).where(eq12(pets.id, parseInt(userId)));
     if (userPets.length > 0) {
       const creditsPerPet = Math.floor(creditsToAdd / userPets.length);
       for (const pet of userPets) {
-        await db2.update(pets).set({ credits: (pet.credits || 0) + creditsPerPet }).where(eq12(pets.id, pet.id));
+        await db.update(pets).set({ credits: (pet.credits || 0) + creditsPerPet }).where(eq12(pets.id, pet.id));
       }
     }
   }
@@ -6711,12 +6782,12 @@ async function handlePaymentFailed(paymentIntent) {
     console.error("[Webhook] Missing user_id in metadata");
     return;
   }
-  const db2 = await getDb();
-  if (!db2) {
+  const db = await getDb();
+  if (!db) {
     console.error("[Webhook] Database connection failed");
     return;
   }
-  await db2.insert(payments).values({
+  await db.insert(payments).values({
     userId: parseInt(userId),
     stripePaymentIntentId: paymentIntent.id,
     stripeCustomerId: paymentIntent.customer || null,
@@ -6729,15 +6800,13 @@ async function handlePaymentFailed(paymentIntent) {
   });
   console.log(`[Webhook] Payment failed for user ${userId}`);
 }
-var stripe;
+var _stripe;
 var init_stripeWebhook = __esm({
   "server/stripeWebhook.ts"() {
     "use strict";
     init_db();
     init_schema();
-    stripe = new Stripe2(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2025-12-15.clover"
-    });
+    _stripe = null;
   }
 });
 
@@ -7124,8 +7193,8 @@ init_schema();
 init_whatsappService();
 import { and as and2, eq as eq4, gte as gte2, lte as lte2, isNotNull as isNotNull2 } from "drizzle-orm";
 async function checkUpcomingVaccines() {
-  const db2 = await getDb();
-  if (!db2) {
+  const db = await getDb();
+  if (!db) {
     console.error("[VaccineNotifications] Database not available");
     return { success: false, error: "Database not available" };
   }
@@ -7133,7 +7202,7 @@ async function checkUpcomingVaccines() {
     const today = /* @__PURE__ */ new Date();
     const sevenDaysFromNow = /* @__PURE__ */ new Date();
     sevenDaysFromNow.setDate(today.getDate() + 7);
-    const upcomingVaccines = await db2.select({
+    const upcomingVaccines = await db.select({
       vaccination: petVaccinations,
       pet: pets,
       vaccine: vaccineLibrary
@@ -7148,7 +7217,7 @@ async function checkUpcomingVaccines() {
     const notifications2 = [];
     for (const { vaccination, pet, vaccine } of upcomingVaccines) {
       try {
-        const tutorRelations = await db2.select({
+        const tutorRelations = await db.select({
           tutor: users,
           isPrimary: petTutors.isPrimary
         }).from(petTutors).innerJoin(users, eq4(petTutors.tutorId, users.id)).where(eq4(petTutors.petId, pet.id)).orderBy(petTutors.isPrimary);
@@ -7321,31 +7390,31 @@ var searchRouter = router({
   global: protectedProcedure.input(z2.object({
     query: z2.string().min(2)
   })).query(async ({ input, ctx }) => {
-    const db2 = await getDb();
-    if (!db2) {
+    const db = await getDb();
+    if (!db) {
       throw new Error("Database not available");
     }
     const searchTerm = `%${input.query}%`;
-    const petsResults = await db2.select().from(pets).where(
+    const petsResults = await db.select().from(pets).where(
       or2(
         like2(pets.name, searchTerm),
         like2(pets.breed, searchTerm),
         like2(pets.species, searchTerm)
       )
     ).limit(5);
-    const tutorsResults = await db2.select().from(users).where(
+    const tutorsResults = await db.select().from(users).where(
       or2(
         like2(users.name, searchTerm),
         like2(users.email, searchTerm)
       )
     ).limit(5);
-    const eventsResults = await db2.select().from(calendarEvents).where(
+    const eventsResults = await db.select().from(calendarEvents).where(
       or2(
         like2(calendarEvents.title, searchTerm),
         like2(calendarEvents.notes, searchTerm)
       )
     ).limit(5);
-    const documentsResults = await db2.select().from(documents).where(
+    const documentsResults = await db.select().from(documents).where(
       or2(
         like2(documents.title, searchTerm),
         like2(documents.type, searchTerm)
@@ -9322,7 +9391,7 @@ V\xE1lido at\xE9: ${expiresAt.toLocaleString("pt-BR")}`
     createCheckout: protectedProcedure.input(z3.object({
       productKey: z3.string()
     })).mutation(async ({ input, ctx }) => {
-      const stripe2 = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
         apiVersion: "2025-12-15.clover"
       });
       const product = PRODUCTS[input.productKey];
@@ -9330,7 +9399,7 @@ V\xE1lido at\xE9: ${expiresAt.toLocaleString("pt-BR")}`
         throw new TRPCError4({ code: "BAD_REQUEST", message: "Produto inv\xE1lido" });
       }
       const origin = ctx.req.headers.origin || "http://localhost:3000";
-      const session = await stripe2.checkout.sessions.create({
+      const session = await stripe.checkout.sessions.create({
         mode: "payment",
         customer_email: ctx.user.email || void 0,
         client_reference_id: ctx.user.id.toString(),
@@ -10123,8 +10192,8 @@ V\xE1lido at\xE9: ${expiresAt.toLocaleString("pt-BR")}`
       const { getDb: getDb2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const { bookingRequests: bookingRequests2 } = await Promise.resolve().then(() => (init_schema(), schema_exports));
       const { eq: eq13 } = await import("drizzle-orm");
-      const db2 = await getDb2();
-      const [request] = await db2.select().from(bookingRequests2).where(eq13(bookingRequests2.id, input.id));
+      const db = await getDb2();
+      const [request] = await db.select().from(bookingRequests2).where(eq13(bookingRequests2.id, input.id));
       const result = await approveBookingRequest2(input.id, ctx.user.openId || ctx.user.email || "", input.adminNotes);
       if (request) {
         const { notifyUser: notifyUser2 } = await Promise.resolve().then(() => (init_websocket(), websocket_exports));
@@ -10149,8 +10218,8 @@ V\xE1lido at\xE9: ${expiresAt.toLocaleString("pt-BR")}`
       const { getDb: getDb2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const { bookingRequests: bookingRequests2 } = await Promise.resolve().then(() => (init_schema(), schema_exports));
       const { eq: eq13 } = await import("drizzle-orm");
-      const db2 = await getDb2();
-      const [request] = await db2.select().from(bookingRequests2).where(eq13(bookingRequests2.id, input.id));
+      const db = await getDb2();
+      const [request] = await db.select().from(bookingRequests2).where(eq13(bookingRequests2.id, input.id));
       const result = await rejectBookingRequest2(input.id, ctx.user.openId || ctx.user.email || "", input.adminNotes);
       if (request) {
         const { notifyUser: notifyUser2 } = await Promise.resolve().then(() => (init_websocket(), websocket_exports));
