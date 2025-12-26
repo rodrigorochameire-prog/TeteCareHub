@@ -3,7 +3,7 @@
   "buildCommand": "pnpm build",
   "outputDirectory": "dist/public",
   "framework": null,
-  "installCommand": "corepack enable && corepack prepare pnpm@latest --activate && pnpm install",
+  "installCommand": "npm install -g pnpm@10.4.1 && pnpm install --no-frozen-lockfile",
   "devCommand": "pnpm dev",
   "functions": {
     "api/index.ts": {
