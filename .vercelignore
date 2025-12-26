@@ -1,9 +1,11 @@
 # Vercel ignore file
 node_modules/
-dist/
 .vercel/
 .env.local
 .env.local.backup
 *.backup
 .vite/
 .DS_Store
+.pnpm-store/
+dist/index.js
+dist/api/
