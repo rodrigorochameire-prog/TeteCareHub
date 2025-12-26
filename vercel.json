@@ -1,10 +1,10 @@
 {
   "version": 2,
-  "buildCommand": "pnpm build",
+  "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
   "framework": null,
-  "installCommand": "npm install -g pnpm@10.4.1 && pnpm install --no-frozen-lockfile",
-  "devCommand": "pnpm dev",
+  "installCommand": "npm install",
+  "devCommand": "npm run dev",
   "functions": {
     "api/index.ts": {
       "maxDuration": 30,
