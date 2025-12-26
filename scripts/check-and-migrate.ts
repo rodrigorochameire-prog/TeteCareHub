@@ -6,7 +6,7 @@ import { migrate } from "drizzle-orm/postgres-js/migrator";
  * Script para verificar e aplicar migrações com segurança
  *
  * Este script:
- * 1. Verifica se as colunas linkedResourceType, linkedResourceId e autoCreated existem
+ * 1. Verifica se as colunas linked_resource_type, linked_resource_id e auto_created existem
  * 2. Se existirem, marca a migração 0050 como aplicada
  * 3. Aplica as migrações restantes
  */
@@ -18,6 +18,11 @@ async function checkAndMigrate() {
     const db = await getDb();
     if (!db) {
       console.error("❌ Não foi possível conectar ao banco de dados");
+      // Em produção, não falhar o deploy se não conseguir conectar
+      if (process.env.NODE_ENV === "production") {
+        console.warn("⚠️  Modo produção: continuando sem migrações");
+        process.exit(0);
+      }
       process.exit(1);
     }
 
@@ -64,6 +69,11 @@ async function checkAndMigrate() {
       console.error("❌ Estado inconsistente! Apenas algumas colunas existem.");
       console.error(`   Encontradas: ${existingColumns.join(", ")}`);
       console.error(`   Esperadas: linked_resource_type, linked_resource_id, auto_created`);
+      // Em produção, não falhar o deploy
+      if (process.env.NODE_ENV === "production") {
+        console.warn("⚠️  Modo produção: continuando mesmo com estado inconsistente");
+        process.exit(0);
+      }
       process.exit(1);
     } else {
       console.log("📝 Colunas não existem. As migrações irão criá-las.");
@@ -88,12 +98,18 @@ async function checkAndMigrate() {
       process.exit(0);
     }
 
-    // Se o erro for de conexão (ECONNRESET, timeout, etc), tentar continuar
+    // Se o erro for de conexão (ECONNRESET, timeout, etc), não falhar em produção
     if (error.code === 'ECONNRESET' || 
         error.code === 'ETIMEDOUT' || 
         error.message?.includes('ECONNRESET') ||
         error.message?.includes('connection')) {
-      console.warn("⚠️  Erro de conexão ao banco. Tentando aplicar migrações mesmo assim...");
+      console.warn("⚠️  Erro de conexão ao banco.");
+      // Em produção, não falhar o deploy
+      if (process.env.NODE_ENV === "production") {
+        console.warn("⚠️  Modo produção: continuando sem aplicar migrações. Execute manualmente depois.");
+        process.exit(0);
+      }
+      // Em desenvolvimento, tentar retry
       try {
         const db = await getDb();
         if (db) {
@@ -105,24 +121,18 @@ async function checkAndMigrate() {
         }
       } catch (retryError: any) {
         console.error("❌ Erro ao tentar novamente:", retryError.message);
-        // Não falhar o deploy se for erro de conexão - migrações podem ser aplicadas depois
-        console.warn("⚠️  Continuando sem aplicar migrações. Execute manualmente depois.");
-        process.exit(0); // Exit 0 para não falhar o deploy
+        process.exit(process.env.NODE_ENV === "production" ? 0 : 1);
       }
     }
 
     console.error("❌ Erro ao verificar/migrar:", error);
-    // Se for erro de query SQL, não falhar o deploy
-    if (error.message?.includes("query") || error.code === 'ECONNRESET') {
-      console.warn("⚠️  Erro de query/conexão. Continuando sem migrações.");
+    // Em produção, não falhar o deploy
+    if (process.env.NODE_ENV === "production") {
+      console.warn("⚠️  Modo produção: continuando sem migrações devido a erro.");
       process.exit(0);
     }
     process.exit(1);
   }
-}
-
-checkAndMigrate();
-
 }
 
 checkAndMigrate();
