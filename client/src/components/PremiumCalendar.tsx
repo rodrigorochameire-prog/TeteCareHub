@@ -17,6 +17,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,82 +42,115 @@ import {
   LogIn,
   LogOut,
   Shield,
+  Sparkles,
+  Zap,
+  Star,
+  Users,
+  User,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Event type configurations with colors and icons (soft premium palette)
+// Event type configurations with PREMIUM colors, gradients, and icons
 const EVENT_TYPES = {
   vaccination: {
     label: "Vacinação",
-    color: "bg-blue-200",
-    lightColor: "bg-blue-50",
-    textColor: "text-gray-900",
-    borderColor: "border-blue-100",
+    color: "bg-gradient-to-br from-blue-400 to-blue-600",
+    lightColor: "bg-gradient-to-br from-blue-50 via-blue-100 to-blue-50",
+    hoverColor: "hover:from-blue-100 hover:via-blue-200 hover:to-blue-100",
+    textColor: "text-blue-900",
+    borderColor: "border-blue-300",
+    shadowColor: "shadow-blue-200/50",
     icon: Syringe,
+    glow: "shadow-lg shadow-blue-400/30",
   },
   medication: {
     label: "Medicamento",
-    color: "bg-purple-200",
-    lightColor: "bg-purple-50",
-    textColor: "text-gray-900",
-    borderColor: "border-purple-100",
+    color: "bg-gradient-to-br from-purple-400 to-purple-600",
+    lightColor: "bg-gradient-to-br from-purple-50 via-purple-100 to-purple-50",
+    hoverColor: "hover:from-purple-100 hover:via-purple-200 hover:to-purple-100",
+    textColor: "text-purple-900",
+    borderColor: "border-purple-300",
+    shadowColor: "shadow-purple-200/50",
     icon: Pill,
+    glow: "shadow-lg shadow-purple-400/30",
   },
   medical: {
     label: "Consulta Médica",
-    color: "bg-rose-200",
-    lightColor: "bg-rose-50",
-    textColor: "text-gray-900",
-    borderColor: "border-rose-100",
+    color: "bg-gradient-to-br from-rose-400 to-rose-600",
+    lightColor: "bg-gradient-to-br from-rose-50 via-rose-100 to-rose-50",
+    hoverColor: "hover:from-rose-100 hover:via-rose-200 hover:to-rose-100",
+    textColor: "text-rose-900",
+    borderColor: "border-rose-300",
+    shadowColor: "shadow-rose-200/50",
     icon: Heart,
+    glow: "shadow-lg shadow-rose-400/30",
   },
   general: {
     label: "Geral",
-    color: "bg-slate-200",
-    lightColor: "bg-slate-50",
-    textColor: "text-gray-900",
-    borderColor: "border-slate-100",
+    color: "bg-gradient-to-br from-slate-400 to-slate-600",
+    lightColor: "bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50",
+    hoverColor: "hover:from-slate-100 hover:via-slate-200 hover:to-slate-100",
+    textColor: "text-slate-900",
+    borderColor: "border-slate-300",
+    shadowColor: "shadow-slate-200/50",
     icon: CalendarIcon,
+    glow: "shadow-lg shadow-slate-400/30",
   },
   holiday: {
     label: "Feriado",
-    color: "bg-emerald-200",
-    lightColor: "bg-emerald-50",
-    textColor: "text-gray-900",
-    borderColor: "border-emerald-100",
-    icon: CalendarIcon,
+    color: "bg-gradient-to-br from-emerald-400 to-emerald-600",
+    lightColor: "bg-gradient-to-br from-emerald-50 via-emerald-100 to-emerald-50",
+    hoverColor: "hover:from-emerald-100 hover:via-emerald-200 hover:to-emerald-100",
+    textColor: "text-emerald-900",
+    borderColor: "border-emerald-300",
+    shadowColor: "shadow-emerald-200/50",
+    icon: Sparkles,
+    glow: "shadow-lg shadow-emerald-400/30",
   },
   closure: {
     label: "Fechamento",
-    color: "bg-orange-200",
-    lightColor: "bg-orange-50",
-    textColor: "text-gray-900",
-    borderColor: "border-orange-100",
+    color: "bg-gradient-to-br from-orange-400 to-orange-600",
+    lightColor: "bg-gradient-to-br from-orange-50 via-orange-100 to-orange-50",
+    hoverColor: "hover:from-orange-100 hover:via-orange-200 hover:to-orange-100",
+    textColor: "text-orange-900",
+    borderColor: "border-orange-300",
+    shadowColor: "shadow-orange-200/50",
     icon: AlertCircle,
+    glow: "shadow-lg shadow-orange-400/30",
   },
   checkin: {
     label: "Check-in",
-    color: "bg-teal-200",
-    lightColor: "bg-teal-50",
-    textColor: "text-gray-900",
-    borderColor: "border-teal-100",
+    color: "bg-gradient-to-br from-teal-400 to-teal-600",
+    lightColor: "bg-gradient-to-br from-teal-50 via-teal-100 to-teal-50",
+    hoverColor: "hover:from-teal-100 hover:via-teal-200 hover:to-teal-100",
+    textColor: "text-teal-900",
+    borderColor: "border-teal-300",
+    shadowColor: "shadow-teal-200/50",
     icon: LogIn,
+    glow: "shadow-lg shadow-teal-400/30",
   },
   checkout: {
     label: "Check-out",
-    color: "bg-amber-200",
-    lightColor: "bg-amber-50",
-    textColor: "text-gray-900",
-    borderColor: "border-amber-100",
+    color: "bg-gradient-to-br from-amber-400 to-amber-600",
+    lightColor: "bg-gradient-to-br from-amber-50 via-amber-100 to-amber-50",
+    hoverColor: "hover:from-amber-100 hover:via-amber-200 hover:to-amber-100",
+    textColor: "text-amber-900",
+    borderColor: "border-amber-300",
+    shadowColor: "shadow-amber-200/50",
     icon: LogOut,
+    glow: "shadow-lg shadow-amber-400/30",
   },
   preventive: {
     label: "Preventivo",
-    color: "bg-cyan-200",
-    lightColor: "bg-cyan-50",
-    textColor: "text-gray-900",
-    borderColor: "border-cyan-100",
+    color: "bg-gradient-to-br from-cyan-400 to-cyan-600",
+    lightColor: "bg-gradient-to-br from-cyan-50 via-cyan-100 to-cyan-50",
+    hoverColor: "hover:from-cyan-100 hover:via-cyan-200 hover:to-cyan-100",
+    textColor: "text-cyan-900",
+    borderColor: "border-cyan-300",
+    shadowColor: "shadow-cyan-200/50",
     icon: Shield,
+    glow: "shadow-lg shadow-cyan-400/30",
   },
 } as const;
 
@@ -132,6 +171,12 @@ export type CalendarEvent = {
   checkInDate?: Date | null;
   checkOutDate?: Date | null;
   dailyCount?: number | null;
+  // Status fields (from admin calendar)
+  status?: "overdue" | "upcoming" | "future";
+  amount?: number;
+  // Co-management fields
+  createdByRole?: "admin" | "user" | null;
+  createdByName?: string | null;
 };
 
 type ViewMode = "month" | "week" | "day";
@@ -165,10 +210,22 @@ export function PremiumCalendar({
   const [selectedPet, setSelectedPet] = useState<number | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
 
   // Filter events
   const filteredEvents = useMemo(() => {
-    return events.filter((event) => {
+    // Ensure events is always an array
+    const safeEvents = Array.isArray(events) ? events : [];
+    
+    return safeEvents.filter((event) => {
+      // Validate event structure
+      if (!event || !event.eventDate) return false;
+      
+      // Validate eventDate is a valid Date
+      if (!(event.eventDate instanceof Date) || isNaN(event.eventDate.getTime())) {
+        return false;
+      }
+      
       if (selectedEventType !== "all" && event.eventType !== selectedEventType) {
         return false;
       }
@@ -178,9 +235,9 @@ export function PremiumCalendar({
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         return (
-          event.title.toLowerCase().includes(query) ||
-          event.description?.toLowerCase().includes(query) ||
-          event.petName?.toLowerCase().includes(query)
+          (event.title?.toLowerCase() || "").includes(query) ||
+          (event.description?.toLowerCase() || "").includes(query) ||
+          (event.petName?.toLowerCase() || "").includes(query)
         );
       }
       return true;
@@ -215,7 +272,11 @@ export function PremiumCalendar({
   const getEventsForDate = (date: Date | null) => {
     if (!date) return [];
     return filteredEvents.filter((event) => {
-      const eventDate = new Date(event.eventDate);
+      if (!event || !event.eventDate) return false;
+      
+      // Validate and get eventDate
+      const eventDate = event.eventDate instanceof Date ? event.eventDate : new Date(event.eventDate);
+      if (isNaN(eventDate.getTime())) return false;
       
       // Check if event is on this specific date
       const isOnDate = (
@@ -226,13 +287,25 @@ export function PremiumCalendar({
       
       // Check if date falls within multi-day period
       const isInPeriod = event.checkInDate && event.checkOutDate && (() => {
-        const checkIn = new Date(event.checkInDate);
-        checkIn.setHours(0, 0, 0, 0);
-        const checkOut = new Date(event.checkOutDate);
-        checkOut.setHours(0, 0, 0, 0);
-        const current = new Date(date);
-        current.setHours(0, 0, 0, 0);
-        return current >= checkIn && current <= checkOut;
+        try {
+          const checkIn = event.checkInDate instanceof Date 
+            ? new Date(event.checkInDate) 
+            : new Date(event.checkInDate);
+          if (isNaN(checkIn.getTime())) return false;
+          
+          const checkOut = event.checkOutDate instanceof Date 
+            ? new Date(event.checkOutDate) 
+            : new Date(event.checkOutDate);
+          if (isNaN(checkOut.getTime())) return false;
+          
+          checkIn.setHours(0, 0, 0, 0);
+          checkOut.setHours(0, 0, 0, 0);
+          const current = new Date(date);
+          current.setHours(0, 0, 0, 0);
+          return current >= checkIn && current <= checkOut;
+        } catch {
+          return false;
+        }
       })();
       
       return isOnDate || isInPeriod;
@@ -264,312 +337,489 @@ export function PremiumCalendar({
   today.setHours(0, 0, 0, 0);
 
   return (
-    <div className="space-y-6">
-      {/* Header with filters and controls */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={goToPreviousMonth}
-            className="h-10 w-10 rounded-xl hover:bg-primary/10 transition-all"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="outline"
-            onClick={goToToday}
-            className="min-w-[120px] rounded-xl font-semibold hover:bg-primary/10 transition-all"
-          >
-            Hoje
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={goToNextMonth}
-            className="h-10 w-10 rounded-xl hover:bg-primary/10 transition-all"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
-          <h2 className="text-2xl font-bold capitalize ml-2">{monthYear}</h2>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar eventos..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 w-[200px] rounded-xl"
-            />
+    <TooltipProvider delayDuration={200}>
+      <div className="space-y-6">
+        {/* Header with filters and controls */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={goToPreviousMonth}
+              className="h-10 w-10 rounded-xl hover:bg-primary/10 hover:scale-105 transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="outline"
+              onClick={goToToday}
+              className="min-w-[120px] rounded-xl font-semibold hover:bg-primary/10 hover:scale-105 transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              Hoje
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={goToNextMonth}
+              className="h-10 w-10 rounded-xl hover:bg-primary/10 hover:scale-105 transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+            <h2 className="text-2xl font-bold capitalize ml-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              {monthYear}
+            </h2>
           </div>
 
-          {/* Event Type Filter */}
-          <Select
-            value={selectedEventType}
-            onValueChange={(value) => setSelectedEventType(value as EventType | "all")}
-          >
-            <SelectTrigger className="w-[180px] rounded-xl">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Tipo de evento" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os tipos</SelectItem>
-              {Object.entries(EVENT_TYPES).map(([key, config]) => (
-                <SelectItem key={key} value={key}>
-                  <div className="flex items-center gap-2">
-                    <div className={cn("w-3 h-3 rounded-full", config.color)} />
-                    {config.label}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Search */}
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              <Input
+                placeholder="Buscar eventos..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 w-[200px] rounded-xl border-2 focus:border-primary transition-all shadow-sm hover:shadow-md"
+              />
+            </div>
 
-          {/* Pet Filter */}
-          {pets.length > 0 && (
+            {/* Event Type Filter */}
             <Select
-              value={selectedPet.toString()}
-              onValueChange={(value) => setSelectedPet(value === "all" ? "all" : parseInt(value))}
+              value={selectedEventType}
+              onValueChange={(value) => setSelectedEventType(value as EventType | "all")}
             >
-              <SelectTrigger className="w-[180px] rounded-xl">
-                <SelectValue placeholder="Filtrar por pet" />
+              <SelectTrigger className="w-[180px] rounded-xl border-2 shadow-sm hover:shadow-md transition-all">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Tipo de evento" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os pets</SelectItem>
-                {pets.map((pet) => (
-                  <SelectItem key={pet.id} value={pet.id.toString()}>
-                    {pet.name}
+                <SelectItem value="all">Todos os tipos</SelectItem>
+                {Object.entries(EVENT_TYPES).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>
+                    <div className="flex items-center gap-2">
+                      <div className={cn("w-3 h-3 rounded-full", config.color, "shadow-sm")} />
+                      {config.label}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          )}
 
-          {/* Create Event Button */}
-          {showCreateButton && onCreateEvent && (
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="rounded-xl shadow-lg hover:shadow-xl transition-all">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Novo Evento
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Criar Novo Evento</DialogTitle>
-                  <DialogDescription>
-                    Adicione um novo evento ao calendário
-                  </DialogDescription>
-                </DialogHeader>
-                <CreateEventForm
-                  onSubmit={(event) => {
-                    onCreateEvent(event);
-                    setIsCreateDialogOpen(false);
-                  }}
-                  pets={pets}
-                />
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
-      </div>
-
-      {/* Event Type Legend - Discrete chips */}
-      <div className="flex flex-wrap gap-2">
-        {Object.entries(EVENT_TYPES).map(([key, config]) => {
-          const Icon = config.icon;
-          const count = filteredEvents.filter((e) => e.eventType === key).length;
-          return (
-            <div
-              key={key}
-              className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all text-xs",
-                config.lightColor,
-                config.borderColor,
-                "hover:shadow-sm"
-              )}
-            >
-              <Icon className="h-3 w-3 text-gray-600" />
-              <span className="font-medium text-gray-900">
-                {config.label}
-              </span>
-              <span className="text-gray-600 ml-0.5">
-                {count}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Calendar Grid */}
-      <Card className="p-6 shadow-xl border-2">
-        <div className="grid grid-cols-7 gap-2">
-          {/* Week day headers */}
-          {weekDays.map((day) => (
-            <div
-              key={day}
-              className="text-center font-bold text-sm text-muted-foreground py-3"
-            >
-              {day}
-            </div>
-          ))}
-
-          {/* Calendar days */}
-          {days.map((date, index) => {
-            const dayEvents = getEventsForDate(date);
-            const isToday =
-              date &&
-              date.getDate() === today.getDate() &&
-              date.getMonth() === today.getMonth() &&
-              date.getFullYear() === today.getFullYear();
-            const isPast = date && date < today;
-
-            return (
-              <div
-                key={index}
-                className={cn(
-                  "min-h-[120px] p-2 rounded-xl border-2 transition-all cursor-pointer",
-                  date ? "bg-card hover:bg-accent/5 hover:border-primary/30 hover:shadow-md" : "bg-muted/20",
-                  isToday && "ring-2 ring-primary ring-offset-2 bg-primary/5",
-                  isPast && "opacity-60"
-                )}
-                onClick={() => {
-                  if (date) {
-                    onDateClick?.(date);
-                    onDayClick?.(date);
-                  }
-                }}
-                onDragOver={(e) => {
-                  if (date) {
-                    e.preventDefault();
-                    e.currentTarget.classList.add("ring-2", "ring-primary", "bg-primary/10");
-                  }
-                }}
-                onDragLeave={(e) => {
-                  e.currentTarget.classList.remove("ring-2", "ring-primary", "bg-primary/10");
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.classList.remove("ring-2", "ring-primary", "bg-primary/10");
-                  if (date) {
-                    const eventId = e.dataTransfer.getData("eventId");
-                    if (eventId && onEventDrop) {
-                      onEventDrop(parseInt(eventId), date);
-                    }
-                  }
-                }}
+            {/* Pet Filter */}
+            {pets.length > 0 && (
+              <Select
+                value={selectedPet.toString()}
+                onValueChange={(value) => setSelectedPet(value === "all" ? "all" : parseInt(value))}
               >
-                {date && (
-                  <>
-                    <div className="flex items-center justify-between mb-2">
-                      <span
-                        className={cn(
-                          "text-sm font-semibold",
-                          isToday && "text-primary"
-                        )}
-                      >
-                        {date.getDate()}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        {dayEvents.length > 0 && (
-                          <Badge
-                            variant="secondary"
-                            className="h-5 w-5 p-0 flex items-center justify-center text-xs"
-                          >
-                            {dayEvents.length}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      {dayEvents.slice(0, 3).map((event) => {
-                        const config = EVENT_TYPES[event.eventType];
-                        const Icon = config.icon;
-                        
-                        // Check if this is a multi-day period event
-                        const isPeriodEvent = event.checkInDate && event.checkOutDate;
-                        const isFirstDay = isPeriodEvent && (() => {
-                          const checkIn = new Date(event.checkInDate!);
-                          return checkIn.getDate() === date.getDate() &&
-                                 checkIn.getMonth() === date.getMonth() &&
-                                 checkIn.getFullYear() === date.getFullYear();
-                        })();
-                        const isLastDay = isPeriodEvent && (() => {
-                          const checkOut = new Date(event.checkOutDate!);
-                          return checkOut.getDate() === date.getDate() &&
-                                 checkOut.getMonth() === date.getMonth() &&
-                                 checkOut.getFullYear() === date.getFullYear();
-                        })();
-                        
-                        return (
-                          <div
-                            key={event.id}
-                            draggable
-                            onDragStart={(e) => {
-                              e.dataTransfer.setData("eventId", event.id.toString());
-                              e.dataTransfer.effectAllowed = "move";
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEventClick?.(event);
-                            }}
-                            className={cn(
-                              "px-2 py-1 rounded-lg text-xs font-medium cursor-move transition-all hover:scale-105 hover:shadow-md border",
-                              config.lightColor,
-                              config.textColor,
-                              config.borderColor,
-                              isPeriodEvent && "border-2 border-dashed"
-                            )}
-                          >
-                            <div className="flex items-center gap-1">
-                              <Icon className="h-3 w-3 flex-shrink-0" />
-                              <span className="truncate">
-                                {isFirstDay && "👉 "}
-                                {event.title}
-                                {isLastDay && " 🏁"}
-                                {isPeriodEvent && !isFirstDay && !isLastDay && " 🟦"}
-                              </span>
-                            </div>
-                            {isPeriodEvent && event.dailyCount && (
-                              <div className="text-[10px] opacity-70 mt-0.5">
-                                {event.dailyCount} {event.dailyCount === 1 ? 'diária' : 'diárias'}
-                              </div>
-                            )}
-                            {!event.isAllDay && (
-                              <div className="flex items-center gap-1 mt-0.5 opacity-70">
-                                <Clock className="h-2.5 w-2.5" />
-                                <span className="text-[10px]">
-                                  {new Date(event.eventDate).toLocaleTimeString("pt-BR", {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                      {dayEvents.length > 3 && (
-                        <div className="text-xs text-muted-foreground text-center py-1">
-                          +{dayEvents.length - 3} mais
-                        </div>
+                <SelectTrigger className="w-[180px] rounded-xl border-2 shadow-sm hover:shadow-md transition-all">
+                  <SelectValue placeholder="Filtrar por pet" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os pets</SelectItem>
+                  {pets.map((pet) => (
+                    <SelectItem key={pet.id} value={pet.id.toString()}>
+                      {pet.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Create Event Button */}
+            {showCreateButton && onCreateEvent && (
+              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 bg-gradient-to-r from-primary to-primary/80">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Novo Evento
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Criar Novo Evento</DialogTitle>
+                    <DialogDescription>
+                      Adicione um novo evento ao calendário
+                    </DialogDescription>
+                  </DialogHeader>
+                  <CreateEventForm
+                    onSubmit={(event) => {
+                      onCreateEvent(event);
+                      setIsCreateDialogOpen(false);
+                    }}
+                    pets={pets}
+                  />
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+        </div>
+
+        {/* Event Type Legend - Premium chips with animations */}
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(EVENT_TYPES).map(([key, config]) => {
+            const Icon = config.icon;
+            const count = filteredEvents.filter((e) => e.eventType === key).length;
+            return (
+              <Tooltip key={key}>
+                <TooltipTrigger asChild>
+                  <div
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 transition-all text-xs cursor-pointer group",
+                      config.lightColor,
+                      config.borderColor,
+                      "hover:shadow-lg hover:scale-105 duration-200",
+                      config.glow
+                    )}
+                  >
+                    <Icon className={cn("h-3.5 w-3.5 transition-transform group-hover:scale-110", config.textColor)} />
+                    <span className={cn("font-semibold", config.textColor)}>
+                      {config.label}
+                    </span>
+                    <Badge
+                      variant="secondary"
+                      className={cn(
+                        "ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs font-bold",
+                        config.textColor,
+                        "bg-white/50"
                       )}
-                    </div>
-                  </>
-                )}
-              </div>
+                    >
+                      {count}
+                    </Badge>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{count} {config.label.toLowerCase()}{count !== 1 ? "s" : ""}</p>
+                </TooltipContent>
+              </Tooltip>
             );
           })}
         </div>
-      </Card>
-    </div>
+
+        {/* Calendar Grid - PREMIUM VERSION - COMPACT */}
+        <Card className="p-4 shadow-2xl border-2 bg-gradient-to-br from-background via-background to-muted/20">
+          <div className="grid grid-cols-7 gap-2">
+            {/* Week day headers - Premium style */}
+            {weekDays.map((day) => (
+              <div
+                key={day}
+                className="text-center font-bold text-xs text-muted-foreground py-2 bg-gradient-to-b from-muted/50 to-transparent rounded-lg"
+              >
+                {day}
+              </div>
+            ))}
+
+            {/* Calendar days - PREMIUM INTERACTIVE SQUARES - COMPACT */}
+            {days.map((date, index) => {
+              const dayEvents = getEventsForDate(date);
+              const isToday =
+                date &&
+                date.getDate() === today.getDate() &&
+                date.getMonth() === today.getMonth() &&
+                date.getFullYear() === today.getFullYear();
+              const isPast = date && date < today;
+              const isHovered = date && hoveredDate && 
+                date.getDate() === hoveredDate.getDate() &&
+                date.getMonth() === hoveredDate.getMonth() &&
+                date.getFullYear() === hoveredDate.getFullYear();
+              const isWeekend = date && (date.getDay() === 0 || date.getDay() === 6);
+
+              return (
+                <Tooltip key={index}>
+                  <TooltipTrigger asChild>
+                    <div
+                      className={cn(
+                        "min-h-[110px] p-2 rounded-lg border-2 transition-all duration-300 cursor-pointer group relative overflow-hidden",
+                        // Base styles
+                        date ? "bg-gradient-to-br from-card via-card to-muted/30" : "bg-muted/20",
+                        // Hover effects
+                        date && "hover:scale-[1.02] hover:shadow-xl hover:border-primary/50",
+                        // Today highlight
+                        isToday && "ring-2 ring-primary ring-offset-1 bg-gradient-to-br from-primary/10 via-primary/5 to-primary/10 border-primary shadow-lg",
+                        // Past dates
+                        isPast && "opacity-50",
+                        // Weekend subtle styling
+                        isWeekend && date && "bg-gradient-to-br from-card via-muted/20 to-card",
+                        // Hovered state
+                        isHovered && "ring-2 ring-primary/50 shadow-lg scale-[1.02]"
+                      )}
+                      onClick={() => {
+                        if (date) {
+                          onDateClick?.(date);
+                          onDayClick?.(date);
+                        }
+                      }}
+                      onMouseEnter={() => date && setHoveredDate(date)}
+                      onMouseLeave={() => setHoveredDate(null)}
+                      onDragOver={(e) => {
+                        if (date) {
+                          e.preventDefault();
+                          e.currentTarget.classList.add("ring-4", "ring-primary", "bg-primary/20", "scale-105");
+                        }
+                      }}
+                      onDragLeave={(e) => {
+                        e.currentTarget.classList.remove("ring-4", "ring-primary", "bg-primary/20", "scale-105");
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.remove("ring-4", "ring-primary", "bg-primary/20", "scale-105");
+                        if (date) {
+                          const eventId = e.dataTransfer.getData("eventId");
+                          if (eventId && onEventDrop) {
+                            onEventDrop(parseInt(eventId), date);
+                          }
+                        }
+                      }}
+                    >
+                      {/* Animated background gradient on hover */}
+                      {date && (
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/5 group-hover:via-primary/10 group-hover:to-primary/5 transition-all duration-500 rounded-xl -z-0" />
+                      )}
+
+                      {date && (
+                        <div className="relative z-10">
+                          {/* Date number with premium styling */}
+                          <div className="flex items-center justify-between mb-2">
+                            <span
+                              className={cn(
+                                "text-base font-bold transition-all duration-200",
+                                isToday && "text-primary scale-110",
+                                !isToday && "text-foreground group-hover:text-primary group-hover:scale-110"
+                              )}
+                            >
+                              {date.getDate()}
+                            </span>
+                            {/* Event count badge - Premium */}
+                            {dayEvents.length > 0 && (
+                              <Badge
+                                variant="secondary"
+                                className={cn(
+                                  "h-6 w-6 p-0 flex items-center justify-center text-xs font-bold transition-all duration-200",
+                                  "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground",
+                                  "shadow-md group-hover:shadow-lg group-hover:scale-110"
+                                )}
+                              >
+                                {dayEvents.length}
+                              </Badge>
+                            )}
+                            {/* Star indicator for today */}
+                            {isToday && (
+                              <Star className="h-4 w-4 text-primary fill-primary animate-pulse" />
+                            )}
+                          </div>
+
+                          {/* Events list - Premium cards */}
+                          <div className="space-y-1.5">
+                            {dayEvents.slice(0, 3).map((event, eventIndex) => {
+                              const config = EVENT_TYPES[event.eventType];
+                              const Icon = config.icon;
+                              
+                              // Check if this is a multi-day period event
+                              const isPeriodEvent = event.checkInDate && event.checkOutDate;
+                              const isFirstDay = isPeriodEvent && (() => {
+                                if (!event.checkInDate) return false;
+                                const checkIn = event.checkInDate instanceof Date 
+                                  ? new Date(event.checkInDate) 
+                                  : new Date(event.checkInDate);
+                                if (isNaN(checkIn.getTime())) return false;
+                                return checkIn.getDate() === date.getDate() &&
+                                       checkIn.getMonth() === date.getMonth() &&
+                                       checkIn.getFullYear() === date.getFullYear();
+                              })();
+                              const isLastDay = isPeriodEvent && (() => {
+                                if (!event.checkOutDate) return false;
+                                const checkOut = event.checkOutDate instanceof Date 
+                                  ? new Date(event.checkOutDate) 
+                                  : new Date(event.checkOutDate);
+                                if (isNaN(checkOut.getTime())) return false;
+                                return checkOut.getDate() === date.getDate() &&
+                                       checkOut.getMonth() === date.getMonth() &&
+                                       checkOut.getFullYear() === date.getFullYear();
+                              })();
+
+                              // Status indicators
+                              const isOverdue = event.status === "overdue";
+                              const isUpcoming = event.status === "upcoming";
+                              
+                              // Co-management indicator
+                              const isCreatedByAdmin = event.createdByRole === "admin";
+                              const isCreatedByTutor = event.createdByRole === "user";
+
+                              return (
+                                <Tooltip key={event.id}>
+                                  <TooltipTrigger asChild>
+                                    <div
+                                      draggable
+                                      onDragStart={(e) => {
+                                        e.dataTransfer.setData("eventId", event.id.toString());
+                                        e.dataTransfer.effectAllowed = "move";
+                                      }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onEventClick?.(event);
+                                      }}
+                                      className={cn(
+                                        "px-2 py-1 rounded-md text-[11px] font-semibold cursor-move transition-all duration-200",
+                                        "border-2 group/event relative overflow-hidden",
+                                        // Premium gradient background
+                                        config.lightColor,
+                                        config.borderColor,
+                                        // Hover effects
+                                        "hover:scale-105 hover:shadow-lg hover:border-opacity-100",
+                                        config.glow,
+                                        // Period event styling
+                                        isPeriodEvent && "border-dashed border-2",
+                                        // Status styling
+                                        isOverdue && "ring-2 ring-red-500/50 bg-gradient-to-br from-red-50 to-red-100",
+                                        isUpcoming && "ring-2 ring-yellow-500/50 bg-gradient-to-br from-yellow-50 to-yellow-100",
+                                        // Animation delay for staggered effect
+                                        `animate-in fade-in slide-in-from-left-2 duration-300`,
+                                        `[animation-delay:${eventIndex * 50}ms]`
+                                      )}
+                                    >
+                                      {/* Hover gradient overlay */}
+                                      <div className={cn(
+                                        "absolute inset-0 opacity-0 group-hover/event:opacity-100 transition-opacity duration-200 rounded-md",
+                                        config.hoverColor
+                                      )} />
+
+                                      <div className="relative z-10 flex items-center gap-1">
+                                        <Icon className={cn(
+                                          "h-3 w-3 flex-shrink-0 transition-transform group-hover/event:scale-110 group-hover/event:rotate-12",
+                                          config.textColor
+                                        )} />
+                                        <span className={cn("truncate font-semibold flex-1", config.textColor)}>
+                                          {isFirstDay && "👉 "}
+                                          {event.title}
+                                          {isLastDay && " 🏁"}
+                                          {isPeriodEvent && !isFirstDay && !isLastDay && " 🟦"}
+                                        </span>
+                                        {/* Co-management indicator - Melhorado para tutor */}
+                                        {role === "tutor" && isCreatedByAdmin && (
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <div className="flex items-center gap-0.5">
+                                                <Building2 className="h-2.5 w-2.5 text-blue-600 flex-shrink-0 animate-pulse" />
+                                                <Badge variant="outline" className="h-3 px-1 text-[8px] border-blue-500 text-blue-700 bg-blue-50">
+                                                  Creche
+                                                </Badge>
+                                              </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                              <p className="font-medium">Criado pela Creche</p>
+                                              {event.createdByName && <p className="text-xs text-muted-foreground">por {event.createdByName}</p>}
+                                              <p className="text-xs text-muted-foreground mt-1">Cogestão ativa</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        )}
+                                        {role === "admin" && isCreatedByTutor && (
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <User className="h-2.5 w-2.5 text-green-600 flex-shrink-0" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                              <p>Criado pelo Tutor{event.createdByName ? ` (${event.createdByName})` : ""}</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        )}
+                                        {/* Status badges */}
+                                        {isOverdue && (
+                                          <Badge variant="destructive" className="h-3.5 px-1 text-[9px] ml-auto">
+                                            Atrasado
+                                          </Badge>
+                                        )}
+                                        {isUpcoming && (
+                                          <Badge variant="outline" className="h-3.5 px-1 text-[9px] border-yellow-500 text-yellow-700 ml-auto">
+                                            Próximo
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      
+                                      {/* Additional info row - COMPACT */}
+                                      {(isPeriodEvent && event.dailyCount) || !event.isAllDay || event.petName ? (
+                                        <div className="relative z-10 flex items-center gap-1.5 mt-0.5">
+                                          {isPeriodEvent && event.dailyCount && (
+                                            <div className={cn("text-[9px] font-medium", config.textColor, "opacity-70")}>
+                                              📅 {event.dailyCount} {event.dailyCount === 1 ? 'dia' : 'dias'}
+                                            </div>
+                                          )}
+                                          {!event.isAllDay && (
+                                            <div className={cn("flex items-center gap-0.5 text-[9px]", config.textColor, "opacity-70")}>
+                                              <Clock className="h-2 w-2" />
+                                              {(() => {
+                                                const eventDate = event.eventDate instanceof Date 
+                                                  ? event.eventDate 
+                                                  : new Date(event.eventDate);
+                                                if (isNaN(eventDate.getTime())) return "";
+                                                return eventDate.toLocaleTimeString("pt-BR", {
+                                                  hour: "2-digit",
+                                                  minute: "2-digit",
+                                                });
+                                              })()}
+                                            </div>
+                                          )}
+                                          {event.petName && (
+                                            <div className={cn("text-[9px] font-medium truncate", config.textColor, "opacity-70")}>
+                                              🐾 {event.petName}
+                                            </div>
+                                          )}
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right" className="max-w-xs">
+                                    <div className="space-y-1">
+                                      <p className="font-semibold">{event.title}</p>
+                                      {event.description && (
+                                        <p className="text-xs text-muted-foreground">{event.description}</p>
+                                      )}
+                                      {event.petName && (
+                                        <p className="text-xs">Pet: {event.petName}</p>
+                                      )}
+                                      {event.location && (
+                                        <p className="text-xs">📍 {event.location}</p>
+                                      )}
+                                    </div>
+                                  </TooltipContent>
+                                </Tooltip>
+                              );
+                            })}
+                            {dayEvents.length > 3 && (
+                              <div className="text-[10px] text-muted-foreground text-center py-1 font-semibold bg-muted/50 rounded-md transition-all hover:bg-muted hover:scale-105 cursor-pointer">
+                                ✨ +{dayEvents.length - 3} mais
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  {date && dayEvents.length > 0 && (
+                    <TooltipContent side="top" className="max-w-sm">
+                      <div className="space-y-1">
+                        <p className="font-semibold">
+                          {date.toLocaleDateString("pt-BR", {
+                            weekday: "long",
+                            day: "numeric",
+                            month: "long",
+                          })}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {dayEvents.length} {dayEvents.length === 1 ? "evento" : "eventos"} agendado{dayEvents.length > 1 ? "s" : ""}
+                        </p>
+                      </div>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              );
+            })}
+          </div>
+        </Card>
+      </div>
+    </TooltipProvider>
   );
 }
 
-// Create Event Form Component
+// Create Event Form Component (unchanged)
 function CreateEventForm({
   onSubmit,
   pets,
@@ -786,7 +1036,16 @@ function CreateEventForm({
                 📅 Total: <span className="font-bold">{dailyCount} {dailyCount === 1 ? 'diária' : 'diárias'}</span>
               </p>
               <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                {new Date(formData.checkInDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} a {new Date(formData.checkOutDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                {(() => {
+                  const checkIn = formData.checkInDate instanceof Date 
+                    ? formData.checkInDate 
+                    : new Date(formData.checkInDate);
+                  const checkOut = formData.checkOutDate instanceof Date 
+                    ? formData.checkOutDate 
+                    : new Date(formData.checkOutDate);
+                  if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) return "";
+                  return `${checkIn.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} a ${checkOut.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}`;
+                })()}
               </p>
             </div>
           )}

@@ -41,6 +41,9 @@ import {
   MessageSquare,
   MessageCircle,
   User as UserIcon,
+  Heart,
+  Wallet,
+  LayoutDashboard,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -49,46 +52,45 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationBell } from "@/components/NotificationBell";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 
+// Menu groups - adaptado seguindo padrão do AdminLayout
 const menuGroups = [
   {
-    label: "Principal",
+    label: "Operacional",
     color: "blue",
     items: [
-      { icon: Home, label: "Dashboard", path: "/tutor/dashboard" },
+      { icon: LayoutDashboard, label: "Dashboard", path: "/tutor/dashboard" },
       { icon: Dog, label: "Meus Pets", path: "/tutor/pets" },
-      { icon: Calendar, label: "Calend\u00e1rio", path: "/tutor/calendar" },
+      { icon: Calendar, label: "Calendário", path: "/tutor/calendar" },
       { icon: CalendarCheck, label: "Agendamento", path: "/tutor/booking" },
-      { icon: MessageSquare, label: "Mural", path: "/tutor/wall" },
-      { icon: MessageCircle, label: "Chat", path: "/tutor/chat" },
     ],
   },
   {
-    label: "Sa\u00fade & Cuidados",
+    label: "Cuidados",
     color: "red",
     items: [
-      { icon: Syringe, label: "Preventivo", path: "/tutor/preventive" },
-      { icon: Pill, label: "Medicamentos", path: "/tutor/medications" },
-      { icon: UtensilsCrossed, label: "Ra\u00e7\u00e3o", path: "/tutor/food" },
+      { icon: Heart, label: "Central de Saúde", path: "/tutor/health" },
+      { icon: UtensilsCrossed, label: "Ração", path: "/tutor/food" },
+      { icon: Brain, label: "Comportamento", path: "/tutor/behavior" },
     ],
   },
   {
-    label: "Acompanhamento",
+    label: "Comunicação",
     color: "purple",
     items: [
-      { icon: Brain, label: "Comportamento", path: "/tutor/behavior" },
-      { icon: BarChart3, label: "Analytics", path: "/tutor/analytics" },
+      { icon: MessageCircle, label: "Comunicação", path: "/tutor/wall" },
+      { icon: MessageSquare, label: "Chat", path: "/tutor/chat" },
     ],
   },
   {
-    label: "Serviços",
+    label: "Gestão",
     color: "green",
     items: [
-      { icon: Package, label: "Planos & Créditos", path: "/tutor/checkout" },
+      { icon: Wallet, label: "Pacotes & Créditos", path: "/tutor/checkout" },
       { icon: FileText, label: "Documentos", path: "/tutor/documents" },
       { icon: BarChart3, label: "Relatórios", path: "/tutor/reports" },
       { icon: Star, label: "Avaliações", path: "/tutor/reviews" },
       { icon: Sparkles, label: "Assistente IA", path: "/tutor/ai" },
-      { icon: Settings, label: "Configurações de Notificações", path: "/tutor/notification-settings" },
+      { icon: Settings, label: "Configurações", path: "/tutor/notification-settings" },
     ],
   },
 ];
@@ -281,7 +283,7 @@ function TutorLayoutContent({
               {!isCollapsed && (
                 <div className="flex flex-col">
                   <span className="text-xs font-bold tracking-wider uppercase bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                    Gestão
+                    Tutor
                   </span>
                 </div>
               )}

@@ -31,11 +31,9 @@ const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserI
 
 class OAuthService {
   constructor(private client: ReturnType<typeof axios.create>) {
-    console.log("[OAuth] Initialized with baseURL:", ENV.oAuthServerUrl);
-    if (!ENV.oAuthServerUrl) {
-      console.error(
-        "[OAuth] ERROR: OAUTH_SERVER_URL is not configured! Set OAUTH_SERVER_URL environment variable."
-      );
+    // OAuth is optional - only log if configured
+    if (ENV.oAuthServerUrl) {
+      console.log("[OAuth] Initialized with baseURL:", ENV.oAuthServerUrl);
     }
   }
 
@@ -77,11 +75,23 @@ class OAuthService {
   }
 }
 
-const createOAuthHttpClient = (): AxiosInstance =>
-  axios.create({
+const createOAuthHttpClient = (): AxiosInstance => {
+  if (!ENV.oAuthServerUrl) {
+    // Return a mock client that throws helpful errors
+    return {
+      post: async () => {
+        throw new Error("OAuth is not configured. This feature requires OAUTH_SERVER_URL to be set.");
+      },
+      get: async () => {
+        throw new Error("OAuth is not configured. This feature requires OAUTH_SERVER_URL to be set.");
+      },
+    } as any;
+  }
+  return axios.create({
     baseURL: ENV.oAuthServerUrl,
     timeout: AXIOS_TIMEOUT_MS,
   });
+};
 
 class SDKServer {
   private readonly client: AxiosInstance;
@@ -156,7 +166,23 @@ class SDKServer {
   }
 
   private getSessionSecret() {
-    const secret = ENV.cookieSecret;
+    // Read directly from process.env to ensure we get the latest value
+    const secret = process.env.JWT_SECRET || ENV.cookieSecret;
+    
+    console.log('[getSessionSecret] JWT_SECRET check:', {
+      hasSecret: !!secret,
+      secretLength: secret?.length || 0,
+      secretPreview: secret ? `${secret.substring(0, 10)}...` : 'empty',
+      processEnvJWT: process.env.JWT_SECRET ? `${process.env.JWT_SECRET.substring(0, 10)}...` : 'NOT SET',
+      envCookieSecret: ENV.cookieSecret ? `${ENV.cookieSecret.substring(0, 10)}...` : 'EMPTY'
+    });
+    
+    if (!secret || secret.length === 0) {
+      console.error('[getSessionSecret] JWT_SECRET is empty or not set');
+      console.error('[getSessionSecret] process.env.JWT_SECRET:', process.env.JWT_SECRET);
+      console.error('[getSessionSecret] ENV.cookieSecret:', ENV.cookieSecret);
+      throw new Error("JWT_SECRET is not configured. Please set JWT_SECRET in your environment variables.");
+    }
     return new TextEncoder().encode(secret);
   }
 
@@ -169,14 +195,26 @@ class SDKServer {
     openId: string,
     options: { expiresInMs?: number; name?: string } = {}
   ): Promise<string> {
-    return this.signSession(
-      {
-        openId,
-        appId: ENV.appId,
-        name: options.name || "",
-      },
-      options
-    );
+    // Ensure appId is not empty - use a default if ENV.appId is empty
+    const appId = ENV.appId || "tete-house-hub";
+    const name = options.name || "User";
+    
+    const payload = {
+      openId,
+      appId,
+      name,
+    };
+    
+    console.log('[createSessionToken] Creating token with payload:', {
+      openId: payload.openId,
+      appId: payload.appId,
+      name: payload.name,
+      appIdLength: payload.appId.length,
+      nameLength: payload.name.length,
+      ENV_appId: ENV.appId || 'EMPTY'
+    });
+    
+    return this.signSession(payload, options);
   }
 
   async signSession(
@@ -211,6 +249,16 @@ class SDKServer {
       const { payload } = await jwtVerify(cookieValue, secretKey, {
         algorithms: ["HS256"],
       });
+      
+      console.log('[verifySession] JWT payload:', {
+        hasPayload: !!payload,
+        payloadKeys: Object.keys(payload || {}),
+        openId: (payload as any)?.openId,
+        appId: (payload as any)?.appId,
+        name: (payload as any)?.name,
+        fullPayload: JSON.stringify(payload, null, 2)
+      });
+      
       const { openId, appId, name } = payload as Record<string, unknown>;
 
       if (
@@ -218,7 +266,17 @@ class SDKServer {
         !isNonEmptyString(appId) ||
         !isNonEmptyString(name)
       ) {
-        console.warn("[Auth] Session payload missing required fields");
+        console.warn("[Auth] Session payload missing required fields", {
+          openId: (typeof openId === 'string' && openId) ? `${openId.substring(0, 20)}...` : 'MISSING',
+          appId: (typeof appId === 'string' && appId) ? `${appId.substring(0, 20)}...` : 'MISSING',
+          name: (typeof name === 'string' && name) ? `${name.substring(0, 20)}...` : 'MISSING',
+          openIdType: typeof openId,
+          appIdType: typeof appId,
+          nameType: typeof name,
+          openIdLength: typeof openId === 'string' ? openId.length : 0,
+          appIdLength: typeof appId === 'string' ? appId.length : 0,
+          nameLength: typeof name === 'string' ? name.length : 0
+        });
         return null;
       }
 
@@ -293,12 +351,12 @@ class SDKServer {
 
         // DATABASE SYNC:
         await db.upsertUser({
-          openId: finalOpenId,
+          open_id: finalOpenId,
           name: finalName,
           email: userInfo.email ?? null,
           // FIX: Default to "email" if loginMethod is missing/null to prevent DB error
-          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? "email",
-          lastSignedIn: signedInAt,
+          login_method: userInfo.loginMethod ?? userInfo.platform ?? "email",
+          last_signed_in: signedInAt,
         });
         
         user = await db.getUserByOpenId(finalOpenId);
@@ -313,12 +371,13 @@ class SDKServer {
     }
 
     await db.upsertUser({
-      openId: user.openId,
-      lastSignedIn: signedInAt,
+      open_id: user.open_id,
+      last_signed_in: signedInAt,
     });
 
     return user;
   }
 }
 
+// Initialize SDK - OAuth is optional, methods will fail gracefully if not configured
 export const sdk = new SDKServer();

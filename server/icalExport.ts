@@ -3,6 +3,8 @@
  * Generates .ics files for calendar synchronization with Google Calendar, Outlook, etc.
  */
 
+import type { CalendarEvent } from "../drizzle/schema";
+
 interface ICalEvent {
   id: number;
   title: string;
@@ -103,7 +105,18 @@ export async function exportEventsToICal(startDate: Date, endDate: Date): Promis
   const { getCalendarEvents } = await import("./db");
   const events = await getCalendarEvents(startDate, endDate);
 
-  return generateICalFile(events);
+  // Map database events to ICalEvent format
+  const mappedEvents: ICalEvent[] = events.map((event: any) => ({
+    id: event.id,
+    title: event.title,
+    description: event.description ?? null,
+    eventDate: new Date(event.event_date || event.eventDate),
+    endDate: event.end_date ? new Date(event.end_date) : (event.endDate ? new Date(event.endDate) : null),
+    location: event.location ?? null,
+    isAllDay: event.is_all_day ?? event.isAllDay ?? true,
+  }));
+
+  return generateICalFile(mappedEvents);
 }
 
 /**

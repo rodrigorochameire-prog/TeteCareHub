@@ -160,9 +160,9 @@ export default function TutorPets() {
         breed: formData.breed || undefined,
         age: formData.age || undefined,
         weight: formData.weight ? parseInt(formData.weight) * 1000 : undefined,
-        birthDate: formData.birthDate || undefined,
-        foodBrand: formData.foodBrand || undefined,
-        foodAmount: formData.foodAmount ? parseInt(formData.foodAmount) : undefined,
+        birth_date: formData.birthDate || undefined,
+        food_brand: formData.foodBrand || undefined,
+        food_amount: formData.foodAmount ? parseInt(formData.foodAmount) : undefined,
         notes: formData.notes || undefined,
       });
     } else {
@@ -172,9 +172,9 @@ export default function TutorPets() {
         breed: formData.breed || undefined,
         age: formData.age || undefined,
         weight: formData.weight ? parseInt(formData.weight) * 1000 : undefined,
-        birthDate: formData.birthDate || undefined,
-        foodBrand: formData.foodBrand || undefined,
-        foodAmount: formData.foodAmount ? parseInt(formData.foodAmount) : undefined,
+        birth_date: formData.birthDate || undefined,
+        food_brand: formData.foodBrand || undefined,
+        food_amount: formData.foodAmount ? parseInt(formData.foodAmount) : undefined,
         notes: formData.notes || undefined,
       });
     }

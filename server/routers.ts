@@ -15,6 +15,11 @@ import { triggerVaccineNotificationsManually } from "./jobs/vaccineNotifications
 import Stripe from "stripe";
 import { PRODUCTS } from "./products";
 import { searchRouter } from "./searchRouter";
+import { getStripe } from "./stripeWebhook";
+// emailAuth functions are imported dynamically where needed to avoid circular dependencies
+import { pets, petTutors, users } from "../drizzle/schema";
+import { eq, desc, sql } from "drizzle-orm";
+import { getDb } from "./db";
 
 // Admin-only procedure with audit logging
 const adminProcedure = protectedProcedure.use(async ({ ctx, next, path }) => {
@@ -23,7 +28,7 @@ const adminProcedure = protectedProcedure.use(async ({ ctx, next, path }) => {
   // Log access attempt
   try {
     await db.createAuditLog({
-      userId: ctx.user.id,
+      user_id: ctx.user.id,
       action: path,
       success: isAdmin,
       errorCode: isAdmin ? null : "FORBIDDEN",
@@ -67,27 +72,69 @@ export const appRouter = router({
         role: z.enum(["user", "admin"]).optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const { registerUser, generateVerificationToken } = await import("./emailAuth");
         const { sdk } = await import("./_core/sdk");
+        const { registerUser, generateVerificationToken } = await import("./emailAuth");
+        
+        console.log('[register route] Starting registration for:', input.email);
         
         const user = await registerUser(input);
         
-        // Generate verification token and send email
-        const verificationResult = await generateVerificationToken(user.id);
-        await notifyOwner({
-          title: "New User Registration - Email Verification",
-          content: `User ${user.name} (${input.email}) registered. Verification token: ${verificationResult.token}`,
+        console.log('[register route] registerUser returned:', {
+          hasUser: !!user,
+          userId: user?.id,
+          email: user?.email
         });
         
+        // Validate user has a valid ID
+        if (!user) {
+          console.error('[register route] No user returned from registerUser');
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to create user account. Please try again.'
+          });
+        }
+        
+        if (!user.id || user.id === 0) {
+          console.error('[register route] Invalid user ID:', user.id);
+          console.error('[register route] User object:', JSON.stringify(user, null, 2));
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: `Failed to create user account - invalid user ID: ${user.id}. Please try again.`
+          });
+        }
+        
+        console.log('[register route] User validated, ID:', user.id);
+        
+        // Generate verification token and send email
+        try {
+          console.log('[register route] Generating verification token for user ID:', user.id);
+          // generateVerificationToken já foi importado acima
+          const verificationResult = await generateVerificationToken(user.id);
+          console.log('[register route] Verification token generated successfully');
+          await notifyOwner({
+            title: "New User Registration - Email Verification",
+            content: `User ${user.name} (${input.email}) registered. Verification token: ${verificationResult.token}`,
+          });
+        } catch (tokenError: any) {
+          console.error('[register route] Error generating verification token:', tokenError.message);
+          console.error('[register route] Token error stack:', tokenError.stack);
+          // Don't fail registration if token generation fails
+        }
+        
         // Create session token
+        // Ensure name is always a non-empty string
+        const userName = user.name || user.email || "User";
         const sessionToken = await sdk.createSessionToken(String(user.id), {
-          name: user.name,
+          name: userName,
           expiresInMs: 365 * 24 * 60 * 60 * 1000, // 1 year
         });
         
-        // Set cookie
+        // Set cookie with maxAge
         const cookieOptions = getSessionCookieOptions(ctx.req);
-        ctx.res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
+        ctx.res.cookie(COOKIE_NAME, sessionToken, {
+          ...cookieOptions,
+          maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year
+        });
         
         return { success: true, user };
       }),
@@ -101,22 +148,93 @@ export const appRouter = router({
         password: z.string(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const { loginUser } = await import("./emailAuth");
         const { sdk } = await import("./_core/sdk");
+        const { loginWithEmail } = await import("./emailAuth");
         
-        const user = await loginUser(input);
+        console.log('[login route] Attempting login for:', input.email);
+        const user = await loginWithEmail(input.email, input.password);
+        
+        if (!user) {
+          console.log('[login route] Login failed - user is null');
+          throw new TRPCError({
+            code: 'UNAUTHORIZED',
+            message: 'Invalid email or password'
+          });
+        }
+        
+        console.log('[login route] Login successful, user ID:', user.id);
+        
+        // Determine the identifier to use for the session
+        // Priority: open_id (if set) > auth_id > user.id > email (as fallback)
+        // open_id should match what's stored in the database for session lookup
+        let userIdForSession: string;
+        if (user.open_id) {
+          userIdForSession = user.open_id;
+        } else if (user.auth_id) {
+          userIdForSession = user.auth_id;
+          // Update open_id in database to match auth_id for future lookups
+          try {
+            await db.upsertUser({
+              id: user.id,
+              open_id: user.auth_id
+            });
+          } catch (err) {
+            console.warn('[login route] Failed to update open_id:', err);
+          }
+        } else if (user.id && user.id > 0) {
+          userIdForSession = String(user.id);
+          // Update open_id in database to match user.id for future lookups
+          try {
+            await db.upsertUser({
+              id: user.id,
+              open_id: String(user.id)
+            });
+          } catch (err) {
+            console.warn('[login route] Failed to update open_id:', err);
+          }
+        } else if (user.email) {
+          userIdForSession = user.email;
+        } else {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Unable to create session: no valid user identifier found'
+          });
+        }
+        
+        console.log('[login route] Using user ID for session:', userIdForSession);
+        
+        // Validate that we have a non-empty identifier
+        if (!userIdForSession || userIdForSession.trim().length === 0) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Invalid user identifier for session creation'
+          });
+        }
         
         // Create session token
-        const sessionToken = await sdk.createSessionToken(String(user.id), {
-          name: user.name || user.email || undefined,
+        // Ensure name is always a non-empty string
+        const userName = user.name || user.email || "User";
+        const sessionToken = await sdk.createSessionToken(userIdForSession, {
+          name: userName,
           expiresInMs: 365 * 24 * 60 * 60 * 1000, // 1 year
         });
         
-        // Set cookie
+        // Set cookie with maxAge
         const cookieOptions = getSessionCookieOptions(ctx.req);
-        ctx.res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
+        ctx.res.cookie(COOKIE_NAME, sessionToken, {
+          ...cookieOptions,
+          maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year
+        });
         
-        return { success: true, user };
+        return { 
+          success: true, 
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role
+          }
+        };
       }),
 
     /**
@@ -128,7 +246,6 @@ export const appRouter = router({
         newPassword: z.string().min(6),
       }))
       .mutation(async ({ input, ctx }) => {
-        const { changePassword } = await import("./emailAuth");
         return await changePassword(ctx.user.id, input.oldPassword, input.newPassword);
       }),
 
@@ -141,17 +258,11 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const { generateResetToken } = await import("./emailAuth");
+        // generateResetToken now uses Supabase Auth to send email automatically
         const result = await generateResetToken(input.email);
         
-        // If token was generated (user exists), send email
-        if (result.token && result.email) {
-          // TODO: Send email with reset link
-          // For now, just notify owner (in production, send email to user)
-          await notifyOwner({
-            title: "Password Reset Requested",
-            content: `User ${result.name} (${result.email}) requested a password reset. Token: ${result.token}`,
-          });
-        }
+        // Log for admin notification (optional)
+        console.log('[requestPasswordReset] Password reset requested for:', input.email);
         
         return { success: true };
       }),
@@ -165,7 +276,6 @@ export const appRouter = router({
         newPassword: z.string().min(6),
       }))
       .mutation(async ({ input }) => {
-        const { resetPassword } = await import("./emailAuth");
         return await resetPassword(input.token, input.newPassword);
       }),
 
@@ -195,8 +305,8 @@ export const appRouter = router({
         token: z.string(),
       }))
       .mutation(async ({ input }) => {
-        const { verifyEmail } = await import("./emailAuth");
-        return await verifyEmail(input.token);
+        const { verifyEmail: verifyEmailToken } = await import("./emailAuth");
+        return await verifyEmailToken(input.token);
       }),
 
     /**
@@ -216,10 +326,20 @@ export const appRouter = router({
   // ==================== PET MANAGEMENT ====================
   pets: router({
     list: protectedProcedure.query(async ({ ctx }) => {
-      if (ctx.user.role === "admin") {
-        return await db.getAllPets();
+      try {
+        if (ctx.user.role === "admin") {
+          return await db.getAllPets();
+        }
+        // Skip query if user.id is 0 (temporary user when DB is unavailable)
+        if (ctx.user.id === 0) {
+          console.warn('[pets.list] Temporary user detected, returning empty array');
+          return [];
+        }
+        return await db.getPetsByTutorId(ctx.user.id);
+      } catch (error: any) {
+        console.error('[pets.list] Error fetching pets:', error.message);
+        return [];
       }
-      return await db.getPetsByTutorId(ctx.user.id);
     }),
 
     listMine: protectedProcedure.query(async ({ ctx }) => {
@@ -244,20 +364,31 @@ export const appRouter = router({
         breed: z.string().optional(),
         age: z.string().optional(),
         weight: z.number().optional(),
-        birthDate: z.string().optional(),
-        foodBrand: z.string().optional(),
-        foodAmount: z.number().optional(),
+        birth_date: z.string().optional(),
+        food_brand: z.string().optional(),
+        food_amount: z.number().optional(),
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        // Convert birthDate string to Date if provided
-        const birthDate = input.birthDate ? new Date(input.birthDate) : undefined;
+        // Convert birth_date string to Date if provided
+        const birth_date = input.birth_date ? new Date(input.birth_date) : undefined;
         
-        const petId = await db.createPet({
-          ...input,
-          birthDate,
-          approvalStatus: ctx.user.role === "admin" ? "approved" : "pending",
-        });
+        // Build pet data with snake_case field names (matching schema)
+        const petData: Partial<InsertPet> = {
+          name: input.name,
+          approval_status: ctx.user.role === "admin" ? "approved" : "pending",
+        };
+        
+        // Only add fields that have values (not undefined/null/empty)
+        if (input.breed) petData.breed = input.breed;
+        if (input.age) petData.age = input.age;
+        if (input.weight !== undefined && input.weight !== null) petData.weight = input.weight;
+        if (birth_date) petData.birth_date = birth_date;
+        if (input.food_brand) petData.food_brand = input.food_brand;
+        if (input.food_amount !== undefined && input.food_amount !== null) petData.food_amount = input.food_amount;
+        if (input.notes) petData.notes = input.notes;
+        
+        const petId = await db.createPet(petData as InsertPet);
         
         // Link pet to tutor
         await db.linkPetToTutor(petId, ctx.user.id, true);
@@ -272,13 +403,27 @@ export const appRouter = router({
         breed: z.string().optional(),
         age: z.string().optional(),
         weight: z.number().optional(),
-        birthDate: z.string().optional(),
-        foodBrand: z.string().optional(),
-        foodAmount: z.number().optional(),
+        birth_date: z.string().optional(),
+        food_brand: z.string().optional(),
+        food_amount: z.number().optional(),
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const { id, ...data } = input;
+        const { id, ...inputData } = input;
+        
+        // Convert birth_date string to Date if provided
+        const birth_date = inputData.birth_date ? new Date(inputData.birth_date) : undefined;
+        
+        // Build update data with snake_case field names (matching schema)
+        const data: Partial<InsertPet> = {};
+        if (inputData.name) data.name = inputData.name;
+        if (inputData.breed) data.breed = inputData.breed;
+        if (inputData.age) data.age = inputData.age;
+        if (inputData.weight !== undefined && inputData.weight !== null) data.weight = inputData.weight;
+        if (birth_date) data.birth_date = birth_date;
+        if (inputData.food_brand) data.food_brand = inputData.food_brand;
+        if (inputData.food_amount !== undefined && inputData.food_amount !== null) data.food_amount = inputData.food_amount;
+        if (inputData.notes) data.notes = inputData.notes;
         
         // Check if pet belongs to user
         const userPets = await db.getPetsByTutorId(ctx.user.id);
@@ -289,18 +434,14 @@ export const appRouter = router({
         }
         
         // Only allow editing pending or rejected pets
-        if (pet.approvalStatus === "approved") {
+        if (pet.approval_status === "approved") {
           throw new TRPCError({ code: "FORBIDDEN", message: "Pets aprovados n\u00e3o podem ser editados. Entre em contato com a creche." });
         }
         
-        // Convert birthDate string to Date if provided
-        const birthDate = data.birthDate ? new Date(data.birthDate) : undefined;
+        // Reset approval status to pending after edit
+        data.approval_status = "pending";
         
-        await db.updatePet(id, {
-          ...data,
-          birthDate,
-          approvalStatus: "pending", // Reset to pending after edit
-        });
+        await db.updatePet(id, data);
         
         return { success: true };
       }),
@@ -312,11 +453,11 @@ export const appRouter = router({
         breed: z.string().optional(),
         age: z.string().optional(),
         weight: z.number().optional(),
-        birthDate: z.date().optional(),
-        photoUrl: z.string().optional(),
-        photoKey: z.string().optional(),
-        foodBrand: z.string().optional(),
-        foodAmount: z.number().optional(),
+        birth_date: z.date().optional(),
+        photo_url: z.string().optional(),
+        photo_key: z.string().optional(),
+        food_brand: z.string().optional(),
+        food_amount: z.number().optional(),
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
@@ -324,16 +465,16 @@ export const appRouter = router({
         await db.updatePet(id, data);
         
         // Track change for important fields
-        if (data.weight || data.foodBrand || data.foodAmount) {
+        if (data.weight || data.food_brand || data.food_amount) {
           const changes = [];
           if (data.weight) changes.push(`Peso: ${data.weight}kg`);
-          if (data.foodBrand) changes.push(`Ração: ${data.foodBrand}`);
-          if (data.foodAmount) changes.push(`Quantidade: ${data.foodAmount}g`);
+          if (data.food_brand) changes.push(`Ração: ${data.food_brand}`);
+          if (data.food_amount) changes.push(`Quantidade: ${data.food_amount}g`);
           
           await logChange({
             resourceType: "pet_data",
             resourceId: id,
-            petId: id,
+            pet_id: id,
             fieldName: "pet_info_updated",
             oldValue: null,
             newValue: changes.join(", "),
@@ -358,7 +499,7 @@ export const appRouter = router({
         const now = new Date();
         await db.updatePet(input.petId, {
           status: "checked-in",
-          checkInTime: now,
+          check_in_time: now,
         });
         
         // Send notification to tutors
@@ -373,7 +514,7 @@ export const appRouter = router({
         const now = new Date();
         await db.updatePet(input.petId, {
           status: "checked-out",
-          checkOutTime: now,
+          check_out_time: now,
         });
         
         // Send notification to tutors
@@ -390,7 +531,7 @@ export const appRouter = router({
         return logs
           .filter((log: any) => log.weight)
           .map((log: any) => ({
-            date: log.logDate,
+            date: log.log_date,
             weight: log.weight,
           }));
       }),
@@ -402,7 +543,7 @@ export const appRouter = router({
         return logs
           .filter((log: any) => log.mood)
           .map((log: any) => ({
-            date: log.logDate,
+            date: log.log_date,
             mood: log.mood,
           }));
       }),
@@ -416,7 +557,7 @@ export const appRouter = router({
         // Group by month
         const monthlyFrequency: Record<string, number> = {};
         daycareLog.forEach((log: any) => {
-          const date = new Date(log.logDate);
+          const date = new Date(log.log_date);
           const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
           monthlyFrequency[monthKey] = (monthlyFrequency[monthKey] || 0) + 1;
         });
@@ -464,31 +605,84 @@ export const appRouter = router({
           photoKey: fileKey,
         });
 
-        return { photoUrl: url };
+        return { photo_url: url };
       }),
 
     listPending: adminProcedure.query(async () => {
-      const pets = await db.getPetsByApprovalStatus("pending");
-      // Enrich with tutor info
-      const enrichedPets = await Promise.all(
-        pets.map(async (pet: any) => {
-          const tutors = await db.getPetTutors(pet.id);
-          const primaryTutor = tutors.find((t: any) => t.isPrimary) || tutors[0];
-          return {
-            ...pet,
-            tutorName: primaryTutor?.tutor?.name || "Desconhecido",
-            tutorId: primaryTutor?.tutor?.id,
-          };
-        })
-      );
-      return enrichedPets;
+      // Cache key for pending pets with tutors
+      const cacheKey = 'pets:pending:with-tutors';
+      const { cache } = await import('./cache');
+      const cached = cache.get<any[]>(cacheKey);
+      if (cached !== null) {
+        return cached;
+      }
+      
+      // Optimized: Use JOIN instead of N+1 queries
+      const dbInstance = await getDb();
+      if (!dbInstance) return [];
+      
+      try {
+        // Single query with JOIN to get pets and their primary tutors
+        const result = await dbInstance
+          .select({
+            pet: pets,
+            tutor: users,
+            isPrimary: petTutors.is_primary,
+          })
+          .from(pets)
+          .leftJoin(petTutors, eq(pets.id, petTutors.pet_id))
+          .leftJoin(users, eq(petTutors.tutor_id, users.id))
+          .where(eq(pets.approval_status, "pending"))
+          .orderBy(desc(pets.created_at));
+        
+        // Group by pet and get primary tutor
+        const petMap = new Map();
+        for (const row of result) {
+          const petId = row.pet.id;
+          if (!petMap.has(petId)) {
+            petMap.set(petId, {
+              ...row.pet,
+              tutorName: null,
+              tutorId: null,
+            });
+          }
+          
+          // Prefer primary tutor, otherwise first tutor found
+          const current = petMap.get(petId);
+          if (row.tutor && (!current.tutorName || row.isPrimary)) {
+            current.tutorName = row.tutor.name || "Desconhecido";
+            current.tutorId = row.tutor.id;
+          }
+        }
+        
+        const data = Array.from(petMap.values());
+        cache.set(cacheKey, data, 30 * 1000); // 30 seconds cache
+        return data;
+      } catch (error: any) {
+        console.error('[pets.listPending] Error:', error.message);
+        // Fallback to old method if JOIN fails
+        const petsList = await db.getPetsByApprovalStatus("pending");
+        const enrichedPets = await Promise.all(
+          petsList.map(async (pet: any) => {
+            const tutors = await db.getPetTutors(pet.id);
+            const primaryTutor = tutors.find((t: any) => t.is_primary) || tutors[0];
+            return {
+              ...pet,
+              tutorName: primaryTutor?.tutor?.name || "Desconhecido",
+              tutorId: primaryTutor?.tutor?.id,
+            };
+          })
+        );
+        cache.set(cacheKey, enrichedPets, 30 * 1000);
+        return enrichedPets;
+      }
     }),
 
     approve: adminProcedure
       .input(z.object({ petId: z.number() }))
       .mutation(async ({ input }) => {
         await db.updatePet(input.petId, {
-          approvalStatus: "approved",
+          approval_status: "approved",
         });
         
         // TODO: Send notification to tutor
@@ -502,8 +696,13 @@ export const appRouter = router({
       .input(z.object({ petId: z.number() }))
       .mutation(async ({ input }) => {
         await db.updatePet(input.petId, {
-          approvalStatus: "rejected",
+          approval_status: "rejected",
         });
+        
+        // Invalidate approval cache
+        const { cache } = await import('./cache');
+        cache.invalidatePattern('^pets:approval:');
+        cache.delete('pets:pending:with-tutors');
         
         // TODO: Send notification to tutor
         // const tutors = await db.getPetTutors(input.petId);
@@ -536,14 +735,14 @@ export const appRouter = router({
         await db.addDaycareUsage({
           petId: input.petId,
           usageDate: now,
-          checkInTime: now,
+          check_in_time: now,
           creditId,
         });
         
         // Update pet status
         await db.updatePet(input.petId, {
           status: "checked-in",
-          checkInTime: now,
+          check_in_time: now,
         });
         
         // Send notification to tutors
@@ -564,7 +763,7 @@ export const appRouter = router({
         const now = new Date();
         await db.updatePet(input.petId, {
           status: "checked-out",
-          checkOutTime: now,
+          check_out_time: now,
         });
         
         // Send notification to tutors
@@ -620,7 +819,11 @@ export const appRouter = router({
         isPrimary: z.boolean().default(false),
       }))
       .mutation(async ({ input }) => {
-        await db.addPetTutor(input);
+        await db.addPetTutor({
+          pet_id: input.petId,
+          tutor_id: input.tutorId,
+          is_primary: input.isPrimary,
+        });
         return { success: true };
       }),
 
@@ -651,7 +854,11 @@ export const appRouter = router({
         isPrimary: z.boolean().default(false),
       }))
       .mutation(async ({ input }) => {
-        await db.addPetTutor(input);
+        await db.addPetTutor({
+          pet_id: input.petId,
+          tutor_id: input.tutorId,
+          is_primary: input.isPrimary,
+        });
         return { success: true };
       }),
 
@@ -697,21 +904,21 @@ export const appRouter = router({
 
         // Add credits to pet
         const creditId = await db.addDaycareCredit({
-          petId: input.petId,
-          packageDays: pkg.credits,
-          packagePrice: pkg.priceInCents,
-          remainingDays: pkg.credits,
+          pet_id: input.petId,
+          package_days: pkg.credits,
+          package_price: pkg.priceInCents,
+          remaining_days: pkg.credits,
         });
 
         // Add transaction record
         await db.addTransaction({
-          petId: input.petId,
+          pet_id: input.petId,
           type: "credit",
           category: "daycare_package",
           description: `${pkg.name} - ${pkg.credits} créditos`,
           amount: pkg.priceInCents,
-          transactionDate: new Date(),
-          createdById: ctx.user.id,
+          transaction_date: new Date(),
+          created_by_id: ctx.user.id,
         });
 
         return { success: true, creditId, credits: pkg.credits };
@@ -750,13 +957,13 @@ export const appRouter = router({
         
         // Add transaction record
         await db.addTransaction({
-          petId: input.petId,
+          pet_id: input.petId,
           type: "credit",
           category: "daycare_package",
           description: `Pacote de ${input.packageDays} dias`,
           amount: input.packagePrice,
-          transactionDate: new Date(),
-          createdById: ctx.user.id,
+          transaction_date: new Date(),
+          created_by_id: ctx.user.id,
         });
         
         return { id: creditId };
@@ -807,13 +1014,13 @@ export const appRouter = router({
         
         // Add transaction record
         await db.addTransaction({
-          petId: input.petId,
+          pet_id: input.petId,
           type: "credit",
           category: "daycare_credits",
           description: input.description || `Adição de ${input.amount} créditos`,
           amount: input.amount * 50, // Assuming R$50 per credit
-          transactionDate: new Date(),
-          createdById: ctx.user.id,
+          transaction_date: new Date(),
+          created_by_id: ctx.user.id,
         });
         
         return { success: true };
@@ -828,10 +1035,12 @@ export const appRouter = router({
         description: z.string(),
       }))
       .mutation(async ({ input, ctx }) => {
+        const { petId, ...rest } = input;
         const id = await db.addTransaction({
-          ...input,
-          transactionDate: new Date(),
-          createdById: ctx.user.id,
+          ...rest,
+          pet_id: petId,
+          transaction_date: new Date(),
+          created_by_id: ctx.user.id,
         });
         return { id };
       }),
@@ -874,7 +1083,17 @@ export const appRouter = router({
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const id = await db.addPetVaccination(input);
+        const id = await db.addPetVaccination({
+          pet_id: input.petId,
+          vaccine_id: input.vaccineId,
+          application_date: input.applicationDate,
+          next_due_date: input.nextDueDate,
+          dose_number: input.doseNumber,
+          veterinarian: input.veterinarian,
+          clinic: input.clinic,
+          batch_number: input.batchNumber,
+          notes: input.notes,
+        });
 
         // Track change
         const { logChange } = await import("./changeTracker");
@@ -1209,9 +1428,9 @@ export const appRouter = router({
         const { calculateNextDose } = await import("./medicationScheduler");
         const nextDate = calculateNextDose(new Date(), {
           periodicity: med.periodicity || "daily",
-          customInterval: med.customInterval || undefined,
-          weekDays: med.weekDays ? JSON.parse(med.weekDays) : undefined,
-          monthDays: med.monthDays ? JSON.parse(med.monthDays) : undefined,
+          customInterval: med.custom_interval || undefined,
+          weekDays: med.week_days ? JSON.parse(med.week_days) : undefined,
+          monthDays: med.month_days ? JSON.parse(med.month_days) : undefined,
         });
         
         if (!nextDate) {
@@ -1222,19 +1441,19 @@ export const appRouter = router({
         const { calculateProgressiveDosage } = await import("./dosageProgression");
         let currentDosage = med.dosage;
         
-        if (med.dosageProgression && med.dosageProgression !== "stable") {
+        if (med.dosage_progression && med.dosage_progression !== "stable") {
           currentDosage = calculateProgressiveDosage(med.dosage, {
-            dosageProgression: med.dosageProgression,
-            progressionRate: med.progressionRate || "0",
-            progressionInterval: med.progressionInterval || 1,
-            targetDosage: med.targetDosage || undefined,
-            currentDoseCount: med.currentDoseCount || 0,
+            dosageProgression: med.dosage_progression,
+            progressionRate: med.progression_rate || "0",
+            progressionInterval: med.progression_interval || 1,
+            targetDosage: med.target_dosage || undefined,
+            currentDoseCount: med.current_dose_count || 0,
           });
         }
         
         // Get medication name from library
         const library = await db.getMedicationLibrary();
-        const medInfo = library.find(m => m.id === med.medicationId);
+        const medInfo = library.find(m => m.id === med.medication_id);
         const medName = medInfo?.name || "Medicamento";
 
         // Create calendar event using auto-integration helper
@@ -1250,7 +1469,7 @@ export const appRouter = router({
 
         // Increment dose count
         await db.updatePetMedication(med.id, {
-          currentDoseCount: (med.currentDoseCount || 0) + 1,
+          current_dose_count: (med.current_dose_count || 0) + 1,
         });
 
         return {
@@ -1308,8 +1527,22 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         const id = await db.addDailyLog({
-          ...input,
-          createdById: ctx.user.id,
+          pet_id: input.petId,
+          log_date: input.logDate,
+          source: input.source,
+          mood: input.mood,
+          stool: input.stool,
+          appetite: input.appetite,
+          behavior: input.behavior,
+          behavior_notes: input.behaviorNotes,
+          activities: input.activities,
+          food_consumed: input.foodConsumed,
+          feeding_time: input.feedingTime,
+          feeding_amount: input.feedingAmount,
+          feeding_acceptance: input.feedingAcceptance,
+          weight: input.weight,
+          notes: input.notes,
+          created_by_id: ctx.user.id,
         });
         return { id };
       }),
@@ -1386,7 +1619,7 @@ export const appRouter = router({
         
         // Sort by date descending
         return allLogs.sort((a, b) => 
-          new Date(b.logDate).getTime() - new Date(a.logDate).getTime()
+          new Date(b.log_date).getTime() - new Date(a.log_date).getTime()
         );
       }),
   }),
@@ -1438,9 +1671,18 @@ export const appRouter = router({
         }
         
         const id = await db.addCalendarEvent({
-          ...input,
-          dailyCount,
-          createdById: ctx.user.id,
+          title: input.title,
+          description: input.description,
+          event_date: input.eventDate,
+          end_date: input.endDate,
+          event_type: input.eventType,
+          pet_id: input.petId,
+          location: input.location,
+          is_all_day: input.isAllDay,
+          check_in_date: input.checkInDate,
+          check_out_date: input.checkOutDate,
+          daily_count: dailyCount,
+          created_by_id: ctx.user.id,
         });
         
         // Track change
@@ -1474,7 +1716,12 @@ export const appRouter = router({
         isAllDay: z.boolean().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const { id, petId, ...data } = input;
+        const { id, petId, eventDate, endDate, eventType, isAllDay, ...rest } = input;
+        const data: any = { ...rest };
+        if (eventDate !== undefined) data.event_date = eventDate;
+        if (endDate !== undefined) data.end_date = endDate;
+        if (eventType !== undefined) data.event_type = eventType;
+        if (isAllDay !== undefined) data.is_all_day = isAllDay;
         await db.updateCalendarEvent(id, data);
         
         // Track change
@@ -1578,16 +1825,16 @@ export const appRouter = router({
         const { url } = await storagePut(fileKey, buffer, input.mimeType);
         
         const id = await db.addDocument({
-          petId: input.petId,
+          pet_id: input.petId,
           title: input.title,
           description: input.description,
           category: input.category,
-          fileUrl: url,
-          fileKey,
-          fileName: input.fileName,
-          mimeType: input.mimeType,
-          fileSize: buffer.length,
-          uploadedById: ctx.user.id,
+          file_url: url,
+          file_key: fileKey,
+          file_name: input.fileName,
+          mime_type: input.mimeType,
+          file_size: buffer.length,
+          uploaded_by_id: ctx.user.id,
         });
         
         return { id, url };
@@ -1696,10 +1943,12 @@ export const appRouter = router({
         amount: z.number(),
       }))
       .mutation(async ({ input, ctx }) => {
+        const { petId, ...rest } = input;
         const id = await db.addTransaction({
-          ...input,
-          transactionDate: new Date(),
-          createdById: ctx.user.id,
+          ...rest,
+          pet_id: petId,
+          transaction_date: new Date(),
+          created_by_id: ctx.user.id,
         });
         return { id };
       }),
@@ -1738,25 +1987,66 @@ export const appRouter = router({
   // ==================== DASHBOARD STATS ====================
   dashboard: router({
     stats: adminProcedure.query(async () => {
-      const allPets = await db.getAllPets();
-      const checkedIn = allPets.filter(p => p.status === "checked-in").length;
-      const checkedOut = allPets.filter(p => p.status === "checked-out").length;
+      // Cache entire dashboard stats for 30 seconds
+      const cacheKey = 'dashboard:stats';
+      const { cache } = await import('./cache');
+      const cached = cache.get<{
+        totalPets: number;
+        checkedIn: number;
+        checkedOut: number;
+        monthlyRevenue: number;
+        monthlyExpenses: number;
+        upcomingVaccines: number;
+      }>(cacheKey);
       
-      const today = new Date();
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      if (cached !== null) {
+        return cached;
+      }
       
-      const monthlyFinances = await db.getFinancialSummary(startOfMonth, endOfMonth);
-      const upcomingVaccines = await db.getUpcomingVaccinations(30);
-      
-      return {
-        totalPets: allPets.length,
-        checkedIn,
-        checkedOut,
-        monthlyRevenue: monthlyFinances.credits,
-        monthlyExpenses: monthlyFinances.debits,
-        upcomingVaccines: upcomingVaccines.length,
-      };
+      try {
+        // Optimized: Use direct count query instead of fetching all pets
+        const petsCount = await db.getPetsCountByStatus();
+        
+        const today = new Date();
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        
+        // Execute all queries in parallel for better performance
+        const [monthlyFinances, upcomingVaccines] = await Promise.allSettled([
+          db.getFinancialSummary(startOfMonth, endOfMonth),
+          db.getUpcomingVaccinations(30),
+        ]);
+        
+        const finances = monthlyFinances.status === 'fulfilled' 
+          ? monthlyFinances.value 
+          : { credits: 0, debits: 0, balance: 0 };
+        
+        const vaccines = upcomingVaccines.status === 'fulfilled'
+          ? upcomingVaccines.value
+          : [];
+        
+        const data = {
+          totalPets: petsCount.total,
+          checkedIn: petsCount.checkedIn,
+          checkedOut: petsCount.checkedOut,
+          monthlyRevenue: finances.credits || 0,
+          monthlyExpenses: finances.debits || 0,
+          upcomingVaccines: vaccines.length,
+        };
+        
+        cache.set(cacheKey, data, 60 * 1000); // 1 minute cache (aumentado de 30s para melhor performance)
+        return data;
+      } catch (error: any) {
+        console.error('[dashboard.stats] Error:', error.message);
+        return {
+          totalPets: 0,
+          checkedIn: 0,
+          checkedOut: 0,
+          monthlyRevenue: 0,
+          monthlyExpenses: 0,
+          upcomingVaccines: 0,
+        };
+      }
     }),
   }),
 
@@ -1782,12 +2072,12 @@ export const appRouter = router({
         const { url } = await storagePut(fileKey, buffer, 'image/jpeg');
         
         const photoId = await db.addPetPhoto({
-          petId: input.petId,
-          photoUrl: url,
-          photoKey: fileKey,
+          pet_id: input.petId,
+          photo_url: url,
+          photo_key: fileKey,
           caption: input.caption || null,
-          takenAt: input.takenAt,
-          uploadedById: ctx.user.id,
+          taken_at: input.takenAt,
+          uploaded_by_id: ctx.user.id,
         });
         
         return { id: photoId, url };
@@ -1802,7 +2092,7 @@ export const appRouter = router({
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Photo not found' });
         }
         
-        if (ctx.user.role !== 'admin' && photo.uploadedById !== ctx.user.id) {
+        if (ctx.user.role !== 'admin' && photo.uploaded_by_id !== ctx.user.id) {
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Cannot delete this photo' });
         }
         
@@ -1827,12 +2117,12 @@ export const appRouter = router({
           const { url } = await storagePut(fileKey, buffer, 'image/jpeg');
           
           const photoId = await db.addPetPhoto({
-            petId: input.petId,
-            photoUrl: url,
-            photoKey: fileKey,
+            pet_id: input.petId,
+            photo_url: url,
+            photo_key: fileKey,
             caption: photo.caption || null,
-            takenAt: photo.takenAt,
-            uploadedById: ctx.user.id,
+            taken_at: photo.taken_at,
+            uploaded_by_id: ctx.user.id,
           });
           
           results.push({ id: photoId, url });
@@ -1887,7 +2177,7 @@ export const appRouter = router({
         // Group by date
         const timeline: Record<string, typeof photos> = {};
         photos.forEach((photo: any) => {
-          const dateKey = new Date(photo.takenAt).toISOString().split('T')[0];
+          const dateKey = new Date(photo.taken_at).toISOString().split('T')[0];
           if (!timeline[dateKey]) {
             timeline[dateKey] = [];
           }
@@ -1923,7 +2213,7 @@ export const appRouter = router({
         
         if (vaccinesDue.length > 0) {
           const vaccineList = vaccinesDue.map(v => 
-            `${v.pet.name} - ${v.vaccine.name} (${new Date(v.vaccination.nextDueDate!).toLocaleDateString("pt-BR")})`
+            `${v.pet.name} - ${v.vaccine.name} (${new Date(v.vaccination.next_due_date!).toLocaleDateString("pt-BR")})`
           ).join(", ");
           
           await notifyOwner({
@@ -1953,7 +2243,7 @@ export const appRouter = router({
         
         if (vaccinesDue.length > 0) {
           const vaccineList = vaccinesDue.map(v => 
-            `${v.pet.name} - ${v.vaccine.name} (${new Date(v.vaccination.nextDueDate!).toLocaleDateString("pt-BR")})`
+            `${v.pet.name} - ${v.vaccine.name} (${new Date(v.vaccination.next_due_date!).toLocaleDateString("pt-BR")})`
           ).join(", ");
           
           await notifyOwner({
@@ -2125,16 +2415,20 @@ export const appRouter = router({
         }
 
         const result = await db.createFleaTreatment({
-          ...input,
-          createdById: ctx.user.id,
+          pet_id: input.petId,
+          product_name: input.productName,
+          application_date: input.applicationDate,
+          next_due_date: input.nextDueDate,
+          notes: input.notes,
+          created_by_id: ctx.user.id,
         });
 
         // Track change
         const { logChange } = await import("./changeTracker");
         await logChange({
           resourceType: "preventive",
-          resourceId: result.insertId,
-          petId: input.petId,
+          resourceId: result.id,
+          pet_id: input.petId,
           fieldName: "flea_treatment_added",
           oldValue: null,
           newValue: `${input.productName} - Próxima aplicação: ${input.nextDueDate.toLocaleDateString('pt-BR')}`,
@@ -2146,7 +2440,7 @@ export const appRouter = router({
         // Auto-create calendar events for flea treatment
         await db.autoCreateFleaEvent(
           input.petId,
-          result.insertId,
+          result.id,
           input.productName,
           input.applicationDate,
           input.nextDueDate,
@@ -2156,7 +2450,7 @@ export const appRouter = router({
         // Create event for next due date too
         await db.autoCreateFleaEvent(
           input.petId,
-          result.insertId,
+          result.id,
           input.productName,
           input.nextDueDate,
           undefined,
@@ -2212,16 +2506,20 @@ export const appRouter = router({
         }
 
         const result = await db.createDewormingTreatment({
-          ...input,
-          createdById: ctx.user.id,
+          pet_id: input.petId,
+          product_name: input.productName,
+          application_date: input.applicationDate,
+          next_due_date: input.nextDueDate,
+          notes: input.notes,
+          created_by_id: ctx.user.id,
         });
 
         // Track change
         const { logChange } = await import("./changeTracker");
         await logChange({
           resourceType: "preventive",
-          resourceId: result.insertId,
-          petId: input.petId,
+          resourceId: result.id,
+          pet_id: input.petId,
           fieldName: "deworming_treatment_added",
           oldValue: null,
           newValue: `${input.productName} - Próxima aplicação: ${input.nextDueDate.toLocaleDateString('pt-BR')}`,
@@ -2233,7 +2531,7 @@ export const appRouter = router({
         // Auto-create calendar events for deworming treatment
         await db.autoCreateDewormingEvent(
           input.petId,
-          result.insertId,
+          result.id,
           input.productName,
           input.applicationDate,
           input.nextDueDate,
@@ -2577,6 +2875,38 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         await db.deleteUser(input.userId);
         return { success: true };
       }),
+
+    /**
+     * Create user directly in Supabase Auth (admin only)
+     * Useful for creating users without email confirmation
+     */
+    createInSupabase: adminProcedure
+      .input(z.object({
+        email: z.string().email(),
+        password: z.string().min(6),
+        name: z.string().min(1),
+        emailVerified: z.boolean().optional().default(true),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { createUserInSupabase } = await import("./emailAuth");
+        const user = await createUserInSupabase(
+          input.email,
+          input.password,
+          input.name,
+          input.emailVerified
+        );
+        
+        await logAdminAction({
+          adminId: ctx.user.id,
+          action: "create_user_supabase",
+          targetType: "user",
+          targetId: user.id,
+          details: { email: input.email },
+          req: ctx.req,
+        });
+        
+        return { success: true, user };
+      }),
   }),
 
   // ==================== ADMIN LOGS ====================
@@ -2681,9 +3011,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         productKey: z.string(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-          apiVersion: "2025-12-15.clover",
-        });
+        const stripe = getStripe();
 
         const product = PRODUCTS[input.productKey as keyof typeof PRODUCTS];
         if (!product) {
@@ -3235,7 +3563,18 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
      */
     getDashboardStats: protectedProcedure
       .query(async () => {
-        return await db.getHealthDashboardStats();
+        try {
+          return await db.getHealthDashboardStats();
+        } catch (error: any) {
+          console.warn('[healthStats.getDashboardStats] Error:', error.message);
+          return {
+            totalPets: 0,
+            petsWithVaccines: 0,
+            petsWithMedications: 0,
+            upcomingVaccines: [],
+            upcomingMedications: [],
+          };
+        }
       }),
 
     /**
@@ -3344,11 +3683,16 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const data = {
-          ...input,
-          createdById: ctx.user.id,
-        };
-        return await db.addPetVaccination(data);
+        return await db.addPetVaccination({
+          pet_id: input.petId,
+          vaccine_id: input.vaccineId,
+          application_date: input.applicationDate,
+          next_due_date: input.nextDueDate,
+          veterinarian: input.veterinarian,
+          clinic: input.clinic,
+          notes: input.notes,
+          created_by_id: ctx.user.id,
+        });
       }),
 
     /**
@@ -3365,11 +3709,16 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const data = {
-          ...input,
-          createdById: ctx.user.id,
-        };
-        return await db.addPetMedication(data);
+        return await db.addPetMedication({
+          pet_id: input.petId,
+          medication_id: input.medicationId,
+          start_date: input.startDate,
+          end_date: input.endDate,
+          dosage: input.dosage,
+          frequency: input.frequency,
+          notes: input.notes,
+          created_by_id: ctx.user.id,
+        });
       }),
 
     /**
@@ -3410,9 +3759,12 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         transactionDate: z.date(),
       }))
       .mutation(async ({ input, ctx }) => {
+        const { petId, transactionDate, ...rest } = input;
         const data = {
-          ...input,
-          createdById: ctx.user.id,
+          ...rest,
+          pet_id: petId,
+          transaction_date: transactionDate,
+          created_by_id: ctx.user.id,
         };
         return await db.addTransaction(data);
       }),
@@ -3608,13 +3960,13 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         
         // Send notification to each tutor
         for (const tutor of tutors) {
-          if (tutor.tutorId) {
+          if (tutor.tutor_id) {
             await db.createNotification({
-              userId: tutor.tutorId,
+              user_id: tutor.tutor_id,
               type: "system",
               title: input.title,
               message: input.message,
-              isRead: false,
+              is_read: false,
             });
           }
         }
@@ -3648,7 +4000,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         const { createBookingRequest } = await import("./bookingRequests.db");
         const result = await createBookingRequest({
           petId: input.petId,
-          tutorId: ctx.user.openId || ctx.user.email || "",
+          tutorId: ctx.user.open_id || ctx.user.email || "",
           requestedDates: input.requestedDates,
           notes: input.notes,
         });
@@ -3672,7 +4024,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
     myRequests: protectedProcedure
       .query(async ({ ctx }) => {
         const { getTutorBookingRequests } = await import("./bookingRequests.db");
-        return await getTutorBookingRequests(ctx.user.openId || ctx.user.email || "");
+        return await getTutorBookingRequests(ctx.user.open_id || ctx.user.email || "");
       }),
 
     /**
@@ -3682,7 +4034,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
         const { cancelBookingRequest } = await import("./bookingRequests.db");
-        return await cancelBookingRequest(input.id, ctx.user.openId || ctx.user.email || "");
+        return await cancelBookingRequest(input.id, ctx.user.open_id || ctx.user.email || "");
       }),
 
     /**
@@ -3725,7 +4077,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           .from(bookingRequests)
           .where(eq(bookingRequests.id, input.id));
 
-        const result = await approveBookingRequest(input.id, ctx.user.openId || ctx.user.email || "", input.adminNotes);
+        const result = await approveBookingRequest(input.id, ctx.user.open_id || ctx.user.email || "", input.adminNotes);
 
         // Notify tutor about approval
         if (request) {
@@ -3763,7 +4115,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           .from(bookingRequests)
           .where(eq(bookingRequests.id, input.id));
 
-        const result = await rejectBookingRequest(input.id, ctx.user.openId || ctx.user.email || "", input.adminNotes);
+        const result = await rejectBookingRequest(input.id, ctx.user.open_id || ctx.user.email || "", input.adminNotes);
 
         // Notify tutor about rejection
         if (request) {
@@ -3950,6 +4302,13 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
     }),
 
     /**
+     * Get total daily food consumption (optimized)
+     */
+    getTotalDailyConsumption: adminProcedure.query(async () => {
+      return await db.getTotalDailyFoodConsumption();
+    }),
+
+    /**
      * Add stock
      */
     addStock: adminProcedure
@@ -4108,7 +4467,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           return { success: true, id: existing.id };
         } else {
           const id = await db.createTutorNotificationPreference({
-            tutorId: ctx.user.id,
+            tutor_id: ctx.user.id,
             notificationType: input.notificationType,
             enabled: input.enabled,
           });
@@ -4202,15 +4561,21 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         }
         
         const result = await db.createHealthBehaviorLog({
-          ...input,
-          recordedBy: ctx.user.id,
-          recordedAt: input.recordedAt || new Date(),
+          pet_id: input.petId,
+          mood: input.mood,
+          behavior: input.behavior,
+          stool: input.stool,
+          appetite: input.appetite,
+          water_intake: input.waterIntake,
+          notes: input.notes,
+          recorded_by: ctx.user.id,
+          recorded_at: input.recordedAt || new Date(),
         });
 
         // Auto-create calendar event for health/behavior log
         await db.autoCreateHealthLogEvent(
           input.petId,
-          result.insertId,
+          result.id,
           input.recordedAt || new Date(),
           input.mood,
           input.behavior,

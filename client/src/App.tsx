@@ -75,6 +75,7 @@ const TutorReports = lazy(() => import("./pages/TutorReports"));
 const TutorDocuments = lazy(() => import("./pages/TutorDocuments"));
 const TutorSubscriptions = lazy(() => import("./pages/TutorSubscriptions"));
 const TutorPreventive = lazy(() => import("./pages/TutorPreventive"));
+const TutorHealth = lazy(() => import("./pages/TutorHealth"));
 const TutorBehavior = lazy(() => import("./pages/TutorBehavior"));
 const TutorAI = lazy(() => import("./pages/TutorAI"));
 const TutorBooking = lazy(() => import("./pages/TutorBooking"));
@@ -160,6 +161,7 @@ function Router() {
       <Route path="/tutor/documents" component={TutorDocuments} />
       <Route path="/tutor/subscriptions" component={TutorSubscriptions} />
       <Route path="/tutor/preventive" component={TutorPreventive} />
+      <Route path="/tutor/health" component={TutorHealth} />
       <Route path="/tutor/behavior" component={TutorBehavior} />
       <Route path="/tutor/ai" component={TutorAI} />
       <Route path="/tutor/booking" component={TutorBooking} />

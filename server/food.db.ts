@@ -1,6 +1,7 @@
 import { eq, desc } from "drizzle-orm";
 import { getDb } from "./db";
 import * as schema from "../drizzle/schema";
+import { cache } from "./cache";
 
 /**
  * Get current food stock
@@ -27,8 +28,15 @@ function gramsToKg(grams: number): number {
 
 /**
  * Get food statistics
+ * Cached for 30 seconds
  */
 export async function getFoodStats() {
+  const cacheKey = 'food:stats';
+  const cached = cache.get<any>(cacheKey);
+  if (cached !== null) {
+    return cached;
+  }
+  
   const db = await getDb();
   const stock = await getCurrentStock();
   const recentMovements = await db!
@@ -37,7 +45,7 @@ export async function getFoodStats() {
     .orderBy(desc(schema.foodMovements.createdAt))
     .limit(10);
 
-  return {
+  const data = {
     currentStockKg: gramsToKg(stock.currentStockKg),
     lastUpdated: stock.lastUpdated,
     recentMovements: recentMovements.map(m => ({
@@ -45,6 +53,9 @@ export async function getFoodStats() {
       amountKg: gramsToKg(Math.abs(m.amountKg)),
     })),
   };
+  
+  cache.set(cacheKey, data, 60 * 1000); // 1 minute cache (aumentado de 30s para melhor performance)
+  return data;
 }
 
 /**
@@ -80,6 +91,10 @@ export async function addStock(amountKg: number, notes?: string, createdBy?: num
     createdAt: new Date(),
   });
 
+  // Invalidate cache
+  cache.delete('food:stats');
+  cache.delete('food:total-daily-consumption');
+
   return { success: true };
 }
 
@@ -109,6 +124,10 @@ export async function recordDailyConsumption(amountKg: number, notes?: string) {
     notes,
     createdAt: new Date(),
   });
+
+  // Invalidate cache
+  cache.delete('food:stats');
+  cache.delete('food:total-daily-consumption');
 
   return { success: true };
 }
