@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -339,7 +340,7 @@ export const appRouter = router({
             oldValue: null,
             newValue: changes.join(", "),
             changedBy: ctx.user.id,
-            changedByRole: ctx.user.role as "admin" | "tutor",
+            changedByRole: ctx.user.role as "admin" | "tutor" | "user",
             changeType: "update",
           });
         }
@@ -1234,7 +1235,7 @@ export const appRouter = router({
         // Calculate next dose date
         const { calculateNextDose } = await import("./medicationScheduler");
         const nextDate = calculateNextDose(new Date(), {
-          periodicity: med.periodicity || "daily",
+          periodicity: (med.periodicity || "daily") as "daily" | "weekly" | "monthly" | "custom",
           customInterval: med.custom_interval || undefined,
           weekDays: med.week_days ? JSON.parse(med.week_days) : undefined,
           monthDays: med.month_days ? JSON.parse(med.month_days) : undefined,
@@ -1250,7 +1251,7 @@ export const appRouter = router({
         
         if (med.dosage_progression && med.dosage_progression !== "stable") {
           currentDosage = calculateProgressiveDosage(med.dosage, {
-            dosageProgression: med.dosage_progression,
+            dosageProgression: (med.dosage_progression) as "stable" | "increase" | "decrease",
             progressionRate: med.progression_rate || "0",
             progressionInterval: med.progression_interval || 1,
             targetDosage: med.target_dosage || undefined,
@@ -1884,7 +1885,7 @@ export const appRouter = router({
             photo_url: url,
             photo_key: fileKey,
             caption: photo.caption || null,
-            taken_at: photo.takenAt,
+            taken_at: photo.takenAt, // photo.takenAt is from input, schema uses taken_at
             uploaded_by_id: ctx.user.id,
           });
           
@@ -2186,11 +2187,13 @@ export const appRouter = router({
           createdById: ctx.user.id,
         });
 
+        const resultId = (result as any).id;
+
         // Track change
         const { logChange } = await import("./changeTracker");
         await logChange({
           resourceType: "preventive",
-          resourceId: result.id,
+          resourceId: resultId,
           petId: input.petId,
           fieldName: "flea_treatment_added",
           oldValue: null,
@@ -2203,7 +2206,7 @@ export const appRouter = router({
         // Auto-create calendar events for flea treatment
         await db.autoCreateFleaEvent(
           input.petId,
-          result.id,
+          resultId,
           input.productName,
           input.applicationDate,
           input.nextDueDate,
@@ -2213,7 +2216,7 @@ export const appRouter = router({
         // Create event for next due date too
         await db.autoCreateFleaEvent(
           input.petId,
-          result.id,
+          resultId,
           input.productName,
           input.nextDueDate,
           undefined,
@@ -2277,11 +2280,13 @@ export const appRouter = router({
           createdById: ctx.user.id,
         });
 
+        const resultId = (result as any).id;
+
         // Track change
         const { logChange } = await import("./changeTracker");
         await logChange({
           resourceType: "preventive",
-          resourceId: result.id,
+          resourceId: resultId,
           petId: input.petId,
           fieldName: "deworming_treatment_added",
           oldValue: null,
@@ -2294,7 +2299,7 @@ export const appRouter = router({
         // Auto-create calendar events for deworming treatment
         await db.autoCreateDewormingEvent(
           input.petId,
-          result.id,
+          resultId,
           input.productName,
           input.applicationDate,
           input.nextDueDate,
@@ -2304,7 +2309,7 @@ export const appRouter = router({
         // Create event for next due date too
         await db.autoCreateDewormingEvent(
           input.petId,
-          result.id,
+          resultId,
           input.productName,
           input.nextDueDate,
           undefined,
@@ -4285,10 +4290,12 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           recordedAt: input.recordedAt || new Date(),
         });
 
+        const logId = result?.id ?? 0;
+
         // Auto-create calendar event for health/behavior log
         await db.autoCreateHealthLogEvent(
           input.petId,
-          result.id,
+          logId,
           input.recordedAt || new Date(),
           input.mood,
           input.behavior,

@@ -46,6 +46,9 @@ export function initializeWebSocket(httpServer: HTTPServer) {
       }
 
       // Get user from database to get role
+      if (!db) {
+        return next(new Error("Authentication error: Database not available"));
+      }
       const [user] = await db
         .select()
         .from(users)

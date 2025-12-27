@@ -172,19 +172,9 @@ export async function resetPassword(token: string, newPassword: string) {
     throw new Error("Invalid or expired reset token");
   }
 
-  // Hash new password
-  const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
-
   // Note: Password reset should be done via Supabase Auth
   // This is a placeholder - actual implementation should use Supabase Auth
   throw new Error("Password reset should be done via Supabase Auth");
-
-  // Mark token as used
-  await db.update(passwordResetTokens)
-    .set({ used: true })
-    .where(eq(passwordResetTokens.id, resetToken.id));
-
-  return { success: true };
 }
 
 /**

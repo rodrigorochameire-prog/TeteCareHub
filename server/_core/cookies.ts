@@ -1,4 +1,4 @@
-import type { CookieOptions, Request } from "express";
+import type { CookieOptions } from "express";
 
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 
@@ -8,10 +8,10 @@ function isIpAddress(host: string) {
   return host.includes(":");
 }
 
-function isSecureRequest(req: Request) {
-  if (req.protocol === "https") return true;
+function isSecureRequest(req: any) {
+  if ((req as any).protocol === "https") return true;
 
-  const forwardedProto = req.headers["x-forwarded-proto"];
+  const forwardedProto = (req as any).headers?.["x-forwarded-proto"];
   if (!forwardedProto) return false;
 
   const protoList = Array.isArray(forwardedProto)
@@ -22,9 +22,9 @@ function isSecureRequest(req: Request) {
 }
 
 export function getSessionCookieOptions(
-  req: Request
+  req: any
 ): Partial<CookieOptions> {
-  const hostname = req.hostname;
+  const hostname = (req as any).hostname;
   const shouldSetDomain =
     hostname &&
     !LOCAL_HOSTS.has(hostname) &&

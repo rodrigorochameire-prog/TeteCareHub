@@ -69,7 +69,7 @@ export async function createContext(
     const {
       data: { user: supabaseUser },
       error,
-    } = await supabase.auth.getUser(token);
+    } = await (supabase.auth as any).getUser(token);
 
     if (error || !supabaseUser) {
       return {
