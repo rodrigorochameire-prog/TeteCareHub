@@ -1,4 +1,8 @@
-import type { Request, Response } from "express";
+import dotenv from "dotenv";
+// Load .env.local first (development), then .env (production)
+dotenv.config({ path: ".env.local" });
+dotenv.config(); // This will load .env and won't override .env.local values
+
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "../server/routers";
@@ -6,10 +10,9 @@ import { createContext } from "../server/_core/context";
 import { uploadRouter } from "../server/uploadRouter";
 import { handleStripeWebhook } from "../server/stripeWebhook";
 
-// Create Express app
 const app = express();
 
-// Trust proxy for Vercel
+// Configure Express to trust proxy (for Vercel)
 app.set("trust proxy", 1);
 
 // Stripe webhook MUST be registered BEFORE express.json() for signature verification
@@ -31,6 +34,5 @@ app.use(
   })
 );
 
-// Export the handler for Vercel
-// Vercel serverless functions accept Express apps directly
+// Export the Express app as a serverless function handler
 export default app;
