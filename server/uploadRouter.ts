@@ -1,10 +1,10 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 
 export const uploadRouter = Router();
 
-uploadRouter.post("/upload-photo", async (req, res) => {
+uploadRouter.post("/upload-photo", async (req: Request, res: Response) => {
   try {
     const { fileName, fileType, fileData } = req.body;
 

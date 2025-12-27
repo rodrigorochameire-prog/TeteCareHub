@@ -101,11 +101,11 @@ export async function createNotification(data: NotificationData) {
       type: data.type,
       title: data.title,
       message: data.message,
-      resourceType: data.resourceType,
-      resourceId: data.resourceId,
-      isRead: false,
-      isSent: true,
-      sentAt: new Date(),
+      resource_type: data.resourceType,
+      resource_id: data.resourceId,
+      is_read: false,
+      is_sent: true,
+      sent_at: new Date(),
     });
 
     // Also notify via email (using existing notifyOwner for now)

@@ -18,32 +18,26 @@ function isSecureRequest(req: Request) {
     ? forwardedProto
     : forwardedProto.split(",");
 
-  return protoList.some(proto => proto.trim().toLowerCase() === "https");
+  return protoList.some((proto: string) => proto.trim().toLowerCase() === "https");
 }
 
 export function getSessionCookieOptions(
   req: Request
-): Pick<CookieOptions, "domain" | "httpOnly" | "path" | "sameSite" | "secure"> {
-  // const hostname = req.hostname;
-  // const shouldSetDomain =
-  //   hostname &&
-  //   !LOCAL_HOSTS.has(hostname) &&
-  //   !isIpAddress(hostname) &&
-  //   hostname !== "127.0.0.1" &&
-  //   hostname !== "::1";
+): Partial<CookieOptions> {
+  const hostname = req.hostname;
+  const shouldSetDomain =
+    hostname &&
+    !LOCAL_HOSTS.has(hostname) &&
+    !isIpAddress(hostname);
 
-  // const domain =
-  //   shouldSetDomain && !hostname.startsWith(".")
-  //     ? `.${hostname}`
-  //     : shouldSetDomain
-  //       ? hostname
-  //       : undefined;
+  const domain = shouldSetDomain 
+    ? (hostname.startsWith(".") ? hostname : undefined)
+    : undefined;
 
   return {
+    domain,
     httpOnly: true,
     path: "/",
-    // FIX: "lax" é mais seguro e robusto que "none" para a maioria das apps modernas
-    // "none" exige estritamente secure: true, o que falha se o proxy não for detectado
     sameSite: "lax",
     secure: isSecureRequest(req),
   };

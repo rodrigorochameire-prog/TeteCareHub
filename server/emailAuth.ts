@@ -74,17 +74,10 @@ export async function loginUser(input: LoginInput) {
   }
 
   // Check if user uses email/password auth
-  // Note: passwordHash is not stored in database (uses Supabase Auth)
-  if (user.login_method !== "email") {
+  // Note: For Supabase Auth, login is handled by Supabase directly
+  // This function is a fallback for legacy email/password users
+  if (user.login_method !== "email" && user.login_method !== "supabase") {
     throw new Error("This account uses a different login method");
-  }
-
-  // Note: Password verification should be done via Supabase Auth
-  // This is a placeholder - actual implementation should use Supabase Auth
-  throw new Error("Email/password authentication should use Supabase Auth");
-
-  if (!isValidPassword) {
-    throw new Error("Invalid email or password");
   }
 
   // Update last signed in

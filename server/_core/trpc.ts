@@ -12,7 +12,7 @@ export const router = t.router;
 
 const rateLimitMiddleware = t.middleware(async opts => {
   const { ctx, path } = opts;
-  const identifier = ctx.user?.id?.toString() || ctx.req.ip || "anonymous";
+  const identifier = ctx.user?.id?.toString() || (ctx.req as any).ip || "anonymous";
 
   // Apply rate limiting based on route type
   if (path.includes("auth.login") || path.includes("auth.register")) {

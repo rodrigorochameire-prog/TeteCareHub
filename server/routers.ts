@@ -28,8 +28,8 @@ const adminProcedure = protectedProcedure.use(async ({ ctx, next, path }) => {
       action: path,
       success: isAdmin,
       errorCode: isAdmin ? null : "FORBIDDEN",
-      ipAddress: ctx.req.ip || ctx.req.headers["x-forwarded-for"] as string || null,
-      userAgent: ctx.req.headers["user-agent"] || null,
+      ipAddress: (ctx.req as any).ip || (ctx.req as any).headers?.["x-forwarded-for"] as string || null,
+      userAgent: (ctx.req as any).headers?.["user-agent"] || null,
     });
   } catch (err) {
     // Don't fail the request if logging fails
@@ -53,7 +53,7 @@ export const appRouter = router({
     
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      (ctx.res as any).clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
 
@@ -88,7 +88,7 @@ export const appRouter = router({
         
         // Set cookie
         const cookieOptions = getSessionCookieOptions(ctx.req);
-        ctx.res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
+        (ctx.res as any).cookie(COOKIE_NAME, sessionToken, cookieOptions);
         
         return { success: true, user };
       }),
@@ -115,7 +115,7 @@ export const appRouter = router({
         
         // Set cookie
         const cookieOptions = getSessionCookieOptions(ctx.req);
-        ctx.res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
+        (ctx.res as any).cookie(COOKIE_NAME, sessionToken, cookieOptions);
         
         return { success: true, user };
       }),
@@ -2665,7 +2665,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         });
 
         // Send email with invite link
-        const origin = ctx.req.headers.origin || "http://localhost:3000";
+        const origin = (ctx.req as any).headers?.origin || "http://localhost:3000";
         const inviteUrl = `${origin}/accept-invite?token=${token}`;
 
         // TODO: Implement email sending service
@@ -2738,7 +2738,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           throw new TRPCError({ code: "BAD_REQUEST", message: "Produto inv\u00e1lido" });
         }
 
-        const origin = ctx.req.headers.origin || "http://localhost:3000";
+        const origin = (ctx.req as any).headers?.origin || "http://localhost:3000";
 
         const session = await stripe.checkout.sessions.create({
           mode: "payment",

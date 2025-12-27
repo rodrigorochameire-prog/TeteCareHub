@@ -25,7 +25,7 @@ export function initializeWebSocket(httpServer: HTTPServer) {
       origin: "*", // In production, restrict to your domain
       methods: ["GET", "POST"],
     },
-  });
+  } as any);
 
   // Authentication middleware
   io.use(async (socket: AuthenticatedSocket, next) => {
