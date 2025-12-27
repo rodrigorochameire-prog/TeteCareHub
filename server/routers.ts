@@ -334,7 +334,7 @@ export const appRouter = router({
           await logChange({
             resourceType: "pet_data",
             resourceId: id,
-            pet_id: id,
+            petId: id,
             fieldName: "pet_info_updated",
             oldValue: null,
             newValue: changes.join(", "),
@@ -753,19 +753,22 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         const creditId = await db.addDaycareCredit({
-          ...input,
-          remainingDays: input.packageDays,
+          pet_id: input.petId,
+          package_days: input.packageDays,
+          package_price: input.packagePrice,
+          remaining_days: input.packageDays,
+          expiry_date: input.expiryDate,
         });
         
         // Add transaction record
         await db.addTransaction({
-          petId: input.petId,
+          pet_id: input.petId,
           type: "credit",
           category: "daycare_package",
           description: `Pacote de ${input.packageDays} dias`,
           amount: input.packagePrice,
-          transactionDate: new Date(),
-          createdById: ctx.user.id,
+          transaction_date: new Date(),
+          created_by_id: ctx.user.id,
         });
         
         return { id: creditId };
@@ -1873,7 +1876,7 @@ export const appRouter = router({
             photo_url: url,
             photo_key: fileKey,
             caption: photo.caption || null,
-            taken_at: photo.taken_at,
+            taken_at: photo.takenAt,
             uploaded_by_id: ctx.user.id,
           });
           
@@ -2167,12 +2170,12 @@ export const appRouter = router({
         }
 
         const result = await db.createFleaTreatment({
-          pet_id: input.petId,
-          product_name: input.productName,
-          application_date: input.applicationDate,
-          next_due_date: input.nextDueDate,
+          petId: input.petId,
+          productName: input.productName,
+          applicationDate: input.applicationDate,
+          nextDueDate: input.nextDueDate,
           notes: input.notes,
-          created_by_id: ctx.user.id,
+          createdById: ctx.user.id,
         });
 
         // Track change
@@ -2180,7 +2183,7 @@ export const appRouter = router({
         await logChange({
           resourceType: "preventive",
           resourceId: result.id,
-          pet_id: input.petId,
+          petId: input.petId,
           fieldName: "flea_treatment_added",
           oldValue: null,
           newValue: `${input.productName} - Próxima aplicação: ${input.nextDueDate.toLocaleDateString('pt-BR')}`,
@@ -2258,12 +2261,12 @@ export const appRouter = router({
         }
 
         const result = await db.createDewormingTreatment({
-          pet_id: input.petId,
-          product_name: input.productName,
-          application_date: input.applicationDate,
-          next_due_date: input.nextDueDate,
+          petId: input.petId,
+          productName: input.productName,
+          applicationDate: input.applicationDate,
+          nextDueDate: input.nextDueDate,
           notes: input.notes,
-          created_by_id: ctx.user.id,
+          createdById: ctx.user.id,
         });
 
         // Track change
@@ -2271,7 +2274,7 @@ export const appRouter = router({
         await logChange({
           resourceType: "preventive",
           resourceId: result.id,
-          pet_id: input.petId,
+          petId: input.petId,
           fieldName: "deworming_treatment_added",
           oldValue: null,
           newValue: `${input.productName} - Próxima aplicação: ${input.nextDueDate.toLocaleDateString('pt-BR')}`,
@@ -2293,7 +2296,7 @@ export const appRouter = router({
         // Create event for next due date too
         await db.autoCreateDewormingEvent(
           input.petId,
-          result.insertId,
+          result.id,
           input.productName,
           input.nextDueDate,
           undefined,

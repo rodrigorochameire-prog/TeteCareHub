@@ -1292,7 +1292,7 @@ export async function createTrainingProgress(data: InsertTrainingProgress) {
 export async function listTrainingProgress(petId?: number) {
   const db = await getDb();
   if (petId) {
-    return db!.select().from(trainingProgress).where(eq(trainingProgress.petId, pet_id)).orderBy(desc(trainingProgress.updatedAt));
+    return db!.select().from(trainingProgress).where(eq(trainingProgress.petId, petId)).orderBy(desc(trainingProgress.updatedAt));
   }
   return db!.select().from(trainingProgress).orderBy(desc(trainingProgress.updatedAt));
 }
@@ -1301,7 +1301,7 @@ export async function updateTrainingProgress(id: number, currentLevel: number, n
   const db = await getDb();
   const updated = await db!
     .update(trainingProgress)
-    .set({ currentLevel, notes, updated_at: new Date() })
+    .set({ currentLevel, notes, updatedAt: new Date() })
     .where(eq(trainingProgress.id, id));
   return updated;
 }
@@ -1373,7 +1373,7 @@ export async function addPhotoReaction(photoId: number, user_id: number, reactio
 
 export async function removePhotoReaction(photoId: number, user_id: number) {
   const db = await getDb();
-  await db!.delete(photoReactions).where(and(eq(photoReactions.photoId, photoId), eq(photoReactions.userId, userId)));
+  await db!.delete(photoReactions).where(and(eq(photoReactions.photoId, photoId), eq(photoReactions.userId, user_id)));
 }
 
 export async function getPhotoReactions(photoId: number) {
@@ -3554,7 +3554,7 @@ export function calculateRestockDate(
 export async function createWallPost(data: InsertWallPost) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const [result] = await db.insert(wallPosts).values(data);
+  const [result] = await db.insert(wallPosts).values(data).returning();
   return result.id;
 }
 
@@ -3588,7 +3588,7 @@ export async function getWallPosts(limit: number = 20, offset: number = 0, petId
   
   // Filter by petId if provided
   if (petId !== undefined) {
-    query = query.where(eq(wallPosts.petId, pet_id)) as any;
+    query = query.where(eq(wallPosts.petId, petId)) as any;
   }
   
   // Filter by targetType if provided
@@ -3601,7 +3601,7 @@ export async function getWallPosts(limit: number = 20, offset: number = 0, petId
     const userInfo = await db.select().from(users).where(eq(users.id, userId));
     if (userInfo[0]?.role === "user") {
       // Get user's pets
-      const userPets = await db.select().from(petTutors).where(eq(petTutors.tutor_id, user_id));
+      const userPets = await db.select().from(petTutors).where(eq(petTutors.tutor_id, userId));
       const petIds = userPets.map(pt => pt.pet_id);
       
       // Show: general posts OR posts targeted to this tutor OR posts targeted to their pets
@@ -3656,7 +3656,7 @@ export async function deleteWallPost(id: number) {
 export async function addWallComment(postId: number, authorId: number, comment: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const [result] = await db.insert(wallComments).values({ postId, authorId, comment });
+  const [result] = await db.insert(wallComments).values({ postId, authorId, comment }).returning();
   return result.id;
 }
 
@@ -3741,7 +3741,7 @@ export async function getWallReactionCounts(postId: number) {
 export async function createConversation(data: InsertConversation) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const [result] = await db.insert(conversations).values(data);
+  const [result] = await db.insert(conversations).values(data).returning();
   return result.id;
 }
 
@@ -3768,7 +3768,7 @@ export async function getConversationById(id: number) {
 export async function addChatMessage(data: InsertChatMessage) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const [result] = await db.insert(chatMessages).values(data);
+  const [result] = await db.insert(chatMessages).values(data).returning();
   
   // Update conversation lastMessageAt
   await db

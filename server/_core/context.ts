@@ -13,9 +13,10 @@ function getSupabaseAdmin() {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error(
-        `Missing Supabase environment variables. VITE_SUPABASE_URL: ${supabaseUrl ? "OK" : "MISSING"}, SUPABASE_SERVICE_ROLE_KEY: ${supabaseServiceKey ? "OK" : "MISSING"}`
+      console.warn(
+        `[Supabase] Missing environment variables. VITE_SUPABASE_URL: ${supabaseUrl ? "OK" : "MISSING"}, SUPABASE_SERVICE_ROLE_KEY: ${supabaseServiceKey ? "OK" : "MISSING"}`
       );
+      return null;
     }
     supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
@@ -54,10 +55,20 @@ export async function createContext(
     const token = authHeader.substring(7);
 
     // Verify token with Supabase
+    const supabase = getSupabaseAdmin();
+    if (!supabase) {
+      console.warn("[Auth] Supabase not configured, skipping auth");
+      return {
+        req: opts.req,
+        res: opts.res,
+        user: null,
+      };
+    }
+
     const {
       data: { user: supabaseUser },
       error,
-    } = await getSupabaseAdmin().auth.getUser(token);
+    } = await supabase.auth.getUser(token);
 
     if (error || !supabaseUser) {
       return {
