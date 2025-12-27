@@ -52,8 +52,8 @@ export default function AdminPreventivesAll() {
         petId: pet.id,
         type: "Antipulgas" as const,
         product: treatment.productName,
-        lastApplication: treatment.applicationDate,
-        nextApplication: treatment.nextDueDate,
+        lastApplication: treatment.application_date,
+        nextApplication: treatment.next_due_date,
         notes: treatment.notes,
       }))
     ),
@@ -64,8 +64,8 @@ export default function AdminPreventivesAll() {
         petId: pet.id,
         type: "Vermífugo" as const,
         product: treatment.productName,
-        lastApplication: treatment.applicationDate,
-        nextApplication: treatment.nextDueDate,
+        lastApplication: treatment.application_date,
+        nextApplication: treatment.next_due_date,
         notes: treatment.notes,
       }))
     ),

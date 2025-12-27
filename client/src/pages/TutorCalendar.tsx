@@ -85,12 +85,6 @@ export default function TutorCalendar() {
     enabled: activeTab === "logs",
   });
 
-  // Fetch recent changes for cogestão (co-management) - mostrar alterações do admin
-  const { data: recentChangesData } = trpc.changeHistory.getPetHistory.useQuery(
-    { petId: selectedPet || 0 },
-    { enabled: false } // Desabilitado por padrão, pode ser habilitado quando necessário
-  );
-
   // Transform and merge all events for tutor
   const allEvents = useMemo(() => {
     if (!calendarEventsData && !vaccinesData && !medicationsData) {
@@ -102,65 +96,25 @@ export default function TutorCalendar() {
 
     // Transform calendar events
     const calendarEvents: CalendarEvent[] = (calendarEventsData || [])
-      .filter((event: any) => {
-        if (!event) return false;
-        const eventDate = event.eventDate || event.event_date;
-        if (!eventDate) return false;
-        // Validate date
-        const date = new Date(eventDate);
-        return !isNaN(date.getTime());
-      })
+      .filter((event: any) => event && event.eventDate) // Filter out invalid events
       .map((event: any) => {
         try {
-          const eventDate = event.eventDate || event.event_date;
-          if (!eventDate) return null;
-          
-          const parsedEventDate = new Date(eventDate);
-          if (isNaN(parsedEventDate.getTime())) {
-            console.warn("Invalid eventDate:", eventDate, event);
-            return null;
-          }
-          
-          let parsedEndDate: Date | null = null;
-          if (event.endDate || event.end_date) {
-            parsedEndDate = new Date(event.endDate || event.end_date);
-            if (isNaN(parsedEndDate.getTime())) {
-              parsedEndDate = null;
-            }
-          }
-          
-          let parsedCheckInDate: Date | null = null;
-          if (event.checkInDate || event.check_in_date) {
-            parsedCheckInDate = new Date(event.checkInDate || event.check_in_date);
-            if (isNaN(parsedCheckInDate.getTime())) {
-              parsedCheckInDate = null;
-            }
-          }
-          
-          let parsedCheckOutDate: Date | null = null;
-          if (event.checkOutDate || event.check_out_date) {
-            parsedCheckOutDate = new Date(event.checkOutDate || event.check_out_date);
-            if (isNaN(parsedCheckOutDate.getTime())) {
-              parsedCheckOutDate = null;
-            }
-          }
-          
           return {
             id: event.id,
             title: event.title || "Sem título",
             description: event.description || null,
-            eventDate: parsedEventDate,
-            endDate: parsedEndDate,
-            eventType: (event.eventType || event.event_type || "general") as CalendarEvent["eventType"],
-            petId: event.petId || event.pet_id || null,
-            petName: petsData?.find((p: any) => p.id === (event.petId || event.pet_id))?.name || null,
+            eventDate: new Date(event.eventDate),
+            endDate: event.endDate ? new Date(event.endDate) : null,
+            eventType: (event.eventType || "general") as CalendarEvent["eventType"],
+            petId: event.petId || null,
+            petName: petsData?.find((p: any) => p.id === event.petId)?.name || null,
             location: event.location || null,
-            isAllDay: event.isAllDay ?? event.is_all_day ?? true,
-            checkInDate: parsedCheckInDate,
-            checkOutDate: parsedCheckOutDate,
-            dailyCount: event.dailyCount || event.daily_count || null,
-            createdByRole: (event.createdByRole || event.created_by_role || null) as "admin" | "user" | null | undefined,
-            createdByName: event.createdByName || event.created_by_name || null,
+            isAllDay: event.isAllDay ?? true,
+            checkInDate: event.checkInDate ? new Date(event.checkInDate) : null,
+            checkOutDate: event.checkOutDate ? new Date(event.checkOutDate) : null,
+            dailyCount: event.dailyCount || null,
+            createdByRole: (event.createdByRole || null) as "admin" | "user" | null | undefined,
+            createdByName: event.createdByName || null,
           };
         } catch (error) {
           console.error("Error transforming calendar event:", error, event);
@@ -172,77 +126,45 @@ export default function TutorCalendar() {
     // Transform vaccines
     const vaccineEvents: CalendarEvent[] = (vaccinesData || [])
       .filter((v: any) => {
-        if (!v || !v.nextDueDate) return false;
         // Only show vaccines for my pets
-        if (!petsData || !Array.isArray(petsData)) return false;
-        return petsData.some((p: any) => p && p.id === v.petId);
+        return petsData?.some((p: any) => p.id === v.petId);
       })
       .map((vaccine: any) => {
-        try {
-          if (!vaccine.nextDueDate) return null;
-          
-          const parsedDate = new Date(vaccine.nextDueDate);
-          if (isNaN(parsedDate.getTime())) {
-            console.warn("Invalid vaccine nextDueDate:", vaccine.nextDueDate, vaccine);
-            return null;
-          }
-          
-          const eventDate = startOfDay(parsedDate);
-          let status: "overdue" | "upcoming" | "future" = "future";
-          
-          if (isBefore(eventDate, today)) {
-            status = "overdue";
-          } else if (isBefore(eventDate, upcomingThreshold)) {
-            status = "upcoming";
-          }
-
-          return {
-            id: `vaccine-${vaccine.id}`,
-            title: vaccine.vaccine?.name || vaccine.name || "Vacina",
-            description: vaccine.notes || undefined,
-            eventDate: parsedDate,
-            endDate: null,
-            eventType: "vaccination" as CalendarEvent["eventType"],
-            petId: vaccine.petId,
-            petName: (petsData || []).find((p: any) => p && p.id === vaccine.petId)?.name || null,
-            location: undefined,
-            isAllDay: true,
-            status,
-          };
-        } catch (error) {
-          console.error("Error transforming vaccine event:", error, vaccine);
-          return null;
+        const eventDate = startOfDay(new Date(vaccine.next_due_date));
+        let status: "overdue" | "upcoming" | "future" = "future";
+        
+        if (isBefore(eventDate, today)) {
+          status = "overdue";
+        } else if (isBefore(eventDate, upcomingThreshold)) {
+          status = "upcoming";
         }
-      })
-      .filter((e): e is CalendarEvent => e !== null);
+
+        return {
+          id: `vaccine-${vaccine.id}`,
+          title: vaccine.vaccine?.name || vaccine.name || "Vacina",
+          description: vaccine.notes || undefined,
+          eventDate: new Date(vaccine.next_due_date),
+          endDate: null,
+          eventType: "vaccination" as CalendarEvent["eventType"],
+          petId: vaccine.petId,
+          petName: petsData?.find((p: any) => p.id === vaccine.petId)?.name,
+          location: undefined,
+          isAllDay: true,
+          status,
+        };
+      });
 
     // Transform medications
     const medicationEvents: CalendarEvent[] = (medicationsData || [])
       .filter((m: any) => {
-        if (!m) return false;
-        if (!m.endDate && !m.end_date) return false;
-        if (!m.startDate && !m.start_date) return false;
         // Only show medications for my pets
-        if (!petsData || !Array.isArray(petsData)) return false;
-        return petsData.some((p: any) => p && p.id === (m.petId || m.pet_id));
+        if (!m || !m.endDate || !m.startDate) return false;
+        return petsData?.some((p: any) => p.id === m.petId);
       })
       .map((med: any) => {
         try {
-          const startDateValue = med.startDate || med.start_date;
-          const endDateValue = med.endDate || med.end_date;
-          
-          if (!startDateValue || !endDateValue) return null;
-          
-          const parsedStartDate = new Date(startDateValue);
-          const parsedEndDate = new Date(endDateValue);
-          
-          if (isNaN(parsedStartDate.getTime()) || isNaN(parsedEndDate.getTime())) {
-            console.warn("Invalid medication dates:", { startDateValue, endDateValue }, med);
-            return null;
-          }
-          
-          const startDate = startOfDay(parsedStartDate);
-          const endDate = startOfDay(parsedEndDate);
+          const startDate = startOfDay(new Date(med.startDate));
+          const endDate = startOfDay(new Date(med.endDate));
           let status: "overdue" | "upcoming" | "future" = "future";
           
           if (isBefore(endDate, today)) {
@@ -255,11 +177,11 @@ export default function TutorCalendar() {
             id: `medication-${med.id}`,
             title: med.medication?.name || med.name || "Medicamento",
             description: med.notes || med.dosage || undefined,
-            eventDate: parsedStartDate,
-            endDate: parsedEndDate,
+            eventDate: startDate,
+            endDate: endDate,
             eventType: "medication" as CalendarEvent["eventType"],
-            petId: med.petId || med.pet_id || null,
-            petName: (petsData || []).find((p: any) => p && p.id === (med.petId || med.pet_id))?.name || null,
+            petId: med.petId,
+            petName: petsData?.find((p: any) => p.id === med.petId)?.name || null,
             location: undefined,
             isAllDay: true,
             status,
@@ -273,40 +195,14 @@ export default function TutorCalendar() {
 
     // Transform bookings (check-ins/check-outs) - removed as bookings are now in separate tab
 
-    // Ensure all arrays are valid before concatenating
-    const allValidEvents = [
-      ...(Array.isArray(calendarEvents) ? calendarEvents : []),
-      ...(Array.isArray(vaccineEvents) ? vaccineEvents : []),
-      ...(Array.isArray(medicationEvents) ? medicationEvents : []),
-    ];
-    
-    // Final validation: ensure all events have valid eventDate
-    return allValidEvents.filter((e) => {
-      if (!e || !e.eventDate) return false;
-      if (e.eventDate instanceof Date) {
-        return !isNaN(e.eventDate.getTime());
-      }
-      const date = new Date(e.eventDate);
-      return !isNaN(date.getTime());
-    });
+    return [...calendarEvents, ...vaccineEvents, ...medicationEvents];
   }, [calendarEventsData, vaccinesData, medicationsData, petsData]);
 
   // Apply filters
   const filteredEvents = useMemo(() => {
-    if (!Array.isArray(allEvents)) return [];
     return allEvents.filter((event) => {
-      if (!event) return false;
-      // Ensure eventDate is valid
-      if (!event.eventDate || !(event.eventDate instanceof Date)) {
-        if (event.eventDate) {
-          const date = new Date(event.eventDate);
-          if (isNaN(date.getTime())) return false;
-        } else {
-          return false;
-        }
-      }
       if (selectedPet && event.petId !== selectedPet) return false;
-      if (searchQuery && !(event.title || "").toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      if (searchQuery && !event.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       return true;
     });
   }, [allEvents, selectedPet, searchQuery]);
@@ -320,10 +216,7 @@ export default function TutorCalendar() {
   // Calculate stats
   const now = new Date();
   const thisMonthEvents = filteredEvents.filter((e) => {
-    if (!e || !e.eventDate) return false;
-    // eventDate should already be a Date object from allEvents useMemo
-    const eventDate = e.eventDate instanceof Date ? e.eventDate : new Date(e.eventDate);
-    if (isNaN(eventDate.getTime())) return false;
+    const eventDate = new Date(e.eventDate);
     return (
       eventDate.getMonth() === now.getMonth() &&
       eventDate.getFullYear() === now.getFullYear()
@@ -331,9 +224,7 @@ export default function TutorCalendar() {
   });
 
   const upcomingVaccinations = filteredEvents.filter((e) => {
-    if (!e || !e.eventDate) return false;
-    const eventDate = e.eventDate instanceof Date ? e.eventDate : new Date(e.eventDate);
-    if (isNaN(eventDate.getTime())) return false;
+    const eventDate = new Date(e.eventDate);
     const thirtyDaysFromNow = new Date();
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
     return (
@@ -344,9 +235,7 @@ export default function TutorCalendar() {
   });
 
   const todayEvents = filteredEvents.filter((e) => {
-    if (!e || !e.eventDate) return false;
-    const eventDate = e.eventDate instanceof Date ? e.eventDate : new Date(e.eventDate);
-    if (isNaN(eventDate.getTime())) return false;
+    const eventDate = new Date(e.eventDate);
     return (
       eventDate.getDate() === now.getDate() &&
       eventDate.getMonth() === now.getMonth() &&
@@ -354,28 +243,19 @@ export default function TutorCalendar() {
     );
   });
 
-  const overdueEvents = filteredEvents.filter((e: any) => e && e.status === "overdue");
-  const upcomingEvents = filteredEvents.filter((e: any) => e && e.status === "upcoming");
+  const overdueEvents = filteredEvents.filter((e: any) => e.status === "overdue");
+  const upcomingEvents = filteredEvents.filter((e: any) => e.status === "upcoming");
 
   // Get events for selected date
   const selectedDateEvents = selectedDate
-    ? filteredEvents
-        .filter((e) => {
-          if (!e || !e.eventDate) return false;
-          const eventDate = e.eventDate instanceof Date ? e.eventDate : new Date(e.eventDate);
-          if (isNaN(eventDate.getTime())) return false;
-          return (
-            eventDate.getDate() === selectedDate.getDate() &&
-            eventDate.getMonth() === selectedDate.getMonth() &&
-            eventDate.getFullYear() === selectedDate.getFullYear()
-          );
-        })
-        .sort((a, b) => {
-          const dateA = a.eventDate instanceof Date ? a.eventDate : new Date(a.eventDate);
-          const dateB = b.eventDate instanceof Date ? b.eventDate : new Date(b.eventDate);
-          if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) return 0;
-          return dateA.getTime() - dateB.getTime();
-        })
+    ? filteredEvents.filter((e) => {
+        const eventDate = new Date(e.eventDate);
+        return (
+          eventDate.getDate() === selectedDate.getDate() &&
+          eventDate.getMonth() === selectedDate.getMonth() &&
+          eventDate.getFullYear() === selectedDate.getFullYear()
+        );
+      }).sort((a, b) => a.eventDate.getTime() - b.eventDate.getTime())
     : [];
 
   // Mutations
@@ -523,16 +403,16 @@ export default function TutorCalendar() {
 
   return (
     <TutorLayout>
-      <div className="container max-w-7xl mx-auto py-6 space-y-6">
-        {/* Header - Layout mais compacto e premium */}
-        <div className="flex items-center justify-between mb-6">
+      <div className="container py-8 space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
               <Sparkles className="h-8 w-8 text-primary" />
               Calendário Completo
             </h1>
             <p className="text-muted-foreground mt-2">
-              Gerencie eventos, vacinas, medicamentos, estadias e compromissos dos seus pets • Cogestão com a creche
+              Gerencie eventos, vacinas, medicamentos, estadias e compromissos dos seus pets
             </p>
           </div>
           <Button
@@ -560,9 +440,9 @@ export default function TutorCalendar() {
             <TabsTrigger value="logs">Logs & Registros</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="calendar" className="space-y-4">
-            {/* Stats Cards - Layout mais compacto */}
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+          <TabsContent value="calendar" className="space-y-6">
+            {/* Stats Cards */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
               <Card className="shadow-card hover:shadow-lg transition-shadow">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
@@ -631,16 +511,16 @@ export default function TutorCalendar() {
               </Card>
             </div>
 
-            {/* Filters - Layout mais compacto */}
-            <Card className="shadow-card border-2 border-border/50">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
+            {/* Filters */}
+            <Card className="shadow-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
                   <Filter className="h-5 w-5" />
                   Filtros
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
-                <div className="grid gap-3 md:grid-cols-2">
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2">
                   {/* Search */}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -674,21 +554,15 @@ export default function TutorCalendar() {
             </Card>
 
             {/* Premium Calendar */}
-            {Array.isArray(filteredEvents) ? (
-              <PremiumCalendar
-                events={filteredEvents}
-                onEventClick={handleEventClick}
-                onCreateEvent={handleCreateEvent}
-                onDayClick={handleDayClick}
-                pets={pets}
-                showCreateButton={true}
-                role="tutor"
-              />
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Carregando eventos...</p>
-              </div>
-            )}
+            <PremiumCalendar
+              events={filteredEvents}
+              onEventClick={handleEventClick}
+              onCreateEvent={handleCreateEvent}
+              onDayClick={handleDayClick}
+              pets={pets}
+              showCreateButton={true}
+              role="tutor"
+            />
 
             {/* Day Agenda */}
             {selectedDate && (

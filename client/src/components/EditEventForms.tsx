@@ -42,10 +42,10 @@ export function EditEventForms({ open, onClose, eventType, eventData, onSuccess 
 
 // Edit Vaccination Form
 function EditVaccinationForm({ eventData, onSuccess, onClose }: any) {
-  const [applicationDate, setApplicationDate] = useState(eventData.applicationDate || "");
+  const [applicationDate, setApplicationDate] = useState(eventData.application_date || "");
   const [veterinarian, setVeterinarian] = useState(eventData.veterinarian || "");
   const [clinic, setClinic] = useState(eventData.clinic || "");
-  const [nextDueDate, setNextDueDate] = useState(eventData.nextDueDate || "");
+  const [nextDueDate, setNextDueDate] = useState(eventData.next_due_date || "");
   const [notes, setNotes] = useState(eventData.notes || "");
 
   const updateMutation = trpc.vaccines.update.useMutation({

@@ -86,8 +86,8 @@ export default function AdminPetDetail() {
   };
 
   const calculateAge = () => {
-    if (!pet.birthDate) return "N/A";
-    const birth = new Date(pet.birthDate);
+    if (!pet.birth_date) return "N/A";
+    const birth = new Date(pet.birth_date);
     const today = new Date();
     const ageInMonths = (today.getFullYear() - birth.getFullYear()) * 12 + (today.getMonth() - birth.getMonth());
     const years = Math.floor(ageInMonths / 12);
@@ -145,7 +145,7 @@ export default function AdminPetDetail() {
             <div className="flex items-start space-x-8">
               {/* Photo */}
               <PetPhotoUpload
-                currentPhotoUrl={pet.photoUrl}
+                currentPhotoUrl={pet.photo_url}
                 petId={pet.id}
                 petName={pet.name}
                 onPhotoUpdated={(newUrl) => {
@@ -161,9 +161,9 @@ export default function AdminPetDetail() {
                     Idade
                   </p>
                   <p className="text-lg font-semibold">{calculateAge()}</p>
-                  {pet.birthDate && (
+                  {pet.birth_date && (
                     <p className="text-xs text-muted-foreground">
-                      Nascimento: {format(new Date(pet.birthDate), "dd/MM/yyyy")}
+                      Nascimento: {format(new Date(pet.birth_date), "dd/MM/yyyy")}
                     </p>
                   )}
                 </div>
@@ -183,9 +183,9 @@ export default function AdminPetDetail() {
                     <Utensils className="h-4 w-4 mr-1" />
                     Alimentação
                   </p>
-                  <p className="text-lg font-semibold">{pet.foodBrand || "N/A"}</p>
-                  {pet.foodAmount && (
-                    <p className="text-xs text-muted-foreground">{pet.foodAmount}g por dia</p>
+                  <p className="text-lg font-semibold">{pet.food_brand || "N/A"}</p>
+                  {pet.food_amount && (
+                    <p className="text-xs text-muted-foreground">{pet.food_amount}g por dia</p>
                   )}
                 </div>
               </div>

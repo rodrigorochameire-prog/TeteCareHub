@@ -77,6 +77,6 @@ EXPOSE 3000
 ENV NODE_ENV=production
 
 # --- COMANDO FINAL ---
-# Inicia o servidor (migrações devem ser executadas manualmente ou via Railway CLI)
-# Se precisar executar migrações, use: pnpm db:migrate
-CMD ["pnpm", "start"]
+# 1. Aplica migrações com verificações de segurança (db:migrate)
+# 2. Inicia o servidor (start)
+CMD ["sh", "-c", "pnpm db:migrate && pnpm start"]

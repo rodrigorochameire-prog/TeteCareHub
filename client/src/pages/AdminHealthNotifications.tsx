@@ -208,7 +208,7 @@ export default function AdminHealthNotifications() {
                             <p className="text-sm text-muted-foreground">{v.vaccineName}</p>
                           </div>
                           <Badge variant="outline">
-                            {new Date(v.nextDueDate).toLocaleDateString('pt-BR')}
+                            {new Date(v.next_due_date).toLocaleDateString('pt-BR')}
                           </Badge>
                         </div>
                       ))}
@@ -268,7 +268,7 @@ export default function AdminHealthNotifications() {
                             <p className="text-sm text-muted-foreground">{f.productName}</p>
                           </div>
                           <Badge variant="outline">
-                            {new Date(f.nextDueDate).toLocaleDateString('pt-BR')}
+                            {new Date(f.next_due_date).toLocaleDateString('pt-BR')}
                           </Badge>
                         </div>
                       ))}
@@ -298,7 +298,7 @@ export default function AdminHealthNotifications() {
                             <p className="text-sm text-muted-foreground">{d.productName}</p>
                           </div>
                           <Badge variant="outline">
-                            {new Date(d.nextDueDate).toLocaleDateString('pt-BR')}
+                            {new Date(d.next_due_date).toLocaleDateString('pt-BR')}
                           </Badge>
                         </div>
                       ))}

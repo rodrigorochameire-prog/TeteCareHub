@@ -172,8 +172,8 @@ export default function AdminPreventivesUnified() {
     
     // Period filter
     let matchesPeriod = true;
-    if (periodFilter !== "all" && prev.applicationDate) {
-      const appDate = new Date(prev.applicationDate);
+    if (periodFilter !== "all" && prev.application_date) {
+      const appDate = new Date(prev.application_date);
       const now = new Date();
       const daysAgo = Math.floor((now.getTime() - appDate.getTime()) / (1000 * 60 * 60 * 24));
       
@@ -458,7 +458,7 @@ export default function AdminPreventivesUnified() {
                         const changeInfo = allChanges?.find(
                           (c: any) => c.entityType === "preventive" && c.entityId === prev.id
                         );
-                        const overdue = isOverdue(prev.nextDueDate);
+                        const overdue = isOverdue(prev.next_due_date);
                         
                         return (
                           <TableRow key={prev.id}>
@@ -473,13 +473,13 @@ export default function AdminPreventivesUnified() {
                             <TableCell>{prev.preventive?.name || "-"}</TableCell>
                             <TableCell>{getTypeBadge(prev.preventive?.type)}</TableCell>
                             <TableCell>
-                              {new Date(prev.applicationDate).toLocaleDateString("pt-BR")}
+                              {new Date(prev.application_date).toLocaleDateString("pt-BR")}
                             </TableCell>
                             <TableCell>
-                              {prev.nextDueDate ? (
+                              {prev.next_due_date ? (
                                 <div className="flex items-center gap-2">
                                   <span className={overdue ? "text-destructive font-medium" : ""}>
-                                    {new Date(prev.nextDueDate).toLocaleDateString("pt-BR")}
+                                    {new Date(prev.next_due_date).toLocaleDateString("pt-BR")}
                                   </span>
                                   {overdue && (
                                     <Badge variant="destructive" className="text-xs">
@@ -540,7 +540,7 @@ export default function AdminPreventivesUnified() {
                     id="edit-applicationDate"
                     name="applicationDate"
                     type="date"
-                    defaultValue={editingPrev?.applicationDate?.split("T")[0]}
+                    defaultValue={editingPrev?.application_date?.split("T")[0]}
                     required
                   />
                 </div>
@@ -550,7 +550,7 @@ export default function AdminPreventivesUnified() {
                     id="edit-nextDueDate"
                     name="nextDueDate"
                     type="date"
-                    defaultValue={editingPrev?.nextDueDate?.split("T")[0]}
+                    defaultValue={editingPrev?.next_due_date?.split("T")[0]}
                   />
                 </div>
                 <div className="space-y-2">

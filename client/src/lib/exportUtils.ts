@@ -119,8 +119,8 @@ export function formatPetsForExport(pets: any[]) {
     Idade: pet.age || "-",
     Peso: pet.weight ? `${pet.weight} kg` : "-",
     Status: pet.status === "checked-in" ? "Na Creche" : "Fora da Creche",
-    "Marca de Ração": pet.foodBrand || "-",
-    "Quantidade Diária": pet.foodAmount ? `${pet.foodAmount}g` : "-",
+    "Marca de Ração": pet.food_brand || "-",
+    "Quantidade Diária": pet.food_amount ? `${pet.food_amount}g` : "-",
   }));
 }
 

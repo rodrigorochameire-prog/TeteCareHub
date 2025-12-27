@@ -119,9 +119,9 @@ export default function AdminVaccinesAll() {
     
     const matchesStatus = 
       statusFilter === "all" ||
-      (statusFilter === "overdue" && isOverdue(vacc.vaccination.nextDueDate)) ||
-      (statusFilter === "upcoming" && isUpcoming(vacc.vaccination.nextDueDate)) ||
-      (statusFilter === "ok" && !isOverdue(vacc.vaccination.nextDueDate) && !isUpcoming(vacc.vaccination.nextDueDate));
+      (statusFilter === "overdue" && isOverdue(vacc.vaccination.next_due_date)) ||
+      (statusFilter === "upcoming" && isUpcoming(vacc.vaccination.next_due_date)) ||
+      (statusFilter === "ok" && !isOverdue(vacc.vaccination.next_due_date) && !isUpcoming(vacc.vaccination.next_due_date));
     
     return matchesSearch && matchesStatus;
   });
@@ -140,9 +140,9 @@ export default function AdminVaccinesAll() {
   // Count statistics
   const stats = {
     total: allVaccinations.length,
-    overdue: allVaccinations.filter(v => isOverdue(v.vaccination.nextDueDate)).length,
-    upcoming: allVaccinations.filter(v => isUpcoming(v.vaccination.nextDueDate)).length,
-    ok: allVaccinations.filter(v => !isOverdue(v.vaccination.nextDueDate) && !isUpcoming(v.vaccination.nextDueDate)).length,
+    overdue: allVaccinations.filter(v => isOverdue(v.vaccination.next_due_date)).length,
+    upcoming: allVaccinations.filter(v => isUpcoming(v.vaccination.next_due_date)).length,
+    ok: allVaccinations.filter(v => !isOverdue(v.vaccination.next_due_date) && !isUpcoming(v.vaccination.next_due_date)).length,
   };
 
   return (
@@ -279,8 +279,8 @@ export default function AdminVaccinesAll() {
                   </TableHeader>
                   <TableBody>
                     {filteredVaccinations.map((vacc) => {
-                      const overdue = isOverdue(vacc.vaccination.nextDueDate);
-                      const upcoming = isUpcoming(vacc.vaccination.nextDueDate);
+                      const overdue = isOverdue(vacc.vaccination.next_due_date);
+                      const upcoming = isUpcoming(vacc.vaccination.next_due_date);
                       
                       return (
                         <TableRow key={vacc.vaccination.id}>
@@ -292,11 +292,11 @@ export default function AdminVaccinesAll() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            {new Date(vacc.vaccination.applicationDate).toLocaleDateString("pt-BR")}
+                            {new Date(vacc.vaccination.application_date).toLocaleDateString("pt-BR")}
                           </TableCell>
                           <TableCell>
-                            {vacc.vaccination.nextDueDate 
-                              ? new Date(vacc.vaccination.nextDueDate).toLocaleDateString("pt-BR")
+                            {vacc.vaccination.next_due_date 
+                              ? new Date(vacc.vaccination.next_due_date).toLocaleDateString("pt-BR")
                               : "-"}
                           </TableCell>
                           <TableCell>{vacc.vaccination.veterinarian || "-"}</TableCell>
@@ -365,8 +365,8 @@ export default function AdminVaccinesAll() {
                     name="nextDueDate"
                     type="date"
                     defaultValue={
-                      editingVacc.vaccination.nextDueDate
-                        ? new Date(editingVacc.vaccination.nextDueDate).toISOString().split('T')[0]
+                      editingVacc.vaccination.next_due_date
+                        ? new Date(editingVacc.vaccination.next_due_date).toISOString().split('T')[0]
                         : ""
                     }
                   />

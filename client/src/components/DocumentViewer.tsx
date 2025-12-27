@@ -132,7 +132,7 @@ export function DocumentViewer({ petId }: DocumentViewerProps) {
       : (lightboxIndex + 1) % imageDocuments.length;
     
     setLightboxIndex(newIndex);
-    setLightboxImage(imageDocuments[newIndex].fileUrl);
+    setLightboxImage(imageDocuments[newIndex].file_url);
   };
 
   const formatFileSize = (bytes?: number) => {
@@ -206,10 +206,10 @@ export function DocumentViewer({ petId }: DocumentViewerProps) {
                       {isImage && (
                         <div
                           className="relative aspect-video rounded-lg overflow-hidden cursor-pointer group"
-                          onClick={() => openLightbox(doc.fileUrl, imageDocuments.findIndex((img: any) => img.id === doc.id))}
+                          onClick={() => openLightbox(doc.file_url, imageDocuments.findIndex((img: any) => img.id === doc.id))}
                         >
                           <img
-                            src={doc.fileUrl}
+                            src={doc.file_url}
                             alt={doc.title}
                             className="w-full h-full object-cover transition-transform group-hover:scale-105"
                           />
@@ -234,7 +234,7 @@ export function DocumentViewer({ petId }: DocumentViewerProps) {
                           size="sm"
                           variant="outline"
                           className="flex-1"
-                          onClick={() => window.open(doc.fileUrl, "_blank")}
+                          onClick={() => window.open(doc.file_url, "_blank")}
                         >
                           <Download className="mr-2 h-4 w-4" />
                           Baixar
@@ -275,10 +275,10 @@ export function DocumentViewer({ petId }: DocumentViewerProps) {
                 <div
                   key={doc.id}
                   className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group"
-                  onClick={() => openLightbox(doc.fileUrl, index)}
+                  onClick={() => openLightbox(doc.file_url, index)}
                 >
                   <img
-                    src={doc.fileUrl}
+                    src={doc.file_url}
                     alt={doc.title}
                     className="w-full h-full object-cover transition-transform group-hover:scale-110"
                   />

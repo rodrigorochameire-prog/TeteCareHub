@@ -96,9 +96,9 @@ export default function AdminPetApproval() {
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    {pet.photoUrl ? (
-                      <img
-                        src={pet.photoUrl}
+{pet.photo_url ? (
+                        <img
+                          src={pet.photo_url}
                         alt={pet.name}
                         className="h-12 w-12 rounded-full object-cover"
                       />
@@ -136,13 +136,13 @@ export default function AdminPetApproval() {
                   )}
                 </div>
 
-                {pet.foodBrand && (
+                {pet.food_brand && (
                   <div className="flex items-start gap-2 text-sm">
                     <ShoppingBag className="h-4 w-4 text-muted-foreground mt-0.5" />
                     <div>
-                      <span className="font-medium">Ração:</span> {pet.foodBrand}
-                      {pet.foodAmount && (
-                        <span className="text-muted-foreground"> ({pet.foodAmount}g/dia)</span>
+                      <span className="font-medium">Ração:</span> {pet.food_brand}
+                      {pet.food_amount && (
+                        <span className="text-muted-foreground"> ({pet.food_amount}g/dia)</span>
                       )}
                     </div>
                   </div>

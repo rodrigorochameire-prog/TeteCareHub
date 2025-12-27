@@ -261,11 +261,11 @@ function PetPreventiveCard({ pet, onAddFlea, onAddDeworming }: {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <p className="font-medium">{treatment.productName}</p>
-                          {getStatusBadge(treatment.nextDueDate)}
+                          {getStatusBadge(treatment.next_due_date)}
                         </div>
                         <div className="text-sm text-muted-foreground space-y-1">
-                          <p>Aplicação: {format(new Date(treatment.applicationDate), "dd/MM/yyyy", { locale: ptBR })}</p>
-                          <p>Próxima dose: {format(new Date(treatment.nextDueDate), "dd/MM/yyyy", { locale: ptBR })}</p>
+                          <p>Aplicação: {format(new Date(treatment.application_date), "dd/MM/yyyy", { locale: ptBR })}</p>
+                          <p>Próxima dose: {format(new Date(treatment.next_due_date), "dd/MM/yyyy", { locale: ptBR })}</p>
                           {treatment.notes && <p className="italic">"{treatment.notes}"</p>}
                         </div>
                       </div>
@@ -311,11 +311,11 @@ function PetPreventiveCard({ pet, onAddFlea, onAddDeworming }: {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <p className="font-medium">{treatment.productName}</p>
-                          {getStatusBadge(treatment.nextDueDate)}
+                          {getStatusBadge(treatment.next_due_date)}
                         </div>
                         <div className="text-sm text-muted-foreground space-y-1">
-                          <p>Aplicação: {format(new Date(treatment.applicationDate), "dd/MM/yyyy", { locale: ptBR })}</p>
-                          <p>Próxima dose: {format(new Date(treatment.nextDueDate), "dd/MM/yyyy", { locale: ptBR })}</p>
+                          <p>Aplicação: {format(new Date(treatment.application_date), "dd/MM/yyyy", { locale: ptBR })}</p>
+                          <p>Próxima dose: {format(new Date(treatment.next_due_date), "dd/MM/yyyy", { locale: ptBR })}</p>
                           {treatment.notes && <p className="italic">"{treatment.notes}"</p>}
                         </div>
                       </div>

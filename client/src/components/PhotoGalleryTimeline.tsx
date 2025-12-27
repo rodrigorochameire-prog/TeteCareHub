@@ -239,7 +239,7 @@ export function PhotoGalleryTimeline({ petId, canUpload = true, canDelete = fals
                   >
                     <div className="relative aspect-square">
                       <img
-                        src={photo.photoUrl}
+                        src={photo.photo_url}
                         alt={photo.caption || 'Pet photo'}
                         className="w-full h-full object-cover"
                       />
@@ -305,7 +305,7 @@ export function PhotoGalleryTimeline({ petId, canUpload = true, canDelete = fals
 
             <div className="space-y-4">
               <img
-                src={selectedPhoto.photoUrl}
+                src={selectedPhoto.photo_url}
                 alt={selectedPhoto.caption || 'Pet photo'}
                 className="w-full rounded-lg"
               />
@@ -317,7 +317,7 @@ export function PhotoGalleryTimeline({ petId, canUpload = true, canDelete = fals
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4" />
                 <span>
-                  {new Date(selectedPhoto.takenAt).toLocaleDateString('pt-BR', {
+                  {new Date(selectedPhoto.taken_at).toLocaleDateString('pt-BR', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',

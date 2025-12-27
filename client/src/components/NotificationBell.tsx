@@ -7,55 +7,20 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useWebSocket, type Notification } from "@/hooks/useWebSocket";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useEffect, useRef } from "react";
-import { trpc } from "@/lib/trpc";
-
-type Notification = {
-  type: string;
-  title: string;
-  message: string;
-  timestamp: Date;
-  data?: {
-    resourceType: string;
-    resourceId: number;
-  };
-};
 
 export function NotificationBell() {
+  const { notifications, isConnected, removeNotification, clearNotifications } = useWebSocket();
   const [isOpen, setIsOpen] = useState(false);
-  const previousCountRef = useRef(0);
-  
-  // Use polling instead of WebSocket
-  const { data: notifications = [], refetch } = trpc.notifications.list.useQuery(
-    { limit: 50 },
-    { refetchInterval: 5000 } // Poll every 5 seconds
-  );
-  
-  const { data: unreadData } = trpc.notifications.unreadCount.useQuery(
-    undefined,
-    { refetchInterval: 5000 }
-  );
-  
-  const unreadCount = unreadData?.count || 0;
-  
-  const markAsReadMutation = trpc.notifications.markAsRead.useMutation({
-    onSuccess: () => {
-      refetch();
-    },
-  });
-  
-  const markAllAsReadMutation = trpc.notifications.markAllAsRead.useMutation({
-    onSuccess: () => {
-      refetch();
-    },
-  });
+  const previousCountRef = useRef(notifications.length);
 
   // Show toast for new notifications
   useEffect(() => {
-    if (notifications.length > previousCountRef.current && previousCountRef.current > 0) {
+    if (notifications.length > previousCountRef.current) {
       const latestNotification = notifications[0];
       
       // Play notification sound (optional)
@@ -89,13 +54,7 @@ export function NotificationBell() {
     }
   };
 
-  const handleRemoveNotification = (notificationId: number) => {
-    markAsReadMutation.mutate({ notificationId });
-  };
-  
-  const handleClearAll = () => {
-    markAllAsReadMutation.mutate();
-  };
+  const unreadCount = notifications.length;
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -110,6 +69,9 @@ export function NotificationBell() {
               {unreadCount > 9 ? "9+" : unreadCount}
             </Badge>
           )}
+          {!isConnected && (
+            <div className="absolute bottom-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-96 p-0" align="end">
@@ -117,18 +79,17 @@ export function NotificationBell() {
           <div>
             <h3 className="font-semibold">Notificações</h3>
             <p className="text-xs text-muted-foreground">
-              {unreadCount > 0 ? `${unreadCount} não lidas` : "Todas lidas"}
+              {isConnected ? "Conectado" : "Desconectado"}
             </p>
           </div>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleClearAll}
-              disabled={markAllAsReadMutation.isPending}
+              onClick={() => clearNotifications()}
               className="text-xs"
             >
-              Marcar todas como lidas
+              Limpar tudo
             </Button>
           )}
         </div>
@@ -146,14 +107,12 @@ export function NotificationBell() {
                   key={index}
                   className="p-4 hover:bg-accent transition-colors relative group"
                 >
-                  {notification.id && (
-                    <button
-                      onClick={() => handleRemoveNotification(notification.id!)}
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => removeNotification(index)}
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                  </button>
 
                   <div className="flex gap-3">
                     <div className="flex-shrink-0 mt-0.5">

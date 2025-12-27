@@ -205,9 +205,9 @@ export default function AdminCredits() {
                       className="flex items-center justify-between p-4 rounded-lg border hover:bg-accent transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        {pet.photoUrl ? (
+                        {pet.photo_url ? (
                           <img
-                            src={pet.photoUrl}
+                            src={pet.photo_url}
                             alt={pet.name}
                             className="w-10 h-10 rounded-full object-cover"
                           />

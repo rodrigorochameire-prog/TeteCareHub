@@ -265,7 +265,7 @@ export function generateHealthReportPDF(data: HealthReportData) {
       doc.text(`   Data de Aplicação: ${new Date(dew.applicationDate).toLocaleDateString("pt-BR")}`, 25, yPos);
       yPos += lineHeight - 1;
       
-      doc.text(`   Próxima Aplicação: ${new Date(dew.nextDueDate).toLocaleDateString("pt-BR")}`, 25, yPos);
+      doc.text(`   Próxima Aplicação: ${new Date(dew.next_due_date).toLocaleDateString("pt-BR")}`, 25, yPos);
       yPos += lineHeight - 1;
       
       if (dew.notes) {

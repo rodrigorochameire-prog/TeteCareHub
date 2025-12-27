@@ -67,8 +67,8 @@ export async function getEffectivePrice(tutorId: number, serviceType: "creche" |
  */
 export async function createCustomPricingPlan(data: schema.InsertCustomPricingPlan) {
   const db = await getDb();
-  const result = await db!.insert(schema.customPricingPlans).values(data);
-  return (result as any)[0].insertId;
+  const [result] = await db!.insert(schema.customPricingPlans).values(data).returning();
+  return result.id;
 }
 
 /**

@@ -45,9 +45,8 @@ import {
   Sparkles,
   Zap,
   Star,
-  Users,
-  User,
   Building2,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -157,14 +156,14 @@ const EVENT_TYPES = {
 type EventType = keyof typeof EVENT_TYPES;
 
 export type CalendarEvent = {
-  id: number;
+  id: number | string;
   title: string;
   description?: string | null;
   eventDate: Date;
   endDate?: Date | null;
   eventType: EventType;
   petId?: number | null;
-  petName?: string;
+  petName?: string | null;
   location?: string | null;
   isAllDay: boolean;
   // Multi-day period fields
@@ -173,10 +172,12 @@ export type CalendarEvent = {
   dailyCount?: number | null;
   // Status fields (from admin calendar)
   status?: "overdue" | "upcoming" | "future";
-  amount?: number;
+  amount?: number | null;
   // Co-management fields
   createdByRole?: "admin" | "user" | null;
   createdByName?: string | null;
+  // Additional fields
+  bookingId?: number | null;
 };
 
 type ViewMode = "month" | "week" | "day";
@@ -214,18 +215,7 @@ export function PremiumCalendar({
 
   // Filter events
   const filteredEvents = useMemo(() => {
-    // Ensure events is always an array
-    const safeEvents = Array.isArray(events) ? events : [];
-    
-    return safeEvents.filter((event) => {
-      // Validate event structure
-      if (!event || !event.eventDate) return false;
-      
-      // Validate eventDate is a valid Date
-      if (!(event.eventDate instanceof Date) || isNaN(event.eventDate.getTime())) {
-        return false;
-      }
-      
+    return events.filter((event) => {
       if (selectedEventType !== "all" && event.eventType !== selectedEventType) {
         return false;
       }
@@ -235,9 +225,9 @@ export function PremiumCalendar({
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         return (
-          (event.title?.toLowerCase() || "").includes(query) ||
-          (event.description?.toLowerCase() || "").includes(query) ||
-          (event.petName?.toLowerCase() || "").includes(query)
+          event.title.toLowerCase().includes(query) ||
+          event.description?.toLowerCase().includes(query) ||
+          event.petName?.toLowerCase().includes(query)
         );
       }
       return true;
@@ -272,11 +262,7 @@ export function PremiumCalendar({
   const getEventsForDate = (date: Date | null) => {
     if (!date) return [];
     return filteredEvents.filter((event) => {
-      if (!event || !event.eventDate) return false;
-      
-      // Validate and get eventDate
-      const eventDate = event.eventDate instanceof Date ? event.eventDate : new Date(event.eventDate);
-      if (isNaN(eventDate.getTime())) return false;
+      const eventDate = new Date(event.eventDate);
       
       // Check if event is on this specific date
       const isOnDate = (
@@ -287,25 +273,13 @@ export function PremiumCalendar({
       
       // Check if date falls within multi-day period
       const isInPeriod = event.checkInDate && event.checkOutDate && (() => {
-        try {
-          const checkIn = event.checkInDate instanceof Date 
-            ? new Date(event.checkInDate) 
-            : new Date(event.checkInDate);
-          if (isNaN(checkIn.getTime())) return false;
-          
-          const checkOut = event.checkOutDate instanceof Date 
-            ? new Date(event.checkOutDate) 
-            : new Date(event.checkOutDate);
-          if (isNaN(checkOut.getTime())) return false;
-          
-          checkIn.setHours(0, 0, 0, 0);
-          checkOut.setHours(0, 0, 0, 0);
-          const current = new Date(date);
-          current.setHours(0, 0, 0, 0);
-          return current >= checkIn && current <= checkOut;
-        } catch {
-          return false;
-        }
+        const checkIn = new Date(event.checkInDate);
+        checkIn.setHours(0, 0, 0, 0);
+        const checkOut = new Date(event.checkOutDate);
+        checkOut.setHours(0, 0, 0, 0);
+        const current = new Date(date);
+        current.setHours(0, 0, 0, 0);
+        return current >= checkIn && current <= checkOut;
       })();
       
       return isOnDate || isInPeriod;
@@ -616,21 +590,13 @@ export function PremiumCalendar({
                               // Check if this is a multi-day period event
                               const isPeriodEvent = event.checkInDate && event.checkOutDate;
                               const isFirstDay = isPeriodEvent && (() => {
-                                if (!event.checkInDate) return false;
-                                const checkIn = event.checkInDate instanceof Date 
-                                  ? new Date(event.checkInDate) 
-                                  : new Date(event.checkInDate);
-                                if (isNaN(checkIn.getTime())) return false;
+                                const checkIn = new Date(event.checkInDate!);
                                 return checkIn.getDate() === date.getDate() &&
                                        checkIn.getMonth() === date.getMonth() &&
                                        checkIn.getFullYear() === date.getFullYear();
                               })();
                               const isLastDay = isPeriodEvent && (() => {
-                                if (!event.checkOutDate) return false;
-                                const checkOut = event.checkOutDate instanceof Date 
-                                  ? new Date(event.checkOutDate) 
-                                  : new Date(event.checkOutDate);
-                                if (isNaN(checkOut.getTime())) return false;
+                                const checkOut = new Date(event.checkOutDate!);
                                 return checkOut.getDate() === date.getDate() &&
                                        checkOut.getMonth() === date.getMonth() &&
                                        checkOut.getFullYear() === date.getFullYear();
@@ -693,25 +659,18 @@ export function PremiumCalendar({
                                           {isLastDay && " 🏁"}
                                           {isPeriodEvent && !isFirstDay && !isLastDay && " 🟦"}
                                         </span>
-                                        {/* Co-management indicator - Melhorado para tutor */}
-                                        {role === "tutor" && isCreatedByAdmin && (
+                                        {/* Co-management indicator */}
+                                        {isCreatedByAdmin && (
                                           <Tooltip>
                                             <TooltipTrigger asChild>
-                                              <div className="flex items-center gap-0.5">
-                                                <Building2 className="h-2.5 w-2.5 text-blue-600 flex-shrink-0 animate-pulse" />
-                                                <Badge variant="outline" className="h-3 px-1 text-[8px] border-blue-500 text-blue-700 bg-blue-50">
-                                                  Creche
-                                                </Badge>
-                                              </div>
+                                              <Building2 className="h-2.5 w-2.5 text-blue-600 flex-shrink-0" />
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                              <p className="font-medium">Criado pela Creche</p>
-                                              {event.createdByName && <p className="text-xs text-muted-foreground">por {event.createdByName}</p>}
-                                              <p className="text-xs text-muted-foreground mt-1">Cogestão ativa</p>
+                                              <p>Criado pela Creche{event.createdByName ? ` (${event.createdByName})` : ""}</p>
                                             </TooltipContent>
                                           </Tooltip>
                                         )}
-                                        {role === "admin" && isCreatedByTutor && (
+                                        {isCreatedByTutor && (
                                           <Tooltip>
                                             <TooltipTrigger asChild>
                                               <User className="h-2.5 w-2.5 text-green-600 flex-shrink-0" />
@@ -745,16 +704,10 @@ export function PremiumCalendar({
                                           {!event.isAllDay && (
                                             <div className={cn("flex items-center gap-0.5 text-[9px]", config.textColor, "opacity-70")}>
                                               <Clock className="h-2 w-2" />
-                                              {(() => {
-                                                const eventDate = event.eventDate instanceof Date 
-                                                  ? event.eventDate 
-                                                  : new Date(event.eventDate);
-                                                if (isNaN(eventDate.getTime())) return "";
-                                                return eventDate.toLocaleTimeString("pt-BR", {
-                                                  hour: "2-digit",
-                                                  minute: "2-digit",
-                                                });
-                                              })()}
+                                              {new Date(event.eventDate).toLocaleTimeString("pt-BR", {
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                              })}
                                             </div>
                                           )}
                                           {event.petName && (
@@ -1036,16 +989,7 @@ function CreateEventForm({
                 📅 Total: <span className="font-bold">{dailyCount} {dailyCount === 1 ? 'diária' : 'diárias'}</span>
               </p>
               <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                {(() => {
-                  const checkIn = formData.checkInDate instanceof Date 
-                    ? formData.checkInDate 
-                    : new Date(formData.checkInDate);
-                  const checkOut = formData.checkOutDate instanceof Date 
-                    ? formData.checkOutDate 
-                    : new Date(formData.checkOutDate);
-                  if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) return "";
-                  return `${checkIn.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} a ${checkOut.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}`;
-                })()}
+                {new Date(formData.checkInDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} a {new Date(formData.checkOutDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
               </p>
             </div>
           )}

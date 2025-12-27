@@ -92,10 +92,10 @@ export default function TutorVaccines() {
   // Separate upcoming and past vaccinations
   const now = new Date();
   const upcomingVaccinations = vaccinations?.filter(
-    v => v.vaccination.nextDueDate && new Date(v.vaccination.nextDueDate) > now
+    v => v.vaccination.next_due_date && new Date(v.vaccination.next_due_date) > now
   ) || [];
   const pastVaccinations = vaccinations?.filter(
-    v => !v.vaccination.nextDueDate || new Date(v.vaccination.nextDueDate) <= now
+    v => !v.vaccination.next_due_date || new Date(v.vaccination.next_due_date) <= now
   ) || [];
 
   return (
@@ -255,7 +255,7 @@ export default function TutorVaccines() {
             <div className="space-y-3">
               {upcomingVaccinations.map((vacc) => {
                 const daysUntil = Math.ceil(
-                  (new Date(vacc.vaccination.nextDueDate!).getTime() - now.getTime()) /
+                  (new Date(vacc.vaccination.next_due_date!).getTime() - now.getTime()) /
                     (1000 * 60 * 60 * 24)
                 );
                 return (
@@ -285,7 +285,7 @@ export default function TutorVaccines() {
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Agendada para:{" "}
-                      {new Date(vacc.vaccination.nextDueDate!).toLocaleDateString("pt-BR", {
+                      {new Date(vacc.vaccination.next_due_date!).toLocaleDateString("pt-BR", {
                         weekday: "long",
                         year: "numeric",
                         month: "long",
@@ -348,14 +348,14 @@ export default function TutorVaccines() {
                     <div>
                       <p className="text-muted-foreground">Aplicação</p>
                       <p className="font-medium">
-                        {new Date(vacc.vaccination.applicationDate).toLocaleDateString("pt-BR")}
+                        {new Date(vacc.vaccination.application_date).toLocaleDateString("pt-BR")}
                       </p>
                     </div>
-                    {vacc.vaccination.nextDueDate && (
+                    {vacc.vaccination.next_due_date && (
                       <div>
                         <p className="text-muted-foreground">Próxima Dose</p>
                         <p className="font-medium">
-                          {new Date(vacc.vaccination.nextDueDate).toLocaleDateString("pt-BR")}
+                          {new Date(vacc.vaccination.next_due_date).toLocaleDateString("pt-BR")}
                         </p>
                       </div>
                     )}

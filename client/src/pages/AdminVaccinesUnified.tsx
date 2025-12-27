@@ -138,25 +138,25 @@ export default function AdminVaccinesUnified() {
     
     let matchesStatus = true;
     if (statusFilter === "overdue") {
-      matchesStatus = vacc.nextDueDate && new Date(vacc.nextDueDate) < new Date();
+      matchesStatus = vacc.next_due_date && new Date(vacc.next_due_date) < new Date();
     } else if (statusFilter === "upcoming") {
       const today = new Date();
       const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-      matchesStatus = vacc.nextDueDate && 
-                     new Date(vacc.nextDueDate) >= today && 
-                     new Date(vacc.nextDueDate) <= thirtyDaysFromNow;
+      matchesStatus = vacc.next_due_date && 
+                     new Date(vacc.next_due_date) >= today && 
+                     new Date(vacc.next_due_date) <= thirtyDaysFromNow;
     } else if (statusFilter === "uptodate") {
       const today = new Date();
       const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-      matchesStatus = !vacc.nextDueDate || new Date(vacc.nextDueDate) > thirtyDaysFromNow;
+      matchesStatus = !vacc.next_due_date || new Date(vacc.next_due_date) > thirtyDaysFromNow;
     }
     
     const matchesPet = petFilter === "all" || vacc.petId.toString() === petFilter;
     
     // Period filter
     let matchesPeriod = true;
-    if (periodFilter !== "all" && vacc.applicationDate) {
-      const appDate = new Date(vacc.applicationDate);
+    if (periodFilter !== "all" && vacc.application_date) {
+      const appDate = new Date(vacc.application_date);
       const now = new Date();
       const daysAgo = Math.floor((now.getTime() - appDate.getTime()) / (1000 * 60 * 60 * 24));
       
@@ -171,17 +171,17 @@ export default function AdminVaccinesUnified() {
   // Calculate statistics
   const stats = {
     total: allVaccinations.length,
-    overdue: allVaccinations.filter((v: any) => v.nextDueDate && new Date(v.nextDueDate) < new Date()).length,
+    overdue: allVaccinations.filter((v: any) => v.next_due_date && new Date(v.next_due_date) < new Date()).length,
     upcoming: allVaccinations.filter((v: any) => {
-      if (!v.nextDueDate) return false;
+      if (!v.next_due_date) return false;
       const today = new Date();
       const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-      return new Date(v.nextDueDate) >= today && new Date(v.nextDueDate) <= thirtyDaysFromNow;
+      return new Date(v.next_due_date) >= today && new Date(v.next_due_date) <= thirtyDaysFromNow;
     }).length,
     uptodate: allVaccinations.filter((v: any) => {
-      if (!v.nextDueDate) return true;
+      if (!v.next_due_date) return true;
       const thirtyDaysFromNow = new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000);
-      return new Date(v.nextDueDate) > thirtyDaysFromNow;
+      return new Date(v.next_due_date) > thirtyDaysFromNow;
     }).length,
   };
 
@@ -504,13 +504,13 @@ export default function AdminVaccinesUnified() {
                               {vacc.doseNumber || "-"}
                             </TableCell>
                             <TableCell>
-                              {new Date(vacc.applicationDate).toLocaleDateString("pt-BR")}
+                              {new Date(vacc.application_date).toLocaleDateString("pt-BR")}
                             </TableCell>
                             <TableCell>
-                              {vacc.nextDueDate ? (
+                              {vacc.next_due_date ? (
                                 <div className="flex items-center gap-2">
-                                  {new Date(vacc.nextDueDate).toLocaleDateString("pt-BR")}
-                                  {new Date(vacc.nextDueDate) < new Date() && (
+                                  {new Date(vacc.next_due_date).toLocaleDateString("pt-BR")}
+                                  {new Date(vacc.next_due_date) < new Date() && (
                                     <AlertCircle className="h-4 w-4 text-red-500" />
                                   )}
                                 </div>
@@ -521,7 +521,7 @@ export default function AdminVaccinesUnified() {
                             <TableCell className="text-sm text-muted-foreground">
                               {vacc.veterinarian || "-"}
                             </TableCell>
-                            <TableCell>{getStatusBadge(vacc.nextDueDate)}</TableCell>
+                            <TableCell>{getStatusBadge(vacc.next_due_date)}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex gap-2 justify-end">
                                 <Button
@@ -571,7 +571,7 @@ export default function AdminVaccinesUnified() {
                     id="nextDueDate"
                     name="nextDueDate"
                     type="date"
-                    defaultValue={editingVaccine?.nextDueDate ? new Date(editingVaccine.nextDueDate).toISOString().split('T')[0] : ""}
+                    defaultValue={editingVaccine?.next_due_date ? new Date(editingVaccine.next_due_date).toISOString().split('T')[0] : ""}
                   />
                 </div>
                 <div className="space-y-2">

@@ -126,7 +126,7 @@ export function DocumentManagement({ petId, showUpload = true }: DocumentManagem
   const groupedDocs = documents?.reduce((acc, doc) => {
     const key = groupBy === "category"
       ? doc.category
-      : new Date(doc.createdAt).toLocaleDateString("pt-BR", { year: "numeric", month: "long" });
+      : new Date(doc.created_at).toLocaleDateString("pt-BR", { year: "numeric", month: "long" });
     if (!acc[key]) acc[key] = [];
     acc[key].push(doc);
     return acc;
@@ -203,9 +203,9 @@ export function DocumentManagement({ petId, showUpload = true }: DocumentManagem
                             </CardTitle>
                             <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                               <Calendar className="h-3 w-3" />
-                              {formatDate(doc.createdAt)}
+                              {formatDate(doc.created_at)}
                               <Clock className="h-3 w-3 ml-2" />
-                              {formatTime(doc.createdAt)}
+                              {formatTime(doc.created_at)}
                             </div>
                           </div>
                         </div>

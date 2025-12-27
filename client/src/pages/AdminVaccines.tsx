@@ -174,7 +174,7 @@ export default function AdminVaccines() {
               <div className="space-y-3">
                 {upcoming.slice(0, 5).map((item) => {
                   const daysUntil = Math.ceil(
-                    (new Date(item.vaccination.nextDueDate!).getTime() - new Date().getTime()) /
+                    (new Date(item.vaccination.next_due_date!).getTime() - new Date().getTime()) /
                       (1000 * 60 * 60 * 24)
                   );
                   return (
@@ -198,7 +198,7 @@ export default function AdminVaccines() {
                             : `${daysUntil} dias`}
                         </Badge>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(item.vaccination.nextDueDate!).toLocaleDateString("pt-BR")}
+                          {new Date(item.vaccination.next_due_date!).toLocaleDateString("pt-BR")}
                         </p>
                       </div>
                     </div>

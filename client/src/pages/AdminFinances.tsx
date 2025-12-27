@@ -471,9 +471,9 @@ export default function AdminFinances() {
                       className="flex items-center justify-between p-4 border rounded-lg"
                     >
                       <div className="flex items-center gap-4">
-                        {pet.photoUrl ? (
-                          <img
-                            src={pet.photoUrl}
+{pet.photo_url ? (
+                            <img
+                              src={pet.photo_url}
                             alt={pet.name}
                             className="w-12 h-12 rounded-full object-cover"
                           />

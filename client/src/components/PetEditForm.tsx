@@ -20,10 +20,10 @@ export function PetEditForm({ pet, isOpen, onClose, onSuccess }: PetEditFormProp
   const [formData, setFormData] = useState({
     name: pet.name || "",
     breed: pet.breed || "",
-    birthDate: pet.birthDate ? new Date(pet.birthDate).toISOString().split("T")[0] : "",
+    birthDate: pet.birth_date ? new Date(pet.birth_date).toISOString().split("T")[0] : "",
     weight: pet.weight ? (pet.weight / 1000).toString() : "", // Convert grams to kg
-    foodBrand: pet.foodBrand || "",
-    foodAmount: pet.foodAmount ? pet.foodAmount.toString() : "",
+    foodBrand: pet.food_brand || "",
+    foodAmount: pet.food_amount ? pet.food_amount.toString() : "",
     notes: pet.notes || "",
   });
 
@@ -31,10 +31,10 @@ export function PetEditForm({ pet, isOpen, onClose, onSuccess }: PetEditFormProp
     setFormData({
       name: pet.name || "",
       breed: pet.breed || "",
-      birthDate: pet.birthDate ? new Date(pet.birthDate).toISOString().split("T")[0] : "",
+      birthDate: pet.birth_date ? new Date(pet.birth_date).toISOString().split("T")[0] : "",
       weight: pet.weight ? (pet.weight / 1000).toString() : "", // Convert grams to kg
-      foodBrand: pet.foodBrand || "",
-      foodAmount: pet.foodAmount ? pet.foodAmount.toString() : "",
+      foodBrand: pet.food_brand || "",
+      foodAmount: pet.food_amount ? pet.food_amount.toString() : "",
       notes: pet.notes || "",
     });
   }, [pet]);
@@ -63,10 +63,10 @@ export function PetEditForm({ pet, isOpen, onClose, onSuccess }: PetEditFormProp
       id: pet.id,
       name: formData.name,
       breed: formData.breed || undefined,
-      birthDate: formData.birthDate ? new Date(formData.birthDate) : undefined,
+      birth_date: formData.birthDate ? new Date(formData.birthDate) : undefined,
       weight: formData.weight ? Math.round(parseFloat(formData.weight) * 1000) : undefined, // Convert kg to grams
-      foodBrand: formData.foodBrand || undefined,
-      foodAmount: formData.foodAmount ? parseInt(formData.foodAmount) : undefined,
+      food_brand: formData.foodBrand || undefined,
+      food_amount: formData.foodAmount ? parseInt(formData.foodAmount) : undefined,
       notes: formData.notes || undefined,
     });
   };

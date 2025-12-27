@@ -103,8 +103,8 @@ export default function AdminMedicationsAll() {
     
     const matchesStatus = 
       statusFilter === "all" ||
-      (statusFilter === "active" && med.medication.isActive) ||
-      (statusFilter === "inactive" && !med.medication.isActive);
+      (statusFilter === "active" && med.medication.is_active) ||
+      (statusFilter === "inactive" && !med.medication.is_active);
     
     const matchesType = 
       typeFilter === "all" ||
@@ -127,8 +127,8 @@ export default function AdminMedicationsAll() {
   // Count statistics
   const stats = {
     total: allMedications.length,
-    active: allMedications.filter(m => m.medication.isActive).length,
-    inactive: allMedications.filter(m => !m.medication.isActive).length,
+    active: allMedications.filter(m => m.medication.is_active).length,
+    inactive: allMedications.filter(m => !m.medication.is_active).length,
   };
 
   return (
@@ -278,8 +278,8 @@ export default function AdminMedicationsAll() {
                           {new Date(med.medication.startDate).toLocaleDateString("pt-BR")}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={med.medication.isActive ? "default" : "secondary"}>
-                            {med.medication.isActive ? "Ativo" : "Finalizado"}
+                          <Badge variant={med.medication.is_active ? "default" : "secondary"}>
+                            {med.medication.is_active ? "Ativo" : "Finalizado"}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -328,7 +328,7 @@ export default function AdminMedicationsAll() {
                   <Label htmlFor="isActive">Status</Label>
                   <Select 
                     name="isActive" 
-                    defaultValue={editingMed.medication.isActive ? "true" : "false"}
+                    defaultValue={editingMed.medication.is_active ? "true" : "false"}
                   >
                     <SelectTrigger>
                       <SelectValue />

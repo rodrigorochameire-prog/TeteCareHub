@@ -1530,15 +1530,26 @@ async function getUsersByRole(role) {
 async function createPet(pet) {
   const db2 = await getDb();
   if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(pets).values(pet).returning();
-  return result[0]?.id || 0;
+  const cleanPet = {};
+  Object.keys(pet).forEach((key) => {
+    const value = pet[key];
+    if (value !== void 0) {
+      cleanPet[key] = value;
+    }
+  });
+  try {
+    const result = await db2.insert(pets).values(cleanPet).returning();
+    return result[0]?.id || 0;
+  } catch (error) {
+    console.error("[createPet] Error inserting pet:", error);
+    console.error("[createPet] Pet data:", cleanPet);
+    throw new Error(`Failed to create pet: ${error.message || "Unknown error"}`);
+  }
 }
 async function updatePet(id, data) {
   const db2 = await getDb();
   if (!db2) throw new Error("Database not available");
   await db2.update(pets).set(data).where(eq(pets.id, id));
-  invalidatePetCache(id);
-  invalidateDashboardCache();
   if (data.approval_status) {
     const { cache: cache2 } = await Promise.resolve().then(() => (init_cache(), cache_exports));
     cache2.invalidatePattern("^pets:approval:");
@@ -1584,7 +1595,7 @@ async function getTotalDailyFoodConsumption() {
       total: sql`COALESCE(SUM(${pets.food_amount}), 0)::int`
     }).from(pets).where(sql`${pets.food_amount} IS NOT NULL AND ${pets.food_amount} > 0`);
     const total = result[0]?.total || 0;
-    cache2.set(cacheKey, total, 60 * 1e3);
+    cache2.set(cacheKey, total, 120 * 1e3);
     return total;
   } catch (error) {
     console.warn("[getTotalDailyFoodConsumption] Database error:", error.message);
@@ -1649,21 +1660,20 @@ async function addPetTutor(data) {
   const db2 = await getDb();
   if (!db2) throw new Error("Database not available");
   const result = await db2.insert(petTutors).values(data).returning();
-  invalidateTutorCache(data.tutor_id);
   return result[0]?.id || 0;
 }
-async function removePetTutor(pet_id2, tutor_id) {
+async function removePetTutor(pet_id, tutor_id) {
   const db2 = await getDb();
   if (!db2) throw new Error("Database not available");
-  await db2.delete(petTutors).where(and(eq(petTutors.pet_id, pet_id2), eq(petTutors.tutor_id, tutor_id)));
+  await db2.delete(petTutors).where(and(eq(petTutors.pet_id, pet_id), eq(petTutors.tutor_id, tutor_id)));
 }
-async function getPetTutors(pet_id2) {
+async function getPetTutors(pet_id) {
   const db2 = await getDb();
   if (!db2) return [];
-  const result = await db2.select({ tutor: users, is_primary: petTutors.is_primary }).from(petTutors).innerJoin(users, eq(petTutors.tutor_id, users.id)).where(eq(petTutors.pet_id, pet_id2));
+  const result = await db2.select({ tutor: users, is_primary: petTutors.is_primary }).from(petTutors).innerJoin(users, eq(petTutors.tutor_id, users.id)).where(eq(petTutors.pet_id, pet_id));
   return result;
 }
-async function getPetTutorsWithDetails(pet_id2) {
+async function getPetTutorsWithDetails(pet_id) {
   const db2 = await getDb();
   if (!db2) return [];
   const result = await db2.select({
@@ -1672,7 +1682,7 @@ async function getPetTutorsWithDetails(pet_id2) {
     email: users.email,
     is_primary: petTutors.is_primary,
     createdAt: petTutors.created_at
-  }).from(petTutors).innerJoin(users, eq(petTutors.tutor_id, users.id)).where(eq(petTutors.pet_id, pet_id2));
+  }).from(petTutors).innerJoin(users, eq(petTutors.tutor_id, users.id)).where(eq(petTutors.pet_id, pet_id));
   return result;
 }
 async function getUserByEmail(email) {
@@ -1694,16 +1704,16 @@ async function getUserByEmail(email) {
     return null;
   }
 }
-async function setPrimaryTutor(pet_id2, tutor_id) {
+async function setPrimaryTutor(pet_id, tutor_id) {
   const db2 = await getDb();
   if (!db2) throw new Error("Database not available");
-  await db2.update(petTutors).set({ is_primary: false }).where(eq(petTutors.pet_id, pet_id2));
-  await db2.update(petTutors).set({ is_primary: true }).where(and(eq(petTutors.pet_id, pet_id2), eq(petTutors.tutor_id, tutor_id)));
+  await db2.update(petTutors).set({ is_primary: false }).where(eq(petTutors.pet_id, pet_id));
+  await db2.update(petTutors).set({ is_primary: true }).where(and(eq(petTutors.pet_id, pet_id), eq(petTutors.tutor_id, tutor_id)));
 }
 async function getActivePackages() {
   const db2 = await getDb();
   if (!db2) return [];
-  return await db2.select().from(creditPackages).where(eq(creditPackages.is_active, true)).orderBy(creditPackages.displayOrder);
+  return await db2.select().from(creditPackages).where(eq(creditPackages.isActive, true)).orderBy(creditPackages.displayOrder);
 }
 async function getPackageById(id) {
   const db2 = await getDb();
@@ -1728,22 +1738,22 @@ async function addDaycareCredit(data) {
   const result = await db2.insert(daycareCredits).values(data).returning();
   return result[0]?.id || 0;
 }
-async function getPetCredits(pet_id2) {
+async function getPetCredits(pet_id) {
   const db2 = await getDb();
   if (!db2) return [];
-  return await db2.select().from(daycareCredits).where(eq(daycareCredits.pet_id, pet_id2)).orderBy(desc(daycareCredits.purchase_date));
+  return await db2.select().from(daycareCredits).where(eq(daycareCredits.pet_id, pet_id)).orderBy(desc(daycareCredits.purchase_date));
 }
-async function getTotalCredits(pet_id2) {
+async function getTotalCredits(pet_id) {
   const db2 = await getDb();
   if (!db2) return 0;
-  const result = await db2.select({ total: sql`SUM(${daycareCredits.remaining_days})` }).from(daycareCredits).where(eq(daycareCredits.pet_id, pet_id2));
+  const result = await db2.select({ total: sql`SUM(${daycareCredits.remaining_days})` }).from(daycareCredits).where(eq(daycareCredits.pet_id, pet_id));
   const total = result[0]?.total;
   return total ? Number(total) : 0;
 }
-async function consumeCredit(pet_id2) {
+async function consumeCredit(pet_id) {
   const db2 = await getDb();
   if (!db2) throw new Error("Database not available");
-  const credits = await db2.select().from(daycareCredits).where(and(eq(daycareCredits.pet_id, pet_id2), sql`${daycareCredits.remaining_days} > 0`)).orderBy(daycareCredits.purchase_date).limit(1);
+  const credits = await db2.select().from(daycareCredits).where(and(eq(daycareCredits.pet_id, pet_id), sql`${daycareCredits.remaining_days} > 0`)).orderBy(daycareCredits.purchase_date).limit(1);
   if (credits.length === 0) {
     throw new Error("No credits available");
   }
@@ -1757,10 +1767,10 @@ async function addDaycareUsage(data) {
   const result = await db2.insert(daycareUsage).values(data).returning();
   return result[0]?.id || 0;
 }
-async function getPetUsageHistory(pet_id2) {
+async function getPetUsageHistory(pet_id) {
   const db2 = await getDb();
   if (!db2) return [];
-  return await db2.select().from(daycareUsage).where(eq(daycareUsage.pet_id, pet_id2)).orderBy(desc(daycareUsage.usage_date));
+  return await db2.select().from(daycareUsage).where(eq(daycareUsage.pet_id, pet_id)).orderBy(desc(daycareUsage.usage_date));
 }
 async function getVaccineLibrary() {
   const db2 = await getDb();
@@ -1777,16 +1787,15 @@ async function addPetVaccination(data) {
   const db2 = await getDb();
   if (!db2) throw new Error("Database not available");
   const result = await db2.insert(petVaccinations).values(data).returning();
-  invalidateVaccinationCache();
   return result[0]?.id || 0;
 }
-async function getPetVaccinations(pet_id2) {
+async function getPetVaccinations(pet_id) {
   const db2 = await getDb();
   if (!db2) return [];
   const result = await db2.select({
     vaccination: petVaccinations,
     vaccine: vaccineLibrary
-  }).from(petVaccinations).innerJoin(vaccineLibrary, eq(petVaccinations.vaccine_id, vaccineLibrary.id)).where(eq(petVaccinations.pet_id, pet_id2)).orderBy(desc(petVaccinations.application_date));
+  }).from(petVaccinations).innerJoin(vaccineLibrary, eq(petVaccinations.vaccine_id, vaccineLibrary.id)).where(eq(petVaccinations.pet_id, pet_id)).orderBy(desc(petVaccinations.application_date));
   return result;
 }
 async function getUpcomingVaccinations(daysAhead = 30) {
@@ -1827,7 +1836,6 @@ async function deletePetVaccination(id) {
   const db2 = await getDb();
   if (!db2) throw new Error("Database not available");
   await db2.delete(petVaccinations).where(eq(petVaccinations.id, id));
-  invalidateVaccinationCache();
 }
 async function getMedicationLibrary() {
   const db2 = await getDb();
@@ -1856,22 +1864,23 @@ async function deletePetMedication(id) {
   if (!db2) throw new Error("Database not available");
   await db2.delete(petMedications).where(eq(petMedications.id, id));
 }
-async function getPetMedications(pet_id2) {
+async function getPetMedications(pet_id) {
   const db2 = await getDb();
   if (!db2) return [];
   const result = await db2.select({
     medication: petMedications,
     medicationInfo: medicationLibrary
-  }).from(petMedications).innerJoin(medicationLibrary, eq(petMedications.medication_id, medicationLibrary.id)).where(eq(petMedications.pet_id, pet_id2)).orderBy(desc(petMedications.start_date));
+  }).from(petMedications).innerJoin(medicationLibrary, eq(petMedications.medication_id, medicationLibrary.id)).where(eq(petMedications.pet_id, pet_id)).orderBy(desc(petMedications.start_date));
   return result;
 }
-async function getActiveMedications(pet_id2) {
+async function getActiveMedications(pet_id) {
   const db2 = await getDb();
   if (!db2) return [];
   const result = await db2.select({
     medication: petMedications,
-    medicationInfo: medicationLibrary
-  }).from(petMedications).innerJoin(medicationLibrary, eq(petMedications.medication_id, medicationLibrary.id)).where(and(eq(petMedications.pet_id, pet_id2), eq(petMedications.is_active, true))).orderBy(desc(petMedications.start_date));
+    medicationInfo: medicationLibrary,
+    pet: pets
+  }).from(petMedications).innerJoin(medicationLibrary, eq(petMedications.medication_id, medicationLibrary.id)).innerJoin(pets, eq(petMedications.pet_id, pets.id)).where(and(eq(petMedications.pet_id, pet_id), eq(petMedications.is_active, true))).orderBy(desc(petMedications.start_date));
   return result;
 }
 async function getAllActiveMedications() {
@@ -1890,17 +1899,17 @@ async function addDailyLog(data) {
   const result = await db2.insert(dailyLogs).values(data).returning();
   return result[0]?.id || 0;
 }
-async function getPetLogs(pet_id2, startDate, endDate) {
+async function getPetLogs(pet_id, startDate, endDate) {
   const db2 = await getDb();
   if (!db2) return [];
   if (startDate && endDate) {
     return await db2.select().from(dailyLogs).where(and(
-      eq(dailyLogs.pet_id, pet_id2),
+      eq(dailyLogs.pet_id, pet_id),
       gte(dailyLogs.log_date, startDate),
       lte(dailyLogs.log_date, endDate)
     )).orderBy(desc(dailyLogs.log_date));
   }
-  return await db2.select().from(dailyLogs).where(eq(dailyLogs.pet_id, pet_id2)).orderBy(desc(dailyLogs.log_date));
+  return await db2.select().from(dailyLogs).where(eq(dailyLogs.pet_id, pet_id)).orderBy(desc(dailyLogs.log_date));
 }
 async function updateDailyLog(id, data) {
   const db2 = await getDb();
@@ -1947,14 +1956,14 @@ async function getAllTransactions() {
     // Convert from cents to reais
   }));
 }
-async function updatePetCredits(pet_id2, amount) {
+async function updatePetCredits(pet_id, amount) {
   const db2 = await getDb();
   if (!db2) return;
-  const pet = await db2.select().from(pets).where(eq(pets.id, pet_id2)).limit(1);
+  const pet = await db2.select().from(pets).where(eq(pets.id, pet_id)).limit(1);
   if (pet.length === 0) throw new Error("Pet not found");
   const currentCredits = pet[0]?.credits || 0;
   const newCredits = currentCredits + amount;
-  await db2.update(pets).set({ credits: newCredits }).where(eq(pets.id, pet_id2));
+  await db2.update(pets).set({ credits: newCredits }).where(eq(pets.id, pet_id));
 }
 async function getAllLogs() {
   const db2 = await getDb();
@@ -1999,10 +2008,10 @@ async function getCalendarEvents(startDate, endDate) {
     createdByName: users.name
   }).from(calendarEvents).leftJoin(users, eq(calendarEvents.created_by_id, users.id)).where(and(gte(calendarEvents.event_date, startDate), lte(calendarEvents.event_date, endDate))).orderBy(calendarEvents.event_date);
 }
-async function getPetEvents(pet_id2) {
+async function getPetEvents(pet_id) {
   const db2 = await getDb();
   if (!db2) return [];
-  return await db2.select().from(calendarEvents).where(eq(calendarEvents.pet_id, pet_id2)).orderBy(calendarEvents.event_date);
+  return await db2.select().from(calendarEvents).where(eq(calendarEvents.pet_id, pet_id)).orderBy(calendarEvents.event_date);
 }
 async function addDocument(data) {
   const db2 = await getDb();
@@ -2023,15 +2032,15 @@ async function deleteDocument(id) {
   if (!db2) throw new Error("Database not available");
   await db2.delete(documents).where(eq(documents.id, id));
 }
-async function getPetDocuments(pet_id2) {
+async function getPetDocuments(pet_id) {
   const db2 = await getDb();
   if (!db2) return [];
-  return await db2.select().from(documents).where(eq(documents.pet_id, pet_id2)).orderBy(desc(documents.created_at));
+  return await db2.select().from(documents).where(eq(documents.pet_id, pet_id)).orderBy(desc(documents.created_at));
 }
-async function getDocumentsByCategory(pet_id2, category) {
+async function getDocumentsByCategory(pet_id, category) {
   const db2 = await getDb();
   if (!db2) return [];
-  return await db2.select().from(documents).where(and(eq(documents.pet_id, pet_id2), eq(documents.category, category))).orderBy(desc(documents.created_at));
+  return await db2.select().from(documents).where(and(eq(documents.pet_id, pet_id), eq(documents.category, category))).orderBy(desc(documents.created_at));
 }
 async function getAllDocuments(petId2, category) {
   const db2 = await getDb();
@@ -2056,7 +2065,7 @@ async function getAllDocuments(petId2, category) {
   if (conditions.length > 0) {
     query = query.where(and(...conditions));
   }
-  return await query.orderBy(desc(documents.createdAt));
+  return await query.orderBy(desc(documents.created_at));
 }
 async function createNotification(data) {
   const db2 = await getDb();
@@ -2094,13 +2103,12 @@ async function addTransaction(data) {
   const db2 = await getDb();
   if (!db2) throw new Error("Database not available");
   const result = await db2.insert(transactions).values(data).returning();
-  invalidateFinancialCache();
   return result[0]?.id || 0;
 }
-async function getPetTransactions(pet_id2) {
+async function getPetTransactions(pet_id) {
   const db2 = await getDb();
   if (!db2) return [];
-  return await db2.select().from(transactions).where(eq(transactions.pet_id, pet_id2)).orderBy(desc(transactions.transaction_date));
+  return await db2.select().from(transactions).where(eq(transactions.pet_id, pet_id)).orderBy(desc(transactions.transaction_date));
 }
 async function getTransactionsByDateRange(startDate, endDate) {
   const db2 = await getDb();
@@ -2136,10 +2144,10 @@ async function addPetPhoto(data) {
   const result = await db2.insert(petPhotos).values(data).returning();
   return result[0]?.id;
 }
-async function getPetPhotos(pet_id2) {
+async function getPetPhotos(pet_id) {
   const db2 = await getDb();
   if (!db2) return [];
-  return await db2.select().from(petPhotos).where(eq(petPhotos.pet_id, pet_id2)).orderBy(desc(petPhotos.taken_at));
+  return await db2.select().from(petPhotos).where(eq(petPhotos.pet_id, pet_id)).orderBy(desc(petPhotos.taken_at));
 }
 async function deletePetPhoto(id) {
   const db2 = await getDb();
@@ -2188,7 +2196,7 @@ async function listSubscriptionPlans(activeOnly = false) {
   const db2 = await getDb();
   if (!db2) return [];
   if (activeOnly) {
-    return db2.select().from(subscriptionPlans).where(eq(subscriptionPlans.is_active, true));
+    return db2.select().from(subscriptionPlans).where(eq(subscriptionPlans.isActive, true));
   }
   return db2.select().from(subscriptionPlans);
 }
@@ -2212,7 +2220,7 @@ async function getUserActiveSubscription(user_id) {
   const db2 = await getDb();
   const [subscription] = await db2.select().from(subscriptions).where(
     and(
-      eq(subscriptions.user_id, userId),
+      eq(subscriptions.userId, user_id),
       eq(subscriptions.status, "active")
     )
   ).limit(1);
@@ -2220,7 +2228,7 @@ async function getUserActiveSubscription(user_id) {
 }
 async function getUserSubscriptionHistory(user_id) {
   const db2 = await getDb();
-  return db2.select().from(subscriptions).where(eq(subscriptions.user_id, user_id)).orderBy(desc(subscriptions.created_at));
+  return db2.select().from(subscriptions).where(eq(subscriptions.userId, user_id)).orderBy(desc(subscriptions.createdAt));
 }
 async function updateSubscription(id, data) {
   const db2 = await getDb();
@@ -2268,9 +2276,9 @@ async function createFleaTreatment(data) {
   const [result] = await db2.insert(fleaTreatments).values(data);
   return result;
 }
-async function getFleaTreatmentsByPetId(pet_id2) {
+async function getFleaTreatmentsByPetId(pet_id) {
   const db2 = await getDb();
-  return db2.select().from(fleaTreatments).where(eq(fleaTreatments.petId, pet_id2)).orderBy(desc(fleaTreatments.applicationDate));
+  return db2.select().from(fleaTreatments).where(eq(fleaTreatments.petId, pet_id)).orderBy(desc(fleaTreatments.applicationDate));
 }
 async function updateFleaTreatment(data) {
   const db2 = await getDb();
@@ -2287,12 +2295,12 @@ async function deleteFleaTreatment(id) {
 }
 async function createDewormingTreatment(data) {
   const db2 = await getDb();
-  const [result] = await db2.insert(dewormingTreatments).values(data);
+  const [result] = await db2.insert(dewormingTreatments).values(data).returning();
   return result;
 }
-async function getDewormingTreatmentsByPetId(pet_id2) {
+async function getDewormingTreatmentsByPetId(pet_id) {
   const db2 = await getDb();
-  return db2.select().from(dewormingTreatments).where(eq(dewormingTreatments.petId, pet_id2)).orderBy(desc(dewormingTreatments.applicationDate));
+  return db2.select().from(dewormingTreatments).where(eq(dewormingTreatments.petId, pet_id)).orderBy(desc(dewormingTreatments.applicationDate));
 }
 async function updateDewormingTreatment(data) {
   const db2 = await getDb();
@@ -2309,14 +2317,14 @@ async function deleteDewormingTreatment(id) {
 }
 async function createBehaviorRecord(data) {
   const db2 = await getDb();
-  await db2.insert(behaviorRecords).values(data);
-  const [record] = await db2.select().from(behaviorRecords).where(eq(behaviorRecords.id, sql`LAST_INSERT_ID()`)).limit(1);
+  if (!db2) throw new Error("Database not available");
+  const [record] = await db2.insert(behaviorRecords).values(data).returning();
   return record;
 }
 async function listBehaviorRecords(petId2) {
   const db2 = await getDb();
   if (petId2) {
-    return db2.select().from(behaviorRecords).where(eq(behaviorRecords.pet_id, petId2)).orderBy(desc(behaviorRecords.date));
+    return db2.select().from(behaviorRecords).where(eq(behaviorRecords.petId, petId2)).orderBy(desc(behaviorRecords.date));
   }
   return db2.select().from(behaviorRecords).orderBy(desc(behaviorRecords.date));
 }
@@ -2333,13 +2341,13 @@ async function createTrainingProgress(data) {
 async function listTrainingProgress(petId2) {
   const db2 = await getDb();
   if (petId2) {
-    return db2.select().from(trainingProgress).where(eq(trainingProgress.pet_id, pet_id)).orderBy(desc(trainingProgress.updated_at));
+    return db2.select().from(trainingProgress).where(eq(trainingProgress.petId, petId2)).orderBy(desc(trainingProgress.updatedAt));
   }
-  return db2.select().from(trainingProgress).orderBy(desc(trainingProgress.updated_at));
+  return db2.select().from(trainingProgress).orderBy(desc(trainingProgress.updatedAt));
 }
 async function updateTrainingProgress(id, currentLevel, notes) {
   const db2 = await getDb();
-  const updated = await db2.update(trainingProgress).set({ currentLevel, notes, updated_at: /* @__PURE__ */ new Date() }).where(eq(trainingProgress.id, id));
+  const updated = await db2.update(trainingProgress).set({ currentLevel, notes, updatedAt: /* @__PURE__ */ new Date() }).where(eq(trainingProgress.id, id));
   return updated;
 }
 async function deleteTrainingProgress(id) {
@@ -2357,14 +2365,14 @@ async function getPhotoComments(photoId) {
   const comments = await db2.select({
     id: photoComments.id,
     photoId: photoComments.photoId,
-    user_id: photoComments.user_id,
+    user_id: photoComments.userId,
     comment: photoComments.comment,
-    createdAt: photoComments.created_at,
+    createdAt: photoComments.createdAt,
     user: {
       id: users.id,
       name: users.name
     }
-  }).from(photoComments).leftJoin(users, eq(photoComments.user_id, users.id)).where(eq(photoComments.photoId, photoId)).orderBy(desc(photoComments.created_at));
+  }).from(photoComments).leftJoin(users, eq(photoComments.userId, users.id)).where(eq(photoComments.photoId, photoId)).orderBy(desc(photoComments.createdAt));
   return comments;
 }
 async function deletePhotoComment(id) {
@@ -2373,7 +2381,7 @@ async function deletePhotoComment(id) {
 }
 async function addPhotoReaction(photoId, user_id, reactionType) {
   const db2 = await getDb();
-  const existing = await db2.select().from(photoReactions).where(and(eq(photoReactions.photoId, photoId), eq(photoReactions.user_id, user_id))).limit(1);
+  const existing = await db2.select().from(photoReactions).where(and(eq(photoReactions.photoId, photoId), eq(photoReactions.userId, user_id))).limit(1);
   if (existing.length > 0) {
     await db2.update(photoReactions).set({ reactionType }).where(eq(photoReactions.id, existing[0].id));
     return existing[0];
@@ -2385,7 +2393,7 @@ async function addPhotoReaction(photoId, user_id, reactionType) {
 }
 async function removePhotoReaction(photoId, user_id) {
   const db2 = await getDb();
-  await db2.delete(photoReactions).where(and(eq(photoReactions.photoId, photoId), eq(photoReactions.user_id, userId)));
+  await db2.delete(photoReactions).where(and(eq(photoReactions.photoId, photoId), eq(photoReactions.userId, user_id)));
 }
 async function getPhotoReactions(photoId) {
   const db2 = await getDb();
@@ -2455,15 +2463,15 @@ async function listReviews(filters) {
   const db2 = await getDb();
   let query = db2.select().from(reviews);
   if (filters?.petId) {
-    query = query.where(eq(reviews.pet_id, filters.petId));
+    query = query.where(eq(reviews.petId, filters.petId));
   }
   if (filters?.tutorId) {
-    query = query.where(eq(reviews.tutor_id, filters.tutorId));
+    query = query.where(eq(reviews.tutorId, filters.tutorId));
   }
   if (filters?.minRating) {
     query = query.where(sql`${reviews.rating} >= ${filters.minRating}`);
   }
-  return query.orderBy(desc(reviews.created_at));
+  return query.orderBy(desc(reviews.createdAt));
 }
 async function getAverageRating() {
   const db2 = await getDb();
@@ -2474,29 +2482,29 @@ async function addReviewResponse(reviewId, response) {
   const db2 = await getDb();
   await db2.update(reviews).set({ response, respondedAt: /* @__PURE__ */ new Date() }).where(eq(reviews.id, reviewId));
 }
-async function getWeightHistory(pet_id2) {
+async function getWeightHistory(pet_id) {
   const db2 = await getDb();
   const logs = await db2.select({
     date: dailyLogs.log_date,
     weight: dailyLogs.weight
-  }).from(dailyLogs).where(and(eq(dailyLogs.pet_id, pet_id2), sql`${dailyLogs.weight} IS NOT NULL`)).orderBy(dailyLogs.log_date).limit(30);
+  }).from(dailyLogs).where(and(eq(dailyLogs.pet_id, pet_id), sql`${dailyLogs.weight} IS NOT NULL`)).orderBy(dailyLogs.log_date).limit(30);
   return logs;
 }
-async function getMoodHistory(pet_id2) {
+async function getMoodHistory(pet_id) {
   const db2 = await getDb();
   const logs = await db2.select({
     date: dailyLogs.log_date,
     mood: dailyLogs.mood
-  }).from(dailyLogs).where(and(eq(dailyLogs.pet_id, pet_id2), sql`${dailyLogs.mood} IS NOT NULL`)).orderBy(dailyLogs.log_date).limit(30);
+  }).from(dailyLogs).where(and(eq(dailyLogs.pet_id, pet_id), sql`${dailyLogs.mood} IS NOT NULL`)).orderBy(dailyLogs.log_date).limit(30);
   return logs;
 }
-async function getFrequencyStats(pet_id2) {
+async function getFrequencyStats(pet_id) {
   const db2 = await getDb();
   const stats = await db2.select({
     month: sql`DATE_FORMAT(${daycareUsage.check_in_time}, '%Y-%m')`,
     frequency: sql`COUNT(*)`
   }).from(daycareUsage).where(and(
-    eq(daycareUsage.pet_id, pet_id2),
+    eq(daycareUsage.pet_id, pet_id),
     sql`${daycareUsage.check_in_time} >= DATE_SUB(NOW(), INTERVAL 12 MONTH)`
   )).groupBy(sql`DATE_FORMAT(${daycareUsage.check_in_time}, '%Y-%m')`).orderBy(sql`DATE_FORMAT(${daycareUsage.check_in_time}, '%Y-%m')`);
   return stats;
@@ -2524,7 +2532,7 @@ async function deleteUser(user_id) {
 }
 async function getPaymentsByUserId(user_id) {
   const db2 = await getDb();
-  return db2.select().from(payments).where(eq(payments.user_id, user_id)).orderBy(payments.created_at);
+  return db2.select().from(payments).where(eq(payments.userId, user_id)).orderBy(payments.createdAt);
 }
 async function createAdminInvite(data) {
   const db2 = await getDb();
@@ -2538,7 +2546,7 @@ async function getAdminInviteByToken(token) {
 }
 async function listPendingAdminInvites() {
   const db2 = await getDb();
-  return db2.select().from(adminInvites).where(eq(adminInvites.status, "pending")).orderBy(adminInvites.created_at);
+  return db2.select().from(adminInvites).where(eq(adminInvites.status, "pending")).orderBy(adminInvites.createdAt);
 }
 async function updateAdminInviteStatus(token, status) {
   const db2 = await getDb();
@@ -2601,7 +2609,7 @@ async function getWhatsAppMessageHistory(limit = 50, status) {
   const db2 = await getDb();
   if (!db2) return [];
   if (status) {
-    return await db2.select().from(whatsappMessages).where(eq(whatsappMessages.status, status)).orderBy(desc(whatsappMessages.created_at)).limit(limit);
+    return await db2.select().from(whatsappMessages).where(eq(whatsappMessages.status, status)).orderBy(desc(whatsappMessages.createdAt)).limit(limit);
   }
   return await db2.select().from(whatsappMessages).orderBy(desc(whatsappMessages.createdAt)).limit(limit);
 }
@@ -2610,14 +2618,14 @@ async function getWhatsAppGroups() {
   if (!db2) return [];
   return await db2.select({
     id: whatsappGroups.id,
-    pet_id: whatsappGroups.pet_id,
+    pet_id: whatsappGroups.petId,
     groupName: whatsappGroups.groupName,
     whatsappGroupId: whatsappGroups.whatsappGroupId,
     inviteLink: whatsappGroups.inviteLink,
-    isActive: whatsappGroups.is_active,
-    createdAt: whatsappGroups.created_at,
+    isActive: whatsappGroups.isActive,
+    createdAt: whatsappGroups.createdAt,
     petName: pets.name
-  }).from(whatsappGroups).leftJoin(pets, eq(whatsappGroups.pet_id, pets.id)).orderBy(whatsappGroups.created_at);
+  }).from(whatsappGroups).leftJoin(pets, eq(whatsappGroups.petId, pets.id)).orderBy(whatsappGroups.createdAt);
 }
 async function createWhatsAppGroup(data) {
   const db2 = await getDb();
@@ -2645,7 +2653,7 @@ async function getWhatsAppAutomations() {
     templateId: whatsappAutomations.templateId,
     enabled: whatsappAutomations.enabled,
     config: whatsappAutomations.config,
-    createdAt: whatsappAutomations.created_at,
+    createdAt: whatsappAutomations.createdAt,
     templateName: whatsappTemplates.name
   }).from(whatsappAutomations).leftJoin(whatsappTemplates, eq(whatsappAutomations.templateId, whatsappTemplates.id)).orderBy(whatsappAutomations.name);
 }
@@ -2711,7 +2719,7 @@ async function markWhatsAppConversationAsRead(id) {
 async function getAllPayments() {
   const db2 = await getDb();
   if (!db2) return [];
-  return await db2.select().from(payments).orderBy(desc(payments.created_at));
+  return await db2.select().from(payments).orderBy(desc(payments.createdAt));
 }
 async function getUpcomingVaccinationReminders(daysAhead = 7) {
   const db2 = await getDb();
@@ -2759,11 +2767,11 @@ async function getUpcomingFleaTreatmentReminders(daysAhead = 7) {
     pet_id: pets.id,
     petName: pets.name,
     productName: fleaTreatments.productName,
-    next_due_date: fleaTreatments.next_due_date
-  }).from(fleaTreatments).innerJoin(pets, eq(fleaTreatments.pet_id, pets.id)).where(and(
-    gte(fleaTreatments.next_due_date, today),
-    lte(fleaTreatments.next_due_date, futureDate)
-  )).orderBy(fleaTreatments.next_due_date);
+    next_due_date: fleaTreatments.nextDueDate
+  }).from(fleaTreatments).innerJoin(pets, eq(fleaTreatments.petId, pets.id)).where(and(
+    gte(fleaTreatments.nextDueDate, today),
+    lte(fleaTreatments.nextDueDate, futureDate)
+  )).orderBy(fleaTreatments.nextDueDate);
   return results;
 }
 async function getUpcomingDewormingReminders(daysAhead = 7) {
@@ -2776,11 +2784,11 @@ async function getUpcomingDewormingReminders(daysAhead = 7) {
     pet_id: pets.id,
     petName: pets.name,
     productName: dewormingTreatments.productName,
-    next_due_date: dewormingTreatments.next_due_date
-  }).from(dewormingTreatments).innerJoin(pets, eq(dewormingTreatments.pet_id, pets.id)).where(and(
-    gte(dewormingTreatments.next_due_date, today),
-    lte(dewormingTreatments.next_due_date, futureDate)
-  )).orderBy(dewormingTreatments.next_due_date);
+    next_due_date: dewormingTreatments.nextDueDate
+  }).from(dewormingTreatments).innerJoin(pets, eq(dewormingTreatments.petId, pets.id)).where(and(
+    gte(dewormingTreatments.nextDueDate, today),
+    lte(dewormingTreatments.nextDueDate, futureDate)
+  )).orderBy(dewormingTreatments.nextDueDate);
   return results;
 }
 async function getAllUpcomingHealthReminders(daysAhead = 7) {
@@ -2876,12 +2884,12 @@ async function getPreventivesThisMonth() {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
   const fleaCount = await db2.select({ count: sql`count(*)` }).from(fleaTreatments).where(and(
-    gte(fleaTreatments.application_date, startOfMonth),
-    lte(fleaTreatments.application_date, endOfMonth)
+    gte(fleaTreatments.applicationDate, startOfMonth),
+    lte(fleaTreatments.applicationDate, endOfMonth)
   ));
   const dewormingCount = await db2.select({ count: sql`count(*)` }).from(dewormingTreatments).where(and(
-    gte(dewormingTreatments.application_date, startOfMonth),
-    lte(dewormingTreatments.application_date, endOfMonth)
+    gte(dewormingTreatments.applicationDate, startOfMonth),
+    lte(dewormingTreatments.applicationDate, endOfMonth)
   ));
   const flea = Number(fleaCount[0]?.count || 0);
   const deworming = Number(dewormingCount[0]?.count || 0);
@@ -2907,15 +2915,15 @@ async function getOverdueTreatments() {
     pet_id: pets.id,
     petName: pets.name,
     itemName: fleaTreatments.productName,
-    dueDate: fleaTreatments.next_due_date
-  }).from(fleaTreatments).innerJoin(pets, eq(fleaTreatments.pet_id, pets.id)).where(lt(fleaTreatments.next_due_date, today)).orderBy(fleaTreatments.next_due_date);
+    dueDate: fleaTreatments.nextDueDate
+  }).from(fleaTreatments).innerJoin(pets, eq(fleaTreatments.petId, pets.id)).where(lt(fleaTreatments.nextDueDate, today)).orderBy(fleaTreatments.nextDueDate);
   const overdueDeworming = await db2.select({
     type: sql`'deworming'`,
     pet_id: pets.id,
     petName: pets.name,
     itemName: dewormingTreatments.productName,
-    dueDate: dewormingTreatments.next_due_date
-  }).from(dewormingTreatments).innerJoin(pets, eq(dewormingTreatments.pet_id, pets.id)).where(lt(dewormingTreatments.next_due_date, today)).orderBy(dewormingTreatments.next_due_date);
+    dueDate: dewormingTreatments.nextDueDate
+  }).from(dewormingTreatments).innerJoin(pets, eq(dewormingTreatments.petId, pets.id)).where(lt(dewormingTreatments.nextDueDate, today)).orderBy(dewormingTreatments.nextDueDate);
   return [...overdueVaccinations, ...overdueFlea, ...overdueDeworming];
 }
 async function getHealthDashboardStats() {
@@ -2930,7 +2938,7 @@ async function getHealthDashboardStats() {
     overdue
   };
 }
-async function getPetVaccinationHistory(pet_id2) {
+async function getPetVaccinationHistory(pet_id) {
   const db2 = await getDb();
   if (!db2) return [];
   const history = await db2.select({
@@ -2943,10 +2951,10 @@ async function getPetVaccinationHistory(pet_id2) {
     batchNumber: petVaccinations.batch_number,
     veterinarian: petVaccinations.veterinarian,
     notes: petVaccinations.notes
-  }).from(petVaccinations).innerJoin(vaccineLibrary, eq(petVaccinations.vaccine_id, vaccineLibrary.id)).where(eq(petVaccinations.pet_id, pet_id2)).orderBy(desc(petVaccinations.application_date));
+  }).from(petVaccinations).innerJoin(vaccineLibrary, eq(petVaccinations.vaccine_id, vaccineLibrary.id)).where(eq(petVaccinations.pet_id, pet_id)).orderBy(desc(petVaccinations.application_date));
   return history;
 }
-async function getPetMedicationHistory(pet_id2) {
+async function getPetMedicationHistory(pet_id) {
   const db2 = await getDb();
   if (!db2) return [];
   const history = await db2.select({
@@ -2959,28 +2967,28 @@ async function getPetMedicationHistory(pet_id2) {
     dosage: petMedications.dosage,
     frequency: petMedications.frequency,
     notes: petMedications.notes
-  }).from(petMedications).innerJoin(medicationLibrary, eq(petMedications.medication_id, medicationLibrary.id)).where(eq(petMedications.pet_id, pet_id2)).orderBy(desc(petMedications.start_date));
+  }).from(petMedications).innerJoin(medicationLibrary, eq(petMedications.medication_id, medicationLibrary.id)).where(eq(petMedications.pet_id, pet_id)).orderBy(desc(petMedications.start_date));
   return history;
 }
-async function getPetFleaTreatmentHistory(pet_id2) {
+async function getPetFleaTreatmentHistory(pet_id) {
   const db2 = await getDb();
   if (!db2) return [];
-  const history = await db2.select().from(fleaTreatments).where(eq(fleaTreatments.pet_id, petId)).orderBy(desc(fleaTreatments.application_date));
+  const history = await db2.select().from(fleaTreatments).where(eq(fleaTreatments.petId, pet_id)).orderBy(desc(fleaTreatments.applicationDate));
   return history;
 }
-async function getPetDewormingHistory(pet_id2) {
+async function getPetDewormingHistory(pet_id) {
   const db2 = await getDb();
   if (!db2) return [];
-  const history = await db2.select().from(dewormingTreatments).where(eq(dewormingTreatments.pet_id, petId)).orderBy(desc(dewormingTreatments.application_date));
+  const history = await db2.select().from(dewormingTreatments).where(eq(dewormingTreatments.petId, pet_id)).orderBy(desc(dewormingTreatments.applicationDate));
   return history;
 }
-async function getPetCompleteHealthHistory(pet_id2) {
-  const [pet, vaccinations, medications, fleaTreatments2, dewormingTreatments2] = await Promise.all([
-    getPetById(petId),
-    getPetVaccinationHistory(petId),
-    getPetMedicationHistory(petId),
-    getPetFleaTreatmentHistory(petId),
-    getPetDewormingHistory(petId)
+async function getPetCompleteHealthHistory(pet_id) {
+  const [pet, vaccinations, medications, fleaHistory, dewormingHistory] = await Promise.all([
+    getPetById(pet_id),
+    getPetVaccinationHistory(pet_id),
+    getPetMedicationHistory(pet_id),
+    getPetFleaTreatmentHistory(pet_id),
+    getPetDewormingHistory(pet_id)
   ]);
   if (!pet) {
     throw new Error("Pet not found");
@@ -2990,8 +2998,8 @@ async function getPetCompleteHealthHistory(pet_id2) {
     vaccinations,
     medications,
     preventives: {
-      flea: fleaTreatments2,
-      deworming: dewormingTreatments2
+      flea: fleaHistory,
+      deworming: dewormingHistory
     }
   };
 }
@@ -3040,12 +3048,12 @@ async function getHealthCalendarEvents(startDate, endDate) {
     )
   ).orderBy(petMedications.end_date);
   for (const m of medications) {
-    if (m.end_date) {
+    if (m.endDate) {
       events.push({
         id: `medication-${m.id}`,
         title: `\u{1F48A} ${m.medicationName} - ${m.petName}`,
-        start: m.end_date,
-        end: m.end_date,
+        start: m.endDate,
+        end: m.endDate,
         type: "medication",
         pet_id: m.pet_id,
         petName: m.petName || "Pet",
@@ -3053,38 +3061,38 @@ async function getHealthCalendarEvents(startDate, endDate) {
       });
     }
   }
-  const fleaResults = await db2.select().from(fleaTreatments).leftJoin(pets, eq(fleaTreatments.pet_id, pets.id)).where(
+  const fleaResults = await db2.select().from(fleaTreatments).leftJoin(pets, eq(fleaTreatments.petId, pets.id)).where(
     and(
-      startDate ? gte(fleaTreatments.next_due_date, startDate) : void 0,
-      endDate ? lte(fleaTreatments.next_due_date, endDate) : void 0
+      startDate ? gte(fleaTreatments.nextDueDate, startDate) : void 0,
+      endDate ? lte(fleaTreatments.nextDueDate, endDate) : void 0
     )
-  ).orderBy(fleaTreatments.next_due_date);
+  ).orderBy(fleaTreatments.nextDueDate);
   for (const f of fleaResults) {
     events.push({
       id: `flea-${f.fleaTreatments.id}`,
       title: `\u{1F6E1}\uFE0F ${f.fleaTreatments.productName} - ${f.pets?.name}`,
-      start: f.fleaTreatments.next_due_date,
-      end: f.fleaTreatments.next_due_date,
+      start: f.fleaTreatments.nextDueDate,
+      end: f.fleaTreatments.nextDueDate,
       type: "flea",
-      pet_id: f.fleaTreatments.pet_id,
+      pet_id: f.fleaTreatments.petId,
       petName: f.pets?.name || "Pet",
       notes: f.fleaTreatments.notes
     });
   }
-  const dewormingResults = await db2.select().from(dewormingTreatments).leftJoin(pets, eq(dewormingTreatments.pet_id, pets.id)).where(
+  const dewormingResults = await db2.select().from(dewormingTreatments).leftJoin(pets, eq(dewormingTreatments.petId, pets.id)).where(
     and(
-      startDate ? gte(dewormingTreatments.next_due_date, startDate) : void 0,
-      endDate ? lte(dewormingTreatments.next_due_date, endDate) : void 0
+      startDate ? gte(dewormingTreatments.nextDueDate, startDate) : void 0,
+      endDate ? lte(dewormingTreatments.nextDueDate, endDate) : void 0
     )
-  ).orderBy(dewormingTreatments.next_due_date);
+  ).orderBy(dewormingTreatments.nextDueDate);
   for (const d of dewormingResults) {
     events.push({
       id: `deworming-${d.dewormingTreatments.id}`,
       title: `\u{1F41B} ${d.dewormingTreatments.productName} - ${d.pets?.name}`,
-      start: d.dewormingTreatments.next_due_date,
-      end: d.dewormingTreatments.next_due_date,
+      start: d.dewormingTreatments.nextDueDate,
+      end: d.dewormingTreatments.nextDueDate,
       type: "deworming",
-      pet_id: d.dewormingTreatments.pet_id,
+      pet_id: d.dewormingTreatments.petId,
       petName: d.pets?.name || "Pet",
       notes: d.dewormingTreatments.notes
     });
@@ -3144,34 +3152,34 @@ async function updateTutor(tutor_id, data) {
   if (!db2) return null;
   await db2.update(users).set({
     ...data,
-    updated_at: /* @__PURE__ */ new Date()
+    updatedAt: /* @__PURE__ */ new Date()
   }).where(eq(users.id, tutor_id));
-  return await getTutorById(tutorId);
+  return await getTutorById(tutor_id);
 }
-async function linkPetToTutor(pet_id2, tutor_id, is_primary = false) {
+async function linkPetToTutor(pet_id, tutor_id, is_primary = false) {
   const db2 = await getDb();
   if (!db2) return false;
-  const existing = await db2.select().from(petTutors).where(and(eq(petTutors.pet_id, pet_id2), eq(petTutors.tutor_id, tutor_id))).limit(1);
+  const existing = await db2.select().from(petTutors).where(and(eq(petTutors.pet_id, pet_id), eq(petTutors.tutor_id, tutor_id))).limit(1);
   if (existing.length > 0) {
-    if (isPrimary) {
-      await db2.update(petTutors).set({ is_primary: true }).where(and(eq(petTutors.pet_id, pet_id2), eq(petTutors.tutor_id, tutor_id)));
+    if (is_primary) {
+      await db2.update(petTutors).set({ is_primary: true }).where(and(eq(petTutors.pet_id, pet_id), eq(petTutors.tutor_id, tutor_id)));
     }
     return true;
   }
   if (is_primary) {
-    await db2.update(petTutors).set({ is_primary: false }).where(eq(petTutors.pet_id, pet_id2));
+    await db2.update(petTutors).set({ is_primary: false }).where(eq(petTutors.pet_id, pet_id));
   }
   await db2.insert(petTutors).values({
-    pet_id: pet_id2,
+    pet_id,
     tutor_id,
     is_primary
   });
   return true;
 }
-async function unlinkPetFromTutor(pet_id2, tutor_id) {
+async function unlinkPetFromTutor(pet_id, tutor_id) {
   const db2 = await getDb();
   if (!db2) return false;
-  await db2.delete(petTutors).where(and(eq(petTutors.pet_id, pet_id2), eq(petTutors.tutor_id, tutor_id)));
+  await db2.delete(petTutors).where(and(eq(petTutors.pet_id, pet_id), eq(petTutors.tutor_id, tutor_id)));
   return true;
 }
 async function getTutorReminderHistory(tutor_id) {
@@ -3254,8 +3262,8 @@ async function getAllCalendarEvents(startDate, endDate) {
   const paymentEvents = paymentsData.map((payment) => ({
     id: `payment-${payment.id}`,
     title: `${payment.type === "income" ? "Receita" : "Despesa"}: ${payment.description}`,
-    start: new Date(payment.transaction_date),
-    end: new Date(payment.transaction_date),
+    start: new Date(payment.transactionDate),
+    end: new Date(payment.transactionDate),
     type: payment.type === "income" ? "payment-income" : "payment-expense",
     pet_id: payment.pet_id,
     petName: payment.petName || void 0,
@@ -3347,7 +3355,7 @@ async function getAuditLogs(filters) {
   if (!db2) return [];
   let query = db2.select().from(auditLogs);
   const conditions = [];
-  if (filters?.userId) conditions.push(eq(auditLogs.user_id, filters.userId));
+  if (filters?.userId) conditions.push(eq(auditLogs.userId, filters.userId));
   if (filters?.action) conditions.push(eq(auditLogs.action, filters.action));
   if (filters?.success !== void 0) conditions.push(eq(auditLogs.success, filters.success));
   if (filters?.startDate) conditions.push(gte(auditLogs.timestamp, filters.startDate));
@@ -3405,14 +3413,14 @@ async function deleteNotificationTemplate(id) {
 async function getTutorNotificationPreferences(tutor_id) {
   const db2 = await getDb();
   if (!db2) return [];
-  return await db2.select().from(tutorNotificationPreferences).where(eq(tutorNotificationPreferences.tutor_id, tutor_id));
+  return await db2.select().from(tutorNotificationPreferences).where(eq(tutorNotificationPreferences.tutorId, tutor_id));
 }
 async function getTutorPreferenceByType(tutor_id, type) {
   const db2 = await getDb();
   if (!db2) return null;
   const results = await db2.select().from(tutorNotificationPreferences).where(
     and(
-      eq(tutorNotificationPreferences.tutor_id, tutor_id),
+      eq(tutorNotificationPreferences.tutorId, tutor_id),
       eq(tutorNotificationPreferences.notificationType, type)
     )
   ).limit(1);
@@ -3441,13 +3449,13 @@ async function getAllTutorPreferences() {
   if (!db2) return [];
   return await db2.select({
     id: tutorNotificationPreferences.id,
-    tutor_id: tutorNotificationPreferences.tutor_id,
+    tutor_id: tutorNotificationPreferences.tutorId,
     tutorName: users.name,
     tutorEmail: users.email,
     notificationType: tutorNotificationPreferences.notificationType,
     enabled: tutorNotificationPreferences.enabled,
     adminOverride: tutorNotificationPreferences.adminOverride
-  }).from(tutorNotificationPreferences).leftJoin(users, eq(tutorNotificationPreferences.tutor_id, users.id)).orderBy(users.name, tutorNotificationPreferences.notificationType);
+  }).from(tutorNotificationPreferences).leftJoin(users, eq(tutorNotificationPreferences.tutorId, users.id)).orderBy(users.name, tutorNotificationPreferences.notificationType);
 }
 async function shouldSendNotification(tutor_id, type) {
   const preference = await getTutorPreferenceByType(tutor_id, type);
@@ -3465,7 +3473,7 @@ async function createHealthBehaviorLog(data) {
   const result = await db2.insert(healthBehaviorLogs).values(data);
   return { id: Number(result.insertId) };
 }
-async function getHealthBehaviorLogsByPet(pet_id2, limit = 50) {
+async function getHealthBehaviorLogsByPet(pet_id, limit = 50) {
   const db2 = await getDb();
   if (!db2) return [];
   return await db2.select({
@@ -3482,7 +3490,7 @@ async function getHealthBehaviorLogsByPet(pet_id2, limit = 50) {
     waterIntake: healthBehaviorLogs.waterIntake,
     notes: healthBehaviorLogs.notes,
     createdAt: healthBehaviorLogs.createdAt
-  }).from(healthBehaviorLogs).leftJoin(pets, eq(healthBehaviorLogs.petId, pets.id)).leftJoin(users, eq(healthBehaviorLogs.recordedBy, users.id)).where(eq(healthBehaviorLogs.petId, pet_id2)).orderBy(desc(healthBehaviorLogs.recordedAt)).limit(limit);
+  }).from(healthBehaviorLogs).leftJoin(pets, eq(healthBehaviorLogs.petId, pets.id)).leftJoin(users, eq(healthBehaviorLogs.recordedBy, users.id)).where(eq(healthBehaviorLogs.petId, pet_id)).orderBy(desc(healthBehaviorLogs.recordedAt)).limit(limit);
 }
 async function getRecentHealthBehaviorLogs(limit = 20) {
   const db2 = await getDb();
@@ -3514,14 +3522,14 @@ async function deleteHealthBehaviorLog(id) {
   await db2.delete(healthBehaviorLogs).where(eq(healthBehaviorLogs.id, id));
   return true;
 }
-async function getHealthBehaviorStats(pet_id2, days = 30) {
+async function getHealthBehaviorStats(pet_id, days = 30) {
   const db2 = await getDb();
   if (!db2) return null;
   const startDate = /* @__PURE__ */ new Date();
   startDate.setDate(startDate.getDate() - days);
   const logs = await db2.select().from(healthBehaviorLogs).where(
     and(
-      eq(healthBehaviorLogs.petId, pet_id2),
+      eq(healthBehaviorLogs.petId, pet_id),
       gte(healthBehaviorLogs.recordedAt, startDate)
     )
   ).orderBy(healthBehaviorLogs.recordedAt);
@@ -3551,7 +3559,7 @@ async function getHealthBehaviorStats(pet_id2, days = 30) {
 async function getAllCreditPackages() {
   const db2 = await getDb();
   if (!db2) return [];
-  return await db2.select().from(creditPackages).where(eq(creditPackages.is_active, true)).orderBy(creditPackages.displayOrder);
+  return await db2.select().from(creditPackages).where(eq(creditPackages.isActive, true)).orderBy(creditPackages.displayOrder);
 }
 async function getAllCreditPackagesIncludingInactive() {
   const db2 = await getDb();
@@ -3567,8 +3575,8 @@ async function getCreditPackageById(id) {
 async function createCreditPackage(data) {
   const db2 = await getDb();
   if (!db2) return null;
-  const result = await db2.insert(creditPackages).values(data);
-  return { id: Number(result.insertId) || 0 };
+  const [result] = await db2.insert(creditPackages).values(data).returning();
+  return { id: result.id };
 }
 async function updateCreditPackage(id, data) {
   const db2 = await getDb();
@@ -3585,7 +3593,7 @@ async function deleteCreditPackage(id) {
 async function getAllEventTypes() {
   const db2 = await getDb();
   if (!db2) return [];
-  return await db2.select().from(eventTypes).where(eq(eventTypes.is_active, true)).orderBy(eventTypes.name);
+  return await db2.select().from(eventTypes).where(eq(eventTypes.isActive, true)).orderBy(eventTypes.name);
 }
 async function getAllEventTypesIncludingInactive() {
   const db2 = await getDb();
@@ -3601,12 +3609,8 @@ async function getEventTypeById(id) {
 async function createEventType(data) {
   const db2 = await getDb();
   if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(eventTypes).values(data);
-  const insertId = Number(result.insertId) || Number(result[0]?.insertId) || 0;
-  if (insertId === 0) {
-    throw new Error("Failed to create event type");
-  }
-  return { id: insertId };
+  const [result] = await db2.insert(eventTypes).values(data).returning();
+  return { id: result.id };
 }
 async function updateEventType(id, data) {
   const db2 = await getDb();
@@ -3623,7 +3627,7 @@ async function deleteEventType(id) {
 async function getAllAutoScheduleRules() {
   const db2 = await getDb();
   if (!db2) return [];
-  return await db2.select().from(medicationAutoScheduleRules).where(eq(medicationAutoScheduleRules.is_active, true));
+  return await db2.select().from(medicationAutoScheduleRules).where(eq(medicationAutoScheduleRules.isActive, true));
 }
 async function getAllAutoScheduleRulesIncludingInactive() {
   const db2 = await getDb();
@@ -3641,8 +3645,8 @@ async function getAutoScheduleRuleByMedicationId(medicationId) {
   if (!db2) return null;
   const [result] = await db2.select().from(medicationAutoScheduleRules).where(
     and(
-      eq(medicationAutoScheduleRules.medication_id, medicationId),
-      eq(medicationAutoScheduleRules.is_active, true)
+      eq(medicationAutoScheduleRules.medicationId, medicationId),
+      eq(medicationAutoScheduleRules.isActive, true)
     )
   ).limit(1);
   return result || null;
@@ -3650,12 +3654,8 @@ async function getAutoScheduleRuleByMedicationId(medicationId) {
 async function createAutoScheduleRule(data) {
   const db2 = await getDb();
   if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(medicationAutoScheduleRules).values(data);
-  const insertId = Number(result.insertId) || Number(result[0]?.insertId) || 0;
-  if (insertId === 0) {
-    throw new Error("Failed to create auto-schedule rule");
-  }
-  return { id: insertId };
+  const [result] = await db2.insert(medicationAutoScheduleRules).values(data).returning();
+  return { id: result.id };
 }
 async function updateAutoScheduleRule(id, data) {
   const db2 = await getDb();
@@ -3669,26 +3669,22 @@ async function deleteAutoScheduleRule(id) {
   await db2.update(medicationAutoScheduleRules).set({ isActive: false }).where(eq(medicationAutoScheduleRules.id, id));
   return true;
 }
-async function getPetFoodStock(pet_id2) {
+async function getPetFoodStock(pet_id) {
   const db2 = await getDb();
   if (!db2) return null;
-  const [result] = await db2.select().from(petFoodStock).where(eq(petFoodStock.pet_id, pet_id2)).limit(1);
+  const [result] = await db2.select().from(petFoodStock).where(eq(petFoodStock.petId, pet_id)).limit(1);
   return result || null;
 }
 async function createPetFoodStock(data) {
   const db2 = await getDb();
   if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(petFoodStock).values(data);
-  const insertId = Number(result.insertId) || Number(result[0]?.insertId) || 0;
-  if (insertId === 0) {
-    throw new Error("Failed to create pet food stock");
-  }
-  return { id: insertId };
+  const [result] = await db2.insert(petFoodStock).values(data).returning();
+  return { id: result.id };
 }
-async function updatePetFoodStock(pet_id2, data) {
+async function updatePetFoodStock(pet_id, data) {
   const db2 = await getDb();
   if (!db2) return false;
-  await db2.update(petFoodStock).set(data).where(eq(petFoodStock.pet_id, pet_id2));
+  await db2.update(petFoodStock).set(data).where(eq(petFoodStock.petId, pet_id));
   return true;
 }
 async function getAllLowStockPets(thresholdDays) {
@@ -3719,12 +3715,12 @@ async function createWallPost(data) {
   const [result] = await db2.insert(wallPosts).values(data);
   return result.id;
 }
-async function getWallPosts(limit = 20, offset = 0, petId2, userId2, targetType) {
+async function getWallPosts(limit = 20, offset = 0, petId2, userId, targetType) {
   const db2 = await getDb();
   if (!db2) return [];
   let query = db2.select({
     id: wallPosts.id,
-    pet_id: wallPosts.pet_id,
+    pet_id: wallPosts.petId,
     authorId: wallPosts.authorId,
     content: wallPosts.content,
     mediaUrls: wallPosts.mediaUrls,
@@ -3732,22 +3728,22 @@ async function getWallPosts(limit = 20, offset = 0, petId2, userId2, targetType)
     postType: wallPosts.postType,
     targetType: wallPosts.targetType,
     targetId: wallPosts.targetId,
-    createdAt: wallPosts.created_at,
-    updated_at: wallPosts.updated_at,
+    createdAt: wallPosts.createdAt,
+    updatedAt: wallPosts.updatedAt,
     authorName: users.name,
     authorRole: users.role,
     petName: pets.name
-  }).from(wallPosts).leftJoin(users, eq(wallPosts.authorId, users.id)).leftJoin(pets, eq(wallPosts.pet_id, pets.id)).orderBy(desc(wallPosts.createdAt)).limit(limit).offset(offset);
+  }).from(wallPosts).leftJoin(users, eq(wallPosts.authorId, users.id)).leftJoin(pets, eq(wallPosts.petId, pets.id)).orderBy(desc(wallPosts.createdAt)).limit(limit).offset(offset);
   if (petId2 !== void 0) {
-    query = query.where(eq(wallPosts.pet_id, pet_id));
+    query = query.where(eq(wallPosts.petId, petId2));
   }
   if (targetType && targetType !== "all") {
     query = query.where(eq(wallPosts.targetType, targetType));
   }
-  if (userId2) {
+  if (userId) {
     const [userInfo, userPets] = await Promise.all([
-      db2.select().from(users).where(eq(users.id, userId2)).limit(1),
-      db2.select().from(petTutors).where(eq(petTutors.tutor_id, userId2))
+      db2.select().from(users).where(eq(users.id, userId)).limit(1),
+      db2.select().from(petTutors).where(eq(petTutors.tutor_id, userId))
     ]);
     if (userInfo[0]?.role === "user") {
       const petIds = userPets.map((pt) => pt.pet_id);
@@ -3755,7 +3751,7 @@ async function getWallPosts(limit = 20, offset = 0, petId2, userId2, targetType)
         query = query.where(
           or(
             eq(wallPosts.targetType, "general"),
-            and(eq(wallPosts.targetType, "tutor"), eq(wallPosts.targetId, userId2)),
+            and(eq(wallPosts.targetType, "tutor"), eq(wallPosts.targetId, userId)),
             and(eq(wallPosts.targetType, "pet"), sql`${wallPosts.targetId} = ANY(${petIds})`)
           )
         );
@@ -3763,7 +3759,7 @@ async function getWallPosts(limit = 20, offset = 0, petId2, userId2, targetType)
         query = query.where(
           or(
             eq(wallPosts.targetType, "general"),
-            and(eq(wallPosts.targetType, "tutor"), eq(wallPosts.targetId, userId2))
+            and(eq(wallPosts.targetType, "tutor"), eq(wallPosts.targetId, userId))
           )
         );
       }
@@ -3776,18 +3772,18 @@ async function getWallPostById(id) {
   if (!db2) return null;
   const [post] = await db2.select({
     id: wallPosts.id,
-    pet_id: wallPosts.pet_id,
+    pet_id: wallPosts.petId,
     authorId: wallPosts.authorId,
     content: wallPosts.content,
     mediaUrls: wallPosts.mediaUrls,
     mediaKeys: wallPosts.mediaKeys,
     postType: wallPosts.postType,
-    createdAt: wallPosts.created_at,
-    updated_at: wallPosts.updated_at,
+    createdAt: wallPosts.createdAt,
+    updatedAt: wallPosts.updatedAt,
     authorName: users.name,
     authorRole: users.role,
     petName: pets.name
-  }).from(wallPosts).leftJoin(users, eq(wallPosts.authorId, users.id)).leftJoin(pets, eq(wallPosts.pet_id, pets.id)).where(eq(wallPosts.id, id));
+  }).from(wallPosts).leftJoin(users, eq(wallPosts.authorId, users.id)).leftJoin(pets, eq(wallPosts.petId, pets.id)).where(eq(wallPosts.id, id));
   return post || null;
 }
 async function deleteWallPost(id) {
@@ -3822,17 +3818,17 @@ async function deleteWallComment(id) {
 async function addWallReaction(postId, user_id, reactionType) {
   const db2 = await getDb();
   if (!db2) throw new Error("Database not available");
-  const existing = await db2.select().from(wallReactions).where(and(eq(wallReactions.postId, postId), eq(wallReactions.user_id, userId)));
+  const existing = await db2.select().from(wallReactions).where(and(eq(wallReactions.postId, postId), eq(wallReactions.userId, user_id)));
   if (existing.length > 0) {
-    await db2.update(wallReactions).set({ reactionType }).where(and(eq(wallReactions.postId, postId), eq(wallReactions.user_id, userId)));
+    await db2.update(wallReactions).set({ reactionType }).where(and(eq(wallReactions.postId, postId), eq(wallReactions.userId, user_id)));
   } else {
-    await db2.insert(wallReactions).values({ postId, userId, reactionType });
+    await db2.insert(wallReactions).values({ postId, userId: user_id, reactionType });
   }
 }
 async function removeWallReaction(postId, user_id) {
   const db2 = await getDb();
   if (!db2) throw new Error("Database not available");
-  await db2.delete(wallReactions).where(and(eq(wallReactions.postId, postId), eq(wallReactions.user_id, userId)));
+  await db2.delete(wallReactions).where(and(eq(wallReactions.postId, postId), eq(wallReactions.userId, user_id)));
 }
 async function getWallReactions(postId) {
   const db2 = await getDb();
@@ -3852,7 +3848,7 @@ async function getWallReactionCounts(postId) {
 async function createConversation(data) {
   const db2 = await getDb();
   if (!db2) throw new Error("Database not available");
-  const [result] = await db2.insert(conversations).values(data);
+  const [result] = await db2.insert(conversations).values(data).returning();
   return result.id;
 }
 async function getConversations(user_id) {
@@ -3861,7 +3857,7 @@ async function getConversations(user_id) {
   const allConversations = await db2.select().from(conversations);
   return allConversations.filter((conv) => {
     const participants = conv.participants;
-    return participants.includes(userId);
+    return participants.includes(user_id);
   });
 }
 async function getConversationById(id) {
@@ -3889,7 +3885,7 @@ async function getChatMessages(conversationId, limit = 50, offset = 0) {
     mediaKey: chatMessages.mediaKey,
     messageType: chatMessages.messageType,
     whatsappMessageId: chatMessages.whatsappMessageId,
-    isRead: chatMessages.is_read,
+    isRead: chatMessages.isRead,
     createdAt: chatMessages.createdAt,
     senderName: users.name,
     senderRole: users.role
@@ -3900,10 +3896,10 @@ async function markMessagesAsRead(conversationId, user_id) {
   if (!db2) throw new Error("Database not available");
   await db2.update(chatMessages).set({ isRead: true }).where(and(
     eq(chatMessages.conversationId, conversationId),
-    not(eq(chatMessages.senderId, userId))
+    not(eq(chatMessages.senderId, user_id))
   ));
 }
-async function getTutorsByPet(pet_id2) {
+async function getTutorsByPet(pet_id) {
   const db2 = await getDb();
   if (!db2) return [];
   const tutors = await db2.select({
@@ -3914,7 +3910,7 @@ async function getTutorsByPet(pet_id2) {
     tutorEmail: users.email,
     tutorPhone: users.phone,
     tutorRole: users.role
-  }).from(petTutors).leftJoin(users, eq(petTutors.tutor_id, users.id)).where(eq(petTutors.pet_id, pet_id2));
+  }).from(petTutors).leftJoin(users, eq(petTutors.tutor_id, users.id)).where(eq(petTutors.pet_id, pet_id));
   return tutors;
 }
 async function getPetsByTutor(tutor_id) {
@@ -3928,7 +3924,7 @@ async function getPetsByTutor(tutor_id) {
     petBreed: pets.breed,
     petStatus: pets.status,
     petCredits: pets.credits
-  }).from(petTutors).leftJoin(pets, eq(petTutors.pet_id, pets.id)).where(eq(petTutors.tutor_id, tutorId));
+  }).from(petTutors).leftJoin(pets, eq(petTutors.pet_id, pets.id)).where(eq(petTutors.tutor_id, tutor_id));
   return petsList;
 }
 async function getTutorsWithPets() {
@@ -3963,7 +3959,7 @@ async function getPetsWithTutors() {
   );
   return petsWithTutors;
 }
-async function autoCreateMedicationEvent(pet_id2, medicationId, medicationName, event_date, dosage, frequency, createdById) {
+async function autoCreateMedicationEvent(pet_id, medicationId, medicationName, event_date, dosage, frequency, createdById) {
   const description = `Medicamento: ${medicationName}
 Dosagem: ${dosage}${frequency ? `
 Frequ\xEAncia: ${frequency}` : ""}`;
@@ -3972,7 +3968,7 @@ Frequ\xEAncia: ${frequency}` : ""}`;
     description,
     event_date,
     event_type: "medication",
-    pet_id: pet_id2,
+    pet_id,
     is_all_day: false,
     linked_resource_type: "medication",
     linked_resource_id: medicationId,
@@ -3981,7 +3977,7 @@ Frequ\xEAncia: ${frequency}` : ""}`;
   });
   return eventId;
 }
-async function autoCreateMedicationPeriod(pet_id2, medicationId, medicationName, startDate, endDate, dosage, frequency, createdById) {
+async function autoCreateMedicationPeriod(pet_id, medicationId, medicationName, startDate, endDate, dosage, frequency, createdById) {
   const eventIds = [];
   if (!endDate) {
     const eventId = await autoCreateMedicationEvent(
@@ -4015,7 +4011,7 @@ async function autoCreateMedicationPeriod(pet_id2, medicationId, medicationName,
   }
   return eventIds;
 }
-async function autoCreateVaccineEvent(pet_id2, vaccineId, vaccineName, event_date, doseNumber, veterinarian, clinic, createdById) {
+async function autoCreateVaccineEvent(pet_id, vaccineId, vaccineName, event_date, doseNumber, veterinarian, clinic, createdById) {
   let description = `Vacina: ${vaccineName}
 Dose: ${doseNumber}\xAA`;
   if (veterinarian) description += `
@@ -4027,7 +4023,7 @@ Cl\xEDnica: ${clinic}`;
     description,
     event_date,
     event_type: "vaccination",
-    pet_id: pet_id2,
+    pet_id,
     is_all_day: true,
     linked_resource_type: "vaccine",
     linked_resource_id: vaccineId,
@@ -4036,7 +4032,7 @@ Cl\xEDnica: ${clinic}`;
   });
   return eventId;
 }
-async function autoCreateFleaEvent(pet_id2, treatmentId, productName, applicationDate, next_due_date, createdById) {
+async function autoCreateFleaEvent(pet_id, treatmentId, productName, applicationDate, next_due_date, createdById) {
   let description = `Antipulgas: ${productName}
 Aplica\xE7\xE3o: ${applicationDate.toLocaleDateString("pt-BR")}`;
   if (next_due_date) description += `
@@ -4046,7 +4042,7 @@ Pr\xF3xima aplica\xE7\xE3o: ${next_due_date.toLocaleDateString("pt-BR")}`;
     description,
     event_date: applicationDate,
     event_type: "preventive",
-    pet_id: pet_id2,
+    pet_id,
     is_all_day: true,
     linked_resource_type: "preventive_flea",
     linked_resource_id: treatmentId,
@@ -4055,7 +4051,7 @@ Pr\xF3xima aplica\xE7\xE3o: ${next_due_date.toLocaleDateString("pt-BR")}`;
   });
   return eventId;
 }
-async function autoCreateDewormingEvent(pet_id2, treatmentId, productName, applicationDate, next_due_date, createdById) {
+async function autoCreateDewormingEvent(pet_id, treatmentId, productName, applicationDate, next_due_date, createdById) {
   let description = `Verm\xEDfugo: ${productName}
 Aplica\xE7\xE3o: ${applicationDate.toLocaleDateString("pt-BR")}`;
   if (next_due_date) description += `
@@ -4065,16 +4061,16 @@ Pr\xF3xima aplica\xE7\xE3o: ${next_due_date.toLocaleDateString("pt-BR")}`;
     description,
     event_date: applicationDate,
     event_type: "preventive",
-    pet_id: pet_id2,
+    pet_id,
     is_all_day: true,
-    linkedResourceType: "preventive_deworming",
-    linkedResourceId: treatmentId,
+    linked_resource_type: "preventive_deworming",
+    linked_resource_id: treatmentId,
     autoCreated: true,
     createdById
   });
   return eventId;
 }
-async function autoCreateHealthLogEvent(pet_id2, logId, recordedAt, mood, behavior, stool, appetite, waterIntake, notes, createdById) {
+async function autoCreateHealthLogEvent(pet_id, logId, recordedAt, mood, behavior, stool, appetite, waterIntake, notes, createdById) {
   let title = "\u{1F4CB} Registro de Sa\xFAde";
   if (behavior) title = `\u{1F4CB} Comportamento: ${behavior}`;
   else if (mood) title = `\u{1F4CB} Humor: ${mood}`;
@@ -4096,7 +4092,7 @@ Observa\xE7\xF5es: ${notes}`;
     description: description.trim(),
     event_date: recordedAt,
     event_type: "medical",
-    pet_id: pet_id2,
+    pet_id,
     is_all_day: false,
     linked_resource_type: "health_log",
     linked_resource_id: logId,
@@ -4302,9 +4298,9 @@ async function getPetHistory(petId2) {
 async function getRecentChanges(limit = 50) {
   return database.select().from(changeHistory).orderBy(changeHistory.createdAt).limit(limit);
 }
-async function getChangesByUser(userId2) {
+async function getChangesByUser(userId) {
   const { eq: eq14 } = await import("drizzle-orm");
-  return database.select().from(changeHistory).where(eq14(changeHistory.changedBy, userId2)).orderBy(changeHistory.createdAt);
+  return database.select().from(changeHistory).where(eq14(changeHistory.changedBy, userId)).orderBy(changeHistory.createdAt);
 }
 async function getCollaborationStats() {
   const { eq: eq14 } = await import("drizzle-orm");
@@ -4919,184 +4915,6 @@ var init_whatsappService = __esm({
   }
 });
 
-// server/stripeWebhook.ts
-var stripeWebhook_exports = {};
-__export(stripeWebhook_exports, {
-  getStripe: () => getStripe,
-  handleStripeWebhook: () => handleStripeWebhook
-});
-import Stripe from "stripe";
-import { eq as eq6 } from "drizzle-orm";
-function getStripe() {
-  if (!stripeInstance) {
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
-    if (!stripeKey) {
-      throw new Error("STRIPE_SECRET_KEY is not configured. Stripe features are disabled.");
-    }
-    stripeInstance = new Stripe(stripeKey, {
-      apiVersion: "2025-12-15.clover"
-    });
-  }
-  return stripeInstance;
-}
-async function handleStripeWebhook(req, res) {
-  let stripe;
-  try {
-    stripe = getStripeForWebhook();
-  } catch (error) {
-    console.warn("[Webhook] Stripe not configured:", error.message);
-    return res.status(503).json({ error: "Stripe is not configured" });
-  }
-  const sig = req.headers["stripe-signature"];
-  if (!sig) {
-    console.error("[Webhook] Missing stripe-signature header");
-    return res.status(400).send("Missing signature");
-  }
-  let event;
-  try {
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    if (!webhookSecret) {
-      throw new Error("STRIPE_WEBHOOK_SECRET is not configured");
-    }
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      webhookSecret
-    );
-  } catch (err) {
-    console.error("[Webhook] Signature verification failed:", err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-  if (event.id.startsWith("evt_test_")) {
-    console.log("[Webhook] Test event detected, returning verification response");
-    return res.json({ verified: true });
-  }
-  console.log(`[Webhook] Received event: ${event.type}`);
-  try {
-    switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object;
-        await handleCheckoutCompleted(session);
-        break;
-      }
-      case "payment_intent.succeeded": {
-        const paymentIntent = event.data.object;
-        await handlePaymentSucceeded(paymentIntent);
-        break;
-      }
-      case "payment_intent.payment_failed": {
-        const paymentIntent = event.data.object;
-        await handlePaymentFailed(paymentIntent);
-        break;
-      }
-      default:
-        console.log(`[Webhook] Unhandled event type: ${event.type}`);
-    }
-    res.json({ received: true });
-  } catch (error) {
-    console.error("[Webhook] Error processing event:", error);
-    res.status(500).json({ error: error.message });
-  }
-}
-async function handleCheckoutCompleted(session) {
-  console.log("[Webhook] Processing checkout.session.completed");
-  const userId2 = session.metadata?.user_id;
-  const productKey = session.metadata?.product_key;
-  const productType = session.metadata?.product_type;
-  if (!userId2) {
-    console.error("[Webhook] Missing user_id in metadata");
-    return;
-  }
-  const db2 = await getDb();
-  if (!db2) {
-    console.error("[Webhook] Database connection failed");
-    return;
-  }
-  if (session.customer) {
-    await db2.update(users).set({ stripeCustomerId: session.customer }).where(eq6(users.id, parseInt(userId2)));
-  }
-  console.log(`[Webhook] Checkout completed for user ${userId2}, product: ${productKey}`);
-}
-async function handlePaymentSucceeded(paymentIntent) {
-  console.log("[Webhook] Processing payment_intent.succeeded");
-  const userId2 = paymentIntent.metadata?.user_id;
-  const productKey = paymentIntent.metadata?.product_key;
-  const productType = paymentIntent.metadata?.product_type;
-  const creditsToAdd = paymentIntent.metadata?.credits ? parseInt(paymentIntent.metadata.credits) : 0;
-  if (!userId2) {
-    console.error("[Webhook] Missing user_id in metadata");
-    return;
-  }
-  const db2 = await getDb();
-  if (!db2) {
-    console.error("[Webhook] Database connection failed");
-    return;
-  }
-  await db2.insert(payments).values({
-    userId: parseInt(userId2),
-    stripePaymentIntentId: paymentIntent.id,
-    stripeCustomerId: paymentIntent.customer || null,
-    amount: paymentIntent.amount,
-    currency: paymentIntent.currency,
-    status: "succeeded",
-    productType: productType || "unknown",
-    productKey: productKey || null,
-    creditsAdded: creditsToAdd > 0 ? creditsToAdd : null,
-    metadata: JSON.stringify(paymentIntent.metadata)
-  });
-  if (productType === "credits" && creditsToAdd > 0) {
-    const userPets = await db2.select().from(pets).where(eq6(pets.id, parseInt(userId2)));
-    if (userPets.length > 0) {
-      const creditsPerPet = Math.floor(creditsToAdd / userPets.length);
-      for (const pet of userPets) {
-        await db2.update(pets).set({ credits: (pet.credits || 0) + creditsPerPet }).where(eq6(pets.id, pet.id));
-      }
-    }
-  }
-  console.log(`[Webhook] Payment succeeded for user ${userId2}, amount: ${paymentIntent.amount}`);
-}
-async function handlePaymentFailed(paymentIntent) {
-  console.log("[Webhook] Processing payment_intent.payment_failed");
-  const userId2 = paymentIntent.metadata?.user_id;
-  if (!userId2) {
-    console.error("[Webhook] Missing user_id in metadata");
-    return;
-  }
-  const db2 = await getDb();
-  if (!db2) {
-    console.error("[Webhook] Database connection failed");
-    return;
-  }
-  await db2.insert(payments).values({
-    userId: parseInt(userId2),
-    stripePaymentIntentId: paymentIntent.id,
-    stripeCustomerId: paymentIntent.customer || null,
-    amount: paymentIntent.amount,
-    currency: paymentIntent.currency,
-    status: "failed",
-    productType: paymentIntent.metadata?.product_type || "unknown",
-    productKey: paymentIntent.metadata?.product_key || null,
-    metadata: JSON.stringify(paymentIntent.metadata)
-  });
-  console.log(`[Webhook] Payment failed for user ${userId2}`);
-}
-var stripeInstance, getStripeForWebhook;
-var init_stripeWebhook = __esm({
-  "server/stripeWebhook.ts"() {
-    "use strict";
-    init_db();
-    init_schema();
-    stripeInstance = null;
-    getStripeForWebhook = () => {
-      try {
-        return getStripe();
-      } catch (error) {
-        throw new Error(`Stripe not configured: ${error.message}`);
-      }
-    };
-  }
-});
-
 // shared/_core/errors.ts
 var HttpError, ForbiddenError;
 var init_errors = __esm({
@@ -5406,7 +5224,7 @@ var init_sdk = __esm({
 // server/emailAuth.ts
 var emailAuth_exports = {};
 __export(emailAuth_exports, {
-  changePassword: () => changePassword2,
+  changePassword: () => changePassword,
   createUserInSupabase: () => createUserInSupabase,
   emailExists: () => emailExists,
   generateResetToken: () => generateResetToken,
@@ -5414,12 +5232,12 @@ __export(emailAuth_exports, {
   loginUser: () => loginUser,
   loginWithEmail: () => loginWithEmail,
   registerUser: () => registerUser,
-  resetPassword: () => resetPassword2,
+  resetPassword: () => resetPassword,
   signupWithEmail: () => signupWithEmail,
   verifyEmail: () => verifyEmail
 });
 import { createClient } from "@supabase/supabase-js";
-import { eq as eq7, and as and4, gt } from "drizzle-orm";
+import { eq as eq6, and as and4, gt } from "drizzle-orm";
 import crypto from "crypto";
 function getSupabaseClient() {
   const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -5477,7 +5295,7 @@ async function loginWithEmail(email, password) {
     if (!user) {
       console.log("[loginWithEmail] User not found in public.users, creating...");
       try {
-        const userId2 = await upsertUser({
+        const userId = await upsertUser({
           auth_id: data.user.id,
           email: data.user.email,
           name: data.user.email.split("@")[0],
@@ -5487,14 +5305,14 @@ async function loginWithEmail(email, password) {
           // Set open_id to auth_id so it can be found by session token
           open_id: data.user.id
         });
-        if (userId2) {
-          user = await getUserById(userId2);
+        if (userId) {
+          user = await getUserById(userId);
           if (user && !user.open_id) {
             await upsertUser({
               id: user.id,
               open_id: data.user.id
             });
-            user = await getUserById(userId2);
+            user = await getUserById(userId);
           }
         } else {
           user = await getUserByAuthId(data.user.id);
@@ -5535,7 +5353,7 @@ async function loginWithEmail(email, password) {
       const db2 = await getDb();
       if (db2 && user.id) {
         try {
-          await db2.update(users).set({ last_signed_in: /* @__PURE__ */ new Date() }).where(eq7(users.id, user.id));
+          await db2.update(users).set({ last_signed_in: /* @__PURE__ */ new Date() }).where(eq6(users.id, user.id));
         } catch (updateError) {
           console.warn("[loginWithEmail] Failed to update last_signed_in:", updateError.message);
         }
@@ -5582,9 +5400,9 @@ async function signupWithEmail(email, password, name) {
       throw new Error("No user returned from signup");
     }
     console.log("[signupWithEmail] Auth user created:", data.user.id);
-    let userId2 = null;
+    let userId = null;
     try {
-      userId2 = await upsertUser({
+      userId = await upsertUser({
         auth_id: data.user.id,
         email: data.user.email,
         name,
@@ -5592,8 +5410,8 @@ async function signupWithEmail(email, password, name) {
         login_method: "email",
         email_verified: false
       });
-      if (userId2) {
-        console.log("[signupWithEmail] User record created in database, ID:", userId2);
+      if (userId) {
+        console.log("[signupWithEmail] User record created in database, ID:", userId);
       } else {
         console.warn("[signupWithEmail] upsertUser returned null ID");
       }
@@ -5602,10 +5420,10 @@ async function signupWithEmail(email, password, name) {
       console.error("[signupWithEmail] Upsert error stack:", upsertError.stack);
     }
     let user = null;
-    if (userId2) {
+    if (userId) {
       try {
-        user = await getUserById(userId2);
-        console.log("[signupWithEmail] User found by ID:", userId2);
+        user = await getUserById(userId);
+        console.log("[signupWithEmail] User found by ID:", userId);
       } catch (error2) {
         console.warn("[signupWithEmail] Error getting user by ID:", error2.message);
       }
@@ -5627,7 +5445,7 @@ async function signupWithEmail(email, password, name) {
       console.error("[signupWithEmail] User not found after creation. Auth ID:", data.user.id);
       console.error("[signupWithEmail] Attempting to create user record again...");
       try {
-        userId2 = await upsertUser({
+        userId = await upsertUser({
           auth_id: data.user.id,
           email: data.user.email,
           name,
@@ -5635,8 +5453,8 @@ async function signupWithEmail(email, password, name) {
           login_method: "email",
           email_verified: false
         });
-        if (userId2) {
-          user = await getUserById(userId2);
+        if (userId) {
+          user = await getUserById(userId);
         }
         if (!user) {
           await new Promise((resolve) => setTimeout(resolve, 300));
@@ -5650,7 +5468,7 @@ async function signupWithEmail(email, password, name) {
       }
     }
     if (!user || !user.id) {
-      const errorMsg = `Failed to create user record in database. Auth ID: ${data.user.id}, Email: ${data.user.email}, UserId from upsert: ${userId2}`;
+      const errorMsg = `Failed to create user record in database. Auth ID: ${data.user.id}, Email: ${data.user.email}, UserId from upsert: ${userId}`;
       console.error("[signupWithEmail]", errorMsg);
       throw new Error(errorMsg);
     }
@@ -5746,11 +5564,11 @@ async function createUserInSupabase(email, password, name, emailVerified = true)
     throw error;
   }
 }
-async function changePassword2(userId2, oldPassword, newPassword) {
+async function changePassword(userId, oldPassword, newPassword) {
   try {
     const db2 = await getDb();
     if (!db2) throw new Error("Database not available");
-    const userResults = await db2.select().from(users).where(eq7(users.id, userId2)).limit(1);
+    const userResults = await db2.select().from(users).where(eq6(users.id, userId)).limit(1);
     const user = userResults.length > 0 ? userResults[0] : null;
     if (!user || !user.auth_id) {
       throw new Error("User not found or not using Supabase Auth");
@@ -5823,13 +5641,13 @@ async function generateResetToken(email) {
     return { success: true };
   }
 }
-async function resetPassword2(token, newPassword) {
+async function resetPassword(token, newPassword) {
   const db2 = await getDb();
   if (!db2) throw new Error("Database not available");
   const tokenResults = await db2.select().from(passwordResetTokens).where(
     and4(
-      eq7(passwordResetTokens.token, token),
-      eq7(passwordResetTokens.used, false),
+      eq6(passwordResetTokens.token, token),
+      eq6(passwordResetTokens.used, false),
       gt(passwordResetTokens.expires_at, /* @__PURE__ */ new Date())
     )
   ).limit(1);
@@ -5837,7 +5655,7 @@ async function resetPassword2(token, newPassword) {
   if (!resetToken) {
     throw new Error("Invalid or expired reset token");
   }
-  const userResults = await db2.select().from(users).where(eq7(users.id, resetToken.user_id)).limit(1);
+  const userResults = await db2.select().from(users).where(eq6(users.id, resetToken.user_id)).limit(1);
   const user = userResults.length > 0 ? userResults[0] : null;
   if (!user || !user.auth_id) {
     throw new Error("User not found or not using Supabase Auth");
@@ -5850,16 +5668,16 @@ async function resetPassword2(token, newPassword) {
     console.error("[resetPassword] Failed to update password:", updateError.message);
     throw new Error("Failed to reset password");
   }
-  await db2.update(passwordResetTokens).set({ used: true }).where(eq7(passwordResetTokens.id, resetToken.id));
+  await db2.update(passwordResetTokens).set({ used: true }).where(eq6(passwordResetTokens.id, resetToken.id));
   return { success: true };
 }
-async function generateVerificationToken(userId2) {
+async function generateVerificationToken(userId) {
   const db2 = await getDb();
   if (!db2) throw new Error("Database not available");
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1e3);
   await db2.insert(emailVerificationTokens).values({
-    user_id: userId2,
+    user_id: userId,
     token,
     expires_at: expiresAt
   });
@@ -5870,8 +5688,8 @@ async function verifyEmail(token) {
   if (!db2) throw new Error("Database not available");
   const tokenResults = await db2.select().from(emailVerificationTokens).where(
     and4(
-      eq7(emailVerificationTokens.token, token),
-      eq7(emailVerificationTokens.used, false),
+      eq6(emailVerificationTokens.token, token),
+      eq6(emailVerificationTokens.used, false),
       gt(emailVerificationTokens.expires_at, /* @__PURE__ */ new Date())
     )
   ).limit(1);
@@ -5879,8 +5697,8 @@ async function verifyEmail(token) {
   if (!verificationToken) {
     throw new Error("Invalid or expired verification token");
   }
-  await db2.update(users).set({ email_verified: true }).where(eq7(users.id, verificationToken.user_id));
-  await db2.update(emailVerificationTokens).set({ used: true }).where(eq7(emailVerificationTokens.id, verificationToken.id));
+  await db2.update(users).set({ email_verified: true }).where(eq6(users.id, verificationToken.user_id));
+  await db2.update(emailVerificationTokens).set({ used: true }).where(eq6(emailVerificationTokens.id, verificationToken.id));
   return { success: true };
 }
 var init_emailAuth = __esm({
@@ -6297,174 +6115,6 @@ var init_icalExport = __esm({
   }
 });
 
-// server/jobs/calendarReminders.ts
-var calendarReminders_exports = {};
-__export(calendarReminders_exports, {
-  sendCalendarReminders: () => sendCalendarReminders
-});
-async function sendCalendarReminders() {
-  console.log("[CalendarReminders] Starting calendar reminders job...");
-  try {
-    const tomorrow = /* @__PURE__ */ new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-    const dayAfterTomorrow = new Date(tomorrow);
-    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
-    const allEvents = await getCalendarEvents(tomorrow, dayAfterTomorrow);
-    const upcomingEvents = allEvents.filter((e) => !e.reminderSent);
-    console.log(`[CalendarReminders] Found ${upcomingEvents.length} events for tomorrow`);
-    let sentCount = 0;
-    let errorCount = 0;
-    for (const event of upcomingEvents) {
-      try {
-        const eventDateStr = event.event_date.toLocaleDateString("pt-BR");
-        const eventTimeStr = event.is_all_day ? "Dia inteiro" : event.event_date.toLocaleTimeString("pt-BR", {
-          hour: "2-digit",
-          minute: "2-digit"
-        });
-        const eventTypeLabels = {
-          holiday: "Feriado",
-          closure: "Fechamento",
-          medical: "Consulta M\xE9dica",
-          general: "Evento",
-          vaccination: "Vacina\xE7\xE3o",
-          medication: "Medica\xE7\xE3o"
-        };
-        const eventTypeLabel = eventTypeLabels[event.event_type] || "Evento";
-        let message = `\u{1F514} *Lembrete de ${eventTypeLabel}*
-
-`;
-        message += `\u{1F4C5} *${event.title}*
-`;
-        message += `\u{1F5D3}\uFE0F Data: ${eventDateStr}
-`;
-        message += `\u23F0 Hor\xE1rio: ${eventTimeStr}
-`;
-        if (event.location) {
-          message += `\u{1F4CD} Local: ${event.location}
-`;
-        }
-        if (event.description) {
-          message += `
-${event.description}`;
-        }
-        if (event.event_type === "closure" || event.event_type === "holiday") {
-          console.log(`[CalendarReminders] Closure/Holiday event: ${event.title}`);
-        }
-        if (event.pet_id) {
-          const petTutors3 = await getPetTutorsWithDetails(event.pet_id);
-          for (const pt of petTutors3) {
-            console.log(
-              `[CalendarReminders] Would send reminder to ${pt.name} for event: ${event.title}`
-            );
-          }
-        }
-        await updateCalendarEvent(event.id, { reminder_sent: true });
-        sentCount++;
-      } catch (error) {
-        console.error(`[CalendarReminders] Error processing event ${event.id}:`, error);
-        errorCount++;
-      }
-    }
-    console.log(
-      `[CalendarReminders] Job completed. Sent: ${sentCount}, Errors: ${errorCount}`
-    );
-    return {
-      success: true,
-      processed: upcomingEvents.length,
-      sent: sentCount,
-      errors: errorCount
-    };
-  } catch (error) {
-    console.error("[CalendarReminders] Job failed:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
-    };
-  }
-}
-var init_calendarReminders = __esm({
-  "server/jobs/calendarReminders.ts"() {
-    "use strict";
-    init_db();
-  }
-});
-
-// server/jobs/lowCreditsAlerts.ts
-var lowCreditsAlerts_exports = {};
-__export(lowCreditsAlerts_exports, {
-  sendLowCreditsAlerts: () => sendLowCreditsAlerts
-});
-async function sendLowCreditsAlerts() {
-  console.log("[LowCreditsAlerts] Starting low credits alerts job...");
-  try {
-    const threshold = 3;
-    const petsWithLowCredits = await getPetsWithLowCredits(threshold);
-    console.log(`[LowCreditsAlerts] Found ${petsWithLowCredits.length} pets with low credits`);
-    let sentCount = 0;
-    let errorCount = 0;
-    for (const pet of petsWithLowCredits) {
-      try {
-        const credits = pet.credits || 0;
-        let message = `\u26A0\uFE0F *Alerta de Cr\xE9ditos Baixos*
-
-`;
-        message += `\u{1F43E} Pet: *${pet.name}*
-`;
-        message += `\u{1F4B3} Cr\xE9ditos restantes: *${credits}*
-
-`;
-        if (credits === 0) {
-          message += `\u274C Sem cr\xE9ditos dispon\xEDveis! O pet n\xE3o poder\xE1 fazer check-in na creche at\xE9 que novos cr\xE9ditos sejam adicionados.
-
-`;
-        } else {
-          message += `\u23F0 Restam apenas ${credits} ${credits === 1 ? "dia" : "dias"} de creche. Recomendamos adicionar mais cr\xE9ditos em breve.
-
-`;
-        }
-        message += `\u{1F4A1} Entre em contato com a creche para adicionar mais cr\xE9ditos e garantir o atendimento cont\xEDnuo do seu pet.`;
-        const petTutors3 = await getPetTutorsWithDetails(pet.id);
-        for (const tutor of petTutors3) {
-          console.log(
-            `[LowCreditsAlerts] Would send alert to ${tutor.name} for pet: ${pet.name} (${credits} credits)`
-          );
-        }
-        await notifyOwner({
-          title: `Alerta: ${pet.name} com cr\xE9ditos baixos`,
-          content: `O pet ${pet.name} possui apenas ${credits} cr\xE9ditos restantes. Entre em contato com os tutores para adicionar mais cr\xE9ditos.`
-        });
-        sentCount++;
-      } catch (error) {
-        console.error(`[LowCreditsAlerts] Error processing pet ${pet.id}:`, error);
-        errorCount++;
-      }
-    }
-    console.log(
-      `[LowCreditsAlerts] Job completed. Sent: ${sentCount}, Errors: ${errorCount}`
-    );
-    return {
-      success: true,
-      processed: petsWithLowCredits.length,
-      sent: sentCount,
-      errors: errorCount
-    };
-  } catch (error) {
-    console.error("[LowCreditsAlerts] Job failed:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
-    };
-  }
-}
-var init_lowCreditsAlerts = __esm({
-  "server/jobs/lowCreditsAlerts.ts"() {
-    "use strict";
-    init_db();
-    init_notification();
-  }
-});
-
 // server/occupancyReport.ts
 var occupancyReport_exports = {};
 __export(occupancyReport_exports, {
@@ -6518,6 +6168,184 @@ var init_occupancyReport = __esm({
   }
 });
 
+// server/stripeWebhook.ts
+var stripeWebhook_exports = {};
+__export(stripeWebhook_exports, {
+  getStripe: () => getStripe,
+  handleStripeWebhook: () => handleStripeWebhook
+});
+import Stripe from "stripe";
+import { eq as eq7 } from "drizzle-orm";
+function getStripe() {
+  if (!stripeInstance) {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      throw new Error("STRIPE_SECRET_KEY is not configured. Stripe features are disabled.");
+    }
+    stripeInstance = new Stripe(stripeKey, {
+      apiVersion: "2025-12-15.clover"
+    });
+  }
+  return stripeInstance;
+}
+async function handleStripeWebhook(req, res) {
+  let stripe;
+  try {
+    stripe = getStripeForWebhook();
+  } catch (error) {
+    console.warn("[Webhook] Stripe not configured:", error.message);
+    return res.status(503).json({ error: "Stripe is not configured" });
+  }
+  const sig = req.headers["stripe-signature"];
+  if (!sig) {
+    console.error("[Webhook] Missing stripe-signature header");
+    return res.status(400).send("Missing signature");
+  }
+  let event;
+  try {
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      throw new Error("STRIPE_WEBHOOK_SECRET is not configured");
+    }
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      webhookSecret
+    );
+  } catch (err) {
+    console.error("[Webhook] Signature verification failed:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+  if (event.id.startsWith("evt_test_")) {
+    console.log("[Webhook] Test event detected, returning verification response");
+    return res.json({ verified: true });
+  }
+  console.log(`[Webhook] Received event: ${event.type}`);
+  try {
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object;
+        await handleCheckoutCompleted(session);
+        break;
+      }
+      case "payment_intent.succeeded": {
+        const paymentIntent = event.data.object;
+        await handlePaymentSucceeded(paymentIntent);
+        break;
+      }
+      case "payment_intent.payment_failed": {
+        const paymentIntent = event.data.object;
+        await handlePaymentFailed(paymentIntent);
+        break;
+      }
+      default:
+        console.log(`[Webhook] Unhandled event type: ${event.type}`);
+    }
+    res.json({ received: true });
+  } catch (error) {
+    console.error("[Webhook] Error processing event:", error);
+    res.status(500).json({ error: error.message });
+  }
+}
+async function handleCheckoutCompleted(session) {
+  console.log("[Webhook] Processing checkout.session.completed");
+  const userId = session.metadata?.user_id;
+  const productKey = session.metadata?.product_key;
+  const productType = session.metadata?.product_type;
+  if (!userId) {
+    console.error("[Webhook] Missing user_id in metadata");
+    return;
+  }
+  const db2 = await getDb();
+  if (!db2) {
+    console.error("[Webhook] Database connection failed");
+    return;
+  }
+  if (session.customer) {
+    await db2.update(users).set({ stripeCustomerId: session.customer }).where(eq7(users.id, parseInt(userId)));
+  }
+  console.log(`[Webhook] Checkout completed for user ${userId}, product: ${productKey}`);
+}
+async function handlePaymentSucceeded(paymentIntent) {
+  console.log("[Webhook] Processing payment_intent.succeeded");
+  const userId = paymentIntent.metadata?.user_id;
+  const productKey = paymentIntent.metadata?.product_key;
+  const productType = paymentIntent.metadata?.product_type;
+  const creditsToAdd = paymentIntent.metadata?.credits ? parseInt(paymentIntent.metadata.credits) : 0;
+  if (!userId) {
+    console.error("[Webhook] Missing user_id in metadata");
+    return;
+  }
+  const db2 = await getDb();
+  if (!db2) {
+    console.error("[Webhook] Database connection failed");
+    return;
+  }
+  await db2.insert(payments).values({
+    userId: parseInt(userId),
+    stripePaymentIntentId: paymentIntent.id,
+    stripeCustomerId: paymentIntent.customer || null,
+    amount: paymentIntent.amount,
+    currency: paymentIntent.currency,
+    status: "succeeded",
+    productType: productType || "unknown",
+    productKey: productKey || null,
+    creditsAdded: creditsToAdd > 0 ? creditsToAdd : null,
+    metadata: JSON.stringify(paymentIntent.metadata)
+  });
+  if (productType === "credits" && creditsToAdd > 0) {
+    const userPets = await db2.select().from(pets).where(eq7(pets.id, parseInt(userId)));
+    if (userPets.length > 0) {
+      const creditsPerPet = Math.floor(creditsToAdd / userPets.length);
+      for (const pet of userPets) {
+        await db2.update(pets).set({ credits: (pet.credits || 0) + creditsPerPet }).where(eq7(pets.id, pet.id));
+      }
+    }
+  }
+  console.log(`[Webhook] Payment succeeded for user ${userId}, amount: ${paymentIntent.amount}`);
+}
+async function handlePaymentFailed(paymentIntent) {
+  console.log("[Webhook] Processing payment_intent.payment_failed");
+  const userId = paymentIntent.metadata?.user_id;
+  if (!userId) {
+    console.error("[Webhook] Missing user_id in metadata");
+    return;
+  }
+  const db2 = await getDb();
+  if (!db2) {
+    console.error("[Webhook] Database connection failed");
+    return;
+  }
+  await db2.insert(payments).values({
+    userId: parseInt(userId),
+    stripePaymentIntentId: paymentIntent.id,
+    stripeCustomerId: paymentIntent.customer || null,
+    amount: paymentIntent.amount,
+    currency: paymentIntent.currency,
+    status: "failed",
+    productType: paymentIntent.metadata?.product_type || "unknown",
+    productKey: paymentIntent.metadata?.product_key || null,
+    metadata: JSON.stringify(paymentIntent.metadata)
+  });
+  console.log(`[Webhook] Payment failed for user ${userId}`);
+}
+var stripeInstance, getStripeForWebhook;
+var init_stripeWebhook = __esm({
+  "server/stripeWebhook.ts"() {
+    "use strict";
+    init_db();
+    init_schema();
+    stripeInstance = null;
+    getStripeForWebhook = () => {
+      try {
+        return getStripe();
+      } catch (error) {
+        throw new Error(`Stripe not configured: ${error.message}`);
+      }
+    };
+  }
+});
+
 // server/bookingRequests.db.ts
 var bookingRequests_db_exports = {};
 __export(bookingRequests_db_exports, {
@@ -6558,14 +6386,14 @@ async function getAvailabilityForDates(dates) {
 }
 async function createBookingRequest(data) {
   const db2 = await getDb();
-  const result = await db2.insert(bookingRequests).values({
+  const [result] = await db2.insert(bookingRequests).values({
     petId: data.petId,
     tutorId: data.tutorId,
     requestedDates: data.requestedDates,
     notes: data.notes,
     status: "pending"
-  });
-  const insertId = Number(result[0]?.insertId || 0);
+  }).returning();
+  const insertId = result.id;
   const [request] = await db2.select().from(bookingRequests).where(eq8(bookingRequests.id, insertId)).limit(1);
   return request;
 }
@@ -6806,13 +6634,13 @@ function initializeWebSocket(httpServer) {
 function getWebSocketServer() {
   return io;
 }
-function notifyUser(userId2, notification) {
+function notifyUser(userId, notification) {
   if (!io) {
     console.warn("[WebSocket] Server not initialized");
     return false;
   }
-  io.to(`user:${userId2}`).emit("notification", notification);
-  console.log(`[WebSocket] Notification sent to user ${userId2}:`, notification.type);
+  io.to(`user:${userId}`).emit("notification", notification);
+  console.log(`[WebSocket] Notification sent to user ${userId}:`, notification.type);
   return true;
 }
 function notifyAdmins(notification) {
@@ -6846,9 +6674,9 @@ function getConnectedUsersCount() {
   if (!io) return 0;
   return io.sockets.sockets.size;
 }
-async function isUserConnected(userId2) {
+async function isUserConnected(userId) {
   if (!io) return false;
-  const sockets = await io.in(`user:${userId2}`).fetchSockets();
+  const sockets = await io.in(`user:${userId}`).fetchSockets();
   return sockets.length > 0;
 }
 var connection2, db, io;
@@ -7141,8 +6969,8 @@ async function getEffectivePrice(tutorId2, serviceType) {
 }
 async function createCustomPricingPlan(data) {
   const db2 = await getDb();
-  const result = await db2.insert(customPricingPlans).values(data);
-  return result[0].insertId;
+  const [result] = await db2.insert(customPricingPlans).values(data).returning();
+  return result.id;
 }
 async function getAllCustomPricingPlans() {
   const db2 = await getDb();
@@ -7351,8 +7179,8 @@ async function processWhatsAppWebhook(webhookData) {
           // Tutor e Admin
           lastMessageAt: new Date(timestamp2),
           unreadCount: 0
-        });
-        conversation = { id: newConv.insertId, participants: [user.id, 1] };
+        }).returning();
+        conversation = { id: newConv.id, participants: [user.id, 1] };
       }
       if (!conversation) {
         console.log(`Erro ao criar/encontrar conversa para usu\xE1rio ${user.id}`);
@@ -7876,6 +7704,156 @@ async function triggerVaccineNotificationsManually() {
   return result;
 }
 
+// server/jobs/calendarReminders.ts
+init_db();
+async function sendCalendarReminders() {
+  console.log("[CalendarReminders] Starting calendar reminders job...");
+  try {
+    const tomorrow = /* @__PURE__ */ new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    const dayAfterTomorrow = new Date(tomorrow);
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+    const allEvents = await getCalendarEvents(tomorrow, dayAfterTomorrow);
+    const upcomingEvents = allEvents.filter((e) => !e.reminderSent);
+    console.log(`[CalendarReminders] Found ${upcomingEvents.length} events for tomorrow`);
+    let sentCount = 0;
+    let errorCount = 0;
+    for (const event of upcomingEvents) {
+      try {
+        const eventDateStr = event.event_date.toLocaleDateString("pt-BR");
+        const eventTimeStr = event.is_all_day ? "Dia inteiro" : event.event_date.toLocaleTimeString("pt-BR", {
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+        const eventTypeLabels = {
+          holiday: "Feriado",
+          closure: "Fechamento",
+          medical: "Consulta M\xE9dica",
+          general: "Evento",
+          vaccination: "Vacina\xE7\xE3o",
+          medication: "Medica\xE7\xE3o"
+        };
+        const eventTypeLabel = eventTypeLabels[event.event_type] || "Evento";
+        let message = `\u{1F514} *Lembrete de ${eventTypeLabel}*
+
+`;
+        message += `\u{1F4C5} *${event.title}*
+`;
+        message += `\u{1F5D3}\uFE0F Data: ${eventDateStr}
+`;
+        message += `\u23F0 Hor\xE1rio: ${eventTimeStr}
+`;
+        if (event.location) {
+          message += `\u{1F4CD} Local: ${event.location}
+`;
+        }
+        if (event.description) {
+          message += `
+${event.description}`;
+        }
+        if (event.event_type === "closure" || event.event_type === "holiday") {
+          console.log(`[CalendarReminders] Closure/Holiday event: ${event.title}`);
+        }
+        if (event.pet_id) {
+          const petTutors3 = await getPetTutorsWithDetails(event.pet_id);
+          for (const pt of petTutors3) {
+            console.log(
+              `[CalendarReminders] Would send reminder to ${pt.name} for event: ${event.title}`
+            );
+          }
+        }
+        await updateCalendarEvent(event.id, { reminder_sent: true });
+        sentCount++;
+      } catch (error) {
+        console.error(`[CalendarReminders] Error processing event ${event.id}:`, error);
+        errorCount++;
+      }
+    }
+    console.log(
+      `[CalendarReminders] Job completed. Sent: ${sentCount}, Errors: ${errorCount}`
+    );
+    return {
+      success: true,
+      processed: upcomingEvents.length,
+      sent: sentCount,
+      errors: errorCount
+    };
+  } catch (error) {
+    console.error("[CalendarReminders] Job failed:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error"
+    };
+  }
+}
+
+// server/jobs/lowCreditsAlerts.ts
+init_db();
+init_notification();
+async function sendLowCreditsAlerts() {
+  console.log("[LowCreditsAlerts] Starting low credits alerts job...");
+  try {
+    const threshold = 3;
+    const petsWithLowCredits = await getPetsWithLowCredits(threshold);
+    console.log(`[LowCreditsAlerts] Found ${petsWithLowCredits.length} pets with low credits`);
+    let sentCount = 0;
+    let errorCount = 0;
+    for (const pet of petsWithLowCredits) {
+      try {
+        const credits = pet.credits || 0;
+        let message = `\u26A0\uFE0F *Alerta de Cr\xE9ditos Baixos*
+
+`;
+        message += `\u{1F43E} Pet: *${pet.name}*
+`;
+        message += `\u{1F4B3} Cr\xE9ditos restantes: *${credits}*
+
+`;
+        if (credits === 0) {
+          message += `\u274C Sem cr\xE9ditos dispon\xEDveis! O pet n\xE3o poder\xE1 fazer check-in na creche at\xE9 que novos cr\xE9ditos sejam adicionados.
+
+`;
+        } else {
+          message += `\u23F0 Restam apenas ${credits} ${credits === 1 ? "dia" : "dias"} de creche. Recomendamos adicionar mais cr\xE9ditos em breve.
+
+`;
+        }
+        message += `\u{1F4A1} Entre em contato com a creche para adicionar mais cr\xE9ditos e garantir o atendimento cont\xEDnuo do seu pet.`;
+        const petTutors3 = await getPetTutorsWithDetails(pet.id);
+        for (const tutor of petTutors3) {
+          console.log(
+            `[LowCreditsAlerts] Would send alert to ${tutor.name} for pet: ${pet.name} (${credits} credits)`
+          );
+        }
+        await notifyOwner({
+          title: `Alerta: ${pet.name} com cr\xE9ditos baixos`,
+          content: `O pet ${pet.name} possui apenas ${credits} cr\xE9ditos restantes. Entre em contato com os tutores para adicionar mais cr\xE9ditos.`
+        });
+        sentCount++;
+      } catch (error) {
+        console.error(`[LowCreditsAlerts] Error processing pet ${pet.id}:`, error);
+        errorCount++;
+      }
+    }
+    console.log(
+      `[LowCreditsAlerts] Job completed. Sent: ${sentCount}, Errors: ${errorCount}`
+    );
+    return {
+      success: true,
+      processed: petsWithLowCredits.length,
+      sent: sentCount,
+      errors: errorCount
+    };
+  } catch (error) {
+    console.error("[LowCreditsAlerts] Job failed:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error"
+    };
+  }
+}
+
 // server/products.ts
 var PRODUCTS = {
   // Monthly Plans
@@ -8008,7 +7986,6 @@ var searchRouter = router({
 });
 
 // server/routers.ts
-init_stripeWebhook();
 init_schema();
 init_db();
 import { eq as eq13, desc as desc4 } from "drizzle-orm";
@@ -8186,7 +8163,8 @@ var appRouter = router({
       oldPassword: z3.string(),
       newPassword: z3.string().min(6)
     })).mutation(async ({ input, ctx }) => {
-      return await changePassword(ctx.user.id, input.oldPassword, input.newPassword);
+      const { changePassword: changePassword2 } = await Promise.resolve().then(() => (init_emailAuth(), emailAuth_exports));
+      return await changePassword2(ctx.user.id, input.oldPassword, input.newPassword);
     }),
     /**
      * Request password reset (public)
@@ -8206,7 +8184,8 @@ var appRouter = router({
       token: z3.string(),
       newPassword: z3.string().min(6)
     })).mutation(async ({ input }) => {
-      return await resetPassword(input.token, input.newPassword);
+      const { resetPassword: resetPassword2 } = await Promise.resolve().then(() => (init_emailAuth(), emailAuth_exports));
+      return await resetPassword2(input.token, input.newPassword);
     }),
     /**
      * Request email verification (protected)
@@ -8277,11 +8256,18 @@ var appRouter = router({
       notes: z3.string().optional()
     })).mutation(async ({ input, ctx }) => {
       const birth_date = input.birth_date ? new Date(input.birth_date) : void 0;
-      const petId2 = await createPet({
-        ...input,
-        birth_date,
+      const petData = {
+        name: input.name,
         approval_status: ctx.user.role === "admin" ? "approved" : "pending"
-      });
+      };
+      if (input.breed) petData.breed = input.breed;
+      if (input.age) petData.age = input.age;
+      if (input.weight !== void 0 && input.weight !== null) petData.weight = input.weight;
+      if (birth_date) petData.birth_date = birth_date;
+      if (input.food_brand) petData.food_brand = input.food_brand;
+      if (input.food_amount !== void 0 && input.food_amount !== null) petData.food_amount = input.food_amount;
+      if (input.notes) petData.notes = input.notes;
+      const petId2 = await createPet(petData);
       await linkPetToTutor(petId2, ctx.user.id, true);
       return { id: petId2 };
     }),
@@ -8296,7 +8282,17 @@ var appRouter = router({
       food_amount: z3.number().optional(),
       notes: z3.string().optional()
     })).mutation(async ({ input, ctx }) => {
-      const { id, ...data } = input;
+      const { id, ...inputData } = input;
+      const birth_date = inputData.birth_date ? new Date(inputData.birth_date) : void 0;
+      const data = {};
+      if (inputData.name) data.name = inputData.name;
+      if (inputData.breed) data.breed = inputData.breed;
+      if (inputData.age) data.age = inputData.age;
+      if (inputData.weight !== void 0 && inputData.weight !== null) data.weight = inputData.weight;
+      if (birth_date) data.birth_date = birth_date;
+      if (inputData.food_brand) data.food_brand = inputData.food_brand;
+      if (inputData.food_amount !== void 0 && inputData.food_amount !== null) data.food_amount = inputData.food_amount;
+      if (inputData.notes) data.notes = inputData.notes;
       const userPets = await getPetsByTutorId(ctx.user.id);
       const pet = userPets.find((p) => p.id === id);
       if (!pet) {
@@ -8305,13 +8301,8 @@ var appRouter = router({
       if (pet.approval_status === "approved") {
         throw new TRPCError4({ code: "FORBIDDEN", message: "Pets aprovados n\xE3o podem ser editados. Entre em contato com a creche." });
       }
-      const birth_date = data.birth_date ? new Date(data.birth_date) : void 0;
-      await updatePet(id, {
-        ...data,
-        birth_date,
-        approval_status: "pending"
-        // Reset to pending after edit
-      });
+      data.approval_status = "pending";
+      await updatePet(id, data);
       return { success: true };
     }),
     updateAdmin: adminProcedure2.input(z3.object({
@@ -8337,7 +8328,7 @@ var appRouter = router({
         await logChange({
           resourceType: "pet_data",
           resourceId: id,
-          pet_id: id,
+          petId: id,
           fieldName: "pet_info_updated",
           oldValue: null,
           newValue: changes.join(", "),
@@ -8419,8 +8410,8 @@ var appRouter = router({
       const fileKey = `pets/${input.petId}/profile-${timestamp2}-${randomSuffix}.${extension}`;
       const { url } = await storagePut(fileKey, buffer, input.mimeType);
       await updatePet(input.petId, {
-        photoUrl: url,
-        photoKey: fileKey
+        photo_url: url,
+        photo_key: fileKey
       });
       return { photo_url: url };
     }),
@@ -8505,10 +8496,10 @@ var appRouter = router({
       const now = /* @__PURE__ */ new Date();
       const creditId = await consumeCredit(input.petId);
       await addDaycareUsage({
-        petId: input.petId,
-        usageDate: now,
+        pet_id: input.petId,
+        usage_date: now,
         check_in_time: now,
-        creditId
+        credit_id: creditId
       });
       await updatePet(input.petId, {
         status: "checked-in",
@@ -8655,8 +8646,11 @@ var appRouter = router({
       expiryDate: z3.date().optional()
     })).mutation(async ({ input, ctx }) => {
       const creditId = await addDaycareCredit({
-        ...input,
-        remainingDays: input.packageDays
+        pet_id: input.petId,
+        package_days: input.packageDays,
+        package_price: input.packagePrice,
+        remaining_days: input.packageDays,
+        expiry_date: input.expiryDate
       });
       await addTransaction({
         pet_id: input.petId,
@@ -9366,37 +9360,8 @@ var appRouter = router({
     })
   }),
   // ==================== NOTIFICATIONS ====================
-  notifications: router({
-    getUserNotifications: protectedProcedure.query(async ({ ctx }) => {
-      return await getUserNotifications(ctx.user.id);
-    }),
-    markAsRead: protectedProcedure.input(z3.object({ id: z3.number() })).mutation(async ({ input }) => {
-      await markNotificationAsRead(input.id);
-      return { success: true };
-    }),
-    markAllAsRead: protectedProcedure.mutation(async ({ ctx }) => {
-      await markAllNotificationsAsRead(ctx.user.id);
-      return { success: true };
-    }),
-    getUnreadCount: protectedProcedure.query(async ({ ctx }) => {
-      const count2 = await getUnreadNotificationCount(ctx.user.id);
-      return { count: count2 };
-    }),
-    triggerVaccineAlerts: adminProcedure2.mutation(async () => {
-      const result = await triggerVaccineNotificationsManually();
-      return result;
-    }),
-    triggerCalendarReminders: adminProcedure2.mutation(async () => {
-      const { sendCalendarReminders: sendCalendarReminders2 } = await Promise.resolve().then(() => (init_calendarReminders(), calendarReminders_exports));
-      const result = await sendCalendarReminders2();
-      return result;
-    }),
-    triggerLowCreditsAlerts: adminProcedure2.mutation(async () => {
-      const { sendLowCreditsAlerts: sendLowCreditsAlerts2 } = await Promise.resolve().then(() => (init_lowCreditsAlerts(), lowCreditsAlerts_exports));
-      const result = await sendLowCreditsAlerts2();
-      return result;
-    })
-  }),
+  // Old notifications router removed - using new one below (line ~5329)
+  // All notification endpoints are now in the new notifications router
   // ==================== TRANSACTIONS & FINANCES ====================
   finances: router({
     getPetTransactions: protectedProcedure.input(z3.object({ petId: z3.number() })).query(async ({ input }) => {
@@ -9481,7 +9446,7 @@ var appRouter = router({
           monthlyExpenses: finances.debits || 0,
           upcomingVaccines: vaccines.length
         };
-        cache2.set(cacheKey, data, 30 * 1e3);
+        cache2.set(cacheKey, data, 60 * 1e3);
         return data;
       } catch (error) {
         console.error("[dashboard.stats] Error:", error.message);
@@ -9551,7 +9516,7 @@ var appRouter = router({
           photo_url: url,
           photo_key: fileKey,
           caption: photo.caption || null,
-          taken_at: photo.taken_at,
+          taken_at: photo.takenAt,
           uploaded_by_id: ctx.user.id
         });
         results.push({ id: photoId, url });
@@ -9763,18 +9728,18 @@ var appRouter = router({
         });
       }
       const result = await createFleaTreatment({
-        pet_id: input.petId,
-        product_name: input.productName,
-        application_date: input.applicationDate,
-        next_due_date: input.nextDueDate,
+        petId: input.petId,
+        productName: input.productName,
+        applicationDate: input.applicationDate,
+        nextDueDate: input.nextDueDate,
         notes: input.notes,
-        created_by_id: ctx.user.id
+        createdById: ctx.user.id
       });
       const { logChange: logChange2 } = await Promise.resolve().then(() => (init_changeTracker(), changeTracker_exports));
       await logChange2({
         resourceType: "preventive",
         resourceId: result.id,
-        pet_id: input.petId,
+        petId: input.petId,
         fieldName: "flea_treatment_added",
         oldValue: null,
         newValue: `${input.productName} - Pr\xF3xima aplica\xE7\xE3o: ${input.nextDueDate.toLocaleDateString("pt-BR")}`,
@@ -9834,18 +9799,18 @@ var appRouter = router({
         });
       }
       const result = await createDewormingTreatment({
-        pet_id: input.petId,
-        product_name: input.productName,
-        application_date: input.applicationDate,
-        next_due_date: input.nextDueDate,
+        petId: input.petId,
+        productName: input.productName,
+        applicationDate: input.applicationDate,
+        nextDueDate: input.nextDueDate,
         notes: input.notes,
-        created_by_id: ctx.user.id
+        createdById: ctx.user.id
       });
       const { logChange: logChange2 } = await Promise.resolve().then(() => (init_changeTracker(), changeTracker_exports));
       await logChange2({
         resourceType: "preventive",
         resourceId: result.id,
-        pet_id: input.petId,
+        petId: input.petId,
         fieldName: "deworming_treatment_added",
         oldValue: null,
         newValue: `${input.productName} - Pr\xF3xima aplica\xE7\xE3o: ${input.nextDueDate.toLocaleDateString("pt-BR")}`,
@@ -9863,7 +9828,7 @@ var appRouter = router({
       );
       await autoCreateDewormingEvent(
         input.petId,
-        result.insertId,
+        result.id,
         input.productName,
         input.nextDueDate,
         void 0,
@@ -10216,7 +10181,8 @@ V\xE1lido at\xE9: ${expiresAt.toLocaleString("pt-BR")}`
     createCheckout: protectedProcedure.input(z3.object({
       productKey: z3.string()
     })).mutation(async ({ input, ctx }) => {
-      const stripe = getStripe();
+      const { getStripe: getStripe2 } = await Promise.resolve().then(() => (init_stripeWebhook(), stripeWebhook_exports));
+      const stripe = getStripe2();
       const product = PRODUCTS[input.productKey];
       if (!product) {
         throw new TRPCError4({ code: "BAD_REQUEST", message: "Produto inv\xE1lido" });
@@ -10877,7 +10843,7 @@ V\xE1lido at\xE9: ${expiresAt.toLocaleString("pt-BR")}`
         // Convert to cents
         category: input.category,
         description: input.description,
-        transactionDate: new Date(input.transactionDate)
+        transaction_date: new Date(input.transactionDate)
       }).where(eq14(transactions2.id, input.id));
       return true;
     })
@@ -11433,15 +11399,15 @@ V\xE1lido at\xE9: ${expiresAt.toLocaleString("pt-BR")}`
         }
       }
       const result = await createHealthBehaviorLog({
-        pet_id: input.petId,
+        petId: input.petId,
         mood: input.mood,
         behavior: input.behavior,
         stool: input.stool,
         appetite: input.appetite,
-        water_intake: input.waterIntake,
+        waterIntake: input.waterIntake,
         notes: input.notes,
-        recorded_by: ctx.user.id,
-        recorded_at: input.recordedAt || /* @__PURE__ */ new Date()
+        recordedBy: ctx.user.id,
+        recordedAt: input.recordedAt || /* @__PURE__ */ new Date()
       });
       await autoCreateHealthLogEvent(
         input.petId,
@@ -12034,7 +12000,74 @@ V\xE1lido at\xE9: ${expiresAt.toLocaleString("pt-BR")}`
     })
   }),
   // Search
-  search: searchRouter
+  search: searchRouter,
+  // Notifications (replacing WebSocket with polling)
+  notifications: router({
+    /**
+     * Get user notifications
+     */
+    list: protectedProcedure.input(z3.object({
+      limit: z3.number().min(1).max(100).optional().default(50)
+    })).query(async ({ ctx, input }) => {
+      const notifications2 = await getUserNotifications(ctx.user.id);
+      return notifications2.slice(0, input.limit).map((n) => ({
+        id: n.id,
+        type: n.type,
+        title: n.title,
+        message: n.message,
+        timestamp: n.created_at,
+        isRead: n.is_read,
+        data: n.resource_type && n.resource_id ? {
+          resourceType: n.resource_type,
+          resourceId: n.resource_id
+        } : void 0
+      }));
+    }),
+    /**
+     * Get unread count
+     */
+    unreadCount: protectedProcedure.query(async ({ ctx }) => {
+      const count2 = await getUnreadNotificationCount(ctx.user.id);
+      return { count: count2 };
+    }),
+    /**
+     * Mark notification as read
+     */
+    markAsRead: protectedProcedure.input(z3.object({
+      notificationId: z3.number()
+    })).mutation(async ({ ctx, input }) => {
+      await markNotificationAsRead(input.notificationId);
+      return { success: true };
+    }),
+    /**
+     * Mark all notifications as read
+     */
+    markAllAsRead: protectedProcedure.mutation(async ({ ctx }) => {
+      await markAllNotificationsAsRead(ctx.user.id);
+      return { success: true };
+    }),
+    /**
+     * Trigger vaccine alerts manually (admin only)
+     */
+    triggerVaccineAlerts: adminProcedure2.mutation(async () => {
+      const result = await triggerVaccineNotificationsManually();
+      return result;
+    }),
+    /**
+     * Trigger calendar reminders manually (admin only)
+     */
+    triggerCalendarReminders: adminProcedure2.mutation(async () => {
+      const result = await sendCalendarReminders();
+      return result;
+    }),
+    /**
+     * Trigger low credits alerts manually (admin only)
+     */
+    triggerLowCreditsAlerts: adminProcedure2.mutation(async () => {
+      const result = await sendLowCreditsAlerts();
+      return result;
+    })
+  })
 });
 
 // server/_core/context.ts
@@ -12303,9 +12336,6 @@ var vite_config_default = defineConfig({
     fs: {
       strict: true,
       deny: ["**/.*"]
-    },
-    hmr: {
-      overlay: true
     }
   }
 });

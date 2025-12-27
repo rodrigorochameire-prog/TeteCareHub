@@ -231,9 +231,9 @@ export default function AdminFood() {
                       className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
                     >
                       <div className="flex items-center gap-4">
-                        {pet.photoUrl ? (
+                        {pet.photo_url ? (
                           <img
-                            src={pet.photoUrl}
+                            src={pet.photo_url}
                             alt={pet.name}
                             className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
                           />
@@ -252,13 +252,13 @@ export default function AdminFood() {
                       <div className="flex items-center gap-4">
                         <div className="text-right">
                           <div className="font-bold text-lg">
-                            {pet.foodAmount ? `${pet.foodAmount}g` : "Não configurado"}
+                            {pet.food_amount ? `${pet.food_amount}g` : "Não configurado"}
                           </div>
                           <div className="text-xs text-muted-foreground">por dia</div>
                         </div>
-                        {pet.foodBrand && (
+                        {pet.food_brand && (
                           <Badge variant="outline" className="ml-2">
-                            {pet.foodBrand}
+                            {pet.food_brand}
                           </Badge>
                         )}
                       </div>

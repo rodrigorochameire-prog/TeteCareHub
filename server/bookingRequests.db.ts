@@ -52,7 +52,7 @@ export async function createBookingRequest(data: {
   notes?: string;
 }) {
   const db = (await getDb())!;
-  const result = await db
+  const [result] = await db
     .insert(bookingRequests)
     .values({
       petId: data.petId,
@@ -60,9 +60,10 @@ export async function createBookingRequest(data: {
       requestedDates: data.requestedDates,
       notes: data.notes,
       status: "pending",
-    }) as any;
+    })
+    .returning();
 
-  const insertId = Number(result[0]?.insertId || 0);
+  const insertId = result.id;
 
   // Get the created request
   const [request] = await db

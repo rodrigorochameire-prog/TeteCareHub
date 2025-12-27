@@ -93,7 +93,7 @@ export function PhotoGallery({ petId, petName = "seu pet" }: PhotoGalleryProps) 
   };
 
   const groupedByDate = photos?.reduce((acc: any, photo) => {
-    const date = new Date(photo.takenAt).toLocaleDateString("pt-BR");
+    const date = new Date(photo.taken_at).toLocaleDateString("pt-BR");
     if (!acc[date]) acc[date] = [];
     acc[date].push(photo);
     return acc;
@@ -180,7 +180,7 @@ export function PhotoGallery({ petId, petName = "seu pet" }: PhotoGalleryProps) 
                         onClick={() => openLightbox(globalIndex)}
                       >
                         <img
-                          src={photo.photoUrl}
+                          src={photo.photo_url}
                           alt={photo.caption || `Foto de ${petName}`}
                           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                         />
@@ -248,7 +248,7 @@ export function PhotoGallery({ petId, petName = "seu pet" }: PhotoGalleryProps) 
 
           <div className="max-w-6xl max-h-[90vh] px-4" onClick={(e) => e.stopPropagation()}>
             <img
-              src={photos[lightboxIndex].photoUrl}
+              src={photos[lightboxIndex].photo_url}
               alt={photos[lightboxIndex].caption || "Foto"}
               className="max-w-full max-h-[85vh] object-contain mx-auto rounded-lg"
             />
@@ -256,7 +256,7 @@ export function PhotoGallery({ petId, petName = "seu pet" }: PhotoGalleryProps) 
               <p className="text-white text-center mt-4">{photos[lightboxIndex].caption}</p>
             )}
             <p className="text-white/60 text-center text-sm mt-2">
-              {new Date(photos[lightboxIndex].takenAt).toLocaleString("pt-BR")}
+              {new Date(photos[lightboxIndex].taken_at).toLocaleString("pt-BR")}
             </p>
             <p className="text-white/40 text-center text-xs mt-1">
               {lightboxIndex + 1} / {photos.length}

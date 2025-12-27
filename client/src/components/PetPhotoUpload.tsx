@@ -47,7 +47,7 @@ export function PetPhotoUpload({ currentPhotoUrl, petId, petName, onPhotoUpdated
 
   const uploadPhotoMutation = trpc.pets.uploadPhoto.useMutation({
     onSuccess: (data) => {
-      onPhotoUpdated(data.photoUrl);
+      onPhotoUpdated(data.photo_url);
       toast.success("Foto atualizada com sucesso!");
       setIsOpen(false);
       setSelectedFile(null);

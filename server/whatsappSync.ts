@@ -121,8 +121,8 @@ export async function processWhatsAppWebhook(webhookData: any) {
           participants: [user.id, 1], // Tutor e Admin
           lastMessageAt: new Date(timestamp),
           unreadCount: 0,
-        });
-        conversation = { id: newConv.insertId, participants: [user.id, 1] } as any;
+        }).returning();
+        conversation = { id: newConv.id, participants: [user.id, 1] } as any;
       }
 
       if (!conversation) {

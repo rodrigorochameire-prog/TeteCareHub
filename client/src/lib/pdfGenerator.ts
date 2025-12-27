@@ -369,7 +369,7 @@ export function generatePetHealthReport(
     const vaccineData = vaccines.map(v => [
       v.vaccineName,
       format(new Date(v.applicationDate), "dd/MM/yyyy"),
-      v.nextDueDate ? format(new Date(v.nextDueDate), "dd/MM/yyyy") : "N/A",
+      v.next_due_date ? format(new Date(v.next_due_date), "dd/MM/yyyy") : "N/A",
       v.doseNumber?.toString() || "1",
       v.veterinarian || "N/A",
     ]);

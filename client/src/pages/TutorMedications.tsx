@@ -138,8 +138,8 @@ export default function TutorMedications() {
     });
   };
 
-  const activeMedications = medications?.filter(m => m.medication.isActive) || [];
-  const completedMedications = medications?.filter(m => !m.medication.isActive) || [];
+  const activeMedications = medications?.filter(m => m.medication.is_active) || [];
+  const completedMedications = medications?.filter(m => !m.medication.is_active) || [];
 
   return (
     <TutorLayout>

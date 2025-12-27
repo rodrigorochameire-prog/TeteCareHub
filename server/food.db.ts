@@ -54,7 +54,7 @@ export async function getFoodStats() {
     })),
   };
   
-  cache.set(cacheKey, data, 60 * 1000); // 1 minute cache (aumentado de 30s para melhor performance)
+  cache.set(cacheKey, data, 30 * 1000); // 30 seconds cache
   return data;
 }
 

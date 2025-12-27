@@ -368,15 +368,15 @@ export default function TutorHealth() {
     const allPreventives = getAllPreventives();
 
     const upcomingVaccines = allVaccinations.filter((v: any) => {
-      const nextDue = v.vaccination?.nextDueDate;
+      const nextDue = v.vaccination?.next_due_date;
       if (!nextDue) return false;
       return new Date(nextDue) > now && new Date(nextDue) <= new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     }).length;
 
-    const activeMedications = allMedications.filter((m: any) => m.medication?.isActive).length;
+    const activeMedications = allMedications.filter((m: any) => m.medication?.is_active).length;
     
     const upcomingPreventives = allPreventives.filter((p: any) => {
-      const nextDue = p.next_due_date || p.nextDueDate;
+      const nextDue = p.next_due_date || p.next_due_date;
       if (!nextDue) return false;
       return new Date(nextDue) > now && new Date(nextDue) <= new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     }).length;
@@ -675,7 +675,7 @@ export default function TutorHealth() {
                       const vaccination = item.vaccination || item;
                       const vaccine = item.vaccine || {};
                       const changes = getRecentChanges(vaccination.id, "vaccine");
-                      const nextDue = vaccination.nextDueDate;
+                      const nextDue = vaccination.next_due_date;
                       const isUpcoming = nextDue && new Date(nextDue) > now && new Date(nextDue) <= new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
                       const isOverdue = nextDue && new Date(nextDue) < now;
 
@@ -707,7 +707,7 @@ export default function TutorHealth() {
                                 </div>
                                 <div className="text-sm text-muted-foreground space-y-1">
                                   <p>
-                                    Aplicada em: {format(new Date(vaccination.applicationDate), "dd/MM/yyyy", { locale: ptBR })}
+                                    Aplicada em: {format(new Date(vaccination.application_date), "dd/MM/yyyy", { locale: ptBR })}
                                   </p>
                                   {nextDue && (
                                     <p>
@@ -901,7 +901,7 @@ export default function TutorHealth() {
                       const medication = item.medication || item;
                       const med = item.medicationLibrary || {};
                       const changes = getRecentChanges(medication.id, "medication");
-                      const isActive = medication.isActive;
+                      const isActive = medication.is_active;
 
                       return (
                         <Card key={medication.id} className={`shadow-sm hover:shadow-md transition-shadow ${isActive ? "border-l-4 border-l-green-500" : ""}`}>
@@ -1072,7 +1072,7 @@ export default function TutorHealth() {
                     {filteredData.map((item: any) => {
                       const preventive = item.fleaTreatment || item.dewormingTreatment || item;
                       const changes = getRecentChanges(preventive.id, "preventive");
-                      const nextDue = preventive.next_due_date || preventive.nextDueDate;
+                      const nextDue = preventive.next_due_date || preventive.next_due_date;
                       const isUpcoming = nextDue && new Date(nextDue) > now && new Date(nextDue) <= new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
                       const isOverdue = nextDue && new Date(nextDue) < now;
                       const isFlea = item.type === "flea" || item.preventiveType === "flea";
@@ -1110,7 +1110,7 @@ export default function TutorHealth() {
                                 </div>
                                 <div className="text-sm text-muted-foreground space-y-1">
                                   <p>
-                                    Aplicado em: {format(new Date(preventive.application_date || preventive.applicationDate), "dd/MM/yyyy", { locale: ptBR })}
+                                    Aplicado em: {format(new Date(preventive.application_date || preventive.application_date), "dd/MM/yyyy", { locale: ptBR })}
                                   </p>
                                   {nextDue && (
                                     <p>

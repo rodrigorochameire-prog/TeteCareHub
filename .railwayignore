@@ -1,3 +1,4 @@
+<<<<<<< Current (Your changes)
 # Railway ignore file
 # Evita que o Railway execute comandos automáticos
 
@@ -6,3 +7,83 @@
 *.backup
 dist/
 node_modules/
+
+
+# Railway ignore file
+# Evita que o Railway execute comandos automáticos
+
+.env.local
+.env.local.backup
+*.backup
+dist/
+node_modules/
+
+
+
+# Railway ignore file
+# Evita que o Railway execute comandos automáticos
+
+.env.local
+.env.local.backup
+*.backup
+dist/
+node_modules/
+
+
+# Railway ignore file
+# Evita que o Railway execute comandos automáticos
+
+.env.local
+.env.local.backup
+*.backup
+dist/
+node_modules/
+
+
+
+# Railway ignore file
+# Evita que o Railway execute comandos automáticos
+
+.env.local
+.env.local.backup
+*.backup
+dist/
+node_modules/
+
+
+# Railway ignore file
+# Evita que o Railway execute comandos automáticos
+
+.env.local
+.env.local.backup
+*.backup
+dist/
+node_modules/
+
+
+
+# Railway ignore file
+# Evita que o Railway execute comandos automáticos
+
+.env.local
+.env.local.backup
+*.backup
+dist/
+node_modules/
+
+
+# Railway ignore file
+# Evita que o Railway execute comandos automáticos
+
+.env.local
+.env.local.backup
+*.backup
+dist/
+node_modules/
+
+
+
+
+
+=======
+>>>>>>> Incoming (Background Agent changes)

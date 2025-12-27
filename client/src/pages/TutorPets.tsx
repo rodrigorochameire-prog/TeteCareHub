@@ -109,12 +109,12 @@ export default function TutorPets() {
       breed: pet.breed || "",
       age: pet.age || "",
       weight: pet.weight ? (pet.weight / 1000).toString() : "",
-      birthDate: pet.birthDate ? new Date(pet.birthDate).toISOString().split("T")[0] : "",
-      foodBrand: pet.foodBrand || "",
-      foodAmount: pet.foodAmount ? pet.foodAmount.toString() : "",
+      birthDate: pet.birth_date ? new Date(pet.birth_date).toISOString().split("T")[0] : "",
+      foodBrand: pet.food_brand || "",
+      foodAmount: pet.food_amount ? pet.food_amount.toString() : "",
       notes: pet.notes || "",
     });
-    setPhotoPreview(pet.photoUrl || null);
+    setPhotoPreview(pet.photo_url || null);
     setIsDialogOpen(true);
   };
 
@@ -160,9 +160,9 @@ export default function TutorPets() {
         breed: formData.breed || undefined,
         age: formData.age || undefined,
         weight: formData.weight ? parseInt(formData.weight) * 1000 : undefined,
-        birth_date: formData.birthDate || undefined,
-        food_brand: formData.foodBrand || undefined,
-        food_amount: formData.foodAmount ? parseInt(formData.foodAmount) : undefined,
+        birthDate: formData.birthDate || undefined,
+        foodBrand: formData.foodBrand || undefined,
+        foodAmount: formData.foodAmount ? parseInt(formData.foodAmount) : undefined,
         notes: formData.notes || undefined,
       });
     } else {
@@ -172,9 +172,9 @@ export default function TutorPets() {
         breed: formData.breed || undefined,
         age: formData.age || undefined,
         weight: formData.weight ? parseInt(formData.weight) * 1000 : undefined,
-        birth_date: formData.birthDate || undefined,
-        food_brand: formData.foodBrand || undefined,
-        food_amount: formData.foodAmount ? parseInt(formData.foodAmount) : undefined,
+        birthDate: formData.birthDate || undefined,
+        foodBrand: formData.foodBrand || undefined,
+        foodAmount: formData.foodAmount ? parseInt(formData.foodAmount) : undefined,
         notes: formData.notes || undefined,
       });
     }

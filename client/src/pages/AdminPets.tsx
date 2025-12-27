@@ -209,9 +209,9 @@ export default function AdminPets() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center text-white font-bold">
-                      {pet.photoUrl ? (
-                        <img
-                          src={pet.photoUrl}
+{pet.photo_url ? (
+                          <img
+                            src={pet.photo_url}
                           alt={pet.name}
                           className="w-full h-full rounded-full object-cover"
                         />
@@ -402,7 +402,7 @@ export default function AdminPets() {
                 <Input
                   id="edit-foodBrand"
                   name="foodBrand"
-                  defaultValue={selectedPet?.foodBrand || ""}
+                  defaultValue={selectedPet?.food_brand || ""}
                 />
               </div>
               <div className="space-y-2">

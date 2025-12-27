@@ -349,7 +349,7 @@ export default function AdminCalendar() {
     const thirtyDaysFromNow = new Date();
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
     return (
-      (e.eventType === "vaccination" || e.eventType === "vaccine") &&
+      e.eventType === "vaccination" &&
       eventDate >= now &&
       eventDate <= thirtyDaysFromNow
     );

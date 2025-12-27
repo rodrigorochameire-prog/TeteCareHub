@@ -2,7 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dog, Users, Calendar, TrendingUp, AlertCircle, CheckCircle2, Clock, Activity, Pill, Syringe, Shield, Brain, Plus } from "lucide-react";
+import { Dog, Users, Calendar, TrendingUp, AlertCircle, CheckCircle2, Clock, Activity, Pill, Syringe, Shield, Brain, Plus, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 import AdminLayout from "@/components/AdminLayout";
 import { HealthBehaviorModal } from "@/components/HealthBehaviorModal";
@@ -233,7 +233,7 @@ export default function AdminDashboard() {
                         <p className="text-sm text-muted-foreground">{item.vaccine.name}</p>
                       </div>
                       <Badge variant="outline" className="text-orange-600 border-orange-200">
-                        {new Date(item.vaccination.nextDueDate).toLocaleDateString("pt-BR")}
+                        {new Date(item.vaccination.next_due_date).toLocaleDateString("pt-BR")}
                       </Badge>
                     </div>
                   </div>
@@ -252,7 +252,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Health Statistics Section */}
-      {healthStats && healthStats.vaccination && healthStats.medications && healthStats.preventives && (
+      {healthStats && 'vaccination' in healthStats && 'medications' in healthStats && 'preventives' in healthStats && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>

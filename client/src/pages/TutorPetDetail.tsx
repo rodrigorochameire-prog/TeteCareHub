@@ -95,13 +95,13 @@ export default function TutorPetDetail() {
             {/* Photo */}
             <div className="flex flex-col items-center gap-3">
               <Avatar className="w-32 h-32">
-                <AvatarImage src={pet.photoUrl || undefined} alt={pet.name} />
+                <AvatarImage src={pet.photo_url || undefined} alt={pet.name} />
                 <AvatarFallback className="text-4xl bg-gradient-primary text-white">
                   {pet.name[0]}
                 </AvatarFallback>
               </Avatar>
               <PhotoUpload
-                currentPhotoUrl={pet.photoUrl || undefined}
+                currentPhotoUrl={pet.photo_url || undefined}
                 petName={pet.name}
                 onUploadComplete={(photoUrl: string, photoKey: string) => {
                   toast.success("Foto atualizada com sucesso!");
@@ -126,7 +126,7 @@ export default function TutorPetDetail() {
               <div className="p-4 bg-muted/50 rounded-lg">
                 <p className="text-xs text-muted-foreground mb-1">Ração</p>
                 <p className="text-sm font-semibold truncate">
-                  {pet.foodBrand || "N/A"}
+                  {pet.food_brand || "N/A"}
                 </p>
               </div>
               <div className="p-4 bg-muted/50 rounded-lg">
@@ -181,7 +181,7 @@ export default function TutorPetDetail() {
                             {log.source === "daycare" ? "Creche" : "Casa"}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
-                            {new Date(log.logDate).toLocaleDateString("pt-BR")}
+                            {new Date(log.log_date).toLocaleDateString("pt-BR")}
                           </span>
                         </div>
                         {log.mood && (
@@ -213,14 +213,14 @@ export default function TutorPetDetail() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {!medications || medications.filter(m => m.medication.isActive).length === 0 ? (
+                {!medications || medications.filter(m => m.medication.is_active).length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-4">
                     Nenhum medicamento ativo
                   </p>
                 ) : (
                   <div className="space-y-3">
                     {medications
-                      .filter(m => m.medication.isActive)
+                      .filter(m => m.medication.is_active)
                       .slice(0, 3)
                       .map((med) => (
                         <div key={med.medication.id} className="p-3 border rounded-lg">
@@ -261,15 +261,15 @@ export default function TutorPetDetail() {
                 ) : (
                   <div className="space-y-3">
                     {vaccinations
-                      .filter(v => v.vaccination.nextDueDate && new Date(v.vaccination.nextDueDate) > new Date())
+                      .filter(v => v.vaccination.next_due_date && new Date(v.vaccination.next_due_date) > new Date())
                       .slice(0, 3)
                       .map((vacc) => (
                         <div key={vacc.vaccination.id} className="p-3 border rounded-lg">
                           <p className="font-medium text-sm">{vacc.vaccine.name}</p>
                           <p className="text-xs text-muted-foreground mt-1">
                             Próxima dose:{" "}
-                            {vacc.vaccination.nextDueDate
-                              ? new Date(vacc.vaccination.nextDueDate).toLocaleDateString("pt-BR")
+                            {vacc.vaccination.next_due_date
+                              ? new Date(vacc.vaccination.next_due_date).toLocaleDateString("pt-BR")
                               : "N/A"}
                           </p>
                         </div>
@@ -400,12 +400,12 @@ export default function TutorPetDetail() {
                         <div>
                           <p className="text-sm font-medium">{vacc.vaccine.name}</p>
                           <p className="text-xs text-muted-foreground">
-                            Aplicada em: {new Date(vacc.vaccination.applicationDate).toLocaleDateString("pt-BR")}
+                            Aplicada em: {new Date(vacc.vaccination.application_date).toLocaleDateString("pt-BR")}
                           </p>
                         </div>
-                        {vacc.vaccination.nextDueDate && (
+                        {vacc.vaccination.next_due_date && (
                           <Badge variant="outline" className="text-xs">
-                            {new Date(vacc.vaccination.nextDueDate).toLocaleDateString("pt-BR")}
+                            {new Date(vacc.vaccination.next_due_date).toLocaleDateString("pt-BR")}
                           </Badge>
                         )}
                       </div>
@@ -478,7 +478,7 @@ export default function TutorPetDetail() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {!vaccinations || vaccinations.filter(v => v.vaccination.nextDueDate && new Date(v.vaccination.nextDueDate) > new Date() && new Date(v.vaccination.nextDueDate) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)).length === 0 ? (
+              {!vaccinations || vaccinations.filter(v => v.vaccination.next_due_date && new Date(v.vaccination.next_due_date) > new Date() && new Date(v.vaccination.next_due_date) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)).length === 0 ? (
                 <div className="empty-state">
                   <Syringe className="empty-state-icon" />
                   <p className="empty-state-title">Nenhuma vacina agendada</p>
@@ -489,18 +489,18 @@ export default function TutorPetDetail() {
               ) : (
                 <div className="space-y-3">
                   {vaccinations
-                    ?.filter(v => v.vaccination.nextDueDate && new Date(v.vaccination.nextDueDate) > new Date() && new Date(v.vaccination.nextDueDate) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))
+                    ?.filter(v => v.vaccination.next_due_date && new Date(v.vaccination.next_due_date) > new Date() && new Date(v.vaccination.next_due_date) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))
                     .map((item) => (
                       <div key={item.vaccination.id} className="p-4 border rounded-lg">
                         <div className="flex items-start justify-between">
                           <div>
                             <p className="font-medium">{item.vaccine.name}</p>
                             <p className="text-sm text-muted-foreground mt-1">
-                              Próxima dose: {new Date(item.vaccination.nextDueDate!).toLocaleDateString("pt-BR")}
+                              Próxima dose: {new Date(item.vaccination.next_due_date!).toLocaleDateString("pt-BR")}
                             </p>
                           </div>
                           <Badge variant="outline">
-                            {Math.ceil((new Date(item.vaccination.nextDueDate!).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} dias
+                            {Math.ceil((new Date(item.vaccination.next_due_date!).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} dias
                           </Badge>
                         </div>
                       </div>

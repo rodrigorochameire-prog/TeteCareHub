@@ -236,8 +236,8 @@ export default function TutorBehavior() {
               }`}
             >
               <div className="flex flex-col items-center gap-2">
-                {pet.photoUrl ? (
-                  <img src={pet.photoUrl} alt={pet.name} className="w-16 h-16 rounded-full object-cover" />
+                {pet.photo_url ? (
+                  <img src={pet.photo_url} alt={pet.name} className="w-16 h-16 rounded-full object-cover" />
                 ) : (
                   <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                     <span className="text-2xl font-bold text-primary">{pet.name[0]}</span>

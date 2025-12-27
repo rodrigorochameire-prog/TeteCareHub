@@ -88,7 +88,7 @@ export function PetHealthDashboard({ petId, petName }: PetHealthDashboardProps) 
   // Calculate statistics
   const totalLogs = logs.length;
   const activeMedications = medications.filter((m: any) => !m.endDate || new Date(m.endDate) > new Date()).length;
-  const upcomingVaccines = vaccines.filter((v: any) => v.nextDueDate && new Date(v.nextDueDate) > new Date()).length;
+  const upcomingVaccines = vaccines.filter((v: any) => v.next_due_date && new Date(v.next_due_date) > new Date()).length;
   
   const recentMood = logs.length > 0 && logs[0].mood 
     ? logs[0].mood 

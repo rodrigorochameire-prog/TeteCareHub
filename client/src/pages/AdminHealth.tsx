@@ -247,15 +247,15 @@ export default function AdminHealth() {
       const days = daysMap[periodFilter];
 
       applications = applications.filter(app => {
-        const date = new Date(app.administeredAt || app.lastApplication || app.applicationDate);
+        const date = new Date(app.administeredAt || app.lastApplication || app.application_date);
         const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
         return diffDays <= days;
       });
     }
 
     return applications.sort((a, b) => {
-      const dateA = new Date(a.administeredAt || a.lastApplication || a.applicationDate || 0);
-      const dateB = new Date(b.administeredAt || b.lastApplication || b.applicationDate || 0);
+      const dateA = new Date(a.administeredAt || a.lastApplication || a.application_date || 0);
+      const dateB = new Date(b.administeredAt || b.lastApplication || b.application_date || 0);
       return dateB.getTime() - dateA.getTime();
     });
   };
@@ -473,7 +473,7 @@ export default function AdminHealth() {
                               <TableCell className="font-medium">{app.petName}</TableCell>
                               <TableCell>{app.name || app.productName}</TableCell>
                               <TableCell>
-                                {format(new Date(app.administeredAt || app.lastApplication || app.applicationDate), "dd/MM/yyyy", { locale: ptBR })}
+                                {format(new Date(app.administeredAt || app.lastApplication || app.application_date), "dd/MM/yyyy", { locale: ptBR })}
                               </TableCell>
                               {mainTab === "vaccines" && (
                                 <TableCell>

@@ -129,7 +129,7 @@ export default function PhotoGalleryAdvanced({ petId, isAdmin = false }: PhotoGa
 
   // Group photos by date
   const photosByDate = photos?.reduce((acc: { [key: string]: typeof photos }, photo) => {
-    const date = new Date(photo.takenAt).toLocaleDateString("pt-BR", {
+    const date = new Date(photo.taken_at).toLocaleDateString("pt-BR", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -171,7 +171,7 @@ export default function PhotoGalleryAdvanced({ petId, isAdmin = false }: PhotoGa
                     >
                       <CardContent className="p-0">
                         <img
-                          src={photo.photoUrl}
+                          src={photo.photo_url}
                           alt={photo.caption || "Pet photo"}
                           className="w-full h-48 object-cover"
                         />
@@ -286,7 +286,7 @@ export default function PhotoGalleryAdvanced({ petId, isAdmin = false }: PhotoGa
 
               {/* Photo */}
               <img
-                src={photos[selectedPhotoIndex]?.photoUrl}
+                src={photos[selectedPhotoIndex]?.photo_url}
                 alt={photos[selectedPhotoIndex]?.caption || "Pet photo"}
                 className="w-full max-h-[60vh] object-contain"
               />
@@ -297,7 +297,7 @@ export default function PhotoGalleryAdvanced({ petId, isAdmin = false }: PhotoGa
                   <p className="text-sm">{photos[selectedPhotoIndex].caption}</p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  {new Date(photos[selectedPhotoIndex]?.takenAt).toLocaleString("pt-BR")}
+                  {new Date(photos[selectedPhotoIndex]?.taken_at).toLocaleString("pt-BR")}
                 </p>
 
                 {/* Reactions */}
@@ -351,7 +351,7 @@ export default function PhotoGalleryAdvanced({ petId, isAdmin = false }: PhotoGa
                 {/* Actions */}
                 <div className="flex justify-between">
                   <Button variant="outline" size="sm" asChild>
-                    <a href={photos[selectedPhotoIndex]?.photoUrl} download target="_blank" rel="noopener noreferrer">
+                    <a href={photos[selectedPhotoIndex]?.photo_url} download target="_blank" rel="noopener noreferrer">
                       <Download className="w-4 h-4 mr-1" />
                       Baixar
                     </a>

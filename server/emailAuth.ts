@@ -53,7 +53,7 @@ export async function loginWithEmail(email: string, password: string) {
     
     // 1. Autenticar via Supabase Auth SDK
     console.log('[loginWithEmail] Calling Supabase signInWithPassword...');
-    let { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: normalizedEmail,
       password
     });
@@ -63,82 +63,35 @@ export async function loginWithEmail(email: string, password: string) {
       console.error('[loginWithEmail] Error code:', error.status);
       console.error('[loginWithEmail] Full error:', JSON.stringify(error, null, 2));
       
-      // Verificar se existe no banco local para diagnóstico
-      const localUser = await getUserByEmail(normalizedEmail);
-      console.log('[loginWithEmail] Local user check:', {
-        exists: !!localUser,
-        hasAuthId: !!localUser?.auth_id,
-        authId: localUser?.auth_id,
-        emailVerified: localUser?.email_verified
-      });
-      
-      // Tratar erro específico de email não confirmado
-      if (error.message.includes('Email not confirmed') || 
-          error.message.includes('email_not_confirmed') ||
-          error.status === 400 && error.message.toLowerCase().includes('confirm')) {
-        console.log('[loginWithEmail] Email not confirmed - attempting to confirm automatically...');
-        // Verificar se podemos confirmar automaticamente via admin API
-        if (localUser && localUser.auth_id) {
-          try {
-            console.log('[loginWithEmail] Attempting to confirm email via admin API...');
-            const { error: confirmError } = await supabase.auth.admin.updateUserById(
-              localUser.auth_id,
-              { email_confirm: true }
-            );
-            
-            if (!confirmError) {
-              console.log('[loginWithEmail] Email confirmed via admin API, retrying login...');
-              // Tentar login novamente após confirmar
-              const retryResult = await supabase.auth.signInWithPassword({
-                email: normalizedEmail,
-                password
-              });
-              
-              if (!retryResult.error && retryResult.data?.user) {
-                console.log('[loginWithEmail] Login successful after email confirmation');
-                // Usar os dados do retry para continuar
-                data = retryResult.data;
-                error = null;
-                // Continuar com o fluxo normal abaixo
-              } else {
-                console.error('[loginWithEmail] Retry login failed after email confirmation:', retryResult.error?.message);
-                return null;
-              }
-            } else {
-              console.error('[loginWithEmail] Failed to confirm email:', confirmError.message);
-              return null;
-            }
-          } catch (confirmErr: any) {
-            console.error('[loginWithEmail] Error confirming email:', confirmErr.message);
-            return null;
-          }
-        } else {
-          console.log('[loginWithEmail] Cannot auto-confirm: user not found locally or missing auth_id');
+      // Se o erro for "Invalid login credentials" ou "Email not confirmed", 
+      // verificar se o usuário existe no banco local mas não no Supabase Auth
+      if (error.message.includes('Invalid login credentials') || 
+          error.message.includes('Email not confirmed') ||
+          error.message.includes('User not found') ||
+          error.message.includes('Invalid login')) {
+        
+        // Verificar se existe no banco local
+        const localUser = await getUserByEmail(normalizedEmail);
+        console.log('[loginWithEmail] Local user check:', {
+          exists: !!localUser,
+          hasAuthId: !!localUser?.auth_id,
+          authId: localUser?.auth_id
+        });
+        
+        if (localUser && !localUser.auth_id) {
+          console.log('[loginWithEmail] User exists locally but not in Supabase Auth. User needs to register first.');
+          // Não podemos criar automaticamente sem a senha correta
           return null;
         }
+        
+        // Se o usuário tem auth_id, pode ser que a senha no Supabase esteja diferente
+        if (localUser && localUser.auth_id) {
+          console.log('[loginWithEmail] User has auth_id but Supabase login failed. Password may have been changed.');
+          console.log('[loginWithEmail] Auth ID:', localUser.auth_id);
+        }
       }
       
-      // Se ainda há erro após tentar confirmar email, tratar outros erros
-      if (error) {
-        // Se o erro for "Invalid login credentials" ou similar
-        if (error.message.includes('Invalid login credentials') || 
-            error.message.includes('User not found') ||
-            error.message.includes('Invalid login')) {
-          
-          if (localUser && !localUser.auth_id) {
-            console.log('[loginWithEmail] User exists locally but not in Supabase Auth. User needs to register first.');
-            return null;
-          }
-          
-          if (localUser && localUser.auth_id) {
-            console.log('[loginWithEmail] User has auth_id but Supabase login failed.');
-            console.log('[loginWithEmail] Possible causes: wrong password, email not confirmed, or account disabled');
-            console.log('[loginWithEmail] Auth ID:', localUser.auth_id);
-          }
-        }
-        
-        return null;
-      }
+      return null;
     }
     
     if (!data.user) {
