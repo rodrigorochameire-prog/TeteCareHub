@@ -3585,7 +3585,7 @@ export async function getWallPosts(limit: number = 20, offset: number = 0, petId
   
   // Filter by petId if provided
   if (petId !== undefined) {
-    query = query.where(eq(wallPosts.pet_id, pet_id)) as any;
+    query = query.where(eq(wallPosts.pet_id, petId)) as any;
   }
   
   // Filter by targetType if provided
@@ -3598,7 +3598,7 @@ export async function getWallPosts(limit: number = 20, offset: number = 0, petId
     const userInfo = await db.select().from(users).where(eq(users.id, userId));
     if (userInfo[0]?.role === "user") {
       // Get user's pets
-      const userPets = await db.select().from(petTutors).where(eq(petTutors.tutor_id, user_id));
+      const userPets = await db.select().from(petTutors).where(eq(petTutors.tutor_id, userId));
       const petIds = userPets.map(pt => pt.pet_id);
       
       // Show: general posts OR posts targeted to this tutor OR posts targeted to their pets
@@ -3693,24 +3693,24 @@ export async function addWallReaction(postId: number, user_id: number, reactionT
   const existing = await db
     .select()
     .from(wallReactions)
-    .where(and(eq(wallReactions.postId, postId), eq(wallReactions.user_id, userId)));
+    .where(and(eq(wallReactions.postId, postId), eq(wallReactions.user_id, user_id)));
   
   if (existing.length > 0) {
     // Update existing reaction
     await db
       .update(wallReactions)
       .set({ reactionType })
-      .where(and(eq(wallReactions.postId, postId), eq(wallReactions.user_id, userId)));
+      .where(and(eq(wallReactions.postId, postId), eq(wallReactions.user_id, user_id)));
   } else {
     // Insert new reaction
-    await db.insert(wallReactions).values({ postId, userId, reactionType });
+    await db.insert(wallReactions).values({ postId, userId: user_id, reactionType });
   }
 }
 
 export async function removeWallReaction(postId: number, user_id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(wallReactions).where(and(eq(wallReactions.postId, postId), eq(wallReactions.user_id, userId)));
+  await db.delete(wallReactions).where(and(eq(wallReactions.postId, postId), eq(wallReactions.user_id, user_id)));
 }
 
 export async function getWallReactions(postId: number) {
@@ -3751,7 +3751,7 @@ export async function getConversations(user_id: number) {
   
   return allConversations.filter((conv: any) => {
     const participants = conv.participants as number[];
-    return participants.includes(userId);
+    return participants.includes(user_id);
   });
 }
 
@@ -3812,7 +3812,7 @@ export async function markMessagesAsRead(conversationId: number, user_id: number
     .set({ isRead: true })
     .where(and(
       eq(chatMessages.conversationId, conversationId),
-      not(eq(chatMessages.senderId, userId))
+      not(eq(chatMessages.senderId, user_id))
     ));
 }
 
@@ -3862,7 +3862,7 @@ export async function getPetsByTutor(tutor_id: number) {
     })
     .from(petTutors)
     .leftJoin(pets, eq(petTutors.pet_id, pets.id))
-    .where(eq(petTutors.tutor_id, tutorId));
+    .where(eq(petTutors.tutor_id, tutor_id));
   
   return petsList;
 }
@@ -3974,7 +3974,7 @@ export async function autoCreateMedicationPeriod(
   // If no end date, create only one event
   if (!endDate) {
     const eventId = await autoCreateMedicationEvent(
-      petId,
+      pet_id,
       medicationId,
       medicationName,
       startDate,
@@ -3995,7 +3995,7 @@ export async function autoCreateMedicationPeriod(
 
   while (currentDate <= finalDate && dayCount < maxDays) {
     const eventId = await autoCreateMedicationEvent(
-      petId,
+      pet_id,
       medicationId,
       medicationName,
       new Date(currentDate),
