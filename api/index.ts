@@ -1,26 +1,15 @@
-/**
- * Vercel Serverless Function Entry Point
- * 
- * This file adapts the Express app for Vercel's serverless environment.
- * Vercel will automatically route requests to this handler.
- */
-
-import dotenv from "dotenv";
-// Load .env.local first (development), then .env (production)
-dotenv.config({ path: ".env.local" });
-dotenv.config();
-
+import type { Request, Response } from "express";
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "../server/routers";
 import { createContext } from "../server/_core/context";
 import { uploadRouter } from "../server/uploadRouter";
 import { handleStripeWebhook } from "../server/stripeWebhook";
-import { serveStatic } from "../server/_core/vite";
 
+// Create Express app
 const app = express();
 
-// Trust proxy for Vercel (SSL termination)
+// Trust proxy for Vercel
 app.set("trust proxy", 1);
 
 // Stripe webhook MUST be registered BEFORE express.json() for signature verification
@@ -42,16 +31,6 @@ app.use(
   })
 );
 
-// Serve static files in production (Vercel handles this automatically via outputDirectory)
-// Only serve static if not on Vercel
-if (process.env.NODE_ENV === "production" && !process.env.VERCEL) {
-  serveStatic(app);
-}
-
-// Health check endpoint
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
-});
-
-// Export for Vercel
+// Export the handler for Vercel
+// Vercel serverless functions accept Express apps directly
 export default app;
