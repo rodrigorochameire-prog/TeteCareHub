@@ -24,8 +24,8 @@ export async function logAdminAction(params: LogActionParams) {
       targetType: params.targetType || null,
       targetId: params.targetId || null,
       details: params.details ? JSON.stringify(params.details) : null,
-      ipAddress: params.req?.ip || params.req?.headers["x-forwarded-for"] as string || null,
-      userAgent: params.req?.headers["user-agent"] || null,
+      ipAddress: (params.req as any)?.ip || (params.req as any)?.headers?.["x-forwarded-for"] as string || null,
+      userAgent: (params.req as any)?.headers?.["user-agent"] || null,
     };
 
     await db!.insert(adminLogs).values(logEntry);

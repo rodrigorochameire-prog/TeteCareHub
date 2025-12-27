@@ -42,7 +42,7 @@ export async function createContext(
 
   try {
     // Get authorization header
-    const authHeader = opts.req.headers.authorization;
+    const authHeader = (opts.req as any).headers?.authorization;
     if (!authHeader?.startsWith("Bearer ")) {
       return {
         req: opts.req,

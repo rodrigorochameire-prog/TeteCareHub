@@ -246,7 +246,7 @@ export async function approveBookingRequest(
     .update(pets)
     .set({
       credits: pet.credits - requiredCredits,
-      updatedAt: new Date(),
+      updated_at: new Date(),
     })
     .where(eq(pets.id, request.petId));
 

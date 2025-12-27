@@ -121,8 +121,8 @@ export async function processWhatsAppWebhook(webhookData: any) {
           participants: [user.id, 1], // Tutor e Admin
           lastMessageAt: new Date(timestamp),
           unreadCount: 0,
-        });
-        conversation = { id: newConv.insertId, participants: [user.id, 1] } as any;
+        }).returning();
+        conversation = { id: newConv?.id, participants: [user.id, 1] } as any;
       }
 
       if (!conversation) {
@@ -224,7 +224,7 @@ export async function syncMessageToWhatsApp(messageId: number) {
     phoneNumber: recipient.phone,
     message: message.content || "",
     mediaUrl: message.mediaUrl || undefined,
-    mediaType: message.messageType !== "text" ? message.messageType : undefined,
+    mediaType: message.messageType !== "text" ? message.messageType as "image" | "document" | "video" | "audio" : undefined,
   });
 
   // Atualizar mensagem com ID do WhatsApp

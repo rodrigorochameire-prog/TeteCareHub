@@ -25,14 +25,14 @@ export async function handleStripeWebhook(req: Request, res: Response) {
     const stripe = getStripe();
   } catch (error: any) {
     console.warn("[Webhook] Stripe not configured:", error.message);
-    return res.status(503).json({ error: "Stripe is not configured" });
+    return (res as any).status(503).json({ error: "Stripe is not configured" });
   }
 
-  const sig = req.headers["stripe-signature"];
+  const sig = (req as any).headers["stripe-signature"];
 
   if (!sig) {
     console.error("[Webhook] Missing stripe-signature header");
-    return res.status(400).send("Missing signature");
+    return (res as any).status(400).send("Missing signature");
   }
 
   let event: Stripe.Event;
@@ -44,19 +44,19 @@ export async function handleStripeWebhook(req: Request, res: Response) {
       throw new Error("STRIPE_WEBHOOK_SECRET is not configured");
     }
     event = stripe.webhooks.constructEvent(
-      req.body,
+      (req as any).body,
       sig,
       webhookSecret
     );
   } catch (err: any) {
     console.error("[Webhook] Signature verification failed:", err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    return (res as any).status(400).send(`Webhook Error: ${err.message}`);
   }
 
   // Handle test events
   if (event.id.startsWith("evt_test_")) {
     console.log("[Webhook] Test event detected, returning verification response");
-    return res.json({ verified: true });
+    return (res as any).json({ verified: true });
   }
 
   console.log(`[Webhook] Received event: ${event.type}`);
@@ -85,10 +85,10 @@ export async function handleStripeWebhook(req: Request, res: Response) {
         console.log(`[Webhook] Unhandled event type: ${event.type}`);
     }
 
-    res.json({ received: true });
+    (res as any).json({ received: true });
   } catch (error: any) {
     console.error("[Webhook] Error processing event:", error);
-    res.status(500).json({ error: error.message });
+    (res as any).status(500).json({ error: error.message });
   }
 }
 
