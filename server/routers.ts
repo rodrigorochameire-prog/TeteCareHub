@@ -1227,7 +1227,7 @@ export const appRouter = router({
         // Calculate next dose date
         const { calculateNextDose } = await import("./medicationScheduler");
         const nextDate = calculateNextDose(new Date(), {
-          periodicity: med.periodicity || "daily",
+          periodicity: (med.periodicity || "daily") as any,
           customInterval: med.custom_interval || undefined,
           weekDays: med.week_days ? JSON.parse(med.week_days) : undefined,
           monthDays: med.month_days ? JSON.parse(med.month_days) : undefined,
@@ -1243,7 +1243,7 @@ export const appRouter = router({
         
         if (med.dosage_progression && med.dosage_progression !== "stable") {
           currentDosage = calculateProgressiveDosage(med.dosage, {
-            dosageProgression: med.dosage_progression,
+            dosageProgression: med.dosage_progression as any,
             progressionRate: med.progression_rate || "0",
             progressionInterval: med.progression_interval || 1,
             targetDosage: med.target_dosage || undefined,
