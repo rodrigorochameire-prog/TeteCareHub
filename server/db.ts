@@ -1126,7 +1126,7 @@ export async function getUserActiveSubscription(user_id: number) {
     .from(subscriptions)
     .where(
       and(
-        eq(subscriptions.user_id, user_id),
+        eq(subscriptions.userId, user_id),
         eq(subscriptions.status, "active")
       )
     )
@@ -1319,7 +1319,7 @@ export async function deleteTrainingProgress(id: number) {
 // Photo Comments
 export async function addPhotoComment(photoId: number, user_id: number, comment: string) {
   const db = await getDb();
-  await db!.insert(photoComments).values({ photoId, user_id, comment });
+  await db!.insert(photoComments).values({ photoId, userId: user_id, comment });
   const [newComment] = await db!.select().from(photoComments).where(eq(photoComments.id, sql`LAST_INSERT_ID()`)).limit(1);
   return newComment;
 }
@@ -1370,7 +1370,7 @@ export async function addPhotoReaction(photoId: number, user_id: number, reactio
     return existing[0];
   } else {
     // Create new reaction
-    await db!.insert(photoReactions).values({ photoId, user_id, reactionType });
+    await db!.insert(photoReactions).values({ photoId, userId: user_id, reactionType });
     const [newReaction] = await db!.select().from(photoReactions).where(eq(photoReactions.id, sql`LAST_INSERT_ID()`)).limit(1);
     return newReaction;
   }
@@ -1441,7 +1441,7 @@ export async function updateBookingStatus(id: number, status: "pending" | "confi
   const db = await getDb();
   await db!
     .update(bookings)
-    .set({ status, updated_at: new Date() })
+    .set({ status, updatedAt: new Date() })
     .where(eq(bookings.id, id));
 }
 
@@ -1788,7 +1788,7 @@ export async function getWhatsAppGroups() {
     .orderBy(whatsappGroups.createdAt);
 }
 
-export async function createWhatsAppGroup(data: { pet_id: number; groupName: string }) {
+export async function createWhatsAppGroup(data: { petId: number; groupName: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -2827,8 +2827,8 @@ export async function getAllCalendarEvents(startDate: Date, endDate: Date) {
   const paymentEvents = paymentsData.map((payment) => ({
     id: `payment-${payment.id}`,
     title: `${payment.type === "income" ? "Receita" : "Despesa"}: ${payment.description}`,
-    start: new Date(payment.transaction_date),
-    end: new Date(payment.transaction_date),
+    start: new Date(payment.transactionDate),
+    end: new Date(payment.transactionDate),
     type: payment.type === "income" ? ("payment-income" as const) : ("payment-expense" as const),
     pet_id: payment.pet_id,
     petName: payment.petName || undefined,
@@ -2957,7 +2957,7 @@ export async function createAuditLog(data: {
   if (!db) throw new Error("Database not available");
   
   const result = await db.insert(auditLogs).values({
-    user_id: data.user_id,
+    userId: data.user_id,
     action: data.action,
     resource: data.resource || null,
     success: data.success,
@@ -3088,7 +3088,7 @@ export async function getTutorNotificationPreferences(tutor_id: number) {
   return await db
     .select()
     .from(tutorNotificationPreferences)
-    .where(eq(tutorNotificationPreferences.tutor_id, tutor_id));
+    .where(eq(tutorNotificationPreferences.tutorId, tutor_id));
 }
 
 export async function getTutorPreferenceByType(tutor_id: number, type: string) {
@@ -3099,7 +3099,7 @@ export async function getTutorPreferenceByType(tutor_id: number, type: string) {
     .from(tutorNotificationPreferences)
     .where(
       and(
-        eq(tutorNotificationPreferences.tutor_id, tutor_id),
+        eq(tutorNotificationPreferences.tutorId, tutor_id),
         eq(tutorNotificationPreferences.notificationType, type as any)
       )
     )
@@ -3145,7 +3145,7 @@ export async function getAllTutorPreferences() {
   return await db
     .select({
       id: tutorNotificationPreferences.id,
-      tutor_id: tutorNotificationPreferences.tutor_id,
+      tutor_id: tutorNotificationPreferences.tutorId,
       tutorName: users.name,
       tutorEmail: users.email,
       notificationType: tutorNotificationPreferences.notificationType,
@@ -3153,7 +3153,7 @@ export async function getAllTutorPreferences() {
       adminOverride: tutorNotificationPreferences.adminOverride,
     })
     .from(tutorNotificationPreferences)
-    .leftJoin(users, eq(tutorNotificationPreferences.tutor_id, users.id))
+    .leftJoin(users, eq(tutorNotificationPreferences.tutorId, users.id))
     .orderBy(users.name, tutorNotificationPreferences.notificationType);
 }
 
@@ -3373,7 +3373,7 @@ export async function deleteCreditPackage(id: number) {
 export async function getAllEventTypes() {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(eventTypes).where(eq(eventTypes.is_active, true)).orderBy(eventTypes.name);
+  return await db.select().from(eventTypes).where(eq(eventTypes.isActive, true)).orderBy(eventTypes.name);
 }
 
 export async function getAllEventTypesIncludingInactive() {
@@ -3423,7 +3423,7 @@ export async function deleteEventType(id: number) {
 export async function getAllAutoScheduleRules() {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(medicationAutoScheduleRules).where(eq(medicationAutoScheduleRules.is_active, true));
+  return await db.select().from(medicationAutoScheduleRules).where(eq(medicationAutoScheduleRules.isActive, true));
 }
 
 export async function getAllAutoScheduleRulesIncludingInactive() {
@@ -3447,8 +3447,8 @@ export async function getAutoScheduleRuleByMedicationId(medicationId: number) {
     .from(medicationAutoScheduleRules)
     .where(
       and(
-        eq(medicationAutoScheduleRules.medication_id, medicationId),
-        eq(medicationAutoScheduleRules.is_active, true)
+        eq(medicationAutoScheduleRules.medicationId, medicationId),
+        eq(medicationAutoScheduleRules.isActive, true)
       )
     )
     .limit(1);
@@ -3489,7 +3489,7 @@ export async function deleteAutoScheduleRule(id: number) {
 export async function getPetFoodStock(pet_id: number) {
   const db = await getDb();
   if (!db) return null;
-  const [result] = await db.select().from(petFoodStock).where(eq(petFoodStock.pet_id, pet_id)).limit(1);
+  const [result] = await db.select().from(petFoodStock).where(eq(petFoodStock.petId, pet_id)).limit(1);
   return result || null;
 }
 
@@ -3507,7 +3507,7 @@ export async function createPetFoodStock(data: InsertPetFoodStock) {
 export async function updatePetFoodStock(pet_id: number, data: Partial<InsertPetFoodStock>) {
   const db = await getDb();
   if (!db) return false;
-  await db.update(petFoodStock).set(data).where(eq(petFoodStock.pet_id, pet_id));
+  await db.update(petFoodStock).set(data).where(eq(petFoodStock.petId, pet_id));
   return true;
 }
 
@@ -4105,10 +4105,10 @@ export async function autoCreateDewormingEvent(
     event_type: "preventive",
     pet_id: pet_id,
     is_all_day: true,
-    linkedResourceType: "preventive_deworming",
-    linkedResourceId: treatmentId,
-    autoCreated: true,
-    createdById,
+    linked_resource_type: "preventive_deworming",
+    linked_resource_id: treatmentId,
+    auto_created: true,
+    created_by_id: createdById,
   });
 
   return eventId;

@@ -43,7 +43,10 @@ export async function registerUser(input: RegisterInput) {
 
   // Create user and return the inserted user
   // Note: passwordHash is not stored in database (uses Supabase Auth)
+  // Generate a unique ID using timestamp + random component
+  const userId = Date.now() + Math.floor(Math.random() * 1000);
   const [newUser] = await db.insert(users).values({
+    id: userId,
     name: input.name,
     email: input.email.toLowerCase(),
     login_method: "email",

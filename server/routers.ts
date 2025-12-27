@@ -461,8 +461,8 @@ export const appRouter = router({
 
         // Update pet with new photo URL
         await db.updatePet(input.petId, {
-          photoUrl: url,
-          photoKey: fileKey,
+          photo_url: url,
+          photo_key: fileKey,
         });
 
         return { photo_url: url };
@@ -535,10 +535,10 @@ export const appRouter = router({
         
         // Record usage
         await db.addDaycareUsage({
-          petId: input.petId,
-          usageDate: now,
+          pet_id: input.petId,
+          usage_date: now,
           check_in_time: now,
-          creditId,
+          credit_id: creditId,
         });
         
         // Update pet status
@@ -819,13 +819,13 @@ export const appRouter = router({
         
         // Add transaction record
         await db.addTransaction({
-          petId: input.petId,
+          pet_id: input.petId,
           type: "credit",
           category: "daycare_credits",
           description: input.description || `Adição de ${input.amount} créditos`,
           amount: input.amount * 50, // Assuming R$50 per credit
-          transactionDate: new Date(),
-          createdById: ctx.user.id,
+          transaction_date: new Date(),
+          created_by_id: ctx.user.id,
         });
         
         return { success: true };
@@ -841,9 +841,13 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         const id = await db.addTransaction({
-          ...input,
-          transactionDate: new Date(),
-          createdById: ctx.user.id,
+          pet_id: input.petId,
+          type: input.type,
+          category: input.category,
+          description: input.description,
+          amount: input.amount,
+          transaction_date: new Date(),
+          created_by_id: ctx.user.id,
         });
         return { id };
       }),
@@ -1742,9 +1746,13 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         const id = await db.addTransaction({
-          ...input,
-          transactionDate: new Date(),
-          createdById: ctx.user.id,
+          pet_id: input.petId,
+          type: input.type,
+          category: input.category,
+          description: input.description,
+          amount: input.amount,
+          transaction_date: new Date(),
+          created_by_id: ctx.user.id,
         });
         return { id };
       }),
@@ -3472,8 +3480,13 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
       }))
       .mutation(async ({ input, ctx }) => {
         const data = {
-          ...input,
-          createdById: ctx.user.id,
+          pet_id: input.petId,
+          type: input.type,
+          category: input.category,
+          description: input.description,
+          amount: input.amount,
+          transaction_date: input.transactionDate,
+          created_by_id: ctx.user.id,
         };
         return await db.addTransaction(data);
       }),
@@ -3567,7 +3580,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
             amount: Math.round(input.amount * 100), // Convert to cents
             category: input.category,
             description: input.description,
-            transactionDate: new Date(input.transactionDate),
+            transaction_date: new Date(input.transactionDate),
           })
           .where(eq(transactions.id, input.id));
         return true;
@@ -4169,7 +4182,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           return { success: true, id: existing.id };
         } else {
           const id = await db.createTutorNotificationPreference({
-            tutor_id: ctx.user.id,
+            tutorId: ctx.user.id,
             notificationType: input.notificationType,
             enabled: input.enabled,
           });
@@ -4263,12 +4276,12 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         }
         
         const result = await db.createHealthBehaviorLog({
-          pet_id: input.petId,
+          petId: input.petId,
           mood: input.mood,
           behavior: input.behavior,
           stool: input.stool,
           appetite: input.appetite,
-          water_intake: input.waterIntake,
+          waterIntake: input.waterIntake,
           notes: input.notes,
           recorded_by: ctx.user.id,
           recorded_at: input.recordedAt || new Date(),
