@@ -5,10 +5,10 @@ dotenv.config(); // This will load .env and won't override .env.local values
 
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { appRouter } from "../server/routers";
-import { createContext } from "../server/_core/context";
-import { uploadRouter } from "../server/uploadRouter";
-import { handleStripeWebhook } from "../server/stripeWebhook";
+import { appRouter } from "../routers";
+import { createContext } from "../_core/context";
+import { uploadRouter } from "../uploadRouter";
+import { handleStripeWebhook } from "../stripeWebhook";
 
 const app = express();
 
