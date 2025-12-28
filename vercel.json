@@ -1,10 +1,16 @@
 {
   "version": 2,
-  "buildCommand": "pnpm run build && pnpm run build:server",
+  "buildCommand": "pnpm run build && pnpm run build:server && mkdir -p dist/public/api && cp api/index.cjs dist/public/api/",
   "outputDirectory": "dist/public",
   "framework": null,
   "installCommand": "pnpm install --no-frozen-lockfile",
   "devCommand": "pnpm run dev",
+  "functions": {
+    "api/index.cjs": {
+      "runtime": "@vercel/node@3",
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     {
       "source": "/api/:path*",
