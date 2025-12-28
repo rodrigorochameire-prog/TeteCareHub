@@ -6,6 +6,9 @@ import { Dog, Bell, Calendar, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+// Force dynamic rendering (não pre-renderizar no build)
+export const dynamic = "force-dynamic";
+
 async function getTutorStats(userId: number) {
   // Buscar pets do tutor
   const myPets = await db

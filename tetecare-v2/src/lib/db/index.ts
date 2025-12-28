@@ -32,24 +32,41 @@ function createConnection() {
   return conn;
 }
 
-// Conexão singleton
-if (!globalForDb.conn) {
-  globalForDb.conn = createConnection();
+/**
+ * Obtém a instância do banco de dados (lazy initialization)
+ * Só inicializa a conexão quando realmente precisa
+ */
+function getDb() {
+  if (!globalForDb.conn) {
+    globalForDb.conn = createConnection();
+  }
+
+  if (!globalForDb.db) {
+    globalForDb.db = drizzle(globalForDb.conn, { schema });
+  }
+
+  return globalForDb.db;
 }
 
-// Instância do Drizzle com schema para query builder
-if (!globalForDb.db) {
-  globalForDb.db = drizzle(globalForDb.conn, { schema });
-}
-
-export const db = globalForDb.db;
+// Exportar db como getter lazy para evitar conexão durante build
+export const db = new Proxy({} as ReturnType<typeof drizzle<typeof schema>>, {
+  get(_target, prop) {
+    const database = getDb();
+    const value = database[prop as keyof typeof database];
+    if (typeof value === "function") {
+      return value.bind(database);
+    }
+    return value;
+  },
+});
 
 /**
  * Verifica se a conexão com o banco está funcionando
  */
 export async function testConnection(): Promise<boolean> {
   try {
-    const result = await globalForDb.conn!`SELECT 1 as test`;
+    const conn = globalForDb.conn ?? createConnection();
+    const result = await conn`SELECT 1 as test`;
     return result.length > 0;
   } catch (error) {
     console.error("❌ Erro ao conectar com o banco:", error);

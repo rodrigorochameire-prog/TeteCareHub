@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+
 export default async function DashboardRootLayout({
   children,
 }: {

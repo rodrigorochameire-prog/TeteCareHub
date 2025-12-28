@@ -5,9 +5,9 @@ Sistema de gestão de creche para pets, reconstruído do zero com Next.js 14.
 ## ✅ Status do Projeto
 
 **BUILD: ✓ SUCESSO**
-- **67 arquivos TypeScript/TSX**
-- **17 páginas**
-- **7 tRPC routers**
+- **70+ arquivos TypeScript/TSX**
+- **18 páginas**
+- **8 tRPC routers**
 - **11 componentes UI**
 - **4 componentes shared**
 
@@ -40,11 +40,12 @@ Sistema de gestão de creche para pets, reconstruído do zero com Next.js 14.
 | Router | Endpoints | Status |
 |--------|-----------|--------|
 | `auth` | me, profile, isAuthenticated | ✅ |
-| `pets` | list, byId, create, update, approve, reject, delete, stats | ✅ |
+| `pets` | list, byId, myPets, create, update, approve, reject, delete, pending, addCredits, stats | ✅ |
 | `users` | list, tutors, byId, create, update, delete, promoteToAdmin, demoteFromAdmin, stats, updateProfile | ✅ |
 | `calendar` | list, currentMonth, today, byId, create, update, delete, eventTypes | ✅ |
 | `bookings` | myBookings, list, pending, byId, create, approve, reject, cancel, complete, stats | ✅ |
 | `notifications` | list, unreadCount, markAsRead, markAllAsRead, delete, clearRead, send, sendToAll | ✅ |
+| `credits` | packages, allPackages, createPackage, updatePackage, deletePackage, addToPet, removeFromPet, mySummary | ✅ |
 | `stats` | dashboard, myStats, monthlyReport | ✅ |
 
 ### Componentes UI (Shadcn/ui)
@@ -78,7 +79,19 @@ npm install
 
 ### 2. Configurar Ambiente
 
-O arquivo `.env.local` já está configurado com suas credenciais Supabase.
+Copie o arquivo `.env.example` para `.env.local` e preencha os valores:
+
+```bash
+cp .env.example .env.local
+```
+
+Variáveis necessárias:
+
+```env
+DATABASE_URL="postgresql://user:password@host:5432/database?sslmode=require"
+AUTH_SECRET="sua-chave-secreta-de-32-caracteres-ou-mais"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
 
 ### 3. Criar Tabelas no Banco
 
@@ -137,7 +150,7 @@ tetecare-v2/
 │   └── lib/
 │       ├── auth/                 # Autenticação JWT
 │       ├── db/                   # Drizzle Schema
-│       ├── trpc/                 # Routers tRPC (7 routers)
+│       ├── trpc/                 # Routers tRPC (8 routers)
 │       ├── env.ts                # Validação de ambiente
 │       ├── errors.ts             # Tratamento de erros
 │       ├── security.ts           # Rate limiting, sanitização
@@ -149,7 +162,9 @@ tetecare-v2/
 │   ├── test-db.ts                # Testar conexão
 │   └── create-admin.ts           # Criar admin
 │
-└── drizzle/                      # Migrations
+├── drizzle.config.ts             # Configuração Drizzle
+├── vercel.json                   # Configuração Vercel
+└── package.json
 ```
 
 ---
@@ -227,13 +242,34 @@ git push -u origin main
 |----------|-----------|
 | `DATABASE_URL` | URL de conexão PostgreSQL |
 | `AUTH_SECRET` | Chave secreta para JWT (mínimo 32 caracteres) |
-| `NEXT_PUBLIC_SUPABASE_URL` | URL do projeto Supabase |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Chave anônima do Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | Chave de serviço do Supabase |
+| `NEXT_PUBLIC_APP_URL` | URL da aplicação (ex: https://seu-app.vercel.app) |
 
 ### 3. Deploy automático!
 
 A Vercel detectará automaticamente que é um projeto Next.js e fará o deploy.
+
+**Região recomendada:** São Paulo (gru1) - já configurado no `vercel.json`
+
+---
+
+## 🔧 Funcionalidades Prontas
+
+### Para o Tutor:
+- ✅ Cadastro e login
+- ✅ Dashboard com visão geral
+- ✅ Cadastro e edição de pets
+- ✅ Solicitação de reservas
+- ✅ Visualização do calendário
+- ✅ Sistema de notificações
+- ✅ Gerenciamento de créditos
+- ✅ Edição de perfil
+
+### Para o Admin:
+- ✅ Dashboard com estatísticas
+- ✅ Aprovação/rejeição de pets
+- ✅ Gestão de tutores
+- ✅ Calendário de eventos
+- ✅ Promoção de usuários a admin
 
 ---
 
@@ -241,29 +277,28 @@ A Vercel detectará automaticamente que é um projeto Next.js e fará o deploy.
 
 ### Funcionalidades para Implementar
 
-1. **Sistema de Reservas Completo**
-   - Form de criação de reservas
-   - Integração com créditos
-   - Emails de confirmação
-
-2. **Vacinas e Medicamentos**
-   - CRUD completo
-   - Alertas de vencimento
-   - Upload de documentos
-
-3. **Pagamentos (Stripe)**
+1. **Pagamentos (Stripe)**
    - Checkout de créditos
    - Webhooks de confirmação
    - Histórico de transações
 
-4. **Upload de Fotos**
+2. **Upload de Fotos**
    - Supabase Storage
    - Galeria de pets
    - Compressão de imagens
 
-5. **Notificações Push**
+3. **Vacinas e Medicamentos**
+   - CRUD completo
+   - Alertas de vencimento
+   - Upload de documentos
+
+4. **Notificações Push**
    - Web Push API
    - Email notifications
+
+5. **Relatórios**
+   - Exportação PDF
+   - Histórico detalhado
 
 ---
 
@@ -277,6 +312,7 @@ npm run db:test
 ### Erro de build
 ```bash
 npm run typecheck
+npm run lint
 ```
 
 ### Limpar cache

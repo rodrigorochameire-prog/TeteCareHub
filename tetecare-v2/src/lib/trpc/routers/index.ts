@@ -6,6 +6,7 @@ import { calendarRouter } from "./calendar";
 import { statsRouter } from "./stats";
 import { bookingsRouter } from "./bookings";
 import { notificationsRouter } from "./notifications";
+import { creditsRouter } from "./credits";
 
 export const appRouter = router({
   auth: authRouter,
@@ -15,6 +16,7 @@ export const appRouter = router({
   stats: statsRouter,
   bookings: bookingsRouter,
   notifications: notificationsRouter,
+  credits: creditsRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -5,6 +5,9 @@ import { Dog, Users, CalendarCheck, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+// Force dynamic rendering (não pre-renderizar no build)
+export const dynamic = "force-dynamic";
+
 async function getStats() {
   const [petsCount] = await db.select({ count: count() }).from(pets);
   const [tutorsCount] = await db

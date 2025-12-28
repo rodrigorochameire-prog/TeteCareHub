@@ -5,13 +5,13 @@ import { z } from "zod";
  * Garante que todas as variáveis necessárias estão configuradas
  */
 const envSchema = z.object({
-  // Banco de dados
-  DATABASE_URL: z.string().min(1, "DATABASE_URL é obrigatória"),
+  // Banco de dados (obrigatório em runtime, opcional no build)
+  DATABASE_URL: z.string().optional(),
 
-  // Autenticação
-  AUTH_SECRET: z.string().min(16, "AUTH_SECRET deve ter no mínimo 16 caracteres"),
+  // Autenticação (obrigatório em runtime, opcional no build)
+  AUTH_SECRET: z.string().optional(),
 
-  // Supabase (opcional, para storage)
+  // Supabase (opcional - para storage)
   NEXT_PUBLIC_SUPABASE_URL: z.string().optional(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
@@ -22,7 +22,7 @@ const envSchema = z.object({
 });
 
 /**
- * Valida as variáveis de ambiente no startup
+ * Valida as variáveis de ambiente
  */
 function validateEnv() {
   const parsed = envSchema.safeParse(process.env);
@@ -38,6 +38,26 @@ function validateEnv() {
 
 // Exportar env validado
 export const env = validateEnv();
+
+/**
+ * Verifica se DATABASE_URL está configurada (para uso em runtime)
+ */
+export function requireDatabaseUrl(): string {
+  if (!env.DATABASE_URL) {
+    throw new Error("DATABASE_URL não está configurada");
+  }
+  return env.DATABASE_URL;
+}
+
+/**
+ * Verifica se AUTH_SECRET está configurada (para uso em runtime)
+ */
+export function requireAuthSecret(): string {
+  if (!env.AUTH_SECRET || env.AUTH_SECRET.length < 16) {
+    throw new Error("AUTH_SECRET deve ter no mínimo 16 caracteres");
+  }
+  return env.AUTH_SECRET;
+}
 
 // Helpers
 export const isDev = env.NODE_ENV === "development";
