@@ -4,85 +4,73 @@ Sistema de gestão de creche para pets, reconstruído do zero com Next.js 14.
 
 ## ✅ Status do Projeto
 
-O projeto está configurado com:
+**BUILD: ✓ SUCESSO**
 
-- [x] **Next.js 14** com App Router
+O projeto está pronto para uso com:
+
+- [x] **Next.js 14.2** com App Router
 - [x] **TypeScript** com configuração estrita
-- [x] **Tailwind CSS** para estilos
-- [x] **shadcn/ui** componentes base (Button, Input, Card, etc.)
-- [x] **Drizzle ORM** para banco de dados PostgreSQL
+- [x] **Tailwind CSS 3.4** para estilos
+- [x] **shadcn/ui** componentes base
+- [x] **Drizzle ORM** para PostgreSQL (Supabase)
 - [x] **tRPC** para API type-safe
 - [x] **Sistema de autenticação** com JWT
-- [x] **Layouts** responsivos para admin e tutor
-- [x] **CRUD de Pets** básico funcionando
-- [x] **Dashboards** para admin e tutor
+- [x] **Layouts responsivos** para admin e tutor
+- [x] **CRUD de Pets** completo
+- [x] **Dashboards** funcionais
+- [x] **Tratamento de erros** robusto
+- [x] **Validações Zod** completas
+- [x] **Scripts de utilidade** (seed, test-db, create-admin)
 
-## 🚀 Como Executar
+---
+
+## 🚀 Guia Rápido de Instalação
 
 ### 1. Instalar Dependências
 
 ```bash
 cd tetecare-v2
 npm install
-# ou
-pnpm install
 ```
 
-### 2. Configurar Variáveis de Ambiente
+### 2. O arquivo `.env.local` já está configurado com o Supabase!
 
-Copie o arquivo de exemplo e configure:
-
-```bash
-cp .env.example .env.local
-```
-
-Edite `.env.local` com suas credenciais:
+Se precisar reconfigurar, edite o arquivo `.env.local`:
 
 ```env
-# Banco de Dados PostgreSQL
-DATABASE_URL="postgresql://user:password@host:5432/database?sslmode=require"
+# Supabase (já configurado)
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
+SUPABASE_SERVICE_ROLE_KEY=xxx
+DATABASE_URL=postgresql://postgres:senha@db.xxx.supabase.co:5432/postgres
 
-# Chave secreta para JWT (gere uma chave segura)
-AUTH_SECRET="sua-chave-secreta-aqui"
+# JWT Secret (já configurado)
+AUTH_SECRET=sua-chave-secreta
 
-# URL da aplicação
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
+# App
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-### 3. Criar Banco de Dados
-
-Use um serviço PostgreSQL como:
-- **Neon** (https://neon.tech) - Recomendado, tem plano gratuito
-- **Supabase** (https://supabase.com)
-- **Railway** (https://railway.app)
-
-### 4. Executar Migrations
+### 3. Criar Tabelas no Banco
 
 ```bash
-# Gerar migrations
-npm run db:generate
-
-# Aplicar ao banco
 npm run db:push
 ```
 
-### 5. Criar Usuário Admin (Manual)
+### 4. Popular com Dados Iniciais (Opcional)
 
-Execute este SQL no seu banco para criar o primeiro admin:
-
-```sql
-INSERT INTO users (name, email, password_hash, role)
-VALUES (
-  'Admin',
-  'admin@tetecare.com',
-  '$2a$10$rQZ8K1L5gK3wP9xH7mNpXu4vB2cD6eF8gHiJkLmNoPqRsTuVwXyZ0', -- senha: 123456
-  'admin'
-);
+```bash
+npm run db:seed
 ```
 
-Ou use a página de registro e depois mude o role no banco.
+Isso cria:
+- Admin: `admin@tetecare.com` / `admin123`
+- Tutor: `maria@email.com` / `tutor123`
+- 3 pets de exemplo
+- Biblioteca de vacinas
+- Pacotes de créditos
 
-### 6. Executar o Projeto
+### 5. Executar em Desenvolvimento
 
 ```bash
 npm run dev
@@ -90,111 +78,185 @@ npm run dev
 
 Acesse: http://localhost:3000
 
+---
+
+## 📋 Scripts Disponíveis
+
+| Comando | Descrição |
+|---------|-----------|
+| `npm run dev` | Inicia servidor de desenvolvimento |
+| `npm run build` | Cria build de produção |
+| `npm run start` | Inicia servidor de produção |
+| `npm run lint` | Verifica código com ESLint |
+| `npm run typecheck` | Verifica tipos TypeScript |
+| `npm run db:push` | Aplica schema ao banco |
+| `npm run db:generate` | Gera migrations |
+| `npm run db:studio` | Abre Drizzle Studio |
+| `npm run db:test` | Testa conexão com banco |
+| `npm run db:seed` | Popula banco com dados iniciais |
+| `npm run db:create-admin` | Cria usuário admin interativamente |
+
+---
+
 ## 📁 Estrutura do Projeto
 
 ```
 tetecare-v2/
 ├── src/
 │   ├── app/                    # App Router (páginas)
-│   │   ├── (auth)/            # Páginas de autenticação
-│   │   │   ├── login/
-│   │   │   └── register/
-│   │   ├── (dashboard)/       # Páginas protegidas
-│   │   │   ├── admin/         # Área do admin
-│   │   │   └── tutor/         # Área do tutor
-│   │   ├── api/               # API Routes
-│   │   │   └── trpc/          # Endpoint tRPC
-│   │   ├── layout.tsx
-│   │   └── page.tsx
+│   │   ├── (auth)/            # Login e registro
+│   │   ├── (dashboard)/       # Área protegida
+│   │   │   ├── admin/         # Páginas admin
+│   │   │   └── tutor/         # Páginas tutor
+│   │   └── api/trpc/          # API tRPC
+│   │
 │   ├── components/
-│   │   ├── layouts/           # Componentes de layout
-│   │   └── ui/                # Componentes shadcn/ui
-│   ├── lib/
-│   │   ├── auth/              # Sistema de autenticação
-│   │   ├── db/                # Banco de dados (Drizzle)
-│   │   ├── trpc/              # Configuração tRPC
-│   │   │   └── routers/       # Routers por domínio
-│   │   └── utils.ts           # Utilitários
-│   └── types/
+│   │   ├── layouts/           # Sidebar, header
+│   │   └── ui/                # Button, Input, Card...
+│   │
+│   └── lib/
+│       ├── auth/              # JWT, sessão, senha
+│       ├── db/                # Drizzle schema
+│       ├── trpc/              # Routers tRPC
+│       ├── errors.ts          # Tratamento de erros
+│       ├── security.ts        # Rate limiting, sanitização
+│       ├── validations.ts     # Schemas Zod
+│       └── utils.ts           # Helpers
+│
+├── scripts/                   # Scripts de utilidade
+│   ├── seed.ts               # Popular banco
+│   ├── test-db.ts            # Testar conexão
+│   └── create-admin.ts       # Criar admin
+│
 ├── drizzle/                   # Migrations
-├── public/
-├── .env.example
-├── drizzle.config.ts
-├── next.config.js
-├── package.json
-├── tailwind.config.ts
-└── tsconfig.json
+└── public/                    # Assets estáticos
 ```
-
-## 🔐 Autenticação
-
-O sistema usa JWT para autenticação:
-
-- **Login**: `/login`
-- **Registro**: `/register`
-- Cookies httpOnly e seguros
-- Sessão válida por 30 dias
-
-## 📊 Banco de Dados
-
-Schema principal (em `src/lib/db/schema.ts`):
-
-- `users` - Usuários (admin/tutor)
-- `pets` - Pets cadastrados
-- `petTutors` - Relação N:N pet-tutor
-- `calendarEvents` - Eventos do calendário
-- `vaccineLibrary` - Biblioteca de vacinas
-- `petVaccinations` - Vacinações por pet
-- `creditPackages` - Pacotes de créditos
-- `bookingRequests` - Solicitações de reserva
-- `notifications` - Notificações
-- `dailyLogs` - Logs diários
-
-## 🛣️ Próximos Passos
-
-Para continuar o desenvolvimento:
-
-1. **Calendário**: Implementar visualização e criação de eventos
-2. **Vacinas**: CRUD completo de vacinações
-3. **Reservas**: Sistema de booking online
-4. **Créditos**: Integração com Stripe
-5. **Notificações**: Push notifications
-6. **Upload de Fotos**: Integração com Supabase Storage
-7. **WhatsApp**: Integração opcional
-
-## 🚀 Deploy na Vercel
-
-1. Push para GitHub
-2. Conectar repositório na Vercel
-3. Configurar variáveis de ambiente
-4. Deploy automático!
-
-## 📝 Comandos Úteis
-
-```bash
-# Desenvolvimento
-npm run dev
-
-# Build
-npm run build
-
-# Lint
-npm run lint
-
-# Banco de dados
-npm run db:generate  # Gerar migrations
-npm run db:push      # Aplicar migrations
-npm run db:studio    # Visualizar banco
-```
-
-## 🤝 Contribuindo
-
-Este é um projeto em desenvolvimento. Sinta-se à vontade para:
-
-1. Reportar bugs
-2. Sugerir features
-3. Enviar pull requests
 
 ---
 
-Desenvolvido com ❤️ para TeteCare
+## 🔐 Sistema de Autenticação
+
+- **JWT** com cookies httpOnly
+- Sessão válida por **30 dias**
+- **Roles**: `admin` e `user` (tutor)
+- Proteção automática de rotas
+
+### Fluxo:
+1. Login → Valida credenciais → Cria sessão JWT
+2. Cada request → Verifica cookie → Carrega usuário
+3. tRPC → Verifica role → Permite/bloqueia acesso
+
+---
+
+## 🗃️ Banco de Dados
+
+### Schema Principal
+
+| Tabela | Descrição |
+|--------|-----------|
+| `users` | Usuários (admin/tutor) |
+| `pets` | Pets cadastrados |
+| `pet_tutors` | Relação N:N pet-tutor |
+| `calendar_events` | Eventos do calendário |
+| `vaccine_library` | Biblioteca de vacinas |
+| `pet_vaccinations` | Vacinações por pet |
+| `credit_packages` | Pacotes de créditos |
+| `booking_requests` | Solicitações de reserva |
+| `notifications` | Notificações |
+| `daily_logs` | Logs diários |
+
+### Conexão
+
+O projeto usa **Supabase PostgreSQL** com:
+- Pool de conexões (max 10)
+- SSL obrigatório
+- Prepared statements desabilitados (serverless-friendly)
+
+---
+
+## 🚀 Deploy na Vercel
+
+### 1. Push para GitHub
+
+```bash
+git init
+git add .
+git commit -m "Initial commit"
+git remote add origin https://github.com/seu-usuario/tetecare-v2.git
+git push -u origin main
+```
+
+### 2. Conectar na Vercel
+
+1. Acesse [vercel.com](https://vercel.com)
+2. Importe o repositório
+3. Configure variáveis de ambiente:
+   - `DATABASE_URL`
+   - `AUTH_SECRET`
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+
+### 3. Deploy!
+
+A Vercel fará o build automaticamente.
+
+---
+
+## 🔧 Próximos Passos de Desenvolvimento
+
+### Fase 2: Calendário e Reservas
+- [ ] Componente de calendário visual
+- [ ] CRUD de eventos
+- [ ] Sistema de reservas online
+- [ ] Check-in/check-out
+
+### Fase 3: Saúde
+- [ ] CRUD de vacinas
+- [ ] CRUD de medicamentos
+- [ ] Alertas de vencimento
+- [ ] Relatórios de saúde
+
+### Fase 4: Créditos e Pagamentos
+- [ ] Integração Stripe
+- [ ] Compra de pacotes
+- [ ] Débito automático
+
+### Fase 5: Comunicação
+- [ ] Push notifications
+- [ ] Chat interno
+- [ ] Galeria de fotos
+- [ ] WhatsApp (opcional)
+
+---
+
+## 🐛 Solução de Problemas
+
+### Erro de conexão com banco
+```bash
+npm run db:test
+```
+Verifique se a `DATABASE_URL` está correta no `.env.local`.
+
+### Erro de build
+```bash
+npm run typecheck
+```
+Corrige erros de TypeScript antes do build.
+
+### Limpar cache
+```bash
+rm -rf .next node_modules
+npm install
+npm run build
+```
+
+---
+
+## 📝 Licença
+
+MIT License
+
+---
+
+**Desenvolvido com ❤️ para TeteCare**

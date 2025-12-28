@@ -1,6 +1,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { getSession } from "@/lib/auth/session";
+import { toTRPCError } from "@/lib/errors";
 import type { User } from "@/lib/db/schema";
 
 /**
@@ -14,8 +15,13 @@ export interface TRPCContext {
  * Cria o contexto para cada requisição
  */
 export async function createTRPCContext(): Promise<TRPCContext> {
-  const user = await getSession();
-  return { user };
+  try {
+    const user = await getSession();
+    return { user };
+  } catch (error) {
+    console.error("Erro ao criar contexto tRPC:", error);
+    return { user: null };
+  }
 }
 
 /**
@@ -23,21 +29,56 @@ export async function createTRPCContext(): Promise<TRPCContext> {
  */
 const t = initTRPC.context<TRPCContext>().create({
   transformer: superjson,
-  errorFormatter({ shape }) {
-    return shape;
+  errorFormatter({ shape, error }) {
+    return {
+      ...shape,
+      data: {
+        ...shape.data,
+        // Em produção, não expor stack trace
+        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+      },
+    };
   },
 });
 
 /**
- * Router e procedures
+ * Middleware de tratamento de erros global
  */
-export const router = t.router;
-export const publicProcedure = t.procedure;
+const errorHandler = t.middleware(async ({ next }) => {
+  try {
+    return await next();
+  } catch (error) {
+    throw toTRPCError(error);
+  }
+});
 
 /**
- * Procedure protegida - requer autenticação
+ * Middleware de logging (apenas em desenvolvimento)
  */
-export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
+const logger = t.middleware(async ({ path, type, next }) => {
+  const start = Date.now();
+  const result = await next();
+  const durationMs = Date.now() - start;
+
+  if (process.env.NODE_ENV === "development") {
+    console.log(`[tRPC] ${type} ${path} - ${durationMs}ms`);
+  }
+
+  return result;
+});
+
+/**
+ * Router e procedures base
+ */
+export const router = t.router;
+
+// Procedure pública com logging e tratamento de erros
+export const publicProcedure = t.procedure.use(logger).use(errorHandler);
+
+/**
+ * Middleware de autenticação
+ */
+const requireAuth = t.middleware(async ({ ctx, next }) => {
   if (!ctx.user) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
@@ -54,10 +95,17 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
 });
 
 /**
- * Procedure de admin - requer role admin
+ * Procedure protegida - requer autenticação
  */
-export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-  if (ctx.user.role !== "admin") {
+export const protectedProcedure = publicProcedure.use(requireAuth);
+
+/**
+ * Middleware de autorização admin
+ */
+const requireAdmin = t.middleware(async ({ ctx, next }) => {
+  // Já temos certeza que ctx.user existe porque este middleware
+  // é usado após o requireAuth
+  if ((ctx as { user: User }).user.role !== "admin") {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Acesso negado: requer permissão de administrador",
@@ -66,3 +114,8 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
 
   return next({ ctx });
 });
+
+/**
+ * Procedure de admin - requer role admin
+ */
+export const adminProcedure = protectedProcedure.use(requireAdmin);
