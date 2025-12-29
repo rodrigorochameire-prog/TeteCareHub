@@ -52,9 +52,9 @@ export function LoginForm() {
         <Input
           id="email"
           name="email"
-          type="email"
+          type="text"
           placeholder="seu@email.com"
-          required
+          autoComplete="email"
           disabled={isLoading}
         />
       </div>
@@ -65,7 +65,7 @@ export function LoginForm() {
           name="password"
           type="password"
           placeholder="••••••"
-          required
+          autoComplete="current-password"
           disabled={isLoading}
         />
       </div>

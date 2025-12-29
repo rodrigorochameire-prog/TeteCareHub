@@ -56,7 +56,7 @@ export function RegisterForm() {
           name="name"
           type="text"
           placeholder="Seu nome completo"
-          required
+          autoComplete="name"
           disabled={isLoading}
         />
       </div>
@@ -65,9 +65,9 @@ export function RegisterForm() {
         <Input
           id="email"
           name="email"
-          type="email"
+          type="text"
           placeholder="seu@email.com"
-          required
+          autoComplete="email"
           disabled={isLoading}
         />
       </div>
@@ -78,8 +78,7 @@ export function RegisterForm() {
           name="password"
           type="password"
           placeholder="Mínimo 6 caracteres"
-          required
-          minLength={6}
+          autoComplete="new-password"
           disabled={isLoading}
         />
       </div>
@@ -90,8 +89,7 @@ export function RegisterForm() {
           name="confirmPassword"
           type="password"
           placeholder="Repita a senha"
-          required
-          minLength={6}
+          autoComplete="new-password"
           disabled={isLoading}
         />
       </div>

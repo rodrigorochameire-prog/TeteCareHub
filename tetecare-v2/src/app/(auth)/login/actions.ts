@@ -17,6 +17,17 @@ interface LoginResult {
 
 export async function loginAction(input: LoginInput): Promise<LoginResult> {
   try {
+    // Validar entrada
+    if (!input.email || !input.password) {
+      return { success: false, error: "Email e senha são obrigatórios" };
+    }
+
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(input.email)) {
+      return { success: false, error: "Formato de email inválido" };
+    }
+
     // Buscar usuário por email
     const user = await db.query.users.findFirst({
       where: eq(users.email, input.email.toLowerCase().trim()),
@@ -44,6 +55,22 @@ export async function loginAction(input: LoginInput): Promise<LoginResult> {
     return { success: true, role: user.role };
   } catch (error) {
     console.error("Erro no login:", error);
-    return { success: false, error: "Erro interno. Tente novamente." };
+    
+    // Tratar erros específicos
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    if (errorMessage.includes("ECONNREFUSED") || errorMessage.includes("ENETUNREACH")) {
+      return { success: false, error: "Não foi possível conectar ao banco de dados. Verifique sua conexão." };
+    }
+    
+    if (errorMessage.includes("Tenant or user not found")) {
+      return { success: false, error: "Erro de autenticação com o banco de dados. Verifique as credenciais." };
+    }
+    
+    if (errorMessage.includes("DATABASE_URL")) {
+      return { success: false, error: "Configuração do banco de dados não encontrada." };
+    }
+    
+    return { success: false, error: "Erro interno. Tente novamente mais tarde." };
   }
 }
