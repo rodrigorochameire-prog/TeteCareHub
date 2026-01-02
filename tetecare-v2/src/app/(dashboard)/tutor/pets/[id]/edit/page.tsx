@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { LoadingPage } from "@/components/shared/loading";
 import { PageHeader } from "@/components/shared/page-header";
+import { PhotoUpload } from "@/components/shared/photo-upload";
 import { notFound } from "next/navigation";
 
 interface EditPetPageProps {
@@ -27,6 +28,7 @@ export default function TutorEditPetPage(props: EditPetPageProps) {
     species: "dog" as "dog" | "cat",
     birthDate: "",
     weight: "",
+    photoUrl: "" as string | null,
     foodBrand: "",
     foodAmount: "",
     notes: "",
@@ -43,6 +45,7 @@ export default function TutorEditPetPage(props: EditPetPageProps) {
         species: pet.species as "dog" | "cat",
         birthDate: pet.birthDate ? new Date(pet.birthDate).toISOString().split("T")[0] : "",
         weight: pet.weight ? String(pet.weight / 1000) : "",
+        photoUrl: pet.photoUrl || null,
         foodBrand: pet.foodBrand || "",
         foodAmount: pet.foodAmount ? String(pet.foodAmount) : "",
         notes: pet.notes || "",
@@ -82,6 +85,7 @@ export default function TutorEditPetPage(props: EditPetPageProps) {
       species: formData.species,
       birthDate: formData.birthDate || undefined,
       weight: formData.weight ? Math.round(parseFloat(formData.weight) * 1000) : undefined,
+      photoUrl: formData.photoUrl || undefined,
       foodBrand: formData.foodBrand || undefined,
       foodAmount: formData.foodAmount ? parseInt(formData.foodAmount) : undefined,
       notes: formData.notes || undefined,
@@ -102,6 +106,18 @@ export default function TutorEditPetPage(props: EditPetPageProps) {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Foto do Pet */}
+            <div className="flex flex-col items-center gap-4 pb-6 border-b">
+              <Label className="text-center">Foto do Pet</Label>
+              <PhotoUpload
+                currentPhotoUrl={formData.photoUrl}
+                onUpload={(url) => setFormData((prev) => ({ ...prev, photoUrl: url }))}
+                onRemove={() => setFormData((prev) => ({ ...prev, photoUrl: null }))}
+                folder="pets"
+                size="lg"
+              />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Nome */}
               <div className="space-y-2">

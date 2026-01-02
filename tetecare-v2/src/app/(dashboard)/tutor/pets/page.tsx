@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,11 +57,22 @@ export default function TutorPetsPage() {
               <Card className="hover:border-primary hover:shadow-md transition-all">
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center">
-                      <span className="text-2xl">
-                        {pet.species === "cat" ? "🐱" : "🐶"}
-                      </span>
-                    </div>
+                    {pet.photoUrl ? (
+                      <div className="relative w-14 h-14 rounded-full overflow-hidden flex-shrink-0">
+                        <Image
+                          src={pet.photoUrl}
+                          alt={pet.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-2xl">
+                          {pet.species === "cat" ? "🐱" : "🐶"}
+                        </span>
+                      </div>
+                    )}
                     <div>
                       <CardTitle className="text-lg">{pet.name}</CardTitle>
                       <p className="text-sm text-gray-500">

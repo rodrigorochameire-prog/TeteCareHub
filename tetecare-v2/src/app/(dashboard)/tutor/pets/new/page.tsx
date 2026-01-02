@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhotoUpload } from "@/components/shared/photo-upload";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -14,6 +15,7 @@ import Link from "next/link";
 export default function NewPetPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   const createPet = trpc.pets.create.useMutation({
     onSuccess: () => {
@@ -37,6 +39,7 @@ export default function NewPetPage() {
         breed: (formData.get("breed") as string) || undefined,
         species: (formData.get("species") as "dog" | "cat") || "dog",
         birthDate: (formData.get("birthDate") as string) || undefined,
+        photoUrl: photoUrl || undefined,
         notes: (formData.get("notes") as string) || undefined,
       });
     } finally {
@@ -67,6 +70,21 @@ export default function NewPetPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Upload de Foto */}
+            <div className="flex flex-col items-center gap-3 pb-4 border-b">
+              <Label>Foto do Pet</Label>
+              <PhotoUpload
+                currentPhotoUrl={photoUrl}
+                onUpload={setPhotoUrl}
+                onRemove={() => setPhotoUrl(null)}
+                folder="pets"
+                size="lg"
+              />
+              <p className="text-xs text-muted-foreground">
+                JPG, PNG ou WebP. Máximo 5MB.
+              </p>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="name">Nome do Pet *</Label>
               <Input

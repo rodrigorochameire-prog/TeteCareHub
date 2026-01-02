@@ -85,6 +85,7 @@ export const petSchema = z.object({
   species: z.enum(["dog", "cat"]).default("dog"),
   birthDate: dateStringSchema,
   weight: z.number().min(0).max(200000).optional(), // até 200kg em gramas
+  photoUrl: z.string().url().max(2000).optional().nullable(), // URL da foto
   notes: z.string().max(2000).optional(),
   foodBrand: z.string().max(200).optional(),
   foodAmount: z.number().min(0).max(10000).optional(), // até 10kg por dia

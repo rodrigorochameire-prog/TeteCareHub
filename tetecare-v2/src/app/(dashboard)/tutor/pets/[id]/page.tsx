@@ -1,6 +1,7 @@
 "use client";
 
 import { use } from "react";
+import Image from "next/image";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -96,9 +97,20 @@ export default function TutorPetDetailPage(props: PetPageProps) {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                  <PetIcon className="h-8 w-8 text-primary" />
-                </div>
+                {pet.photoUrl ? (
+                  <div className="relative w-16 h-16 rounded-full overflow-hidden">
+                    <Image
+                      src={pet.photoUrl}
+                      alt={pet.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                    <PetIcon className="h-8 w-8 text-primary" />
+                  </div>
+                )}
                 <div className="flex-1">
                   <CardTitle className="text-2xl">{pet.name}</CardTitle>
                   <CardDescription>{pet.breed}</CardDescription>
