@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
@@ -64,12 +65,16 @@ export function MobileNav({ userRole, userName, onLogout }: MobileNavProps) {
     <>
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-white text-lg">🐾</span>
-          </div>
-          <span className="font-bold text-lg text-gray-900">TeteCare</span>
-        </div>
+        <Link href="/" className="flex items-center gap-2">
+          <Image
+            src="/tetecare-logo.png"
+            alt="Tetê Care"
+            width={32}
+            height={32}
+            className="rounded-lg object-cover"
+          />
+          <span className="font-bold text-lg text-gray-900">Tetê Care</span>
+        </Link>
         <Button variant="ghost" size="icon" onClick={() => setIsOpen(true)}>
           <Menu className="h-6 w-6" />
         </Button>

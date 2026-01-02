@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { RegisterForm } from "./register-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
@@ -7,9 +8,13 @@ export default function RegisterPage() {
     <Card>
       <CardHeader className="space-y-1 text-center">
         <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
-            <span className="text-2xl">🐾</span>
-          </div>
+          <Image
+            src="/tetecare-logo.png"
+            alt="Tetê Care"
+            width={80}
+            height={80}
+            className="rounded-2xl object-cover shadow-lg"
+          />
         </div>
         <CardTitle className="text-2xl font-bold">Criar Conta</CardTitle>
         <CardDescription>
