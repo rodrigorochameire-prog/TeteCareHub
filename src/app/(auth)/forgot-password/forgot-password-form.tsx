@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Mail, Loader2, CheckCircle } from "lucide-react";
+import { forgotPasswordAction } from "./actions";
 
 export function ForgotPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -19,11 +21,15 @@ export function ForgotPasswordForm() {
     const email = formData.get("email") as string;
 
     try {
-      // TODO: Implementar lógica de recuperação de senha
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const result = await forgotPasswordAction(email);
       
-      setIsSuccess(true);
-      toast.success("Email enviado com sucesso!");
+      if (result.success) {
+        setSubmittedEmail(email);
+        setIsSuccess(true);
+        toast.success("Instruções enviadas!");
+      } else {
+        toast.error(result.message);
+      }
     } catch {
       toast.error("Erro ao enviar email. Tente novamente.");
     } finally {
@@ -40,9 +46,19 @@ export function ForgotPasswordForm() {
             Email enviado!
           </h3>
           <p className="text-sm text-green-600 dark:text-green-500 mt-1">
-            Verifique sua caixa de entrada e siga as instruções para redefinir sua senha.
+            Se existe uma conta com o email <strong>{submittedEmail}</strong>, você receberá as instruções para redefinir sua senha.
           </p>
         </div>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setIsSuccess(false);
+            setSubmittedEmail("");
+          }}
+          className="mt-4"
+        >
+          Tentar outro email
+        </Button>
       </div>
     );
   }
@@ -85,4 +101,3 @@ export function ForgotPasswordForm() {
     </form>
   );
 }
-
