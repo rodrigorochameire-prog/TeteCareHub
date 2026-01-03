@@ -71,6 +71,19 @@ export async function loginAction(input: LoginInput): Promise<LoginResult> {
       return { success: false, error: "Configuração do banco de dados não encontrada." };
     }
     
+    if (errorMessage.includes("AUTH_SECRET")) {
+      return { success: false, error: "Configuração de autenticação não encontrada." };
+    }
+    
+    if (errorMessage.includes("timeout") || errorMessage.includes("ETIMEDOUT")) {
+      return { success: false, error: "Tempo de conexão esgotado. Tente novamente." };
+    }
+    
+    // Em desenvolvimento, mostrar erro real
+    if (process.env.NODE_ENV === "development") {
+      return { success: false, error: `Erro: ${errorMessage}` };
+    }
+    
     return { success: false, error: "Erro interno. Tente novamente mais tarde." };
   }
 }
