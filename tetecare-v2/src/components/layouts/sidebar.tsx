@@ -21,6 +21,10 @@ import {
   MessageSquare,
   Shield,
   BarChart3,
+  ShoppingBag,
+  Wallet,
+  Star,
+  Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -46,10 +50,13 @@ const adminNavItems: NavItem[] = [
   { href: "/admin/vaccines", label: "Vacinas", icon: Syringe },
   { href: "/admin/medications", label: "Medicamentos", icon: Pill },
   { href: "/admin/preventives", label: "Preventivos", icon: Shield },
+  { href: "/admin/food", label: "Alimentação", icon: ShoppingBag },
   { href: "/admin/logs", label: "Logs Diários", icon: ClipboardList },
   { href: "/admin/documents", label: "Documentos", icon: FileText },
   { href: "/admin/wall", label: "Mural", icon: MessageSquare },
+  { href: "/admin/packages", label: "Pacotes", icon: Wallet },
   { href: "/admin/finances", label: "Finanças", icon: TrendingUp },
+  { href: "/admin/audit-logs", label: "Auditoria", icon: Shield },
   { href: "/admin/notifications", label: "Notificações", icon: Bell },
 ];
 
@@ -60,9 +67,12 @@ const tutorNavItems: NavItem[] = [
   { href: "/tutor/bookings", label: "Reservas", icon: FileText },
   { href: "/tutor/vaccines", label: "Vacinas", icon: Syringe },
   { href: "/tutor/medications", label: "Medicamentos", icon: Pill },
+  { href: "/tutor/food", label: "Alimentação", icon: ShoppingBag },
   { href: "/tutor/logs", label: "Logs Diários", icon: ClipboardList },
   { href: "/tutor/documents", label: "Documentos", icon: FileText },
+  { href: "/tutor/analytics", label: "Estatísticas", icon: Activity },
   { href: "/tutor/reports", label: "Relatórios", icon: BarChart3 },
+  { href: "/tutor/reviews", label: "Avaliações", icon: Star },
   { href: "/tutor/wall", label: "Mural", icon: MessageSquare },
   { href: "/tutor/credits", label: "Créditos", icon: CreditCard },
   { href: "/tutor/notifications", label: "Notificações", icon: Bell },
