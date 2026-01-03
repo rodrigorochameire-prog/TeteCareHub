@@ -104,6 +104,15 @@ const colorClasses = {
     bgActive: "bg-cyan-100",
     border: "border-cyan-200",
   },
+  orange: {
+    icon: "text-orange-600",
+    iconHover: "group-hover:text-orange-600",
+    iconActive: "text-orange-600",
+    bg: "bg-orange-50",
+    bgHover: "hover:bg-orange-50",
+    bgActive: "bg-orange-100",
+    border: "border-orange-200",
+  },
   red: {
     icon: "text-red-600",
     iconHover: "group-hover:text-red-600",
@@ -221,7 +230,6 @@ function TutorLayoutContent({
   const { state, toggleSidebar, setOpen } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuGroups.flatMap(g => g.items).find((item) => item.path === location || location.startsWith(item.path + "/"));
   const isMobile = useIsMobile();
@@ -281,7 +289,7 @@ function TutorLayoutContent({
               {!isCollapsed && (
                 <div className="flex flex-col">
                   <span className="text-xs font-bold tracking-wider uppercase bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                    Gestão
+                    Portal do Tutor
                   </span>
                 </div>
               )}
