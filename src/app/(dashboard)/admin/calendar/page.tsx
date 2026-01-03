@@ -34,14 +34,14 @@ export default function AdminCalendarPage() {
   const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const endDate = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59);
 
-  const { data: eventsData, isLoading, refetch } = trpc.calendar.getEvents.useQuery({
-    startDate,
-    endDate,
+  const { data: eventsData, isLoading, refetch } = trpc.calendar.list.useQuery({
+    start: startDate.toISOString(),
+    end: endDate.toISOString(),
   });
 
   const { data: petsData } = trpc.pets.list.useQuery();
 
-  const createEvent = trpc.calendar.add.useMutation({
+  const createEvent = trpc.calendar.create.useMutation({
     onSuccess: () => {
       toast.success("Evento criado com sucesso!");
       refetch();
@@ -118,12 +118,11 @@ export default function AdminCalendarPage() {
     createEvent.mutate({
       title: eventData.title!,
       description: eventData.description || undefined,
-      eventDate: eventData.eventDate!,
-      endDate: eventData.endDate || undefined,
+      eventDate: eventData.eventDate!.toISOString(),
+      endDate: eventData.endDate?.toISOString() || undefined,
       eventType: eventData.eventType!,
       petId: eventData.petId || undefined,
-      location: eventData.location || undefined,
-      isAllDay: eventData.isAllDay!,
+      isAllDay: eventData.isAllDay ?? false,
     });
   };
 
@@ -136,8 +135,6 @@ export default function AdminCalendarPage() {
     if (!selectedEvent) return;
     deleteEvent.mutate({
       id: selectedEvent.id,
-      petId: selectedEvent.petId || undefined,
-      title: selectedEvent.title,
     });
   };
 

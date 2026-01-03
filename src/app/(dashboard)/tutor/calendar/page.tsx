@@ -27,9 +27,9 @@ export default function TutorCalendarPage() {
   const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const endDate = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59);
 
-  const { data: eventsData, isLoading } = trpc.calendar.getEvents.useQuery({
-    startDate,
-    endDate,
+  const { data: eventsData, isLoading } = trpc.calendar.list.useQuery({
+    start: startDate.toISOString(),
+    end: endDate.toISOString(),
   });
 
   const { data: petsData } = trpc.pets.myPets.useQuery();
