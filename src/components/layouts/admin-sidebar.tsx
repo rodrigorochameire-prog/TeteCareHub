@@ -72,11 +72,10 @@ const menuGroups = [
     label: "Cuidados",
     color: "red",
     items: [
-      { icon: Syringe, label: "Vacinas", path: "/admin/vaccines" },
-      { icon: Pill, label: "Medicamentos", path: "/admin/medications" },
-      { icon: Shield, label: "Preventivos", path: "/admin/preventives" },
-      { icon: ClipboardList, label: "Logs Diários", path: "/admin/logs" },
+      { icon: Heart, label: "Central de Saúde", path: "/admin/health" },
+      { icon: UtensilsCrossed, label: "Alimentação", path: "/admin/food" },
       { icon: Brain, label: "Comportamento", path: "/admin/behavior" },
+      { icon: ClipboardList, label: "Logs Diários", path: "/admin/logs" },
     ],
   },
   {

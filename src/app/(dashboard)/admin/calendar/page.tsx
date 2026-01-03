@@ -1,39 +1,144 @@
 "use client";
 
+import { useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Plus, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { 
+  Calendar, 
+  Download, 
+  AlertCircle, 
+  CheckCircle2, 
+  TrendingUp 
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { PremiumCalendar, CalendarEvent } from "@/components/premium-calendar";
 import { LoadingPage } from "@/components/shared/loading";
 import { PageHeader } from "@/components/shared/page-header";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function AdminCalendarPage() {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
 
-  const { data: events, isLoading } = trpc.calendar.currentMonth.useQuery({
-    month: currentDate.getMonth(),
-    year: currentDate.getFullYear(),
+  const now = new Date();
+  const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const endDate = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59);
+
+  const { data: eventsData, isLoading, refetch } = trpc.calendar.getEvents.useQuery({
+    startDate,
+    endDate,
   });
 
-  const { data: todayEvents } = trpc.calendar.today.useQuery();
+  const { data: petsData } = trpc.pets.list.useQuery();
 
-  // Gerar dias do mês
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const createEvent = trpc.calendar.add.useMutation({
+    onSuccess: () => {
+      toast.success("Evento criado com sucesso!");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao criar evento: ${error.message}`);
+    },
+  });
 
-  // Ajustar para começar na segunda-feira
-  const startDay = monthStart.getDay();
-  const prefixDays = startDay === 0 ? 6 : startDay - 1;
+  const deleteEvent = trpc.calendar.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Evento excluído com sucesso!");
+      setIsEventDialogOpen(false);
+      setSelectedEvent(null);
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao excluir evento: ${error.message}`);
+    },
+  });
 
-  // Obter eventos de um dia específico
-  const getEventsForDay = (day: Date) => {
-    return events?.filter((e) => isSameDay(new Date(e.eventDate), day)) || [];
+  // Transform events data
+  const events: CalendarEvent[] =
+    eventsData?.map((event: any) => ({
+      id: event.id,
+      title: event.title,
+      description: event.description,
+      eventDate: new Date(event.eventDate),
+      endDate: event.endDate ? new Date(event.endDate) : null,
+      eventType: event.eventType as CalendarEvent["eventType"],
+      petId: event.petId,
+      petName: event.pet?.name,
+      location: event.location,
+      isAllDay: event.isAllDay ?? false,
+    })) || [];
+
+  // Transform pets data
+  const pets =
+    petsData?.map((pet: any) => ({
+      id: pet.id,
+      name: pet.name,
+    })) || [];
+
+  // Calculate stats
+  const thisMonthEvents = events.filter((e) => {
+    const eventDate = new Date(e.eventDate);
+    return (
+      eventDate.getMonth() === now.getMonth() &&
+      eventDate.getFullYear() === now.getFullYear()
+    );
+  });
+
+  const upcomingVaccinations = events.filter((e) => {
+    const eventDate = new Date(e.eventDate);
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+    return (
+      e.eventType === "vaccination" &&
+      eventDate >= now &&
+      eventDate <= thirtyDaysFromNow
+    );
+  });
+
+  const todayEvents = events.filter((e) => {
+    const eventDate = new Date(e.eventDate);
+    return (
+      eventDate.getDate() === now.getDate() &&
+      eventDate.getMonth() === now.getMonth() &&
+      eventDate.getFullYear() === now.getFullYear()
+    );
+  });
+
+  const handleCreateEvent = (eventData: Partial<CalendarEvent>) => {
+    createEvent.mutate({
+      title: eventData.title!,
+      description: eventData.description || undefined,
+      eventDate: eventData.eventDate!,
+      endDate: eventData.endDate || undefined,
+      eventType: eventData.eventType!,
+      petId: eventData.petId || undefined,
+      location: eventData.location || undefined,
+      isAllDay: eventData.isAllDay!,
+    });
+  };
+
+  const handleEventClick = (event: CalendarEvent) => {
+    setSelectedEvent(event);
+    setIsEventDialogOpen(true);
+  };
+
+  const handleDeleteEvent = () => {
+    if (!selectedEvent) return;
+    deleteEvent.mutate({
+      id: selectedEvent.id,
+      petId: selectedEvent.petId || undefined,
+      title: selectedEvent.title,
+    });
   };
 
   if (isLoading) {
@@ -44,154 +149,138 @@ export default function AdminCalendarPage() {
     <div className="space-y-6">
       <PageHeader
         title="Calendário"
-        description="Gerencie eventos e agendamentos"
-        actions={
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Evento
-          </Button>
-        }
+        description="Gerencie eventos, vacinações e agendamentos"
+        icon={<Calendar className="h-8 w-8 text-primary" />}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calendar */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle>
-              {format(currentDate, "MMMM yyyy", { locale: ptBR })}
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setCurrentDate(subMonths(currentDate, 1))}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentDate(new Date())}
-              >
-                Hoje
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Eventos Hoje</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {/* Dias da semana */}
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map((day) => (
-                <div
-                  key={day}
-                  className="text-center text-sm font-medium text-muted-foreground py-2"
-                >
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            {/* Grid de dias */}
-            <div className="grid grid-cols-7 gap-1">
-              {/* Dias em branco antes do mês */}
-              {Array.from({ length: prefixDays }).map((_, i) => (
-                <div key={`prefix-${i}`} className="h-24 p-1" />
-              ))}
-
-              {/* Dias do mês */}
-              {days.map((day) => {
-                const dayEvents = getEventsForDay(day);
-                const isCurrentDay = isToday(day);
-
-                return (
-                  <div
-                    key={day.toISOString()}
-                    className={cn(
-                      "h-24 p-1 border rounded-lg overflow-hidden hover:bg-gray-50 cursor-pointer",
-                      isCurrentDay && "bg-primary/5 border-primary"
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "text-sm font-medium mb-1",
-                        isCurrentDay && "text-primary"
-                      )}
-                    >
-                      {format(day, "d")}
-                    </div>
-                    <div className="space-y-0.5">
-                      {dayEvents.slice(0, 3).map((event) => (
-                        <div
-                          key={event.id}
-                          className="text-xs px-1 py-0.5 rounded truncate"
-                          style={{ backgroundColor: event.color || "#3b82f6", color: "white" }}
-                        >
-                          {event.title}
-                        </div>
-                      ))}
-                      {dayEvents.length > 3 && (
-                        <div className="text-xs text-muted-foreground px-1">
-                          +{dayEvents.length - 3} mais
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <div className="text-2xl font-bold">{todayEvents.length}</div>
+            <p className="text-xs text-muted-foreground">
+              {todayEvents.length === 0 ? "Nenhum evento" : "eventos agendados"}
+            </p>
           </CardContent>
         </Card>
 
-        {/* Eventos de Hoje */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Hoje
-            </CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Este Mês</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {!todayEvents || todayEvents.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                Nenhum evento para hoje
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {todayEvents.map((event) => (
-                  <div
-                    key={event.id}
-                    className="p-3 border rounded-lg"
-                  >
-                    <div className="flex items-start gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full mt-1"
-                        style={{ backgroundColor: event.color || "#3b82f6" }}
-                      />
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{event.title}</p>
-                        {event.pet && (
-                          <p className="text-xs text-muted-foreground">
-                            {event.pet.species === "cat" ? "🐱" : "🐶"} {event.pet.name}
-                          </p>
-                        )}
-                        <Badge variant="secondary" className="mt-1 text-xs">
-                          {event.typeInfo.label}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div className="text-2xl font-bold">{thisMonthEvents.length}</div>
+            <p className="text-xs text-muted-foreground">eventos no total</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Vacinações</CardTitle>
+            <AlertCircle className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{upcomingVaccinations.length}</div>
+            <p className="text-xs text-muted-foreground">próximos 30 dias</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pets</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{pets.length}</div>
+            <p className="text-xs text-muted-foreground">cadastrados</p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Premium Calendar */}
+      <PremiumCalendar
+        events={events}
+        onEventClick={handleEventClick}
+        onCreateEvent={handleCreateEvent}
+        pets={pets}
+        showCreateButton={true}
+      />
+
+      {/* Event Detail Dialog */}
+      <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedEvent?.title}</DialogTitle>
+            <DialogDescription>
+              Detalhes do evento
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedEvent && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="font-medium text-muted-foreground">Data</p>
+                  <p>
+                    {format(new Date(selectedEvent.eventDate), "PPP", {
+                      locale: ptBR,
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Horário</p>
+                  <p>
+                    {selectedEvent.isAllDay
+                      ? "Dia inteiro"
+                      : format(new Date(selectedEvent.eventDate), "HH:mm")}
+                  </p>
+                </div>
+                {selectedEvent.petName && (
+                  <div>
+                    <p className="font-medium text-muted-foreground">Pet</p>
+                    <p>{selectedEvent.petName}</p>
+                  </div>
+                )}
+                {selectedEvent.location && (
+                  <div>
+                    <p className="font-medium text-muted-foreground">Local</p>
+                    <p>{selectedEvent.location}</p>
+                  </div>
+                )}
+              </div>
+
+              {selectedEvent.description && (
+                <div>
+                  <p className="font-medium text-muted-foreground text-sm">
+                    Descrição
+                  </p>
+                  <p className="text-sm mt-1">{selectedEvent.description}</p>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteEvent}
+                >
+                  Excluir
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEventDialogOpen(false)}
+                >
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
