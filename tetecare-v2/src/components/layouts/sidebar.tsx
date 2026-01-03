@@ -40,13 +40,15 @@ interface SidebarProps {
 
 const adminNavItems: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/dashboard", label: "Visão Geral", icon: BarChart3 },
   { href: "/admin/pets", label: "Pets", icon: Dog },
   { href: "/admin/tutors", label: "Tutores", icon: Users },
   { href: "/admin/calendar", label: "Calendário", icon: Calendar },
   { href: "/admin/vaccines", label: "Vacinas", icon: Syringe },
   { href: "/admin/medications", label: "Medicamentos", icon: Pill },
+  { href: "/admin/preventives", label: "Preventivos", icon: Shield },
   { href: "/admin/logs", label: "Logs Diários", icon: ClipboardList },
+  { href: "/admin/documents", label: "Documentos", icon: FileText },
+  { href: "/admin/wall", label: "Mural", icon: MessageSquare },
   { href: "/admin/finances", label: "Finanças", icon: TrendingUp },
   { href: "/admin/notifications", label: "Notificações", icon: Bell },
 ];
@@ -59,6 +61,9 @@ const tutorNavItems: NavItem[] = [
   { href: "/tutor/vaccines", label: "Vacinas", icon: Syringe },
   { href: "/tutor/medications", label: "Medicamentos", icon: Pill },
   { href: "/tutor/logs", label: "Logs Diários", icon: ClipboardList },
+  { href: "/tutor/documents", label: "Documentos", icon: FileText },
+  { href: "/tutor/reports", label: "Relatórios", icon: BarChart3 },
+  { href: "/tutor/wall", label: "Mural", icon: MessageSquare },
   { href: "/tutor/credits", label: "Créditos", icon: CreditCard },
   { href: "/tutor/notifications", label: "Notificações", icon: Bell },
 ];
