@@ -84,6 +84,15 @@ export default function LoginPage() {
 
             <LoginForm />
 
+            <div className="text-center">
+              <Link
+                href="/forgot-password"
+                className="text-sm text-primary hover:underline"
+              >
+                Esqueci minha senha
+              </Link>
+            </div>
+
             <div className="text-center text-sm">
               <span className="text-muted-foreground">Não tem uma conta? </span>
               <Link
