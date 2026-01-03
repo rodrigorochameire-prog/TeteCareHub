@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
+import { AdminSidebar } from "@/components/layouts/admin-sidebar";
 
 export default async function AdminLayout({
   children,
@@ -13,5 +14,9 @@ export default async function AdminLayout({
     redirect("/tutor");
   }
 
-  return <>{children}</>;
+  return (
+    <AdminSidebar userName={session.name} userEmail={session.email}>
+      {children}
+    </AdminSidebar>
+  );
 }
