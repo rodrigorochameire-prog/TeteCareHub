@@ -429,7 +429,7 @@ export default function AdminWall() {
                     <SelectValue placeholder="Nenhum (opcional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem value="none">Nenhum</SelectItem>
                     {pets?.map((pet) => (
                       <SelectItem key={pet.id} value={String(pet.id)}>
                         {pet.name}
