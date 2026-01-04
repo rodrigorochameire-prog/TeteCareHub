@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db, pets, petVaccinations, vaccineLibrary } from "@/lib/db";
+import { db, pets, petVaccinations, vaccineLibrary, calendarEvents } from "@/lib/db";
 import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
 import {
@@ -25,6 +25,42 @@ export const preventiveTreatments = pgTable("preventive_treatments", {
   createdById: integer("created_by_id").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// Helper para nomes de tipos de preventivos
+const PREVENTIVE_TYPES = {
+  flea: { label: "Antipulgas", emoji: "🦟", color: "#3b82f6" },
+  deworming: { label: "Vermífugo", emoji: "💊", color: "#22c55e" },
+  heartworm: { label: "Dirofilariose", emoji: "❤️", color: "#ef4444" },
+} as const;
+
+// Helper para criar evento no calendário
+async function createPreventiveCalendarEvent(
+  petId: number,
+  productName: string,
+  type: keyof typeof PREVENTIVE_TYPES,
+  eventDate: Date,
+  createdById: number,
+  isReminder: boolean = false
+) {
+  const pet = await db.query.pets.findFirst({ where: eq(pets.id, petId) });
+  const petName = pet?.name || "Pet";
+  const typeInfo = PREVENTIVE_TYPES[type];
+
+  await db.insert(calendarEvents).values({
+    title: isReminder 
+      ? `⏰ Lembrete: ${typeInfo.label} - ${petName}`
+      : `${typeInfo.emoji} ${typeInfo.label}: ${productName} - ${petName}`,
+    description: isReminder 
+      ? `Lembrete para aplicar ${typeInfo.label.toLowerCase()}: ${productName}`
+      : `Produto: ${productName}\nTipo: ${typeInfo.label}`,
+    eventDate,
+    eventType: "preventive",
+    petId,
+    isAllDay: true,
+    color: typeInfo.color,
+    createdById,
+  });
+}
 
 export const preventivesRouter = router({
   /**
@@ -56,7 +92,7 @@ export const preventivesRouter = router({
     }),
 
   /**
-   * Adiciona tratamento preventivo
+   * Adiciona tratamento preventivo com integração ao calendário
    */
   add: protectedProcedure
     .input(
@@ -68,23 +104,72 @@ export const preventivesRouter = router({
         nextDueDate: z.string().or(z.date()).optional(),
         dosage: z.string().optional(),
         notes: z.string().optional(),
+        addToCalendar: z.boolean().default(true), // Adicionar ao calendário
+        reminderDaysBefore: z.number().default(3), // Lembrete X dias antes da próxima dose
       })
     )
     .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
+        const applicationDate = new Date(input.applicationDate);
+        const nextDueDate = input.nextDueDate ? new Date(input.nextDueDate) : null;
+
         const [treatment] = await db
           .insert(preventiveTreatments)
           .values({
             petId: input.petId,
             type: input.type,
             productName: input.productName,
-            applicationDate: new Date(input.applicationDate),
-            nextDueDate: input.nextDueDate ? new Date(input.nextDueDate) : null,
+            applicationDate,
+            nextDueDate,
             dosage: input.dosage || null,
             notes: input.notes || null,
             createdById: ctx.user.id,
           })
           .returning();
+
+        // Criar eventos no calendário
+        if (input.addToCalendar) {
+          // Evento da aplicação
+          await createPreventiveCalendarEvent(
+            input.petId,
+            input.productName,
+            input.type,
+            applicationDate,
+            ctx.user.id,
+            false
+          );
+
+          // Evento de lembrete para próxima dose (se tiver)
+          if (nextDueDate) {
+            // Evento da próxima dose
+            await createPreventiveCalendarEvent(
+              input.petId,
+              input.productName,
+              input.type,
+              nextDueDate,
+              ctx.user.id,
+              false
+            );
+
+            // Lembrete X dias antes
+            if (input.reminderDaysBefore > 0) {
+              const reminderDate = new Date(nextDueDate);
+              reminderDate.setDate(reminderDate.getDate() - input.reminderDaysBefore);
+              
+              // Só criar lembrete se for no futuro
+              if (reminderDate > new Date()) {
+                await createPreventiveCalendarEvent(
+                  input.petId,
+                  input.productName,
+                  input.type,
+                  reminderDate,
+                  ctx.user.id,
+                  true
+                );
+              }
+            }
+          }
+        }
 
         return treatment;
       }, "Erro ao adicionar tratamento preventivo");

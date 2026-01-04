@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db } from "@/lib/db";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { db, calendarEvents, pets } from "@/lib/db";
+import { eq, and, desc, sql, gte, lte } from "drizzle-orm";
 import { safeAsync } from "@/lib/errors";
 import {
   pgTable,
@@ -38,6 +38,30 @@ export const petMedications = pgTable("pet_medications", {
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// Helper para criar evento no calendário
+async function createMedicationCalendarEvent(
+  petId: number,
+  medicationName: string,
+  dosage: string,
+  eventDate: Date,
+  createdById: number,
+  frequency?: string
+) {
+  const pet = await db.query.pets.findFirst({ where: eq(pets.id, petId) });
+  const petName = pet?.name || "Pet";
+
+  await db.insert(calendarEvents).values({
+    title: `💊 ${medicationName} - ${petName}`,
+    description: `Dosagem: ${dosage}${frequency ? `\nFrequência: ${frequency}` : ""}`,
+    eventDate,
+    eventType: "medication",
+    petId,
+    isAllDay: false,
+    color: "#f59e0b",
+    createdById,
+  });
+}
 
 export const medicationsRouter = router({
   /**
@@ -129,7 +153,7 @@ export const medicationsRouter = router({
     }),
 
   /**
-   * Adiciona medicamento ao pet
+   * Adiciona medicamento ao pet com integração ao calendário
    */
   add: protectedProcedure
     .input(
@@ -142,13 +166,16 @@ export const medicationsRouter = router({
         endDate: z.string().or(z.date()).optional(),
         dosage: z.string(),
         frequency: z.string().optional(),
-        administrationTimes: z.string().optional(),
+        administrationTimes: z.array(z.string()).optional(), // Array de horários ["08:00", "20:00"]
         notes: z.string().optional(),
+        addToCalendar: z.boolean().default(true), // Adicionar ao calendário automaticamente
+        reminderDays: z.array(z.number()).optional(), // Dias para lembrete [1, 3, 7]
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
         let medicationId = input.medicationId;
+        let medicationName = "";
 
         // Se for medicamento customizado, criar primeiro
         if (input.customMedName && input.customMedType) {
@@ -160,26 +187,65 @@ export const medicationsRouter = router({
             })
             .returning();
           medicationId = newMed.id;
+          medicationName = input.customMedName;
+        } else if (medicationId) {
+          const med = await db.query.medicationLibrary?.findFirst({
+            where: eq(medicationLibrary.id, medicationId),
+          });
+          medicationName = med?.name || "Medicamento";
         }
 
         if (!medicationId) {
           throw new Error("Medicamento não especificado");
         }
 
+        const startDate = new Date(input.startDate);
+        const endDate = input.endDate ? new Date(input.endDate) : null;
+
         const [medication] = await db
           .insert(petMedications)
           .values({
             petId: input.petId,
             medicationId: medicationId,
-            startDate: new Date(input.startDate),
-            endDate: input.endDate ? new Date(input.endDate) : null,
+            startDate,
+            endDate,
             dosage: input.dosage,
             frequency: input.frequency || null,
-            administrationTimes: input.administrationTimes || null,
+            administrationTimes: input.administrationTimes ? JSON.stringify(input.administrationTimes) : null,
             notes: input.notes || null,
             isActive: true,
           })
           .returning();
+
+        // Criar eventos no calendário
+        if (input.addToCalendar) {
+          const times = input.administrationTimes || ["09:00"];
+          
+          // Calcular quantos dias de eventos criar (máximo 30 dias)
+          const daysToCreate = endDate 
+            ? Math.min(Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)), 30)
+            : 14; // Se não tiver data final, criar para 14 dias
+
+          for (let day = 0; day <= daysToCreate; day++) {
+            const eventDay = new Date(startDate);
+            eventDay.setDate(eventDay.getDate() + day);
+
+            for (const time of times) {
+              const [hours, minutes] = time.split(":").map(Number);
+              const eventDate = new Date(eventDay);
+              eventDate.setHours(hours || 9, minutes || 0, 0, 0);
+
+              await createMedicationCalendarEvent(
+                input.petId,
+                medicationName,
+                input.dosage,
+                eventDate,
+                ctx.user.id,
+                input.frequency
+              );
+            }
+          }
+        }
 
         return medication;
       }, "Erro ao adicionar medicamento");

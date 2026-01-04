@@ -81,6 +81,7 @@ export default function AdminMedications() {
   const handleAddMedication = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const times = formData.get("times") as string;
     
     addMedication.mutate({
       petId: Number(formData.get("petId")),
@@ -90,6 +91,8 @@ export default function AdminMedications() {
       dosage: formData.get("dosage") as string,
       frequency: formData.get("frequency") as string || undefined,
       notes: formData.get("notes") as string || undefined,
+      administrationTimes: times ? times.split(",").map(t => t.trim()) : ["09:00"],
+      addToCalendar: true,
     });
   };
 
@@ -288,6 +291,19 @@ export default function AdminMedications() {
                   name="frequency"
                   placeholder="Ex: 2x ao dia"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="times">Horários (separados por vírgula)</Label>
+                <Input
+                  id="times"
+                  name="times"
+                  placeholder="Ex: 08:00, 20:00"
+                  defaultValue="09:00"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Eventos serão criados no calendário para cada horário
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

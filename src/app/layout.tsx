@@ -11,13 +11,32 @@ export const metadata: Metadata = {
   description: "Sistema completo de gestão para creche e daycare de pets",
 };
 
+// Script to prevent flash of wrong theme
+const themeScript = `
+  (function() {
+    try {
+      var theme = localStorage.getItem('theme');
+      var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      if (theme === 'dark' || (theme === 'system' && systemDark) || (!theme && systemDark)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } catch (e) {}
+  })();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className={inter.className}>
         <Providers>
           {children}

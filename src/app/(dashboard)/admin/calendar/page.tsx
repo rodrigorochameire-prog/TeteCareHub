@@ -10,7 +10,11 @@ import {
   Download, 
   AlertCircle, 
   CheckCircle2, 
-  TrendingUp 
+  TrendingUp,
+  Pill,
+  Shield,
+  Syringe,
+  RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -20,6 +24,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { PremiumCalendar, CalendarEvent } from "@/components/premium-calendar";
 import { LoadingPage } from "@/components/shared/loading";
 import { PageHeader } from "@/components/shared/page-header";
@@ -105,6 +115,28 @@ export default function AdminCalendarPage() {
     );
   });
 
+  const upcomingMedications = events.filter((e) => {
+    const eventDate = new Date(e.eventDate);
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    return (
+      e.eventType === "medication" &&
+      eventDate >= now &&
+      eventDate <= sevenDaysFromNow
+    );
+  });
+
+  const upcomingPreventives = events.filter((e) => {
+    const eventDate = new Date(e.eventDate);
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+    return (
+      e.eventType === "preventive" &&
+      eventDate >= now &&
+      eventDate <= thirtyDaysFromNow
+    );
+  });
+
   const todayEvents = events.filter((e) => {
     const eventDate = new Date(e.eventDate);
     return (
@@ -113,6 +145,14 @@ export default function AdminCalendarPage() {
       eventDate.getFullYear() === now.getFullYear()
     );
   });
+
+  // Próximos 7 dias
+  const upcomingWeekEvents = events.filter((e) => {
+    const eventDate = new Date(e.eventDate);
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    return eventDate >= now && eventDate <= sevenDaysFromNow;
+  }).slice(0, 10);
 
   const handleCreateEvent = (eventData: Partial<CalendarEvent>) => {
     createEvent.mutate({
@@ -150,7 +190,7 @@ export default function AdminCalendarPage() {
       />
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Eventos Hoje</CardTitle>
@@ -178,25 +218,74 @@ export default function AdminCalendarPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Vacinações</CardTitle>
-            <AlertCircle className="h-4 w-4 text-orange-500" />
+            <Syringe className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{upcomingVaccinations.length}</div>
+            <div className="text-2xl font-bold text-blue-600">{upcomingVaccinations.length}</div>
             <p className="text-xs text-muted-foreground">próximos 30 dias</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pets</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <CardTitle className="text-sm font-medium">Medicamentos</CardTitle>
+            <Pill className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pets.length}</div>
-            <p className="text-xs text-muted-foreground">cadastrados</p>
+            <div className="text-2xl font-bold text-purple-600">{upcomingMedications.length}</div>
+            <p className="text-xs text-muted-foreground">próximos 7 dias</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Preventivos</CardTitle>
+            <Shield className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{upcomingPreventives.length}</div>
+            <p className="text-xs text-muted-foreground">próximos 30 dias</p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Próximos Eventos */}
+      {upcomingWeekEvents.length > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-lg">Próximos 7 Dias</CardTitle>
+            <Button variant="ghost" size="sm" onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {upcomingWeekEvents.map((event) => (
+                <div 
+                  key={event.id} 
+                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => handleEventClick(event)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-primary" />
+                    <div>
+                      <p className="font-medium">{event.title}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {event.petName && `${event.petName} • `}
+                        {format(new Date(event.eventDate), "EEEE, dd/MM", { locale: ptBR })}
+                        {!event.isAllDay && ` às ${format(new Date(event.eventDate), "HH:mm")}`}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="capitalize">
+                    {event.eventType}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Premium Calendar */}
       <PremiumCalendar

@@ -1,12 +1,33 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db, dailyLogs, pets, users } from "@/lib/db";
+import { db, dailyLogs, pets, users, calendarEvents, notifications } from "@/lib/db";
 import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
 
+// Helper para criar alerta de saúde no calendário
+async function createHealthAlertEvent(
+  petId: number,
+  issue: string,
+  createdById: number
+) {
+  const pet = await db.query.pets.findFirst({ where: eq(pets.id, petId) });
+  const petName = pet?.name || "Pet";
+
+  await db.insert(calendarEvents).values({
+    title: `⚠️ Alerta de Saúde: ${petName}`,
+    description: `Problema detectado: ${issue}\n\nRequer atenção veterinária.`,
+    eventDate: new Date(),
+    eventType: "medical",
+    petId,
+    isAllDay: false,
+    color: "#ef4444",
+    createdById,
+  });
+}
+
 export const logsRouter = router({
   /**
-   * Adiciona log diário
+   * Adiciona log diário com opções avançadas
    */
   add: protectedProcedure
     .input(
@@ -14,19 +35,37 @@ export const logsRouter = router({
         petId: z.number(),
         logDate: z.string().or(z.date()),
         source: z.enum(["home", "daycare"]),
-        mood: z.enum(["happy", "calm", "anxious", "tired", "agitated"]).optional(),
-        stool: z.enum(["normal", "soft", "hard", "diarrhea", "none"]).optional(),
-        appetite: z.enum(["good", "moderate", "poor", "none"]).optional(),
+        // Saúde física
+        mood: z.enum(["happy", "calm", "anxious", "tired", "agitated", "sick"]).optional(),
+        stool: z.enum(["normal", "soft", "hard", "diarrhea", "bloody", "mucus", "none"]).optional(),
+        appetite: z.enum(["excellent", "good", "moderate", "poor", "none"]).optional(),
+        vomit: z.boolean().optional(),
+        cough: z.boolean().optional(),
+        sneeze: z.boolean().optional(),
+        // Comportamento
+        energy: z.enum(["high", "normal", "low", "very_low"]).optional(),
+        socialization: z.enum(["excellent", "good", "moderate", "poor", "avoided"]).optional(),
+        playfulness: z.enum(["very_playful", "normal", "low", "not_interested"]).optional(),
+        // Atividades (JSON array)
+        activities: z.array(z.string()).optional(),
+        // Água e alimentação
+        waterIntake: z.enum(["normal", "increased", "decreased", "none"]).optional(),
+        foodAmount: z.enum(["all", "most", "half", "little", "none"]).optional(),
+        // Outros
         notes: z.string().optional(),
+        photos: z.array(z.string()).optional(), // URLs das fotos
+        createAlertOnIssues: z.boolean().default(true),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
+        const logDate = new Date(input.logDate);
+        
         const [log] = await db
           .insert(dailyLogs)
           .values({
             petId: input.petId,
-            logDate: new Date(input.logDate),
+            logDate,
             source: input.source,
             mood: input.mood || null,
             stool: input.stool || null,
@@ -35,6 +74,39 @@ export const logsRouter = router({
             createdById: ctx.user.id,
           })
           .returning();
+
+        // Detectar problemas de saúde e criar alertas
+        if (input.createAlertOnIssues) {
+          const issues: string[] = [];
+          
+          if (input.stool === "diarrhea" || input.stool === "bloody" || input.stool === "mucus") {
+            issues.push(`Problema nas fezes (${input.stool})`);
+          }
+          if (input.appetite === "none" || input.appetite === "poor") {
+            issues.push("Perda de apetite");
+          }
+          if (input.mood === "sick") {
+            issues.push("Aparência doente");
+          }
+          if (input.vomit) {
+            issues.push("Vômito");
+          }
+          if (input.energy === "very_low") {
+            issues.push("Energia muito baixa");
+          }
+          if (input.waterIntake === "none") {
+            issues.push("Não está bebendo água");
+          }
+
+          // Se houver problemas, criar alerta
+          if (issues.length > 0) {
+            await createHealthAlertEvent(
+              input.petId,
+              issues.join(", "),
+              ctx.user.id
+            );
+          }
+        }
 
         return log;
       }, "Erro ao adicionar log diário");
