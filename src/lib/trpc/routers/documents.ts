@@ -78,10 +78,26 @@ export const documentsRouter = router({
         petId: z.number(),
         title: z.string().min(1).max(200),
         description: z.string().optional(),
-        category: z.enum(["vaccination", "exam", "prescription", "other"]),
+        category: z.enum([
+          "vaccination", 
+          "exam", 
+          "prescription", 
+          "medical_record", 
+          "preventive",
+          "training",
+          "behavior",
+          "nutrition",
+          "insurance",
+          "identification",
+          "contract",
+          "photo",
+          "other"
+        ]),
         fileUrl: z.string().url(),
         fileType: z.string().optional(),
         fileSize: z.number().optional(),
+        eventDate: z.string().or(z.date()).optional(), // Para integrar com calendário
+        expirationDate: z.string().or(z.date()).optional(), // Data de vencimento
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -127,7 +143,21 @@ export const documentsRouter = router({
         id: z.number(),
         title: z.string().min(1).max(200).optional(),
         description: z.string().optional(),
-        category: z.enum(["vaccination", "exam", "prescription", "other"]).optional(),
+        category: z.enum([
+          "vaccination", 
+          "exam", 
+          "prescription", 
+          "medical_record", 
+          "preventive",
+          "training",
+          "behavior",
+          "nutrition",
+          "insurance",
+          "identification",
+          "contract",
+          "photo",
+          "other"
+        ]).optional(),
       })
     )
     .mutation(async ({ input }) => {

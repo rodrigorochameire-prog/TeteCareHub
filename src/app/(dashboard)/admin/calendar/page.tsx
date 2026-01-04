@@ -147,7 +147,6 @@ export default function AdminCalendarPage() {
       <PageHeader
         title="Calendário"
         description="Gerencie eventos, vacinações e agendamentos"
-        icon={<Calendar className="h-8 w-8 text-primary" />}
       />
 
       {/* Stats Cards */}
