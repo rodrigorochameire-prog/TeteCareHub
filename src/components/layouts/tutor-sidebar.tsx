@@ -94,40 +94,44 @@ const menuGroups = [
 
 const colorClasses = {
   blue: {
-    icon: "text-cyan-600",
-    iconHover: "group-hover:text-cyan-600",
-    iconActive: "text-cyan-600",
-    bg: "bg-cyan-50",
-    bgHover: "hover:bg-cyan-50",
-    bgActive: "bg-cyan-100",
-    border: "border-cyan-200",
+    icon: "text-cyan-500 dark:text-cyan-400",
+    iconHover: "group-hover:text-cyan-500 dark:group-hover:text-cyan-400",
+    iconActive: "text-cyan-600 dark:text-cyan-300",
+    bg: "bg-cyan-50 dark:bg-cyan-950/50",
+    bgHover: "hover:bg-cyan-50/80 dark:hover:bg-cyan-950/40",
+    bgActive: "bg-cyan-100 dark:bg-cyan-900/60",
+    border: "border-cyan-200 dark:border-cyan-700/50",
+    glow: "dark:shadow-cyan-500/20",
   },
   orange: {
-    icon: "text-orange-600",
-    iconHover: "group-hover:text-orange-600",
-    iconActive: "text-orange-600",
-    bg: "bg-orange-50",
-    bgHover: "hover:bg-orange-50",
-    bgActive: "bg-orange-100",
-    border: "border-orange-200",
+    icon: "text-orange-500 dark:text-orange-400",
+    iconHover: "group-hover:text-orange-500 dark:group-hover:text-orange-400",
+    iconActive: "text-orange-600 dark:text-orange-300",
+    bg: "bg-orange-50 dark:bg-orange-950/50",
+    bgHover: "hover:bg-orange-50/80 dark:hover:bg-orange-950/40",
+    bgActive: "bg-orange-100 dark:bg-orange-900/60",
+    border: "border-orange-200 dark:border-orange-700/50",
+    glow: "dark:shadow-orange-500/20",
   },
   red: {
-    icon: "text-red-600",
-    iconHover: "group-hover:text-red-600",
-    iconActive: "text-red-600",
-    bg: "bg-red-50",
-    bgHover: "hover:bg-red-50",
-    bgActive: "bg-red-100",
-    border: "border-red-200",
+    icon: "text-rose-500 dark:text-rose-400",
+    iconHover: "group-hover:text-rose-500 dark:group-hover:text-rose-400",
+    iconActive: "text-rose-600 dark:text-rose-300",
+    bg: "bg-rose-50 dark:bg-rose-950/50",
+    bgHover: "hover:bg-rose-50/80 dark:hover:bg-rose-950/40",
+    bgActive: "bg-rose-100 dark:bg-rose-900/60",
+    border: "border-rose-200 dark:border-rose-700/50",
+    glow: "dark:shadow-rose-500/20",
   },
   green: {
-    icon: "text-green-600",
-    iconHover: "group-hover:text-green-600",
-    iconActive: "text-green-600",
-    bg: "bg-green-50",
-    bgHover: "hover:bg-green-50",
-    bgActive: "bg-green-100",
-    border: "border-green-200",
+    icon: "text-emerald-500 dark:text-emerald-400",
+    iconHover: "group-hover:text-emerald-500 dark:group-hover:text-emerald-400",
+    iconActive: "text-emerald-600 dark:text-emerald-300",
+    bg: "bg-emerald-50 dark:bg-emerald-950/50",
+    bgHover: "hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40",
+    bgActive: "bg-emerald-100 dark:bg-emerald-900/60",
+    border: "border-emerald-200 dark:border-emerald-700/50",
+    glow: "dark:shadow-emerald-500/20",
   },
 };
 
@@ -297,14 +301,15 @@ function TutorSidebarContent({
                           asChild
                           isActive={isActive}
                           tooltip={item.label}
-                          className={`${isCollapsed ? "h-9" : "h-12"} transition-all duration-300 font-medium rounded-xl group relative overflow-hidden ${
+                          className={`${isCollapsed ? "h-9" : "h-12"} transition-all duration-200 font-medium rounded-xl group relative overflow-hidden ${
                             isActive
-                              ? `${colors.bgActive} shadow-lg ring-2 ${colors.border}`
-                              : `${colors.bgHover} text-muted-foreground hover:text-foreground hover:shadow-md`
+                              ? `${colors.bgActive} shadow-lg ring-1 ${colors.border} ${colors.glow} dark:shadow-lg`
+                              : `${colors.bgHover} text-muted-foreground hover:text-foreground hover:shadow-md dark:hover:shadow-lg`
                           }`}
                         >
                           <Link
                             href={item.path}
+                            prefetch={true}
                             onClick={() => {
                               if (isMobile && state === "expanded") {
                                 setOpen(false);
@@ -313,22 +318,22 @@ function TutorSidebarContent({
                           >
                             {isActive && (
                               <div
-                                className={`absolute inset-0 ${colors.bg} opacity-50 animate-pulse`}
+                                className={`absolute inset-0 ${colors.bg} opacity-40`}
                               />
                             )}
                             <item.icon
-                              className={`h-6 w-6 relative z-10 transition-all duration-300 ${
+                              className={`h-5 w-5 relative z-10 transition-transform duration-200 ${
                                 isActive
-                                  ? `${colors.iconActive} drop-shadow-md`
+                                  ? `${colors.iconActive}`
                                   : `${colors.iconHover} group-hover:scale-110`
                               }`}
                             />
-                            <span className="relative z-10 font-semibold">
+                            <span className="relative z-10 font-medium text-sm">
                               {item.label}
                             </span>
                             {isActive && !isCollapsed && (
                               <div
-                                className={`ml-auto w-2 h-2 rounded-full ${colors.iconActive} animate-pulse shadow-lg`}
+                                className={`ml-auto w-1.5 h-1.5 rounded-full bg-current ${colors.iconActive}`}
                               />
                             )}
                           </Link>
