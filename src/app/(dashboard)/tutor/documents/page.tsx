@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { trpc } from "@/lib/trpc/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { uploadDocumentClient } from "@/lib/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -30,7 +31,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { 
-  Plus, 
   FileText,
   Eye,
   Trash2,
@@ -39,14 +39,26 @@ import {
   TestTube,
   Pill,
   File,
-  Upload
+  Upload,
+  X,
+  Loader2,
+  Link2,
 } from "lucide-react";
 import { toast } from "sonner";
+
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+}
 
 const categoryIcons: Record<string, typeof FileText> = {
   vaccination: Syringe,
   exam: TestTube,
   prescription: Pill,
+  preventive: File,
   other: File,
 };
 
@@ -54,12 +66,18 @@ const categoryLabels: Record<string, string> = {
   vaccination: "Vacinação",
   exam: "Exame",
   prescription: "Receita",
+  preventive: "Preventivo",
   other: "Outro",
 };
 
 export default function TutorDocuments() {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [selectedPetId, setSelectedPetId] = useState<number | null>(null);
+  const [selectedPetId, setSelectedPetId] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [uploadMode, setUploadMode] = useState<"file" | "url">("file");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: myPets } = trpc.pets.myPets.useQuery();
 
@@ -71,10 +89,11 @@ export default function TutorDocuments() {
     query: trpc.documents.byPet.useQuery({ petId: pet.id }),
   })) || [];
 
-  const uploadDocument = trpc.documents.upload.useMutation({
+  const saveDocumentMutation = trpc.documents.upload.useMutation({
     onSuccess: () => {
       toast.success("Documento enviado com sucesso!");
       setIsUploadDialogOpen(false);
+      resetForm();
       petDocumentsQueries.forEach(q => q.query.refetch());
     },
     onError: (error) => {
@@ -92,18 +111,86 @@ export default function TutorDocuments() {
     },
   });
 
-  const handleUploadDocument = (e: React.FormEvent<HTMLFormElement>) => {
+  const resetForm = () => {
+    setSelectedFile(null);
+    setSelectedPetId("");
+    setSelectedCategory("");
+    setUploadMode("file");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowedTypes = ["application/pdf", "image/jpeg", "image/png", "image/webp", 
+      "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Tipo de arquivo não permitido. Use PDF, JPG, PNG ou DOC.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Arquivo muito grande. Tamanho máximo: 10MB.");
+      return;
+    }
+    setSelectedFile(file);
+  };
+
+  const handleUploadDocument = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    
-    // Por enquanto, usando URL direta (implementar upload real depois)
-    uploadDocument.mutate({
-      petId: Number(formData.get("petId")),
-      title: formData.get("title") as string,
-      description: formData.get("description") as string || undefined,
-      category: formData.get("category") as "vaccination" | "exam" | "prescription" | "other",
-      fileUrl: formData.get("fileUrl") as string,
-    });
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string || undefined;
+
+    if (!selectedPetId || !selectedCategory) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    // Modo URL
+    if (uploadMode === "url") {
+      const fileUrl = formData.get("fileUrl") as string;
+      if (!fileUrl) {
+        toast.error("Informe a URL do arquivo");
+        return;
+      }
+      saveDocumentMutation.mutate({
+        petId: parseInt(selectedPetId),
+        title,
+        description,
+        category: selectedCategory as any,
+        fileUrl,
+      });
+      return;
+    }
+
+    // Modo upload de arquivo
+    if (!selectedFile) {
+      toast.error("Selecione um arquivo");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const result = await uploadDocumentClient(
+        selectedFile,
+        parseInt(selectedPetId),
+        selectedCategory
+      );
+
+      await saveDocumentMutation.mutateAsync({
+        petId: parseInt(selectedPetId),
+        title,
+        description,
+        category: selectedCategory as any,
+        fileUrl: result.url,
+        fileType: result.fileType,
+        fileSize: result.fileSize,
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erro ao fazer upload");
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -174,7 +261,7 @@ export default function TutorDocuments() {
                         size="sm" 
                         className="mt-2"
                         onClick={() => {
-                          setSelectedPetId(petId);
+                          setSelectedPetId(String(petId));
                           setIsUploadDialogOpen(true);
                         }}
                       >
@@ -197,7 +284,7 @@ export default function TutorDocuments() {
                                   <div>
                                     <p className="font-medium">{doc.title}</p>
                                     <p className="text-xs text-muted-foreground">
-                                      {categoryLabels[doc.category]}
+                                      {categoryLabels[doc.category] || doc.category}
                                     </p>
                                   </div>
                                 </div>
@@ -246,19 +333,19 @@ export default function TutorDocuments() {
       )}
 
       {/* Upload Document Dialog */}
-      <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+      <Dialog open={isUploadDialogOpen} onOpenChange={(open) => { setIsUploadDialogOpen(open); if (!open) resetForm(); }}>
         <DialogContent className="max-w-md">
           <form onSubmit={handleUploadDocument}>
             <DialogHeader>
               <DialogTitle>Enviar Documento</DialogTitle>
               <DialogDescription>
-                Envie um documento veterinário
+                Faça upload de um arquivo ou adicione uma URL
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="petId">Pet *</Label>
-                <Select name="petId" defaultValue={selectedPetId ? String(selectedPetId) : undefined} required>
+                <Label>Pet *</Label>
+                <Select value={selectedPetId} onValueChange={setSelectedPetId} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o pet" />
                   </SelectTrigger>
@@ -283,8 +370,8 @@ export default function TutorDocuments() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="category">Categoria *</Label>
-                <Select name="category" required>
+                <Label>Categoria *</Label>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
@@ -292,40 +379,66 @@ export default function TutorDocuments() {
                     <SelectItem value="vaccination">Vacinação</SelectItem>
                     <SelectItem value="exam">Exame</SelectItem>
                     <SelectItem value="prescription">Receita</SelectItem>
+                    <SelectItem value="preventive">Preventivo</SelectItem>
                     <SelectItem value="other">Outro</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="fileUrl">URL do Arquivo *</Label>
-                <Input
-                  id="fileUrl"
-                  name="fileUrl"
-                  type="url"
-                  placeholder="https://..."
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Cole o link do documento (Google Drive, Dropbox, etc)
-                </p>
+              {/* Toggle Upload/URL */}
+              <div className="space-y-3">
+                <Label>Arquivo</Label>
+                <div className="flex gap-1 p-1 bg-muted rounded-lg">
+                  <Button type="button" variant={uploadMode === "file" ? "default" : "ghost"} size="sm" className="flex-1 gap-2" onClick={() => setUploadMode("file")}>
+                    <Upload className="h-4 w-4" />Upload
+                  </Button>
+                  <Button type="button" variant={uploadMode === "url" ? "default" : "ghost"} size="sm" className="flex-1 gap-2" onClick={() => setUploadMode("url")}>
+                    <Link2 className="h-4 w-4" />URL
+                  </Button>
+                </div>
+
+                {uploadMode === "file" ? (
+                  <div 
+                    className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 cursor-pointer transition-all ${selectedFile ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"}`}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <input ref={fileInputRef} type="file" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx" className="hidden" />
+                    {selectedFile ? (
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 bg-primary/10 rounded-lg"><File className="h-6 w-6 text-primary" /></div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{selectedFile.name}</p>
+                          <p className="text-xs text-muted-foreground">{formatFileSize(selectedFile.size)}</p>
+                        </div>
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <Upload className="h-8 w-8 text-muted-foreground mb-3" />
+                        <p className="text-sm font-medium">Clique para selecionar</p>
+                        <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, DOC (máx. 10MB)</p>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Input name="fileUrl" type="url" placeholder="https://drive.google.com/..." />
+                    <p className="text-xs text-muted-foreground">Cole o link do documento</p>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="description">Descrição</Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  rows={2}
-                />
+                <Textarea id="description" name="description" rows={2} />
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={uploadDocument.isPending}>
-                {uploadDocument.isPending ? "Enviando..." : "Enviar"}
+              <Button type="button" variant="outline" onClick={() => { setIsUploadDialogOpen(false); resetForm(); }}>Cancelar</Button>
+              <Button type="submit" disabled={uploading || saveDocumentMutation.isPending}>
+                {uploading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Enviando...</> : saveDocumentMutation.isPending ? "Salvando..." : <><Upload className="h-4 w-4 mr-2" />Enviar</>}
               </Button>
             </DialogFooter>
           </form>
