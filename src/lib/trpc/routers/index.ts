@@ -24,6 +24,7 @@ import { auditLogsRouter } from "./auditLogs";
 import { packagesRouter } from "./packages";
 import { reviewsRouter } from "./reviews";
 import { notificationTemplatesRouter } from "./notificationTemplates";
+import { trainingRouter } from "./training";
 
 export const appRouter = router({
   // Autenticação
@@ -42,6 +43,7 @@ export const appRouter = router({
   medications: medicationsRouter,
   preventives: preventivesRouter,
   behavior: behaviorRouter,
+  training: trainingRouter,
   
   // Alimentação
   food: foodRouter,

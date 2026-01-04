@@ -20,6 +20,13 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Syringe,
+  Pill,
+  GraduationCap,
+  ClipboardList,
+  FolderOpen,
+  MessageSquare,
+  Heart,
 } from "lucide-react";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
@@ -231,6 +238,67 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                 <Link href="/tutor/calendar">
                   <Calendar className="h-4 w-4 mr-2" />
                   Ver Calendário
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Gestão de Saúde */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Heart className="h-5 w-5 text-red-500" />
+                Saúde & Cuidados
+              </CardTitle>
+              <CardDescription>Acompanhe todos os registros</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Button variant="outline" className="w-full justify-start" asChild>
+                <Link href="/tutor/vaccines">
+                  <Syringe className="h-4 w-4 mr-2 text-blue-500" />
+                  Vacinas
+                </Link>
+              </Button>
+              <Button variant="outline" className="w-full justify-start" asChild>
+                <Link href="/tutor/medications">
+                  <Pill className="h-4 w-4 mr-2 text-purple-500" />
+                  Medicamentos
+                </Link>
+              </Button>
+              <Button variant="outline" className="w-full justify-start" asChild>
+                <Link href="/tutor/training">
+                  <GraduationCap className="h-4 w-4 mr-2 text-orange-500" />
+                  Treinamento
+                </Link>
+              </Button>
+              <Button variant="outline" className="w-full justify-start" asChild>
+                <Link href="/tutor/logs">
+                  <ClipboardList className="h-4 w-4 mr-2 text-green-500" />
+                  Logs Diários
+                </Link>
+              </Button>
+              <Button variant="outline" className="w-full justify-start" asChild>
+                <Link href="/tutor/documents">
+                  <FolderOpen className="h-4 w-4 mr-2 text-amber-500" />
+                  Documentos
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Comunicação */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-primary" />
+                Comunicação
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" className="w-full justify-start" asChild>
+                <Link href="/tutor/wall">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Ver Mural
                 </Link>
               </Button>
             </CardContent>

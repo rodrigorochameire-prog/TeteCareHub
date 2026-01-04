@@ -446,3 +446,50 @@ export const transactions = pgTable("transactions", {
 
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = typeof transactions.$inferInsert;
+
+// ==========================================
+// TREINAMENTO / ADESTRAMENTO
+// ==========================================
+
+export const trainingLogs = pgTable("training_logs", {
+  id: serial("id").primaryKey(),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  logDate: timestamp("log_date").notNull(),
+  command: varchar("command", { length: 100 }).notNull(), // 'sit' | 'stay' | 'come' | 'down' | 'heel' | custom
+  category: varchar("category", { length: 50 }).notNull(), // 'obedience' | 'socialization' | 'behavior' | 'agility' | 'tricks'
+  status: varchar("status", { length: 50 }).notNull(), // 'learning' | 'practicing' | 'mastered'
+  successRate: integer("success_rate"), // 0-100 porcentagem de sucesso
+  duration: integer("duration"), // duração em minutos
+  treats: integer("treats"), // número de petiscos usados
+  method: varchar("method", { length: 100 }), // 'positive_reinforcement' | 'clicker' | 'lure' | 'capture'
+  notes: text("notes"),
+  videoUrl: text("video_url"),
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type TrainingLog = typeof trainingLogs.$inferSelect;
+export type InsertTrainingLog = typeof trainingLogs.$inferInsert;
+
+// ==========================================
+// COMANDOS DE TREINAMENTO (BIBLIOTECA)
+// ==========================================
+
+export const trainingCommands = pgTable("training_commands", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  category: varchar("category", { length: 50 }).notNull(),
+  description: text("description"),
+  difficulty: varchar("difficulty", { length: 20 }), // 'easy' | 'medium' | 'hard'
+  steps: text("steps"), // JSON array com passos
+  tips: text("tips"),
+  isDefault: boolean("is_default").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type TrainingCommand = typeof trainingCommands.$inferSelect;
+export type InsertTrainingCommand = typeof trainingCommands.$inferInsert;

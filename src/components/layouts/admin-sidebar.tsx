@@ -25,6 +25,7 @@ import {
   UtensilsCrossed,
   UserCog,
   User,
+  GraduationCap,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
@@ -75,6 +76,7 @@ const menuGroups = [
       { icon: Heart, label: "Central de Saúde", path: "/admin/health" },
       { icon: UtensilsCrossed, label: "Alimentação", path: "/admin/food" },
       { icon: Brain, label: "Comportamento", path: "/admin/behavior" },
+      { icon: GraduationCap, label: "Treinamento", path: "/admin/training" },
       { icon: ClipboardList, label: "Logs Diários", path: "/admin/logs" },
     ],
   },
