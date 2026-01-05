@@ -652,7 +652,7 @@ export default function AdminHealthPage() {
                     {PREVENTIVE_TYPES.map((type) => (
                       <SelectItem key={type.value} value={type.value}>
                         <div className="flex items-center gap-2">
-                          <type.icon className={`h-4 w-4 ${type.color}`} />
+                          <type.icon className="h-4 w-4 text-muted-foreground" />
                           {type.label}
                         </div>
                       </SelectItem>
@@ -774,7 +774,7 @@ export default function AdminHealthPage() {
                     {MEDICATION_TYPES.map((type) => (
                       <SelectItem key={type.value} value={type.value}>
                         <div className="flex items-center gap-2">
-                          <type.icon className={`h-4 w-4 ${type.color}`} />
+                          <type.icon className="h-4 w-4 text-muted-foreground" />
                           {type.label}
                         </div>
                       </SelectItem>
