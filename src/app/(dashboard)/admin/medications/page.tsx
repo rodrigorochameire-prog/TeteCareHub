@@ -131,7 +131,6 @@ export default function AdminMedications() {
             Registrar
           </Button>
         </div>
-        </div>
       </div>
 
       {/* Stats */}
