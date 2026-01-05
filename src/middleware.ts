@@ -11,39 +11,30 @@ const isPublicRoute = createRouteMatcher([
   "/reset-password(.*)",
   "/auth-redirect",
   "/api/webhooks(.*)",
+  "/api/trpc(.*)",
 ]);
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isTutorRoute = createRouteMatcher(["/tutor(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
 
+  // Rotas públicas - permitir acesso
   if (isPublicRoute(req)) {
     return NextResponse.next();
   }
 
+  // Não autenticado - redirecionar para login
   if (!userId) {
     const signInUrl = new URL("/sign-in", req.url);
-    signInUrl.searchParams.set("redirect_url", req.url);
     return NextResponse.redirect(signInUrl);
   }
 
-  // O Clerk armazena em publicMetadata ou public_metadata
-  const publicMeta = (sessionClaims as any)?.publicMetadata || (sessionClaims as any)?.public_metadata || {};
-  const userRole = publicMeta?.role || "tutor";
+  // Para verificar o role, precisamos fazer uma chamada separada
+  // O middleware não deve bloquear com base no role aqui
+  // Os layouts já fazem essa verificação com currentUser()
   
-  // Debug: log para verificar
-  console.log("[Middleware] userId:", userId, "role:", userRole, "claims:", JSON.stringify(sessionClaims));
-
-  if (isAdminRoute(req) && userRole !== "admin") {
-    return NextResponse.redirect(new URL("/tutor", req.url));
-  }
-
-  if (isTutorRoute(req) && userRole === "admin") {
-    return NextResponse.redirect(new URL("/admin", req.url));
-  }
-
   return NextResponse.next();
 });
 
