@@ -22,8 +22,8 @@ export default async function TutorLayout({
   });
 
   if (!dbUser) {
-    // Usuário existe no Clerk mas não no banco - redirecionar para criar conta
-    redirect("/sign-in");
+    // Usuário existe no Clerk mas não no banco - redirecionar para sincronizar
+    redirect("/auth-redirect");
   }
 
   // Verificar se o tutor está aprovado
