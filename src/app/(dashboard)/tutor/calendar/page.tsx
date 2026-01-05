@@ -121,7 +121,7 @@ export default function TutorCalendarPage() {
       <PageHeader
         title="Meu Calendário"
         description="Acompanhe os eventos e agendamentos dos seus pets"
-        icon={<Calendar className="h-8 w-8 text-primary" />}
+        icon={Calendar}
       />
 
       {/* Stats Cards */}

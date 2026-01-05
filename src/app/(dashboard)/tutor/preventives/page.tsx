@@ -108,7 +108,7 @@ export default function TutorPreventivesPage() {
       <PageHeader
         title="Preventivos"
         description="Controle de antipulgas, vermífugos e outros tratamentos preventivos"
-        icon={<Shield className="h-8 w-8 text-primary" />}
+        icon={Shield}
       />
 
       {/* Seletor de Pet */}
