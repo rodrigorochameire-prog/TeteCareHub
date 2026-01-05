@@ -30,7 +30,13 @@ export async function forgotPasswordAction(email: string): Promise<ForgotPasswor
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
     // URL de redirecionamento para reset de senha
-    const redirectTo = `${process.env.NEXT_PUBLIC_APP_URL || "https://tetecare-v2.vercel.app"}/reset-password`;
+    // Prioriza: NEXT_PUBLIC_APP_URL > VERCEL_URL > fallback
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+                   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+                   "https://tetecare-v2.vercel.app";
+    const redirectTo = `${baseUrl}/reset-password`;
+    
+    console.log(`[Forgot Password] Redirect URL: ${redirectTo}`);
 
     // Enviar email de recuperação via Supabase Auth
     const { error } = await supabase.auth.resetPasswordForEmail(
