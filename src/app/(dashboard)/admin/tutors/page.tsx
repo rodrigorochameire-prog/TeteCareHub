@@ -459,7 +459,7 @@ export default function AdminTutorsPage() {
         onOpenChange={setPromoteDialogOpen}
         title="Promover a Administrador"
         description="Tem certeza que deseja promover este usuário a administrador? Ele terá acesso total ao sistema."
-        confirmText="Promover"
+        confirmLabel="Promover"
         onConfirm={() => selectedUserId && promoteMutation.mutate({ id: selectedUserId })}
         isLoading={promoteMutation.isPending}
       />
