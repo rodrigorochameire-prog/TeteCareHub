@@ -3,92 +3,92 @@
 @tailwind utilities;
 
 /* ========================================
-   TETECARE - DESIGN SYSTEM v4
-   Paleta Pastel • Sofisticado • Harmonioso
+   TETECARE - DESIGN SYSTEM v5
+   Cores Claras • Luminosas • Com Vida
    ======================================== */
 
 @layer base {
   :root {
-    /* MODO CLARO - Tons pastéis sofisticados */
-    --background: 30 25% 98%;
-    --foreground: 220 20% 20%;
+    /* MODO CLARO - Branco limpo com toques quentes */
+    --background: 0 0% 99%;
+    --foreground: 220 25% 18%;
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 20%;
+    --card-foreground: 220 25% 18%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 20%;
+    --popover-foreground: 220 25% 18%;
     
-    /* Primary - Laranja suave/coral */
-    --primary: 24 65% 55%;
+    /* Primary - Laranja vibrante mas claro */
+    --primary: 24 85% 58%;
     --primary-foreground: 0 0% 100%;
     
-    /* Tons neutros quentes */
-    --secondary: 30 15% 96%;
-    --secondary-foreground: 220 15% 35%;
-    --muted: 30 12% 95%;
-    --muted-foreground: 220 10% 50%;
-    --accent: 30 15% 94%;
-    --accent-foreground: 220 15% 35%;
+    /* Neutros claros */
+    --secondary: 220 20% 97%;
+    --secondary-foreground: 220 20% 30%;
+    --muted: 220 15% 96%;
+    --muted-foreground: 220 12% 48%;
+    --accent: 220 20% 96%;
+    --accent-foreground: 220 20% 30%;
     
-    --destructive: 0 55% 55%;
+    --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 30 15% 90%;
-    --input: 30 15% 90%;
-    --ring: 24 65% 55%;
-    --radius: 0.75rem;
+    --border: 220 18% 91%;
+    --input: 220 18% 91%;
+    --ring: 24 85% 58%;
+    --radius: 0.625rem;
     
-    /* Charts - Paleta harmoniosa */
-    --chart-1: 24 65% 55%;
-    --chart-2: 200 45% 55%;
-    --chart-3: 150 40% 50%;
-    --chart-4: 40 55% 55%;
-    --chart-5: 340 45% 55%;
+    /* Charts */
+    --chart-1: 24 85% 58%;
+    --chart-2: 210 75% 55%;
+    --chart-3: 150 55% 48%;
+    --chart-4: 45 80% 52%;
+    --chart-5: 340 65% 55%;
     
-    /* Sidebar */
-    --sidebar-background: 30 20% 99%;
-    --sidebar-foreground: 220 20% 25%;
-    --sidebar-primary: 24 65% 55%;
+    /* Sidebar - Limpo */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 25% 20%;
+    --sidebar-primary: 24 85% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 30 15% 95%;
-    --sidebar-accent-foreground: 220 15% 35%;
-    --sidebar-border: 30 15% 92%;
-    --sidebar-ring: 24 65% 55%;
+    --sidebar-accent: 220 20% 97%;
+    --sidebar-accent-foreground: 220 20% 30%;
+    --sidebar-border: 220 18% 93%;
+    --sidebar-ring: 24 85% 58%;
   }
 
   .dark {
-    /* MODO ESCURO - Elegante e aconchegante */
-    --background: 220 20% 8%;
-    --foreground: 30 10% 92%;
-    --card: 220 18% 11%;
-    --card-foreground: 30 10% 92%;
-    --popover: 220 18% 11%;
-    --popover-foreground: 30 10% 92%;
+    /* MODO ESCURO - Elegante e vibrante */
+    --background: 222 25% 8%;
+    --foreground: 220 15% 93%;
+    --card: 222 22% 11%;
+    --card-foreground: 220 15% 93%;
+    --popover: 222 22% 11%;
+    --popover-foreground: 220 15% 93%;
     
-    /* Primary - Laranja vibrante no escuro */
-    --primary: 24 70% 58%;
+    /* Primary - Laranja vibrante */
+    --primary: 24 90% 55%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 220 15% 15%;
-    --secondary-foreground: 30 10% 85%;
-    --muted: 220 15% 14%;
+    --secondary: 222 18% 14%;
+    --secondary-foreground: 220 12% 82%;
+    --muted: 222 16% 15%;
     --muted-foreground: 220 10% 55%;
-    --accent: 220 15% 15%;
-    --accent-foreground: 30 10% 85%;
+    --accent: 222 18% 14%;
+    --accent-foreground: 220 12% 82%;
     
-    --destructive: 0 50% 55%;
+    --destructive: 0 65% 52%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 15% 18%;
-    --input: 220 15% 18%;
-    --ring: 24 70% 58%;
+    --border: 222 18% 18%;
+    --input: 222 18% 18%;
+    --ring: 24 90% 55%;
     
     /* Sidebar escuro */
-    --sidebar-background: 220 20% 7%;
-    --sidebar-foreground: 30 10% 88%;
-    --sidebar-primary: 24 70% 58%;
+    --sidebar-background: 222 25% 7%;
+    --sidebar-foreground: 220 15% 90%;
+    --sidebar-primary: 24 90% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 13%;
-    --sidebar-accent-foreground: 30 10% 85%;
-    --sidebar-border: 220 15% 15%;
-    --sidebar-ring: 24 70% 58%;
+    --sidebar-accent: 222 18% 12%;
+    --sidebar-accent-foreground: 220 12% 82%;
+    --sidebar-border: 222 18% 15%;
+    --sidebar-ring: 24 90% 55%;
   }
 }
 
@@ -212,14 +212,14 @@
 
 .stat-card-icon {
   @apply h-4 w-4;
-  color: hsl(var(--primary) / 0.7);
+  color: hsl(var(--primary));
 }
 
-.stat-card-icon.primary { color: hsl(var(--primary) / 0.8); }
-.stat-card-icon.blue { color: hsl(var(--primary) / 0.7); }
-.stat-card-icon.green { color: hsl(var(--primary) / 0.7); }
-.stat-card-icon.amber { color: hsl(var(--primary) / 0.8); }
-.stat-card-icon.muted { color: hsl(var(--muted-foreground) / 0.6); }
+.stat-card-icon.primary { color: hsl(var(--primary)); }
+.stat-card-icon.blue { color: hsl(210 70% 55%); }
+.stat-card-icon.green { color: hsl(150 50% 45%); }
+.stat-card-icon.amber { color: hsl(40 75% 50%); }
+.stat-card-icon.muted { color: hsl(var(--muted-foreground)); }
 
 .stat-card-value {
   @apply text-2xl font-bold tracking-tight text-foreground;
@@ -334,11 +334,11 @@
   color: hsl(var(--muted-foreground));
 }
 
-.list-item-icon.primary { background: hsl(var(--primary) / 0.1); }
-.list-item-icon.primary svg { color: hsl(var(--primary) / 0.8); }
+.list-item-icon.primary { background: hsl(var(--primary) / 0.12); }
+.list-item-icon.primary svg { color: hsl(var(--primary)); }
 
-.list-item-icon.blue { background: hsl(var(--primary) / 0.08); }
-.list-item-icon.blue svg { color: hsl(var(--primary) / 0.7); }
+.list-item-icon.blue { background: hsl(210 70% 55% / 0.1); }
+.list-item-icon.blue svg { color: hsl(210 70% 55%); }
 
 .list-item-content {
   @apply flex-1 min-w-0;
@@ -376,43 +376,43 @@
 }
 
 .badge-green {
-  background: hsl(150 35% 94%);
-  color: hsl(150 35% 38%);
+  background: hsl(150 60% 95%);
+  color: hsl(150 55% 35%);
 }
 
 .dark .badge-green {
-  background: hsl(150 30% 18% / 0.5);
-  color: hsl(150 35% 60%);
+  background: hsl(150 45% 18% / 0.5);
+  color: hsl(150 50% 60%);
 }
 
 .badge-blue {
-  background: hsl(200 35% 94%);
-  color: hsl(200 40% 40%);
+  background: hsl(210 70% 95%);
+  color: hsl(210 65% 42%);
 }
 
 .dark .badge-blue {
-  background: hsl(200 30% 20% / 0.5);
-  color: hsl(200 35% 62%);
+  background: hsl(210 50% 22% / 0.5);
+  color: hsl(210 55% 62%);
 }
 
 .badge-amber {
-  background: hsl(35 45% 93%);
-  color: hsl(35 50% 35%);
+  background: hsl(40 80% 94%);
+  color: hsl(40 70% 32%);
 }
 
 .dark .badge-amber {
-  background: hsl(35 40% 18% / 0.5);
-  color: hsl(35 45% 60%);
+  background: hsl(40 55% 18% / 0.5);
+  color: hsl(40 65% 60%);
 }
 
 .badge-rose {
-  background: hsl(350 35% 94%);
-  color: hsl(350 40% 45%);
+  background: hsl(350 60% 95%);
+  color: hsl(350 55% 45%);
 }
 
 .dark .badge-rose {
-  background: hsl(350 30% 20% / 0.5);
-  color: hsl(350 35% 62%);
+  background: hsl(350 45% 20% / 0.5);
+  color: hsl(350 50% 62%);
 }
 
 .badge-success {

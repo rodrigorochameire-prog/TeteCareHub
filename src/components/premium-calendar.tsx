@@ -345,90 +345,91 @@ export function PremiumCalendar({
     .slice(0, 5);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Header Controls */}
-      <Card className="shadow-lg border-0 bg-gradient-to-r from-primary/5 to-primary/10">
-        <CardContent className="p-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <Card className="shadow-sm border bg-card">
+        <CardContent className="p-3">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             {/* Navigation */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={goToPrevious}
-                className="h-9 w-9 rounded-full hover:bg-primary/20 transition-all"
+                className="h-8 w-8 rounded-lg hover:bg-muted transition-all"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button
                 variant="outline"
+                size="sm"
                 onClick={goToToday}
-                className="rounded-full px-4 font-medium hover:bg-primary/10 transition-all"
+                className="rounded-lg px-3 h-8 font-medium hover:bg-muted transition-all"
               >
-                <CalendarIcon className="h-4 w-4 mr-2" />
+                <CalendarIcon className="h-3.5 w-3.5 mr-1.5" />
                 Hoje
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={goToNext}
-                className="h-9 w-9 rounded-full hover:bg-primary/20 transition-all"
+                className="h-8 w-8 rounded-lg hover:bg-muted transition-all"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-4 w-4" />
               </Button>
-              <h2 className="text-xl font-bold capitalize ml-2">{getViewTitle()}</h2>
+              <h2 className="text-lg font-semibold capitalize ml-2">{getViewTitle()}</h2>
             </div>
 
             {/* View Mode & Filters */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
               {/* View Mode Toggle */}
-              <div className="flex items-center bg-muted rounded-full p-1">
+              <div className="flex items-center bg-muted/60 rounded-lg p-0.5">
                 <Button
                   variant={viewMode === "month" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("month")}
-                  className="rounded-full h-8 px-3"
+                  className="rounded-md h-7 px-2.5 text-xs"
                 >
-                  <LayoutGrid className="h-4 w-4 mr-1" />
+                  <LayoutGrid className="h-3.5 w-3.5 mr-1" />
                   <span className="hidden sm:inline">Mês</span>
                 </Button>
                 <Button
                   variant={viewMode === "week" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("week")}
-                  className="rounded-full h-8 px-3"
+                  className="rounded-md h-7 px-2.5 text-xs"
                 >
-                  <CalendarDays className="h-4 w-4 mr-1" />
+                  <CalendarDays className="h-3.5 w-3.5 mr-1" />
                   <span className="hidden sm:inline">Semana</span>
                 </Button>
                 <Button
                   variant={viewMode === "day" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("day")}
-                  className="rounded-full h-8 px-3"
+                  className="rounded-md h-7 px-2.5 text-xs"
                 >
-                  <Sun className="h-4 w-4 mr-1" />
+                  <Sun className="h-3.5 w-3.5 mr-1" />
                   <span className="hidden sm:inline">Dia</span>
                 </Button>
                 <Button
                   variant={viewMode === "list" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("list")}
-                  className="rounded-full h-8 px-3"
+                  className="rounded-md h-7 px-2.5 text-xs"
                 >
-                  <List className="h-4 w-4 mr-1" />
+                  <List className="h-3.5 w-3.5 mr-1" />
                   <span className="hidden sm:inline">Lista</span>
                 </Button>
               </div>
 
               {/* Search */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
                   placeholder="Buscar..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-40 rounded-full h-9 bg-background"
+                  className="pl-8 w-32 rounded-lg h-8 text-sm bg-background"
                 />
               </div>
 
@@ -437,8 +438,8 @@ export function PremiumCalendar({
                 value={selectedEventType}
                 onValueChange={(value) => setSelectedEventType(value as EventType | "all")}
               >
-                <SelectTrigger className="w-40 rounded-full h-9">
-                  <Filter className="h-4 w-4 mr-2" />
+                <SelectTrigger className="w-28 rounded-lg h-8 text-sm">
+                  <Filter className="h-3.5 w-3.5 mr-1.5" />
                   <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -462,8 +463,8 @@ export function PremiumCalendar({
                   value={selectedPet.toString()}
                   onValueChange={(value) => setSelectedPet(value === "all" ? "all" : parseInt(value))}
                 >
-                  <SelectTrigger className="w-40 rounded-full h-9">
-                    <Dog className="h-4 w-4 mr-2" />
+                  <SelectTrigger className="w-28 rounded-lg h-8 text-sm">
+                    <Dog className="h-3.5 w-3.5 mr-1.5" />
                     <SelectValue placeholder="Pet" />
                   </SelectTrigger>
                   <SelectContent>
@@ -481,8 +482,8 @@ export function PremiumCalendar({
               {showCreateButton && onCreateEvent && (
                 <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="rounded-full shadow-lg hover:shadow-xl transition-all gap-2">
-                      <Plus className="h-4 w-4" />
+                    <Button className="rounded-lg shadow-sm h-8 px-3 text-sm gap-1.5">
+                      <Plus className="h-3.5 w-3.5" />
                       <span className="hidden sm:inline">Novo</span>
                     </Button>
                   </DialogTrigger>
