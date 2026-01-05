@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
-import { uploadImageBuffer } from "@/lib/supabase/storage";
+import { uploadPetPhoto, uploadWallMedia } from "@/lib/supabase/storage";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,25 +17,11 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const petIdStr = formData.get("petId") as string | null;
+    const uploadType = formData.get("type") as string | null; // "wall" ou "pet"
 
     if (!file) {
       return NextResponse.json(
         { error: "Nenhum arquivo enviado" },
-        { status: 400 }
-      );
-    }
-
-    if (!petIdStr) {
-      return NextResponse.json(
-        { error: "ID do pet é obrigatório" },
-        { status: 400 }
-      );
-    }
-
-    const petId = parseInt(petIdStr, 10);
-    if (isNaN(petId)) {
-      return NextResponse.json(
-        { error: "ID do pet inválido" },
         { status: 400 }
       );
     }
@@ -49,26 +35,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validar tamanho (máximo 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    // Validar tamanho (máximo 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: "Arquivo muito grande. Máximo 5MB." },
+        { error: "Arquivo muito grande. Máximo 10MB." },
         { status: 400 }
       );
     }
 
-    // Converter para Buffer
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    let result;
 
-    // Upload para Supabase com o petId para RLS funcionar
-    const result = await uploadImageBuffer(
-      buffer,
-      file.name,
-      file.type,
-      petId
-    );
+    // Se for upload do mural OU se petId for 0 ou inválido
+    const petId = petIdStr ? parseInt(petIdStr, 10) : 0;
+    
+    if (uploadType === "wall" || petId === 0 || isNaN(petId)) {
+      // Upload para o bucket do mural
+      result = await uploadWallMedia(file);
+    } else {
+      // Upload para o bucket de pets
+      result = await uploadPetPhoto(file, petId);
+    }
 
     return NextResponse.json({
       success: true,
