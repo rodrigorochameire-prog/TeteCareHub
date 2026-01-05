@@ -16,11 +16,26 @@ export async function POST(request: NextRequest) {
     // Obter o arquivo do FormData
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
-    const folder = (formData.get("folder") as string) || "pets";
+    const petIdStr = formData.get("petId") as string | null;
 
     if (!file) {
       return NextResponse.json(
         { error: "Nenhum arquivo enviado" },
+        { status: 400 }
+      );
+    }
+
+    if (!petIdStr) {
+      return NextResponse.json(
+        { error: "ID do pet é obrigatório" },
+        { status: 400 }
+      );
+    }
+
+    const petId = parseInt(petIdStr, 10);
+    if (isNaN(petId)) {
+      return NextResponse.json(
+        { error: "ID do pet inválido" },
         { status: 400 }
       );
     }
@@ -47,12 +62,12 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Upload para Supabase
+    // Upload para Supabase com o petId para RLS funcionar
     const result = await uploadImageBuffer(
       buffer,
       file.name,
       file.type,
-      folder
+      petId
     );
 
     return NextResponse.json({

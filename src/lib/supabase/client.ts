@@ -20,23 +20,23 @@ export function getSupabaseClient() {
 
 /**
  * Faz upload de um documento via cliente (frontend)
- * Usa o bucket 'pet-photos' que já tem RLS configurado
- * Documentos são salvos em: docs/{petId}/{category}/{arquivo}
+ * Usa o bucket 'documents' com RLS configurado
+ * Documentos são salvos em: pets/{petId}/{category}/{arquivo}
  */
 export async function uploadDocumentClient(
   file: File,
   petId: number,
   category: string
-): Promise<{ url: string; fileType: string; fileSize: number }> {
+): Promise<{ url: string; fileType: string; fileSize: number; path: string }> {
   const supabase = getSupabaseClient();
   
-  // Gerar nome único - usando pasta 'docs' dentro do bucket pet-photos
+  // Gerar nome único - usando padrão pets/{petId} para compatibilidade com RLS
   const fileExt = file.name.split(".").pop()?.toLowerCase() || "bin";
-  const fileName = `docs/${petId}/${category}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+  const fileName = `pets/${petId}/${category}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-  // Upload para o bucket pet-photos (já tem RLS configurado)
+  // Upload para o bucket documents (com RLS configurado)
   const { data, error } = await supabase.storage
-    .from("pet-photos")
+    .from("documents")
     .upload(fileName, file, {
       cacheControl: "3600",
       upsert: false,
@@ -47,15 +47,16 @@ export async function uploadDocumentClient(
     throw new Error(`Erro no upload: ${error.message}`);
   }
 
-  // Obter URL pública
-  const { data: urlData } = supabase.storage
-    .from("pet-photos")
-    .getPublicUrl(data.path);
+  // Para buckets privados, usar URL assinada
+  const { data: signedUrlData } = await supabase.storage
+    .from("documents")
+    .createSignedUrl(data.path, 60 * 60 * 24 * 365); // 1 ano
 
   return {
-    url: urlData.publicUrl,
+    url: signedUrlData?.signedUrl || "",
     fileType: fileExt,
     fileSize: file.size,
+    path: data.path,
   };
 }
 
