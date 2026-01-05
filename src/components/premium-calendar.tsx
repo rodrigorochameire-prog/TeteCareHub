@@ -57,105 +57,105 @@ import { cn } from "@/lib/utils";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, isToday, isPast, isFuture } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-// Event type configurations with colors and icons
+// Event type configurations with soft pastel colors
 const EVENT_TYPES = {
   vaccination: {
     label: "Vacinação",
-    color: "bg-blue-500",
-    lightColor: "bg-blue-50 dark:bg-blue-950",
-    textColor: "text-white",
-    borderColor: "border-blue-400",
-    dotColor: "bg-blue-500",
+    color: "bg-blue-200 dark:bg-blue-800/60",
+    lightColor: "bg-blue-50/80 dark:bg-blue-950/50",
+    textColor: "text-blue-800 dark:text-blue-200",
+    borderColor: "border-blue-300 dark:border-blue-700",
+    dotColor: "bg-blue-400",
     icon: Syringe,
   },
   medication: {
     label: "Medicamento",
-    color: "bg-purple-500",
-    lightColor: "bg-purple-50 dark:bg-purple-950",
-    textColor: "text-white",
-    borderColor: "border-purple-400",
-    dotColor: "bg-purple-500",
+    color: "bg-violet-200 dark:bg-violet-800/60",
+    lightColor: "bg-violet-50/80 dark:bg-violet-950/50",
+    textColor: "text-violet-800 dark:text-violet-200",
+    borderColor: "border-violet-300 dark:border-violet-700",
+    dotColor: "bg-violet-400",
     icon: Pill,
   },
   medical: {
     label: "Consulta",
-    color: "bg-rose-500",
-    lightColor: "bg-rose-50 dark:bg-rose-950",
-    textColor: "text-white",
-    borderColor: "border-rose-400",
-    dotColor: "bg-rose-500",
+    color: "bg-rose-200 dark:bg-rose-800/60",
+    lightColor: "bg-rose-50/80 dark:bg-rose-950/50",
+    textColor: "text-rose-800 dark:text-rose-200",
+    borderColor: "border-rose-300 dark:border-rose-700",
+    dotColor: "bg-rose-400",
     icon: Heart,
   },
   general: {
     label: "Geral",
-    color: "bg-slate-500",
-    lightColor: "bg-slate-50 dark:bg-slate-900",
-    textColor: "text-white",
-    borderColor: "border-slate-400",
-    dotColor: "bg-slate-500",
+    color: "bg-slate-200 dark:bg-slate-700/60",
+    lightColor: "bg-slate-50/80 dark:bg-slate-900/50",
+    textColor: "text-slate-700 dark:text-slate-200",
+    borderColor: "border-slate-300 dark:border-slate-600",
+    dotColor: "bg-slate-400",
     icon: CalendarIcon,
   },
   holiday: {
     label: "Feriado",
-    color: "bg-emerald-500",
-    lightColor: "bg-emerald-50 dark:bg-emerald-950",
-    textColor: "text-white",
-    borderColor: "border-emerald-400",
-    dotColor: "bg-emerald-500",
+    color: "bg-emerald-200 dark:bg-emerald-800/60",
+    lightColor: "bg-emerald-50/80 dark:bg-emerald-950/50",
+    textColor: "text-emerald-800 dark:text-emerald-200",
+    borderColor: "border-emerald-300 dark:border-emerald-700",
+    dotColor: "bg-emerald-400",
     icon: Sun,
   },
   closure: {
     label: "Fechamento",
-    color: "bg-orange-500",
-    lightColor: "bg-orange-50 dark:bg-orange-950",
-    textColor: "text-white",
-    borderColor: "border-orange-400",
-    dotColor: "bg-orange-500",
+    color: "bg-amber-200 dark:bg-amber-800/60",
+    lightColor: "bg-amber-50/80 dark:bg-amber-950/50",
+    textColor: "text-amber-800 dark:text-amber-200",
+    borderColor: "border-amber-300 dark:border-amber-700",
+    dotColor: "bg-amber-400",
     icon: AlertCircle,
   },
   checkin: {
     label: "Check-in",
-    color: "bg-teal-500",
-    lightColor: "bg-teal-50 dark:bg-teal-950",
-    textColor: "text-white",
-    borderColor: "border-teal-400",
-    dotColor: "bg-teal-500",
+    color: "bg-teal-200 dark:bg-teal-800/60",
+    lightColor: "bg-teal-50/80 dark:bg-teal-950/50",
+    textColor: "text-teal-800 dark:text-teal-200",
+    borderColor: "border-teal-300 dark:border-teal-700",
+    dotColor: "bg-teal-400",
     icon: LogIn,
   },
   checkout: {
     label: "Check-out",
-    color: "bg-amber-500",
-    lightColor: "bg-amber-50 dark:bg-amber-950",
-    textColor: "text-white",
-    borderColor: "border-amber-400",
-    dotColor: "bg-amber-500",
+    color: "bg-orange-200 dark:bg-orange-800/60",
+    lightColor: "bg-orange-50/80 dark:bg-orange-950/50",
+    textColor: "text-orange-800 dark:text-orange-200",
+    borderColor: "border-orange-300 dark:border-orange-700",
+    dotColor: "bg-orange-400",
     icon: LogOut,
   },
   preventive: {
     label: "Preventivo",
-    color: "bg-cyan-500",
-    lightColor: "bg-cyan-50 dark:bg-cyan-950",
-    textColor: "text-white",
-    borderColor: "border-cyan-400",
-    dotColor: "bg-cyan-500",
+    color: "bg-cyan-200 dark:bg-cyan-800/60",
+    lightColor: "bg-cyan-50/80 dark:bg-cyan-950/50",
+    textColor: "text-cyan-800 dark:text-cyan-200",
+    borderColor: "border-cyan-300 dark:border-cyan-700",
+    dotColor: "bg-cyan-400",
     icon: Shield,
   },
   training: {
     label: "Treinamento",
-    color: "bg-indigo-500",
-    lightColor: "bg-indigo-50 dark:bg-indigo-950",
-    textColor: "text-white",
-    borderColor: "border-indigo-400",
-    dotColor: "bg-indigo-500",
+    color: "bg-indigo-200 dark:bg-indigo-800/60",
+    lightColor: "bg-indigo-50/80 dark:bg-indigo-950/50",
+    textColor: "text-indigo-800 dark:text-indigo-200",
+    borderColor: "border-indigo-300 dark:border-indigo-700",
+    dotColor: "bg-indigo-400",
     icon: Sparkles,
   },
   grooming: {
     label: "Banho/Tosa",
-    color: "bg-pink-500",
-    lightColor: "bg-pink-50 dark:bg-pink-950",
-    textColor: "text-white",
-    borderColor: "border-pink-400",
-    dotColor: "bg-pink-500",
+    color: "bg-pink-200 dark:bg-pink-800/60",
+    lightColor: "bg-pink-50/80 dark:bg-pink-950/50",
+    textColor: "text-pink-800 dark:text-pink-200",
+    borderColor: "border-pink-300 dark:border-pink-700",
+    dotColor: "bg-pink-400",
     icon: Sparkles,
   },
 } as const;
@@ -847,7 +847,7 @@ function MonthView({
                       className={cn(
                         "flex items-center gap-1 px-1.5 py-0.5 rounded text-xs truncate",
                         isCompleted 
-                          ? "bg-green-500 text-white" 
+                          ? "bg-green-200 dark:bg-green-800/60 text-green-800 dark:text-green-200" 
                           : cn(config.color, config.textColor)
                       )}
                       onClick={(e) => {
@@ -930,7 +930,7 @@ function WeekView({
                       className={cn(
                         "p-2 rounded text-xs",
                         isCompleted
-                          ? "bg-green-500 text-white"
+                          ? "bg-green-200 dark:bg-green-800/60 text-green-800 dark:text-green-200"
                           : cn(config.color, config.textColor)
                       )}
                       onClick={(e) => {
@@ -1012,7 +1012,7 @@ function DayView({
                       className={cn(
                         "p-2 rounded text-sm cursor-pointer",
                         isCompleted
-                          ? "bg-green-500 text-white"
+                          ? "bg-green-200 dark:bg-green-800/60 text-green-800 dark:text-green-200"
                           : cn(config.color, config.textColor)
                       )}
                       onClick={() => onEventClick?.(event)}
