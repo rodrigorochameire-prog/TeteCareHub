@@ -154,15 +154,24 @@ export default function AdminCalendarPage() {
     return eventDate >= now && eventDate <= sevenDaysFromNow;
   }).slice(0, 10);
 
-  const handleCreateEvent = (eventData: Partial<CalendarEvent>) => {
+  const handleCreateEvent = (eventData: Record<string, unknown>) => {
     createEvent.mutate({
-      title: eventData.title!,
-      description: eventData.description || undefined,
-      eventDate: eventData.eventDate!.toISOString(),
-      endDate: eventData.endDate?.toISOString() || undefined,
-      eventType: eventData.eventType!,
-      petId: eventData.petId || undefined,
-      isAllDay: eventData.isAllDay ?? false,
+      title: eventData.title as string,
+      description: (eventData.description as string) || undefined,
+      eventDate: eventData.eventDate as string,
+      endDate: (eventData.endDate as string) || undefined,
+      eventType: eventData.eventType as string,
+      petId: eventData.petId as number | undefined,
+      isAllDay: (eventData.isAllDay as boolean) ?? false,
+      // Campos opcionais
+      notes: (eventData.notes as string) || undefined,
+      priority: (eventData.priority as string) || undefined,
+      reminderMinutes: (eventData.reminderMinutes as number) || undefined,
+      isRecurring: (eventData.isRecurring as boolean) || false,
+      recurrenceType: (eventData.recurrenceType as string) || undefined,
+      recurrenceInterval: (eventData.recurrenceInterval as number) || undefined,
+      recurrenceEndDate: (eventData.recurrenceEndDate as string) || undefined,
+      recurrenceCount: (eventData.recurrenceCount as number) || undefined,
     });
   };
 

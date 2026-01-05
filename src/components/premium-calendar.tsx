@@ -194,7 +194,7 @@ type PremiumCalendarProps = {
   events: CalendarEvent[];
   onEventClick?: (event: CalendarEvent) => void;
   onDateClick?: (date: Date) => void;
-  onCreateEvent?: (event: Partial<CalendarEvent>) => void;
+  onCreateEvent?: (event: Record<string, unknown>) => void;
   pets?: Array<{ id: number; name: string }>;
   showCreateButton?: boolean;
 };
