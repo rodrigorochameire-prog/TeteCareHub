@@ -42,7 +42,7 @@ export default function AuthRedirectPage() {
         setStatus("Redirecionando...");
 
         // Verificar o role no publicMetadata ou usar o do banco
-        const role = (user.publicMetadata as { role?: string })?.role || data.role || "user";
+        const role = (user?.publicMetadata as { role?: string })?.role || data.role || "user";
         
         console.log("[AuthRedirect] User synced:", email, "Role:", role);
 
