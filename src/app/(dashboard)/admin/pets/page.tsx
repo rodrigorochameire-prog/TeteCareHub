@@ -34,7 +34,7 @@ import {
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import { LoadingPage } from "@/components/shared/loading";
-import { PageHeader } from "@/components/shared/page-header";
+import { PageIcon } from "@/components/shared/page-icon";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -113,111 +113,72 @@ export default function AdminPetsPage() {
   }
 
   return (
-    <div className="space-y-6 animate-page-in">
-      {/* Header Premium */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-cyan-500/5 to-primary/10 rounded-2xl blur-xl" />
-        <div className="relative bg-gradient-to-br from-card via-card to-blue-500/5 rounded-2xl p-6 border shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white">
-                  <PawPrint className="h-6 w-6" />
-                </div>
-                Gestão de Pets
-              </h1>
-              <p className="text-muted-foreground mt-2">
-                Gerencie todos os pets cadastrados no sistema
-              </p>
-            </div>
-          </div>
+    <div className="space-y-6 animate-fade-in">
+      {/* Header - Clean e Minimalista */}
+      <div className="flex items-center gap-4 mb-8">
+        <PageIcon icon={PawPrint} size="lg" />
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Gestão de Pets</h1>
+          <p className="text-sm text-muted-foreground">
+            Gerencie todos os pets cadastrados no sistema
+          </p>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card className="group hover:shadow-md transition-all hover:-translate-y-0.5">
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">Total</p>
-              </div>
-              <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
-                <PawPrint className="h-4 w-4" />
-              </div>
+      {/* Stats Cards - Minimalista */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="border-border/50 hover:shadow-md transition-all duration-200">
+          <CardContent className="pt-5 pb-4">
+            <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 w-fit mb-3">
+              <PawPrint className="h-4 w-4 text-slate-600 dark:text-slate-400" />
             </div>
+            <p className="text-2xl font-semibold tracking-tight">{stats.total}</p>
+            <p className="text-xs text-muted-foreground">Total de pets</p>
           </CardContent>
         </Card>
 
-        <Card className="group hover:shadow-md transition-all hover:-translate-y-0.5">
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
-                <p className="text-xs text-muted-foreground">Aprovados</p>
-              </div>
-              <div className="p-2 rounded-lg bg-green-500/10 text-green-500">
-                <CheckCircle2 className="h-4 w-4" />
-              </div>
+        <Card className="border-border/50 hover:shadow-md transition-all duration-200">
+          <CardContent className="pt-5 pb-4">
+            <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 w-fit mb-3">
+              <CheckCircle2 className="h-4 w-4 text-slate-600 dark:text-slate-400" />
             </div>
+            <p className="text-2xl font-semibold tracking-tight">{stats.approved}</p>
+            <p className="text-xs text-muted-foreground">Aprovados</p>
           </CardContent>
         </Card>
 
-        <Card className={`group hover:shadow-md transition-all hover:-translate-y-0.5 ${stats.pending > 0 ? 'border-orange-500/50' : ''}`}>
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-2xl font-bold ${stats.pending > 0 ? 'text-orange-500' : ''}`}>{stats.pending}</p>
-                <p className="text-xs text-muted-foreground">Pendentes</p>
-              </div>
-              <div className={`p-2 rounded-lg bg-orange-500/10 text-orange-500 ${stats.pending > 0 ? 'animate-pulse' : ''}`}>
-                <Clock className="h-4 w-4" />
-              </div>
+        <Card className={`hover:shadow-md transition-all duration-200 ${stats.pending > 0 ? 'border-amber-300/50 dark:border-amber-700/50' : 'border-border/50'}`}>
+          <CardContent className="pt-5 pb-4">
+            <div className={`p-2 rounded-xl w-fit mb-3 ${stats.pending > 0 ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-slate-100 dark:bg-slate-800'}`}>
+              <Clock className={`h-4 w-4 ${stats.pending > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'}`} />
             </div>
+            <p className={`text-2xl font-semibold tracking-tight ${stats.pending > 0 ? 'text-amber-600 dark:text-amber-400' : ''}`}>{stats.pending}</p>
+            <p className="text-xs text-muted-foreground">Pendentes</p>
           </CardContent>
         </Card>
 
-        <Card className="group hover:shadow-md transition-all hover:-translate-y-0.5">
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold text-red-500">{stats.rejected}</p>
-                <p className="text-xs text-muted-foreground">Rejeitados</p>
-              </div>
-              <div className="p-2 rounded-lg bg-red-500/10 text-red-500">
-                <XCircle className="h-4 w-4" />
-              </div>
+        <Card className="border-border/50 hover:shadow-md transition-all duration-200">
+          <CardContent className="pt-5 pb-4">
+            <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 w-fit mb-3">
+              <Dog className="h-4 w-4 text-slate-600 dark:text-slate-400" />
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="group hover:shadow-md transition-all hover:-translate-y-0.5">
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold">{stats.dogs}</p>
-                <p className="text-xs text-muted-foreground">Cachorros</p>
-              </div>
-              <div className="p-2.5 rounded-xl bg-amber-500/10">
-                <Dog className="h-5 w-5 text-amber-600" />
-              </div>
-            </div>
+            <p className="text-2xl font-semibold tracking-tight">{stats.dogs}</p>
+            <p className="text-xs text-muted-foreground">Cachorros</p>
           </CardContent>
         </Card>
 
       </div>
 
-      {/* Pending Approvals - Highlighted */}
+      {/* Pending Approvals - Minimalista */}
       {pendingPets && pendingPets.length > 0 && (
-        <Card className="border-orange-500/30 bg-gradient-to-br from-orange-500/5 via-card to-amber-500/5 overflow-hidden">
+        <Card className="border-amber-200/50 dark:border-amber-800/30 bg-amber-50/50 dark:bg-amber-950/20">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-orange-500/20 animate-pulse">
-                <AlertCircle className="h-5 w-5 text-orange-500" />
+              <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/40">
+                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
               </div>
               <div>
-                <CardTitle className="text-orange-600 dark:text-orange-400">
+                <CardTitle className="text-base font-medium text-foreground">
                   Aguardando Aprovação
                 </CardTitle>
                 <CardDescription>

@@ -12,7 +12,7 @@ import {
   TrendingUp,
   ArrowUpRight,
   Clock,
-  Sparkles,
+  LayoutDashboard,
   Activity,
   PawPrint,
   Calendar,
@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { LoadingPage } from "@/components/shared/loading";
-import { PageHeader } from "@/components/shared/page-header";
+import { PageIcon } from "@/components/shared/page-icon";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -84,113 +84,86 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-8 animate-page-in">
-      {/* Header Premium */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-purple-500/5 to-pink-500/10 rounded-2xl blur-xl" />
-        <div className="relative bg-gradient-to-br from-card via-card to-primary/5 rounded-2xl p-6 border shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-purple-600 text-white">
-                  <Sparkles className="h-6 w-6" />
-                </div>
-                Dashboard
-              </h1>
-              <p className="text-muted-foreground mt-2 flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                {format(now, "EEEE, d 'de' MMMM", { locale: ptBR })}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button asChild variant="outline" className="group">
-                <Link href="/admin/calendar" className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 group-hover:text-primary transition-colors" />
-                  Calendário
-                </Link>
-              </Button>
-              <Button asChild className="bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 transition-opacity">
-                <Link href="/admin/pets" className="flex items-center gap-2">
-                  <PawPrint className="h-4 w-4" />
-                  Ver Pets
-                </Link>
-              </Button>
-            </div>
+    <div className="space-y-8 animate-fade-in">
+      {/* Header - Clean e Minimalista */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <PageIcon icon={LayoutDashboard} size="lg" />
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+            <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" />
+              {format(now, "EEEE, d 'de' MMMM", { locale: ptBR })}
+            </p>
           </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm" className="rounded-xl">
+            <Link href="/admin/calendar" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              <span className="hidden sm:inline">Calendário</span>
+            </Link>
+          </Button>
+          <Button asChild size="sm" className="rounded-xl">
+            <Link href="/admin/pets" className="flex items-center gap-2">
+              <PawPrint className="h-4 w-4" />
+              <span className="hidden sm:inline">Ver Pets</span>
+            </Link>
+          </Button>
         </div>
       </div>
 
-      {/* Stats Grid - Premium Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Pets */}
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Pets</CardTitle>
-            <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-all">
-              <Dog className="h-4 w-4" />
+      {/* Stats Grid - Minimalista */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Pets */}
+        <Card className="group hover:shadow-md transition-all duration-200 border-border/50">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800">
+                <Dog className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{totalPets}</div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-              <PawPrint className="h-3 w-3" />
-              pets cadastrados
-            </div>
+            <div className="text-2xl font-semibold tracking-tight">{totalPets}</div>
+            <p className="text-xs text-muted-foreground mt-0.5">Pets cadastrados</p>
           </CardContent>
         </Card>
 
         {/* Tutores */}
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tutores</CardTitle>
-            <div className="p-2 rounded-lg bg-green-500/10 text-green-500 group-hover:bg-green-500 group-hover:text-white transition-all">
-              <Users className="h-4 w-4" />
+        <Card className="group hover:shadow-md transition-all duration-200 border-border/50">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800">
+                <Users className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{totalTutors}</div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-              <Heart className="h-3 w-3" />
-              tutores ativos
-            </div>
+            <div className="text-2xl font-semibold tracking-tight">{totalTutors}</div>
+            <p className="text-xs text-muted-foreground mt-0.5">Tutores ativos</p>
           </CardContent>
         </Card>
 
         {/* Pendentes */}
-        <Card className={`group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden relative ${pendingCount > 0 ? 'border-orange-500/50' : ''}`}>
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-amber-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-            <div className={`p-2 rounded-lg ${pendingCount > 0 ? 'bg-orange-500/20 text-orange-500 animate-pulse' : 'bg-orange-500/10 text-orange-500'} group-hover:bg-orange-500 group-hover:text-white transition-all`}>
-              <AlertCircle className="h-4 w-4" />
+        <Card className={`group hover:shadow-md transition-all duration-200 ${pendingCount > 0 ? 'border-amber-300/50 dark:border-amber-700/50' : 'border-border/50'}`}>
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className={`p-2 rounded-xl ${pendingCount > 0 ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                <AlertCircle className={`h-4 w-4 ${pendingCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'}`} />
+              </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className={`text-3xl font-bold ${pendingCount > 0 ? 'text-orange-500' : ''}`}>{pendingCount}</div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-              <Clock className="h-3 w-3" />
-              aguardando aprovação
-            </div>
+            <div className={`text-2xl font-semibold tracking-tight ${pendingCount > 0 ? 'text-amber-600 dark:text-amber-400' : ''}`}>{pendingCount}</div>
+            <p className="text-xs text-muted-foreground mt-0.5">Aguardando aprovação</p>
           </CardContent>
         </Card>
 
         {/* Eventos Hoje */}
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Eventos Hoje</CardTitle>
-            <div className="p-2 rounded-lg bg-purple-500/10 text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-all">
-              <CalendarCheck className="h-4 w-4" />
+        <Card className="group hover:shadow-md transition-all duration-200 border-border/50">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800">
+                <CalendarCheck className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{todayEvents.length}</div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-              <Activity className="h-3 w-3" />
-              agendados para hoje
-            </div>
+            <div className="text-2xl font-semibold tracking-tight">{todayEvents.length}</div>
+            <p className="text-xs text-muted-foreground mt-0.5">Eventos hoje</p>
           </CardContent>
         </Card>
       </div>

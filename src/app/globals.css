@@ -129,26 +129,30 @@
   
   html {
     scroll-behavior: smooth;
-    font-size: 16px; /* Base maior para melhor legibilidade */
+    font-size: 17px; /* Base maior para melhor legibilidade */
   }
   
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
-    line-height: 1.6;
+    line-height: 1.65;
+    letter-spacing: -0.01em;
   }
 
-  /* Headings mais expressivos */
+  /* Headings - Clean e Sofisticados */
   h1 {
-    @apply text-3xl md:text-4xl font-bold tracking-tight;
+    @apply text-3xl md:text-4xl font-semibold tracking-tight;
+    letter-spacing: -0.02em;
   }
   
   h2 {
     @apply text-2xl md:text-3xl font-semibold tracking-tight;
+    letter-spacing: -0.015em;
   }
   
   h3 {
-    @apply text-xl md:text-2xl font-semibold;
+    @apply text-xl md:text-2xl font-medium;
+    letter-spacing: -0.01em;
   }
   
   h4 {
