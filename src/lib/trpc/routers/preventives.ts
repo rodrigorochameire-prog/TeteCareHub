@@ -31,6 +31,7 @@ const PREVENTIVE_TYPES = {
   flea: { label: "Antipulgas", emoji: "🦟", color: "#3b82f6" },
   deworming: { label: "Vermífugo", emoji: "💊", color: "#22c55e" },
   heartworm: { label: "Dirofilariose", emoji: "❤️", color: "#ef4444" },
+  tick: { label: "Carrapaticida", emoji: "🪲", color: "#f59e0b" },
 } as const;
 
 // Helper para criar evento no calendário
