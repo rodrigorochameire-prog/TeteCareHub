@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -213,6 +214,7 @@ function AdminSidebarContent({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { signOut } = useClerk();
   const { state, toggleSidebar, setOpen } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
@@ -263,9 +265,10 @@ function AdminSidebarContent({
   }, [isResizing, setSidebarWidth]);
 
   async function handleLogout() {
+    // Limpa a sessão customizada (cookies)
     await logoutAction();
-    router.push("/login");
-    router.refresh();
+    // Faz logout do Clerk e redireciona para a página inicial
+    await signOut({ redirectUrl: "/" });
   }
 
   return (
