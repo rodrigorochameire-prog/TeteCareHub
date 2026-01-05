@@ -4,7 +4,51 @@ import { db, calendarEvents, pets, petTutors } from "@/lib/db";
 import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
 import { Errors, safeAsync } from "@/lib/errors";
 import { idSchema, calendarEventSchema } from "@/lib/validations";
-import { startOfMonth, endOfMonth, startOfDay, endOfDay } from "date-fns";
+import { startOfMonth, endOfMonth, startOfDay, endOfDay, addDays, addWeeks, addMonths, addYears } from "date-fns";
+
+/**
+ * Gera as datas de ocorrência para eventos recorrentes
+ */
+function generateRecurrenceOccurrences(
+  startDate: Date,
+  recurrenceType: string,
+  interval: number,
+  endDate: Date | null,
+  maxCount: number,
+  recurrenceDays?: string | null
+): Date[] {
+  const occurrences: Date[] = [startDate];
+  let currentDate = new Date(startDate);
+  const maxOccurrences = Math.min(maxCount, 100); // limite de segurança
+  const limitDate = endDate || addYears(startDate, 1); // máximo 1 ano se não especificado
+
+  while (occurrences.length < maxOccurrences) {
+    switch (recurrenceType) {
+      case "daily":
+        currentDate = addDays(currentDate, interval);
+        break;
+      case "weekly":
+        currentDate = addWeeks(currentDate, interval);
+        break;
+      case "biweekly":
+        currentDate = addWeeks(currentDate, 2 * interval);
+        break;
+      case "monthly":
+        currentDate = addMonths(currentDate, interval);
+        break;
+      case "yearly":
+        currentDate = addYears(currentDate, interval);
+        break;
+      default:
+        return occurrences;
+    }
+
+    if (currentDate > limitDate) break;
+    occurrences.push(new Date(currentDate));
+  }
+
+  return occurrences;
+}
 
 // Tipos de eventos disponíveis
 export const EVENT_TYPES = {
@@ -190,7 +234,7 @@ export const calendarRouter = router({
     }),
 
   /**
-   * Cria novo evento
+   * Cria novo evento (com suporte a recorrência)
    */
   create: protectedProcedure
     .input(calendarEventSchema)
@@ -210,6 +254,9 @@ export const calendarRouter = router({
           }
         }
 
+        const eventColor = input.color || EVENT_TYPES[input.eventType as keyof typeof EVENT_TYPES]?.color || EVENT_TYPES.custom.color;
+
+        // Criar evento principal
         const [event] = await db
           .insert(calendarEvents)
           .values({
@@ -220,10 +267,56 @@ export const calendarRouter = router({
             eventType: input.eventType,
             petId: input.petId || null,
             isAllDay: input.isAllDay,
-            color: input.color || EVENT_TYPES[input.eventType as keyof typeof EVENT_TYPES]?.color || EVENT_TYPES.custom.color,
+            color: eventColor,
+            location: input.location || null,
+            notes: input.notes || null,
+            reminderMinutes: input.reminderMinutes || null,
+            priority: input.priority || "normal",
+            status: input.status || "scheduled",
+            isRecurring: input.isRecurring || false,
+            recurrenceType: input.recurrenceType || null,
+            recurrenceInterval: input.recurrenceInterval || 1,
+            recurrenceEndDate: input.recurrenceEndDate ? new Date(input.recurrenceEndDate) : null,
+            recurrenceCount: input.recurrenceCount || null,
+            recurrenceDays: input.recurrenceDays || null,
             createdById: ctx.user.id,
           })
           .returning();
+
+        // Se for evento recorrente, criar ocorrências futuras
+        if (input.isRecurring && input.recurrenceType) {
+          const occurrences = generateRecurrenceOccurrences(
+            new Date(input.eventDate),
+            input.recurrenceType,
+            input.recurrenceInterval || 1,
+            input.recurrenceEndDate ? new Date(input.recurrenceEndDate) : null,
+            input.recurrenceCount || 52, // máximo de 52 ocorrências por padrão
+            input.recurrenceDays
+          );
+
+          // Criar eventos filhos (pular o primeiro que já foi criado)
+          for (const occurrence of occurrences.slice(1)) {
+            await db.insert(calendarEvents).values({
+              title: input.title,
+              description: input.description || null,
+              eventDate: occurrence,
+              endDate: input.endDate ? new Date(occurrence.getTime() + (new Date(input.endDate).getTime() - new Date(input.eventDate).getTime())) : null,
+              eventType: input.eventType,
+              petId: input.petId || null,
+              isAllDay: input.isAllDay,
+              color: eventColor,
+              location: input.location || null,
+              notes: input.notes || null,
+              reminderMinutes: input.reminderMinutes || null,
+              priority: input.priority || "normal",
+              status: "scheduled",
+              isRecurring: true,
+              recurrenceType: input.recurrenceType || null,
+              parentEventId: event.id,
+              createdById: ctx.user.id,
+            });
+          }
+        }
 
         return event;
       }, "Erro ao criar evento");
@@ -236,11 +329,12 @@ export const calendarRouter = router({
     .input(
       calendarEventSchema.partial().extend({
         id: idSchema,
+        updateSeries: z.boolean().optional(), // Atualizar toda a série de eventos recorrentes
       })
     )
     .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
-        const { id, ...data } = input;
+        const { id, updateSeries, ...data } = input;
 
         // Verificar se evento existe
         const existing = await db.query.calendarEvents.findFirst({
@@ -257,7 +351,7 @@ export const calendarRouter = router({
         }
 
         // Preparar dados
-        const updateData: Record<string, unknown> = {};
+        const updateData: Record<string, unknown> = { updatedAt: new Date() };
         if (data.title) updateData.title = data.title;
         if (data.description !== undefined) updateData.description = data.description;
         if (data.eventDate) updateData.eventDate = new Date(data.eventDate);
@@ -266,12 +360,27 @@ export const calendarRouter = router({
         if (data.petId !== undefined) updateData.petId = data.petId;
         if (data.isAllDay !== undefined) updateData.isAllDay = data.isAllDay;
         if (data.color) updateData.color = data.color;
+        if (data.location !== undefined) updateData.location = data.location;
+        if (data.notes !== undefined) updateData.notes = data.notes;
+        if (data.reminderMinutes !== undefined) updateData.reminderMinutes = data.reminderMinutes;
+        if (data.priority !== undefined) updateData.priority = data.priority;
+        if (data.status !== undefined) updateData.status = data.status;
 
+        // Atualizar evento
         const [updated] = await db
           .update(calendarEvents)
           .set(updateData)
           .where(eq(calendarEvents.id, id))
           .returning();
+
+        // Se solicitado, atualizar toda a série
+        if (updateSeries && existing.parentEventId) {
+          // Atualizar eventos filhos do mesmo pai
+          await db
+            .update(calendarEvents)
+            .set({ title: data.title, description: data.description, color: data.color, location: data.location, notes: data.notes, priority: data.priority, updatedAt: new Date() })
+            .where(eq(calendarEvents.parentEventId, existing.parentEventId));
+        }
 
         return updated;
       }, "Erro ao atualizar evento");

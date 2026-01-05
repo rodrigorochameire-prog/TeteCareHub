@@ -174,6 +174,18 @@ export type CalendarEvent = {
   isAllDay: boolean;
   checkInDate?: Date | null;
   checkOutDate?: Date | null;
+  // Campos adicionais
+  notes?: string | null;
+  priority?: "low" | "normal" | "high" | "urgent";
+  status?: "scheduled" | "completed" | "cancelled";
+  reminderMinutes?: number | null;
+  // Campos de recorrência
+  isRecurring?: boolean;
+  recurrenceType?: "daily" | "weekly" | "biweekly" | "monthly" | "yearly" | null;
+  recurrenceInterval?: number;
+  recurrenceEndDate?: Date | null;
+  recurrenceCount?: number | null;
+  parentEventId?: number | null;
 };
 
 type ViewMode = "month" | "week" | "day" | "list";
@@ -1073,12 +1085,39 @@ function ListView({
 }
 
 // Create Event Form Component
+// Configurações de recorrência
+const RECURRENCE_OPTIONS = [
+  { value: "daily", label: "Diariamente" },
+  { value: "weekly", label: "Semanalmente" },
+  { value: "biweekly", label: "Quinzenalmente" },
+  { value: "monthly", label: "Mensalmente" },
+  { value: "yearly", label: "Anualmente" },
+];
+
+const PRIORITY_OPTIONS = [
+  { value: "low", label: "Baixa", color: "text-slate-500" },
+  { value: "normal", label: "Normal", color: "text-blue-500" },
+  { value: "high", label: "Alta", color: "text-orange-500" },
+  { value: "urgent", label: "Urgente", color: "text-red-500" },
+];
+
+const REMINDER_OPTIONS = [
+  { value: 0, label: "Sem lembrete" },
+  { value: 15, label: "15 minutos antes" },
+  { value: 30, label: "30 minutos antes" },
+  { value: 60, label: "1 hora antes" },
+  { value: 120, label: "2 horas antes" },
+  { value: 1440, label: "1 dia antes" },
+  { value: 2880, label: "2 dias antes" },
+  { value: 10080, label: "1 semana antes" },
+];
+
 function CreateEventForm({
   onSubmit,
   pets,
   initialDate,
 }: {
-  onSubmit: (event: Partial<CalendarEvent>) => void;
+  onSubmit: (event: Record<string, unknown>) => void;
   pets: Array<{ id: number; name: string }>;
   initialDate?: Date | null;
 }) {
@@ -1093,7 +1132,19 @@ function CreateEventForm({
     petId: "",
     location: "",
     isAllDay: false,
+    notes: "",
+    priority: "normal",
+    reminderMinutes: 0,
+    // Recorrência
+    isRecurring: false,
+    recurrenceType: "weekly",
+    recurrenceInterval: 1,
+    recurrenceEndType: "never" as "never" | "date" | "count",
+    recurrenceEndDate: "",
+    recurrenceCount: 10,
   });
+
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1113,20 +1164,38 @@ function CreateEventForm({
       }
     }
 
-    onSubmit({
+    const eventData: Record<string, unknown> = {
       title: formData.title,
       description: formData.description || undefined,
-      eventDate,
-      endDate,
+      eventDate: eventDate.toISOString(),
+      endDate: endDate?.toISOString(),
       eventType: formData.eventType,
-      petId: formData.petId ? parseInt(formData.petId) : undefined,
+      petId: formData.petId ? parseInt(formData.petId) : null,
       location: formData.location || undefined,
       isAllDay: formData.isAllDay,
-    });
+      notes: formData.notes || undefined,
+      priority: formData.priority,
+      reminderMinutes: formData.reminderMinutes || undefined,
+      isRecurring: formData.isRecurring,
+    };
+
+    // Adicionar dados de recorrência se habilitado
+    if (formData.isRecurring) {
+      eventData.recurrenceType = formData.recurrenceType;
+      eventData.recurrenceInterval = formData.recurrenceInterval;
+      if (formData.recurrenceEndType === "date" && formData.recurrenceEndDate) {
+        eventData.recurrenceEndDate = new Date(formData.recurrenceEndDate).toISOString();
+      } else if (formData.recurrenceEndType === "count") {
+        eventData.recurrenceCount = formData.recurrenceCount;
+      }
+    }
+
+    onSubmit(eventData);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+      {/* Título */}
       <div className="space-y-2">
         <Label htmlFor="title">Título *</Label>
         <Input
@@ -1138,31 +1207,35 @@ function CreateEventForm({
         />
       </div>
 
+      {/* Tipo e Pet */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="eventType">Tipo *</Label>
+          <Label>Tipo *</Label>
           <Select
             value={formData.eventType}
-            onValueChange={(value) =>
-              setFormData({ ...formData, eventType: value as EventType })
-            }
+            onValueChange={(value) => setFormData({ ...formData, eventType: value as EventType })}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(EVENT_TYPES).map(([key, config]) => (
-                <SelectItem key={key} value={key}>
-                  {(() => { const Icon = config.icon; return <Icon className="h-4 w-4 mr-2" />; })()}
-                  {config.label}
-                </SelectItem>
-              ))}
+              {Object.entries(EVENT_TYPES).map(([key, config]) => {
+                const Icon = config.icon;
+                return (
+                  <SelectItem key={key} value={key}>
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4" />
+                      {config.label}
+                    </div>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="petId">Pet</Label>
+          <Label>Pet</Label>
           <Select
             value={formData.petId}
             onValueChange={(value) => setFormData({ ...formData, petId: value })}
@@ -1174,7 +1247,10 @@ function CreateEventForm({
               <SelectItem value="">Nenhum</SelectItem>
               {pets.map((pet) => (
                 <SelectItem key={pet.id} value={pet.id.toString()}>
-                  {pet.name}
+                  <div className="flex items-center gap-2">
+                    <Dog className="h-4 w-4" />
+                    {pet.name}
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -1182,22 +1258,20 @@ function CreateEventForm({
         </div>
       </div>
 
+      {/* Data e Hora */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="eventDate">Data *</Label>
+          <Label>Data *</Label>
           <Input
-            id="eventDate"
             type="date"
             value={formData.eventDate}
             onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
             required
           />
         </div>
-
         <div className="space-y-2">
-          <Label htmlFor="eventTime">Hora</Label>
+          <Label>Hora</Label>
           <Input
-            id="eventTime"
             type="time"
             value={formData.eventTime}
             onChange={(e) => setFormData({ ...formData, eventTime: e.target.value })}
@@ -1206,31 +1280,33 @@ function CreateEventForm({
         </div>
       </div>
 
+      {/* Dia inteiro */}
       <div className="flex items-center gap-2">
         <Checkbox
           id="isAllDay"
           checked={formData.isAllDay}
-          onCheckedChange={(checked) =>
-            setFormData({ ...formData, isAllDay: checked as boolean })
-          }
+          onCheckedChange={(checked) => setFormData({ ...formData, isAllDay: checked as boolean })}
         />
         <Label htmlFor="isAllDay">Dia inteiro</Label>
       </div>
 
+      {/* Local */}
       <div className="space-y-2">
-        <Label htmlFor="location">Local</Label>
+        <Label className="flex items-center gap-2">
+          <MapPin className="h-4 w-4" />
+          Local
+        </Label>
         <Input
-          id="location"
           value={formData.location}
           onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-          placeholder="Ex: Clínica Veterinária"
+          placeholder="Ex: Clínica Veterinária, Petshop..."
         />
       </div>
 
+      {/* Descrição */}
       <div className="space-y-2">
-        <Label htmlFor="description">Descrição</Label>
+        <Label>Descrição</Label>
         <Textarea
-          id="description"
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           placeholder="Detalhes do evento..."
@@ -1238,8 +1314,181 @@ function CreateEventForm({
         />
       </div>
 
-      <DialogFooter>
-        <Button type="submit">Criar Evento</Button>
+      <Separator />
+
+      {/* Recorrência */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="isRecurring"
+            checked={formData.isRecurring}
+            onCheckedChange={(checked) => setFormData({ ...formData, isRecurring: checked as boolean })}
+          />
+          <Label htmlFor="isRecurring" className="flex items-center gap-2 cursor-pointer">
+            <CalendarDays className="h-4 w-4" />
+            Evento recorrente
+          </Label>
+        </div>
+
+        {formData.isRecurring && (
+          <div className="pl-6 space-y-3 border-l-2 border-primary/20">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Repetir</Label>
+                <Select
+                  value={formData.recurrenceType}
+                  onValueChange={(value) => setFormData({ ...formData, recurrenceType: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {RECURRENCE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>A cada</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min="1"
+                    max="365"
+                    value={formData.recurrenceInterval}
+                    onChange={(e) => setFormData({ ...formData, recurrenceInterval: parseInt(e.target.value) || 1 })}
+                    className="w-20"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {formData.recurrenceType === "daily" ? "dia(s)" :
+                     formData.recurrenceType === "weekly" || formData.recurrenceType === "biweekly" ? "semana(s)" :
+                     formData.recurrenceType === "monthly" ? "mês(es)" : "ano(s)"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Termina</Label>
+              <Select
+                value={formData.recurrenceEndType}
+                onValueChange={(value) => setFormData({ ...formData, recurrenceEndType: value as "never" | "date" | "count" })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="never">Nunca</SelectItem>
+                  <SelectItem value="date">Em uma data</SelectItem>
+                  <SelectItem value="count">Após X ocorrências</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {formData.recurrenceEndType === "date" && (
+              <Input
+                type="date"
+                value={formData.recurrenceEndDate}
+                onChange={(e) => setFormData({ ...formData, recurrenceEndDate: e.target.value })}
+                min={formData.eventDate}
+              />
+            )}
+
+            {formData.recurrenceEndType === "count" && (
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={formData.recurrenceCount}
+                  onChange={(e) => setFormData({ ...formData, recurrenceCount: parseInt(e.target.value) || 10 })}
+                  className="w-24"
+                />
+                <span className="text-sm text-muted-foreground">ocorrências</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Opções avançadas */}
+      <div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="text-muted-foreground"
+        >
+          {showAdvanced ? "- Menos opções" : "+ Mais opções"}
+        </Button>
+
+        {showAdvanced && (
+          <div className="mt-3 space-y-4 pt-3 border-t">
+            {/* Prioridade */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                Prioridade
+              </Label>
+              <Select
+                value={formData.priority}
+                onValueChange={(value) => setFormData({ ...formData, priority: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRIORITY_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      <span className={opt.color}>{opt.label}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Lembrete */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Bell className="h-4 w-4" />
+                Lembrete
+              </Label>
+              <Select
+                value={formData.reminderMinutes.toString()}
+                onValueChange={(value) => setFormData({ ...formData, reminderMinutes: parseInt(value) })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {REMINDER_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value.toString()}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Notas */}
+            <div className="space-y-2">
+              <Label>Notas adicionais</Label>
+              <Textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Anotações internas, observações..."
+                rows={2}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <DialogFooter className="pt-4 border-t">
+        <Button type="submit" className="w-full sm:w-auto">
+          <Plus className="h-4 w-4 mr-2" />
+          Criar Evento
+        </Button>
       </DialogFooter>
     </form>
   );

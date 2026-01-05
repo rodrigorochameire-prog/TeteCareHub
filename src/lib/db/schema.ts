@@ -87,10 +87,26 @@ export const calendarEvents = pgTable("calendar_events", {
   petId: integer("pet_id").references(() => pets.id, { onDelete: "cascade" }),
   isAllDay: boolean("is_all_day").default(true).notNull(),
   color: varchar("color", { length: 20 }),
+  // Campos adicionais para detalhamento
+  location: varchar("location", { length: 200 }), // Local do evento
+  notes: text("notes"), // Notas adicionais
+  reminderMinutes: integer("reminder_minutes"), // Lembrete X minutos antes
+  priority: varchar("priority", { length: 20 }).default("normal"), // 'low' | 'normal' | 'high' | 'urgent'
+  status: varchar("status", { length: 20 }).default("scheduled"), // 'scheduled' | 'completed' | 'cancelled'
+  // Campos para recorrência
+  isRecurring: boolean("is_recurring").default(false),
+  recurrenceType: varchar("recurrence_type", { length: 20 }), // 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly'
+  recurrenceInterval: integer("recurrence_interval").default(1), // A cada X dias/semanas/meses
+  recurrenceEndDate: timestamp("recurrence_end_date"), // Data final da recorrência
+  recurrenceCount: integer("recurrence_count"), // Número de ocorrências (alternativa a endDate)
+  recurrenceDays: varchar("recurrence_days", { length: 50 }), // Para weekly: "0,1,2,3,4" (Dom-Qui)
+  parentEventId: integer("parent_event_id"), // Referência ao evento pai (para séries)
+  // Metadados
   createdById: integer("created_by_id")
     .notNull()
     .references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export type CalendarEvent = typeof calendarEvents.$inferSelect;

@@ -102,9 +102,22 @@ export const calendarEventSchema = z.object({
   eventDate: z.string().datetime(),
   endDate: z.string().datetime().optional(),
   eventType: z.string().min(1).max(100),
-  petId: idSchema.optional(),
+  petId: idSchema.optional().nullable(),
   isAllDay: z.boolean().default(true),
   color: z.string().max(20).optional(),
+  // Campos adicionais
+  location: z.string().max(200).optional(),
+  notes: z.string().max(2000).optional(),
+  reminderMinutes: z.number().int().min(0).optional(),
+  priority: z.enum(["low", "normal", "high", "urgent"]).default("normal"),
+  status: z.enum(["scheduled", "completed", "cancelled"]).default("scheduled"),
+  // Campos de recorrência
+  isRecurring: z.boolean().default(false),
+  recurrenceType: z.enum(["daily", "weekly", "biweekly", "monthly", "yearly"]).optional(),
+  recurrenceInterval: z.number().int().min(1).max(365).default(1),
+  recurrenceEndDate: z.string().datetime().optional(),
+  recurrenceCount: z.number().int().min(1).max(365).optional(),
+  recurrenceDays: z.string().max(50).optional(), // "0,1,2,3,4" para dias da semana
 });
 
 // Solicitação de reserva
