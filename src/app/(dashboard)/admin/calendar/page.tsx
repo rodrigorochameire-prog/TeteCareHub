@@ -168,7 +168,7 @@ export default function AdminCalendarPage() {
       priority: (eventData.priority as "low" | "normal" | "high" | "urgent") || undefined,
       reminderMinutes: (eventData.reminderMinutes as number) || undefined,
       isRecurring: (eventData.isRecurring as boolean) || false,
-      recurrenceType: (eventData.recurrenceType as string) || undefined,
+      recurrenceType: (eventData.recurrenceType as "daily" | "weekly" | "biweekly" | "monthly" | "yearly") || undefined,
       recurrenceInterval: (eventData.recurrenceInterval as number) || undefined,
       recurrenceEndDate: (eventData.recurrenceEndDate as string) || undefined,
       recurrenceCount: (eventData.recurrenceCount as number) || undefined,
