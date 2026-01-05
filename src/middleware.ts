@@ -7,36 +7,28 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/auth-redirect",
   "/api/webhooks(.*)",
+  "/api/auth(.*)", // Permitir rotas de auth
 ]);
 
-const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
-const isTutorRoute = createRouteMatcher(["/tutor(.*)"]);
-
 export default clerkMiddleware(async (auth, req) => {
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
 
+  // Rotas públicas não precisam de autenticação
   if (isPublicRoute(req)) {
     return NextResponse.next();
   }
 
+  // Se não está autenticado, redirecionar para login
   if (!userId) {
     const signInUrl = new URL("/sign-in", req.url);
     signInUrl.searchParams.set("redirect_url", req.url);
     return NextResponse.redirect(signInUrl);
   }
 
-  // O Clerk armazena em publicMetadata ou public_metadata
-  const publicMeta = (sessionClaims as any)?.publicMetadata || (sessionClaims as any)?.public_metadata || {};
-  const userRole = publicMeta?.role || "tutor";
-
-  if (isAdminRoute(req) && userRole !== "admin") {
-    return NextResponse.redirect(new URL("/tutor", req.url));
-  }
-
-  if (isTutorRoute(req) && userRole === "admin") {
-    return NextResponse.redirect(new URL("/admin", req.url));
-  }
-
+  // IMPORTANTE: NÃO fazer verificação de role aqui
+  // A verificação de permissões é feita nos layouts de admin e tutor
+  // que consultam o banco de dados (fonte de verdade)
+  
   return NextResponse.next();
 });
 
