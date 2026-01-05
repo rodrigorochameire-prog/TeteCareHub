@@ -178,7 +178,7 @@ export default function AdminPetsPage() {
       weight: formData.get("weight") ? parseFloat(formData.get("weight") as string) : undefined,
       notes: formData.get("notes") as string || undefined,
       credits: formData.get("credits") ? parseInt(formData.get("credits") as string) : undefined,
-      approvalStatus: formData.get("approvalStatus") as string || undefined,
+      approvalStatus: (formData.get("approvalStatus") as "pending" | "approved" | "rejected") || undefined,
     });
   };
 
