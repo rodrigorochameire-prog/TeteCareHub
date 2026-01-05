@@ -538,7 +538,7 @@ export default function AdminPetsPage() {
           <DialogHeader>
             <DialogTitle>Confirmar Exclusão</DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja excluir o pet "{selectedPet?.name}"? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir o pet &quot;{selectedPet?.name}&quot;? Esta ação não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
