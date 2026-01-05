@@ -42,11 +42,11 @@ import {
 import { toast } from "sonner";
 
 const moodOptions = [
-  { value: "happy", label: "Feliz", icon: Smile, color: "text-green-600" },
-  { value: "calm", label: "Calmo", icon: Meh, color: "text-blue-600" },
-  { value: "anxious", label: "Ansioso", icon: Frown, color: "text-yellow-600" },
-  { value: "tired", label: "Cansado", icon: Meh, color: "text-gray-600" },
-  { value: "agitated", label: "Agitado", icon: Frown, color: "text-red-600" },
+  { value: "happy", label: "Feliz", icon: Smile, color: "text-emerald-600 dark:text-emerald-400" },
+  { value: "calm", label: "Calmo", icon: Meh, color: "text-sky-600 dark:text-sky-400" },
+  { value: "anxious", label: "Ansioso", icon: Frown, color: "text-amber-600 dark:text-amber-400" },
+  { value: "tired", label: "Cansado", icon: Meh, color: "text-muted-foreground" },
+  { value: "agitated", label: "Agitado", icon: Frown, color: "text-primary" },
 ];
 
 const stoolOptions = [
@@ -103,19 +103,24 @@ export default function TutorLogs() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="page-container">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Logs Diários</h1>
-          <p className="text-muted-foreground mt-2">
-            Registre o dia a dia dos seus pets
-          </p>
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <Calendar />
+          </div>
+          <div className="page-header-info">
+            <h1>Logs Diários</h1>
+            <p>Registre o dia a dia dos seus pets</p>
+          </div>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Log
-        </Button>
+        <div className="page-header-actions">
+          <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="btn-sm btn-primary">
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
+            Novo Log
+          </Button>
+        </div>
       </div>
 
       {/* Pet Selector */}

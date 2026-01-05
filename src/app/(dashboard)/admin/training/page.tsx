@@ -34,22 +34,27 @@ import {
   Timer,
   TrendingUp,
   Sparkles,
-  Star
+  Star,
+  Users,
+  Brain,
+  Zap,
+  RefreshCw,
+  type LucideIcon
 } from "lucide-react";
 import { toast } from "sonner";
 
-const categoryOptions = [
-  { value: "obedience", label: "Obediência", icon: "🎯", color: "bg-blue-100 text-blue-700" },
-  { value: "socialization", label: "Socialização", icon: "🤝", color: "bg-green-100 text-green-700" },
-  { value: "behavior", label: "Comportamento", icon: "🧠", color: "bg-purple-100 text-purple-700" },
-  { value: "agility", label: "Agilidade", icon: "🏃", color: "bg-orange-100 text-orange-700" },
-  { value: "tricks", label: "Truques", icon: "✨", color: "bg-pink-100 text-pink-700" },
+const categoryOptions: { value: string; label: string; icon: LucideIcon }[] = [
+  { value: "obedience", label: "Obediência", icon: Target },
+  { value: "socialization", label: "Socialização", icon: Users },
+  { value: "behavior", label: "Comportamento", icon: Brain },
+  { value: "agility", label: "Agilidade", icon: Zap },
+  { value: "tricks", label: "Truques", icon: Sparkles },
 ];
 
-const statusOptions = [
-  { value: "learning", label: "Aprendendo", icon: "📚", color: "bg-yellow-100 text-yellow-700" },
-  { value: "practicing", label: "Praticando", icon: "🔄", color: "bg-blue-100 text-blue-700" },
-  { value: "mastered", label: "Dominado", icon: "⭐", color: "bg-green-100 text-green-700" },
+const statusOptions: { value: string; label: string; icon: LucideIcon }[] = [
+  { value: "learning", label: "Aprendendo", icon: BookOpen },
+  { value: "practicing", label: "Praticando", icon: RefreshCw },
+  { value: "mastered", label: "Dominado", icon: Star },
 ];
 
 const methodOptions = [
@@ -176,16 +181,21 @@ export default function AdminTraining() {
             >
               Todos
             </Button>
-            {categoryOptions.map((cat) => (
-              <Button
-                key={cat.value}
-                variant={selectedCategory === cat.value ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(cat.value)}
-              >
-                {cat.icon} {cat.label}
-              </Button>
-            ))}
+            {categoryOptions.map((cat) => {
+              const IconComponent = cat.icon;
+              return (
+                <Button
+                  key={cat.value}
+                  variant={selectedCategory === cat.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedCategory(cat.value)}
+                  className="gap-1.5"
+                >
+                  <IconComponent className="h-3.5 w-3.5" />
+                  {cat.label}
+                </Button>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
@@ -195,6 +205,8 @@ export default function AdminTraining() {
         {logs?.map((log) => {
           const category = categoryOptions.find(c => c.value === log.category);
           const status = statusOptions.find(s => s.value === log.status);
+          const StatusIcon = status?.icon || Star;
+          const CategoryIcon = category?.icon || Target;
           
           return (
             <Card key={log.id} className="hover:shadow-md transition-shadow">
@@ -205,11 +217,11 @@ export default function AdminTraining() {
                       <img
                         src={log.pet.photoUrl}
                         alt={log.pet.name}
-                        className="h-12 w-12 rounded-full object-cover border-2 border-primary/20"
+                        className="h-12 w-12 rounded-full object-cover border-2 border-border"
                       />
                     ) : (
-                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Dog className="h-6 w-6 text-primary" />
+                      <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                        <Dog className="h-6 w-6 text-muted-foreground" />
                       </div>
                     )}
                     <div>
@@ -219,16 +231,21 @@ export default function AdminTraining() {
                       </CardDescription>
                     </div>
                   </div>
-                  <Badge className={status?.color || ""}>
-                    {status?.icon} {status?.label}
+                  <Badge 
+                    variant={log.status === "mastered" ? "success" : log.status === "practicing" ? "default" : "secondary"}
+                    className="gap-1"
+                  >
+                    <StatusIcon className="h-3 w-3" />
+                    {status?.label}
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-lg">{log.command}</span>
-                  <Badge variant="outline" className={category?.color || ""}>
-                    {category?.icon} {category?.label}
+                  <Badge variant="outline" className="gap-1">
+                    <CategoryIcon className="h-3 w-3" />
+                    {category?.label}
                   </Badge>
                 </div>
 
@@ -353,11 +370,17 @@ export default function AdminTraining() {
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categoryOptions.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.icon} {opt.label}
-                      </SelectItem>
-                    ))}
+                    {categoryOptions.map((opt) => {
+                      const IconComponent = opt.icon;
+                      return (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          <span className="flex items-center gap-2">
+                            <IconComponent className="h-4 w-4 text-muted-foreground" />
+                            {opt.label}
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
@@ -369,11 +392,17 @@ export default function AdminTraining() {
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    {statusOptions.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.icon} {opt.label}
-                      </SelectItem>
-                    ))}
+                    {statusOptions.map((opt) => {
+                      const IconComponent = opt.icon;
+                      return (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          <span className="flex items-center gap-2">
+                            <IconComponent className="h-4 w-4 text-muted-foreground" />
+                            {opt.label}
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
