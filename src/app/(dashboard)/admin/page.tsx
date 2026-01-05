@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Dog, 
+  Dog,
+  Cat, 
   Users, 
   CalendarCheck, 
   AlertCircle, 
@@ -285,8 +286,8 @@ export default function AdminDashboard() {
                     key={pet.id}
                     className="flex items-center gap-3 p-3 rounded-xl border bg-card hover:bg-accent/50 transition-all"
                   >
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center text-xl">
-                      {pet.species === "cat" ? "🐱" : "🐶"}
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/10 to-violet-500/10 flex items-center justify-center">
+                      {pet.species === "cat" ? <Cat className="h-5 w-5 text-violet-500" /> : <Dog className="h-5 w-5 text-primary" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{pet.name}</p>

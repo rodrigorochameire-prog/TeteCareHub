@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { 
   Dog, 
+  Cat,
   Check, 
   X, 
   Search,
@@ -198,10 +199,10 @@ export default function AdminPetsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold">{stats.dogs}</p>
-                <p className="text-xs text-muted-foreground">Cachorros 🐶</p>
+                <p className="text-xs text-muted-foreground">Cachorros</p>
               </div>
-              <div className="p-2 rounded-lg bg-amber-500/10">
-                <span className="text-lg">🐶</span>
+              <div className="p-2.5 rounded-xl bg-amber-500/10">
+                <Dog className="h-5 w-5 text-amber-600" />
               </div>
             </div>
           </CardContent>
@@ -212,10 +213,10 @@ export default function AdminPetsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold">{stats.cats}</p>
-                <p className="text-xs text-muted-foreground">Gatos 🐱</p>
+                <p className="text-xs text-muted-foreground">Gatos</p>
               </div>
-              <div className="p-2 rounded-lg bg-purple-500/10">
-                <span className="text-lg">🐱</span>
+              <div className="p-2.5 rounded-xl bg-violet-500/10">
+                <Cat className="h-5 w-5 text-violet-600" />
               </div>
             </div>
           </CardContent>
@@ -248,8 +249,8 @@ export default function AdminPetsPage() {
                   className="flex items-center justify-between p-4 bg-card rounded-xl border hover:border-primary/30 hover:shadow-sm transition-all group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-orange-500/20 to-amber-500/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                      {pet.species === "cat" ? "🐱" : "🐶"}
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      {pet.species === "cat" ? <Cat className="h-6 w-6 text-violet-500" /> : <Dog className="h-6 w-6 text-amber-500" />}
                     </div>
                     <div>
                       <p className="font-medium">{pet.name}</p>
@@ -325,8 +326,8 @@ export default function AdminPetsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="dog">🐶 Cachorros</SelectItem>
-                  <SelectItem value="cat">🐱 Gatos</SelectItem>
+                  <SelectItem value="dog">Cachorros</SelectItem>
+                  <SelectItem value="cat">Gatos</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -370,8 +371,8 @@ export default function AdminPetsPage() {
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
-                          {pet.species === "cat" ? "🐱" : "🐶"}
+                        <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/10 to-violet-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          {pet.species === "cat" ? <Cat className="h-7 w-7 text-violet-500" /> : <Dog className="h-7 w-7 text-primary" />}
                         </div>
                         <div>
                           <p className="font-semibold text-lg">{pet.name}</p>
@@ -460,7 +461,9 @@ export default function AdminPetsPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
-              <span className="text-3xl">{selectedPet?.species === "cat" ? "🐱" : "🐶"}</span>
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/10 to-violet-500/10 flex items-center justify-center">
+                {selectedPet?.species === "cat" ? <Cat className="h-5 w-5 text-violet-500" /> : <Dog className="h-5 w-5 text-primary" />}
+              </div>
               {selectedPet?.name}
             </DialogTitle>
             <DialogDescription>

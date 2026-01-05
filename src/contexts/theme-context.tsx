@@ -26,14 +26,14 @@ function getResolvedTheme(theme: Theme): "light" | "dark" {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("system");
+  const [theme, setThemeState] = useState<Theme>("light");
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
   const [mounted, setMounted] = useState(false);
 
-  // Initialize theme from localStorage
+  // Initialize theme from localStorage - default to light
   useEffect(() => {
     const stored = localStorage.getItem("theme") as Theme | null;
-    const initialTheme = stored || "system";
+    const initialTheme = stored || "light"; // Padrão: modo claro
     setThemeState(initialTheme);
     setResolvedTheme(getResolvedTheme(initialTheme));
     setMounted(true);

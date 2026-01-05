@@ -347,13 +347,15 @@ function AdminSidebarContent({
                               />
                             )}
                             <item.icon
-                              className={`h-5 w-5 relative z-10 transition-transform duration-200 ${
+                              className={`h-5 w-5 relative z-10 transition-all duration-200 ${
                                 isActive
                                   ? `${colors.iconActive}`
-                                  : `${colors.iconHover} group-hover:scale-110`
+                                  : `text-muted-foreground/70 group-hover:text-foreground group-hover:scale-105`
                               }`}
                             />
-                            <span className="relative z-10 font-medium text-sm">
+                            <span className={`relative z-10 font-medium text-sm ${
+                              isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+                            }`}>
                               {item.label}
                             </span>
                             {isActive && !isCollapsed && (
