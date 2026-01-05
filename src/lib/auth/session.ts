@@ -1,4 +1,4 @@
-import { currentUser } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { db, users, type User } from "@/lib/db";
 import { eq } from "drizzle-orm";
 
@@ -8,23 +8,41 @@ import { eq } from "drizzle-orm";
  */
 export async function getSession(): Promise<User | null> {
   try {
-    // Obter usuário do Clerk
+    // Verificar se está autenticado
+    const { userId } = await auth();
+    
+    if (!userId) {
+      console.log("[getSession] No userId from Clerk auth()");
+      return null;
+    }
+
+    // Obter dados completos do usuário Clerk
     const clerkUser = await currentUser();
     
     if (!clerkUser) {
+      console.log("[getSession] No clerkUser from currentUser()");
       return null;
     }
 
     const email = clerkUser.emailAddresses[0]?.emailAddress;
     
     if (!email) {
+      console.log("[getSession] No email found in clerkUser");
       return null;
     }
+
+    console.log("[getSession] Looking for user with email:", email);
 
     // Buscar usuário no banco pelo email
     const user = await db.query.users.findFirst({
       where: eq(users.email, email),
     });
+
+    if (user) {
+      console.log("[getSession] Found user:", user.id, user.role);
+    } else {
+      console.log("[getSession] User not found in database");
+    }
 
     return user ?? null;
   } catch (error) {
