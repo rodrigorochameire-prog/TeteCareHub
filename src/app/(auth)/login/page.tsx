@@ -8,7 +8,7 @@ export default function LoginPage() {
     { icon: Dog, text: "Gestão completa de pets", color: "text-amber-500" },
     { icon: ShieldCheck, text: "Controle de vacinas e saúde", color: "text-rose-400" },
     { icon: Calendar, text: "Calendário inteligente", color: "text-blue-400" },
-    { icon Heart, text: "Cuidado personalizado", color: "text-rose-400" },
+    { icon: Heart, text: "Cuidado personalizado", color: "text-rose-400" },
   ];
 
   return (
