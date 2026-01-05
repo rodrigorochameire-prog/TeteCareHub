@@ -24,7 +24,12 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(signInUrl);
   }
 
-  const userRole = (sessionClaims?.metadata as { role?: string })?.role || "tutor";
+  // O Clerk armazena em publicMetadata ou public_metadata
+  const publicMeta = (sessionClaims as any)?.publicMetadata || (sessionClaims as any)?.public_metadata || {};
+  const userRole = publicMeta?.role || "tutor";
+  
+  // Debug: log para verificar
+  console.log("[Middleware] userId:", userId, "role:", userRole, "claims:", JSON.stringify(sessionClaims));
 
   if (isAdminRoute(req) && userRole !== "admin") {
     return NextResponse.redirect(new URL("/tutor", req.url));
