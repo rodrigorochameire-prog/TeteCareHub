@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -22,14 +24,19 @@ import {
   PawPrint,
   Clock,
   CheckCircle2,
-  XCircle,
   CreditCard,
   Calendar,
   Eye,
   MoreVertical,
-  Sparkles,
   AlertCircle,
-  ArrowUpRight
+  ArrowUpRight,
+  Plus,
+  Edit,
+  Trash2,
+  Save,
+  User,
+  Phone,
+  Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
@@ -38,6 +45,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -46,19 +54,23 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import Link from "next/link";
 
 export default function AdminPetsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [speciesFilter, setSpeciesFilter] = useState<string>("all");
   const [selectedPet, setSelectedPet] = useState<any>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const utils = trpc.useUtils();
   const { data: pets, isLoading } = trpc.pets.list.useQuery();
   const { data: pendingPets } = trpc.pets.pending.useQuery();
+  const { data: tutors } = trpc.users.tutors.useQuery();
 
   const approveMutation = trpc.pets.approve.useMutation({
     onSuccess: () => {
@@ -66,9 +78,7 @@ export default function AdminPetsPage() {
       utils.pets.list.invalidate();
       utils.pets.pending.invalidate();
     },
-    onError: (error) => {
-      toast.error(error.message);
-    },
+    onError: (error) => toast.error(error.message),
   });
 
   const rejectMutation = trpc.pets.reject.useMutation({
@@ -77,9 +87,44 @@ export default function AdminPetsPage() {
       utils.pets.list.invalidate();
       utils.pets.pending.invalidate();
     },
-    onError: (error) => {
-      toast.error(error.message);
+    onError: (error) => toast.error(error.message),
+  });
+
+  const createPetMutation = trpc.pets.adminCreate.useMutation({
+    onSuccess: () => {
+      toast.success("Pet criado com sucesso!");
+      setIsCreateOpen(false);
+      utils.pets.list.invalidate();
     },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const updatePetMutation = trpc.pets.adminUpdate.useMutation({
+    onSuccess: () => {
+      toast.success("Pet atualizado com sucesso!");
+      setIsEditOpen(false);
+      setSelectedPet(null);
+      utils.pets.list.invalidate();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const deletePetMutation = trpc.pets.adminDelete.useMutation({
+    onSuccess: () => {
+      toast.success("Pet excluído com sucesso!");
+      setIsDeleteConfirmOpen(false);
+      setSelectedPet(null);
+      utils.pets.list.invalidate();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const addCreditsMutation = trpc.pets.addCredits.useMutation({
+    onSuccess: () => {
+      toast.success("Créditos adicionados!");
+      utils.pets.list.invalidate();
+    },
+    onError: (error) => toast.error(error.message),
   });
 
   // Filtered pets
@@ -90,22 +135,56 @@ export default function AdminPetsPage() {
         pet.name.toLowerCase().includes(search.toLowerCase()) ||
         pet.breed?.toLowerCase().includes(search.toLowerCase());
       const matchesStatus = statusFilter === "all" || pet.approvalStatus === statusFilter;
-      const matchesSpecies = speciesFilter === "all" || pet.species === speciesFilter;
-      return matchesSearch && matchesStatus && matchesSpecies;
+      return matchesSearch && matchesStatus;
     });
-  }, [pets, search, statusFilter, speciesFilter]);
+  }, [pets, search, statusFilter]);
 
   // Stats
   const stats = useMemo(() => {
-    if (!pets) return { total: 0, approved: 0, pending: 0, rejected: 0, dogs: 0 };
+    if (!pets) return { total: 0, approved: 0, pending: 0, totalCredits: 0 };
     return {
       total: pets.length,
       approved: pets.filter(p => p.approvalStatus === "approved").length,
       pending: pets.filter(p => p.approvalStatus === "pending").length,
-      rejected: pets.filter(p => p.approvalStatus === "rejected").length,
-      dogs: pets.length, // Todos são cachorros
+      totalCredits: pets.reduce((sum, p) => sum + (p.credits || 0), 0),
     };
   }, [pets]);
+
+  const handleCreatePet = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    createPetMutation.mutate({
+      name: formData.get("name") as string,
+      species: "dog",
+      breed: formData.get("breed") as string || undefined,
+      birthDate: formData.get("birthDate") as string || undefined,
+      weight: formData.get("weight") ? parseFloat(formData.get("weight") as string) : undefined,
+      notes: formData.get("notes") as string || undefined,
+      tutorId: formData.get("tutorId") ? parseInt(formData.get("tutorId") as string) : undefined,
+      credits: formData.get("credits") ? parseInt(formData.get("credits") as string) : 0,
+      approvalStatus: "approved",
+    });
+  };
+
+  const handleUpdatePet = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!selectedPet) return;
+    const formData = new FormData(e.currentTarget);
+    updatePetMutation.mutate({
+      id: selectedPet.id,
+      name: formData.get("name") as string,
+      breed: formData.get("breed") as string || undefined,
+      birthDate: formData.get("birthDate") as string || undefined,
+      weight: formData.get("weight") ? parseFloat(formData.get("weight") as string) : undefined,
+      notes: formData.get("notes") as string || undefined,
+      credits: formData.get("credits") ? parseInt(formData.get("credits") as string) : undefined,
+      approvalStatus: formData.get("approvalStatus") as string || undefined,
+    });
+  };
+
+  const handleQuickAddCredits = (petId: number, amount: number) => {
+    addCreditsMutation.mutate({ petId, credits: amount });
+  };
 
   if (isLoading) {
     return <LoadingPage />;
@@ -124,13 +203,19 @@ export default function AdminPetsPage() {
             <p>Gerencie todos os pets cadastrados</p>
           </div>
         </div>
+        <div className="page-header-actions">
+          <Button onClick={() => setIsCreateOpen(true)} size="sm" className="btn-sm btn-primary">
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
+            Novo Pet
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
       <div className="stats-row">
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-title">Total de Pets</span>
+            <span className="stat-card-title">Total</span>
             <PawPrint className="stat-card-icon primary" />
           </div>
           <div className="stat-card-value">{stats.total}</div>
@@ -154,55 +239,40 @@ export default function AdminPetsPage() {
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-title">Cachorros</span>
-            <Dog className="stat-card-icon primary" />
+            <span className="stat-card-title">Créditos Totais</span>
+            <CreditCard className="stat-card-icon blue" />
           </div>
-          <div className="stat-card-value">{stats.dogs}</div>
+          <div className="stat-card-value">{stats.totalCredits}</div>
         </div>
       </div>
 
-      {/* Pending Approvals - Minimalista */}
+      {/* Pending Approvals */}
       {pendingPets && pendingPets.length > 0 && (
-        <Card className="border-amber-200/50 dark:border-amber-800/30 bg-amber-50/50 dark:bg-amber-950/20">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/40">
-                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-              </div>
-              <div>
-                <CardTitle className="text-base font-medium text-foreground">
-                  Aguardando Aprovação
-                </CardTitle>
-                <CardDescription>
-                  {pendingPets.length} pet{pendingPets.length > 1 ? 's' : ''} precisam de sua atenção
-                </CardDescription>
-              </div>
+        <div className="section-card border-amber-200/50 dark:border-amber-800/30 bg-amber-50/30 dark:bg-amber-950/10">
+          <div className="section-card-header">
+            <div className="section-card-title">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+              Aguardando Aprovação ({pendingPets.length})
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="section-card-content">
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {pendingPets.slice(0, 6).map((pet) => (
-                <div
-                  key={pet.id}
-                  className="flex items-center justify-between p-4 bg-card rounded-xl border hover:border-primary/30 hover:shadow-sm transition-all group"
-                >
+                <div key={pet.id} className="flex items-center justify-between p-3 bg-card rounded-xl border">
                   <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Dog className="h-6 w-6 text-primary" />
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Dog className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium">{pet.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {pet.breed || "Sem raça"} • {formatDate(pet.createdAt)}
-                      </p>
+                      <p className="font-medium text-sm">{pet.name}</p>
+                      <p className="text-xs text-muted-foreground">{pet.breed || "Sem raça"}</p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1.5">
                     <Button
                       size="sm"
                       onClick={() => approveMutation.mutate({ id: pet.id })}
-                      disabled={approveMutation.isPending}
-                      className="bg-green-500 hover:bg-green-600"
+                      className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600"
                     >
                       <Check className="h-4 w-4" />
                     </Button>
@@ -210,8 +280,7 @@ export default function AdminPetsPage() {
                       size="sm"
                       variant="outline"
                       onClick={() => rejectMutation.mutate({ id: pet.id })}
-                      disabled={rejectMutation.isPending}
-                      className="hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30"
+                      className="h-8 w-8 p-0"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -219,261 +288,331 @@ export default function AdminPetsPage() {
                 </div>
               ))}
             </div>
-            {pendingPets.length > 6 && (
-              <div className="text-center mt-4">
-                <Button variant="outline" onClick={() => setStatusFilter("pending")}>
-                  Ver todos ({pendingPets.length})
-                  <ArrowUpRight className="h-4 w-4 ml-2" />
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nome ou raça..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="approved">Aprovados</SelectItem>
-                  <SelectItem value="pending">Pendentes</SelectItem>
-                  <SelectItem value="rejected">Rejeitados</SelectItem>
-                </SelectContent>
-              </Select>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome ou raça..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[160px]">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="approved">Aprovados</SelectItem>
+            <SelectItem value="pending">Pendentes</SelectItem>
+            <SelectItem value="rejected">Rejeitados</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-              <Select value={speciesFilter} onValueChange={setSpeciesFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Espécie" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="dog">Cachorros</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* All Pets Grid */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Dog className="h-5 w-5 text-primary" />
+      {/* Pets Grid */}
+      <div className="section-card">
+        <div className="section-card-header">
+          <div className="section-card-title">
+            <Dog />
             Todos os Pets
-            <Badge variant="secondary" className="ml-2">
-              {filteredPets.length}
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+            <Badge variant="secondary" className="ml-2">{filteredPets.length}</Badge>
+          </div>
+        </div>
+        <div className="section-card-content">
           {filteredPets.length === 0 ? (
-            <div className="text-center py-12">
-              <Dog className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
-              <p className="text-lg font-medium text-muted-foreground">Nenhum pet encontrado</p>
-              <p className="text-sm text-muted-foreground/70 mt-1">
-                {search || statusFilter !== "all" || speciesFilter !== "all"
-                  ? "Tente ajustar os filtros"
-                  : "Nenhum pet cadastrado ainda"}
-              </p>
+            <div className="empty-state">
+              <div className="empty-state-icon"><Dog /></div>
+              <p className="empty-state-text">Nenhum pet encontrado</p>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {filteredPets.map((pet) => (
-                <Card
-                  key={pet.id}
-                  className="group hover:shadow-lg transition-all hover:-translate-y-1 overflow-hidden cursor-pointer"
-                  onClick={() => {
-                    setSelectedPet(pet);
-                    setIsDetailOpen(true);
-                  }}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/10 to-violet-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Dog className="h-7 w-7 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-lg">{pet.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {pet.breed || "Sem raça definida"}
-                          </p>
-                        </div>
+                <div key={pet.id} className="p-4 rounded-xl border bg-card hover:border-primary/30 transition-all group">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Dog className="h-6 w-6 text-primary" />
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedPet(pet);
-                            setIsDetailOpen(true);
-                          }}>
-                            <Eye className="h-4 w-4 mr-2" />
-                            Ver Detalhes
+                      <div>
+                        <p className="font-semibold">{pet.name}</p>
+                        <p className="text-sm text-muted-foreground">{pet.breed || "Sem raça"}</p>
+                      </div>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => { setSelectedPet(pet); setIsDetailOpen(true); }}>
+                          <Eye className="h-4 w-4 mr-2" /> Ver Detalhes
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setSelectedPet(pet); setIsEditOpen(true); }}>
+                          <Edit className="h-4 w-4 mr-2" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleQuickAddCredits(pet.id, 5)}>
+                          <CreditCard className="h-4 w-4 mr-2" /> +5 Créditos
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleQuickAddCredits(pet.id, 10)}>
+                          <CreditCard className="h-4 w-4 mr-2" /> +10 Créditos
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {pet.approvalStatus !== "approved" && (
+                          <DropdownMenuItem onClick={() => approveMutation.mutate({ id: pet.id })}>
+                            <Check className="h-4 w-4 mr-2 text-green-500" /> Aprovar
                           </DropdownMenuItem>
-                          {pet.approvalStatus === "pending" && (
-                            <>
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                approveMutation.mutate({ id: pet.id });
-                              }}>
-                                <Check className="h-4 w-4 mr-2 text-green-500" />
-                                Aprovar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                rejectMutation.mutate({ id: pet.id });
-                              }}>
-                                <X className="h-4 w-4 mr-2 text-red-500" />
-                                Rejeitar
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        )}
+                        <DropdownMenuItem 
+                          onClick={() => { setSelectedPet(pet); setIsDeleteConfirmOpen(true); }}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between">
+                    <Badge className={
+                      pet.approvalStatus === "approved" ? "badge-green" :
+                      pet.approvalStatus === "pending" ? "badge-amber" : "badge-rose"
+                    }>
+                      {pet.approvalStatus === "approved" ? "Aprovado" :
+                       pet.approvalStatus === "pending" ? "Pendente" : "Rejeitado"}
+                    </Badge>
+                    <div className="flex items-center gap-1 text-sm">
+                      <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="font-medium">{pet.credits}</span>
                     </div>
-
-                    <div className="mt-4 flex items-center justify-between">
-                      <Badge
-                        variant={pet.approvalStatus === "approved" ? "default" : "secondary"}
-                        className={
-                          pet.approvalStatus === "approved"
-                            ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30"
-                            : pet.approvalStatus === "pending"
-                            ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30"
-                            : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30"
-                        }
-                      >
-                        {pet.approvalStatus === "approved"
-                          ? "✓ Aprovado"
-                          : pet.approvalStatus === "pending"
-                          ? "⏳ Pendente"
-                          : "✗ Rejeitado"}
-                      </Badge>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <CreditCard className="h-3 w-3" />
-                        <span className="font-medium text-primary">{pet.credits}</span>
-                        <span>créditos</span>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 pt-3 border-t flex items-center justify-between text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {formatDate(pet.createdAt)}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      {/* Create Pet Dialog */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Cadastrar Novo Pet</DialogTitle>
+            <DialogDescription>Cadastre um pet diretamente no sistema</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreatePet} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome *</Label>
+                <Input id="name" name="name" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="breed">Raça</Label>
+                <Input id="breed" name="breed" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="birthDate">Data de Nascimento</Label>
+                <Input id="birthDate" name="birthDate" type="date" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="weight">Peso (kg)</Label>
+                <Input id="weight" name="weight" type="number" step="0.1" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="tutorId">Tutor</Label>
+                <Select name="tutorId">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar tutor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Sem tutor</SelectItem>
+                    {tutors?.map((tutor) => (
+                      <SelectItem key={tutor.id} value={tutor.id.toString()}>
+                        {tutor.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="credits">Créditos Iniciais</Label>
+                <Input id="credits" name="credits" type="number" defaultValue="0" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notes">Observações</Label>
+              <Textarea id="notes" name="notes" rows={2} />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={createPetMutation.isPending}>
+                {createPetMutation.isPending ? "Salvando..." : "Cadastrar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Pet Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar Pet</DialogTitle>
+            <DialogDescription>Atualize as informações do pet</DialogDescription>
+          </DialogHeader>
+          {selectedPet && (
+            <form onSubmit={handleUpdatePet} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">Nome *</Label>
+                  <Input id="edit-name" name="name" defaultValue={selectedPet.name} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-breed">Raça</Label>
+                  <Input id="edit-breed" name="breed" defaultValue={selectedPet.breed || ""} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-birthDate">Data de Nascimento</Label>
+                  <Input id="edit-birthDate" name="birthDate" type="date" defaultValue={selectedPet.birthDate?.split("T")[0] || ""} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-weight">Peso (kg)</Label>
+                  <Input id="edit-weight" name="weight" type="number" step="0.1" defaultValue={selectedPet.weight || ""} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-credits">Créditos</Label>
+                  <Input id="edit-credits" name="credits" type="number" defaultValue={selectedPet.credits || 0} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-status">Status</Label>
+                  <Select name="approvalStatus" defaultValue={selectedPet.approvalStatus}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="approved">Aprovado</SelectItem>
+                      <SelectItem value="pending">Pendente</SelectItem>
+                      <SelectItem value="rejected">Rejeitado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-notes">Observações</Label>
+                <Textarea id="edit-notes" name="notes" rows={2} defaultValue={selectedPet.notes || ""} />
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={updatePetMutation.isPending}>
+                  {updatePetMutation.isPending ? "Salvando..." : "Salvar"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir o pet "{selectedPet?.name}"? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => selectedPet && deletePetMutation.mutate({ id: selectedPet.id })}
+              disabled={deletePetMutation.isPending}
+            >
+              {deletePetMutation.isPending ? "Excluindo..." : "Excluir"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Pet Detail Dialog */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/10 to-violet-500/10 flex items-center justify-center">
-                <Dog className="h-5 w-5 text-primary" />
-              </div>
+            <DialogTitle className="flex items-center gap-2">
+              <Dog className="h-5 w-5 text-primary" />
               {selectedPet?.name}
             </DialogTitle>
-            <DialogDescription>
-              Detalhes do pet
-            </DialogDescription>
           </DialogHeader>
-
           {selectedPet && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 rounded-lg bg-muted/50">
-                  <p className="text-xs text-muted-foreground">Raça</p>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Raça</p>
                   <p className="font-medium">{selectedPet.breed || "Não informada"}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-muted/50">
-                  <p className="text-xs text-muted-foreground">Espécie</p>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Espécie</p>
                   <p className="font-medium">Cachorro</p>
                 </div>
-                <div className="p-3 rounded-lg bg-muted/50">
-                  <p className="text-xs text-muted-foreground">Créditos</p>
-                  <p className="font-medium text-primary">{selectedPet.credits}</p>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Nascimento</p>
+                  <p className="font-medium">{selectedPet.birthDate ? formatDate(selectedPet.birthDate) : "Não informado"}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-muted/50">
-                  <p className="text-xs text-muted-foreground">Cadastro</p>
-                  <p className="font-medium">{formatDate(selectedPet.createdAt)}</p>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Peso</p>
+                  <p className="font-medium">{selectedPet.weight ? `${selectedPet.weight} kg` : "Não informado"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Créditos</p>
+                  <p className="font-medium">{selectedPet.credits}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Status</p>
+                  <Badge className={
+                    selectedPet.approvalStatus === "approved" ? "badge-green" :
+                    selectedPet.approvalStatus === "pending" ? "badge-amber" : "badge-rose"
+                  }>
+                    {selectedPet.approvalStatus === "approved" ? "Aprovado" :
+                     selectedPet.approvalStatus === "pending" ? "Pendente" : "Rejeitado"}
+                  </Badge>
                 </div>
               </div>
-
-              <div className="p-3 rounded-lg bg-muted/50">
-                <p className="text-xs text-muted-foreground mb-1">Status</p>
-                <Badge
-                  variant={selectedPet.approvalStatus === "approved" ? "default" : "secondary"}
-                  className={
-                    selectedPet.approvalStatus === "approved"
-                      ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30"
-                      : selectedPet.approvalStatus === "pending"
-                      ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30"
-                      : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30"
-                  }
-                >
-                  {selectedPet.approvalStatus === "approved"
-                    ? "Aprovado"
-                    : selectedPet.approvalStatus === "pending"
-                    ? "Pendente"
-                    : "Rejeitado"}
-                </Badge>
-              </div>
-
-              {selectedPet.approvalStatus === "pending" && (
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    className="flex-1 bg-green-500 hover:bg-green-600"
-                    onClick={() => {
-                      approveMutation.mutate({ id: selectedPet.id });
-                      setIsDetailOpen(false);
-                    }}
-                  >
-                    <Check className="h-4 w-4 mr-2" />
-                    Aprovar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30"
-                    onClick={() => {
-                      rejectMutation.mutate({ id: selectedPet.id });
-                      setIsDetailOpen(false);
-                    }}
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Rejeitar
-                  </Button>
+              {selectedPet.notes && (
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Observações</p>
+                  <p className="text-sm mt-1">{selectedPet.notes}</p>
                 </div>
               )}
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" className="flex-1" onClick={() => { setIsDetailOpen(false); setIsEditOpen(true); }}>
+                  <Edit className="h-4 w-4 mr-2" /> Editar
+                </Button>
+                <Button className="flex-1" onClick={() => handleQuickAddCredits(selectedPet.id, 10)}>
+                  <CreditCard className="h-4 w-4 mr-2" /> +10 Créditos
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>

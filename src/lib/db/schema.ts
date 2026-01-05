@@ -22,6 +22,7 @@ export const users = pgTable("users", {
   role: varchar("role", { length: 20 }).default("user").notNull(), // 'admin' | 'user'
   phone: text("phone"),
   emailVerified: boolean("email_verified").default(false).notNull(),
+  approvalStatus: varchar("approval_status", { length: 20 }).default("pending").notNull(), // 'pending' | 'approved' | 'rejected'
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

@@ -307,6 +307,128 @@ export const petsRouter = router({
   }),
 
   /**
+   * Cria um pet como admin (pode associar a tutor existente)
+   */
+  adminCreate: adminProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).max(100),
+        species: z.string().default("dog"),
+        breed: z.string().max(100).optional(),
+        birthDate: z.string().optional(),
+        weight: z.number().positive().optional(),
+        notes: z.string().max(1000).optional(),
+        tutorId: z.number().int().positive().optional(),
+        credits: z.number().int().min(0).default(0),
+        approvalStatus: z.enum(["approved", "pending", "rejected"]).default("approved"),
+      })
+    )
+    .mutation(async ({ input }) => {
+      return safeAsync(async () => {
+        const [newPet] = await db
+          .insert(pets)
+          .values({
+            name: input.name,
+            species: input.species,
+            breed: input.breed || null,
+            birthDate: input.birthDate ? new Date(input.birthDate) : null,
+            weight: input.weight || null,
+            notes: input.notes || null,
+            credits: input.credits,
+            approvalStatus: input.approvalStatus,
+          })
+          .returning();
+
+        // Se tiver tutor, associar
+        if (input.tutorId) {
+          await db.insert(petTutors).values({
+            petId: newPet.id,
+            tutorId: input.tutorId,
+            isPrimary: true,
+          });
+        }
+
+        return newPet;
+      }, "Erro ao criar pet");
+    }),
+
+  /**
+   * Atualiza um pet como admin (mais controle)
+   */
+  adminUpdate: adminProcedure
+    .input(
+      z.object({
+        id: idSchema,
+        name: z.string().min(1).max(100).optional(),
+        breed: z.string().max(100).optional(),
+        birthDate: z.string().optional(),
+        weight: z.number().positive().optional(),
+        notes: z.string().max(1000).optional(),
+        credits: z.number().int().min(0).optional(),
+        approvalStatus: z.enum(["approved", "pending", "rejected"]).optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      return safeAsync(async () => {
+        const { id, ...data } = input;
+
+        const existingPet = await db.query.pets.findFirst({
+          where: eq(pets.id, id),
+        });
+
+        if (!existingPet) {
+          throw Errors.notFound("Pet");
+        }
+
+        const updateData: Record<string, unknown> = {
+          updatedAt: new Date(),
+        };
+
+        if (data.name !== undefined) updateData.name = data.name;
+        if (data.breed !== undefined) updateData.breed = data.breed;
+        if (data.notes !== undefined) updateData.notes = data.notes;
+        if (data.weight !== undefined) updateData.weight = data.weight;
+        if (data.credits !== undefined) updateData.credits = data.credits;
+        if (data.approvalStatus !== undefined) updateData.approvalStatus = data.approvalStatus;
+        if (data.birthDate !== undefined) {
+          updateData.birthDate = data.birthDate ? new Date(data.birthDate) : null;
+        }
+
+        const [updatedPet] = await db
+          .update(pets)
+          .set(updateData)
+          .where(eq(pets.id, id))
+          .returning();
+
+        return updatedPet;
+      }, "Erro ao atualizar pet");
+    }),
+
+  /**
+   * Deleta um pet como admin
+   */
+  adminDelete: adminProcedure
+    .input(z.object({ id: idSchema }))
+    .mutation(async ({ input }) => {
+      return safeAsync(async () => {
+        const existingPet = await db.query.pets.findFirst({
+          where: eq(pets.id, input.id),
+        });
+
+        if (!existingPet) {
+          throw Errors.notFound("Pet");
+        }
+
+        // Deletar relações primeiro
+        await db.delete(petTutors).where(eq(petTutors.petId, input.id));
+        // Depois deletar o pet
+        await db.delete(pets).where(eq(pets.id, input.id));
+
+        return { success: true, deletedId: input.id };
+      }, "Erro ao excluir pet");
+    }),
+
+  /**
    * Deleta um pet (admin)
    */
   delete: adminProcedure

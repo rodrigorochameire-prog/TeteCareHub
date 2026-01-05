@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar, AlertCircle, CheckCircle2, Pill, Shield, Syringe, RefreshCw, Edit, Clock, MapPin, Dog, Check, X, Save, Trash2 } from "lucide-react";
+import { Calendar, AlertCircle, CheckCircle2, Pill, Shield, Syringe, RefreshCw, Edit, Clock, MapPin, Dog, Check, X, Save, Trash2, ArrowRight } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -310,42 +310,7 @@ export default function TutorCalendarPage() {
         </div>
       </div>
 
-      {/* Próximos Eventos */}
-      {upcomingWeekEvents.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Próximos 7 Dias</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {upcomingWeekEvents.map((event) => (
-                <div 
-                  key={event.id} 
-                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
-                  onClick={() => handleEventClick(event)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-primary" />
-                    <div>
-                      <p className="font-medium">{event.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {event.petName && `${event.petName} • `}
-                        {format(new Date(event.eventDate), "EEEE, dd/MM", { locale: ptBR })}
-                        {!event.isAllDay && ` às ${format(new Date(event.eventDate), "HH:mm")}`}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="capitalize">
-                    {event.eventType}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Premium Calendar - Tutor pode criar e editar eventos (cogestão) */}
+      {/* Premium Calendar - EM DESTAQUE no topo */}
       <PremiumCalendar
         events={events}
         onEventClick={handleEventClick}
@@ -353,6 +318,63 @@ export default function TutorCalendarPage() {
         pets={pets}
         showCreateButton={true}
       />
+
+      {/* Próximos 7 Dias - Lista complementar abaixo */}
+      <div className="section-card">
+        <div className="section-card-header">
+          <div className="section-card-title">
+            <Clock className="h-4 w-4" />
+            Próximos 7 Dias
+          </div>
+          <span className="text-xs text-muted-foreground">{upcomingWeekEvents.length} eventos</span>
+        </div>
+        <div className="section-card-content">
+          {upcomingWeekEvents.length === 0 ? (
+            <div className="empty-state py-6">
+              <div className="empty-state-icon"><Calendar /></div>
+              <p className="empty-state-text">Nenhum evento nos próximos 7 dias</p>
+            </div>
+          ) : (
+            <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
+              {upcomingWeekEvents.map((event) => {
+                const eventDate = new Date(event.eventDate);
+                const isToday = eventDate.toDateString() === new Date().toDateString();
+                const isTomorrow = eventDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
+                
+                return (
+                  <div 
+                    key={event.id} 
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:shadow-sm",
+                      isToday ? "bg-primary/10 border-primary/30" : "bg-card hover:border-primary/30"
+                    )}
+                    onClick={() => handleEventClick(event)}
+                  >
+                    <div className={cn(
+                      "w-10 h-10 rounded-lg flex flex-col items-center justify-center text-center flex-shrink-0",
+                      isToday ? "bg-primary text-white" : "bg-muted"
+                    )}>
+                      <span className="text-[10px] font-medium uppercase leading-none">
+                        {format(eventDate, "MMM", { locale: ptBR })}
+                      </span>
+                      <span className="text-sm font-bold leading-none">
+                        {format(eventDate, "dd")}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{event.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {isToday ? "Hoje" : isTomorrow ? "Amanhã" : format(eventDate, "EEE", { locale: ptBR })}
+                        {!event.isAllDay && ` • ${format(eventDate, "HH:mm")}`}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Event Detail Dialog - Com funcionalidades de edição e exclusão */}
       <Dialog open={isEventDialogOpen} onOpenChange={(open) => {

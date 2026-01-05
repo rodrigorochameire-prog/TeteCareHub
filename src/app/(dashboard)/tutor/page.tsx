@@ -1,14 +1,16 @@
 import { getSession } from "@/lib/auth/session";
-import { db, pets, petTutors, notifications } from "@/lib/db";
-import { eq, and, desc, count } from "drizzle-orm";
-import { Dog, Bell, Calendar, CreditCard, Home, Plus, ArrowUpRight } from "lucide-react";
+import { db, pets, petTutors, notifications, calendarEvents } from "@/lib/db";
+import { eq, and, desc, count, gte, lte } from "drizzle-orm";
+import { Dog, Bell, Calendar, CreditCard, Home, Plus, ArrowUpRight, Heart, Clock, Syringe, Pill, Shield } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { format, addDays, startOfDay, endOfDay } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
-// Force dynamic rendering (não pre-renderizar no build)
 export const dynamic = "force-dynamic";
 
-async function getTutorStats(userId: number) {
+async function getTutorData(userId: number) {
   // Buscar pets do tutor
   const myPets = await db
     .select({ pet: pets })
@@ -25,6 +27,22 @@ async function getTutorStats(userId: number) {
       and(eq(notifications.userId, userId), eq(notifications.isRead, false))
     );
 
+  // Buscar eventos dos próximos 7 dias
+  const now = new Date();
+  const in7Days = addDays(now, 7);
+  
+  const upcomingEvents = await db
+    .select()
+    .from(calendarEvents)
+    .where(
+      and(
+        gte(calendarEvents.eventDate, startOfDay(now)),
+        lte(calendarEvents.eventDate, endOfDay(in7Days))
+      )
+    )
+    .orderBy(calendarEvents.eventDate)
+    .limit(5);
+
   // Calcular total de créditos
   const totalCredits = myPets.reduce((sum, { pet }) => sum + pet.credits, 0);
 
@@ -32,14 +50,23 @@ async function getTutorStats(userId: number) {
     pets: myPets.map((r) => r.pet),
     unreadNotifications: unreadNotifications.count,
     totalCredits,
+    upcomingEvents,
   };
 }
+
+const eventTypeConfig: Record<string, { icon: typeof Calendar; color: string; label: string }> = {
+  vaccination: { icon: Syringe, color: "text-blue-500", label: "Vacina" },
+  medication: { icon: Pill, color: "text-violet-500", label: "Medicamento" },
+  medical: { icon: Heart, color: "text-rose-500", label: "Consulta" },
+  preventive: { icon: Shield, color: "text-cyan-500", label: "Preventivo" },
+  general: { icon: Calendar, color: "text-slate-500", label: "Evento" },
+};
 
 export default async function TutorDashboard() {
   const session = await getSession();
   if (!session) return null;
 
-  const stats = await getTutorStats(session.id);
+  const data = await getTutorData(session.id);
 
   return (
     <div className="page-container">
@@ -55,10 +82,10 @@ export default async function TutorDashboard() {
           </div>
         </div>
         <div className="page-header-actions">
-          <Button asChild size="sm" className="btn-sm btn-primary rounded-lg">
-            <Link href="/tutor/pets/new" className="flex items-center gap-1.5">
-              <Plus className="h-3.5 w-3.5" />
-              Adicionar Pet
+          <Button asChild size="sm" className="btn-sm btn-primary">
+            <Link href="/tutor/pets/new">
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              Novo Pet
             </Link>
           </Button>
         </div>
@@ -71,7 +98,7 @@ export default async function TutorDashboard() {
             <span className="stat-card-title">Meus Pets</span>
             <Dog className="stat-card-icon primary" />
           </div>
-          <div className="stat-card-value">{stats.pets.length}</div>
+          <div className="stat-card-value">{data.pets.length}</div>
         </div>
 
         <div className="stat-card">
@@ -79,113 +106,159 @@ export default async function TutorDashboard() {
             <span className="stat-card-title">Dias Disponíveis</span>
             <CreditCard className="stat-card-icon blue" />
           </div>
-          <div className="stat-card-value">{stats.totalCredits}</div>
+          <div className="stat-card-value">{data.totalCredits}</div>
         </div>
 
-        <div className={`stat-card ${stats.unreadNotifications > 0 ? "highlight" : ""}`}>
+        <div className={`stat-card ${data.unreadNotifications > 0 ? "highlight" : ""}`}>
           <div className="stat-card-header">
             <span className="stat-card-title">Notificações</span>
-            <Bell className={`stat-card-icon ${stats.unreadNotifications > 0 ? "amber" : "muted"}`} />
+            <Bell className={`stat-card-icon ${data.unreadNotifications > 0 ? "amber" : "muted"}`} />
           </div>
-          <div className="stat-card-value">{stats.unreadNotifications}</div>
+          <div className="stat-card-value">{data.unreadNotifications}</div>
         </div>
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-title">Próxima Reserva</span>
+            <span className="stat-card-title">Próx. Eventos</span>
             <Calendar className="stat-card-icon blue" />
           </div>
-          <div className="stat-card-value">-</div>
+          <div className="stat-card-value">{data.upcomingEvents.length}</div>
         </div>
       </div>
 
-      {/* Meus Pets */}
-      <div className="section-card">
-        <div className="section-card-header">
-          <div>
-            <div className="section-card-title">
-              <Dog />
-              Meus Pets
-            </div>
-            <div className="section-card-subtitle">{stats.pets.length} pets cadastrados</div>
-          </div>
-          <Link href="/tutor/pets" className="link-primary">
-            Ver todos
-            <ArrowUpRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-        <div className="section-card-content">
-          {stats.pets.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">
+      <div className="grid gap-5 lg:grid-cols-2">
+        {/* Meus Pets */}
+        <div className="section-card">
+          <div className="section-card-header">
+            <div>
+              <div className="section-card-title">
                 <Dog />
+                Meus Pets
               </div>
-              <div className="empty-state-title">Nenhum pet cadastrado</div>
-              <div className="empty-state-description">
-                Cadastre seu primeiro pet para começar
-              </div>
-              <Button asChild size="sm" className="mt-3">
-                <Link href="/tutor/pets/new">Cadastrar Pet</Link>
-              </Button>
+              <div className="section-card-subtitle">{data.pets.length} pets cadastrados</div>
             </div>
-          ) : (
-            <div className="list-container">
-              {stats.pets.slice(0, 4).map((pet) => (
-                <Link key={pet.id} href={`/tutor/pets/${pet.id}`}>
-                  <div className="list-item">
-                    <div className="list-item-icon orange">
-                      <Dog />
-                    </div>
-                    <div className="list-item-content">
-                      <div className="list-item-title">{pet.name}</div>
-                      <div className="list-item-subtitle">
-                        {pet.breed || "Sem raça definida"} • {pet.credits} créditos
+            <Link href="/tutor/pets" className="section-card-action">
+              Ver todos
+              <ArrowUpRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="section-card-content">
+            {data.pets.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-state-icon"><Dog /></div>
+                <div className="empty-state-title">Nenhum pet cadastrado</div>
+                <div className="empty-state-description">
+                  Cadastre seu primeiro pet para começar
+                </div>
+                <Button asChild size="sm" className="mt-4">
+                  <Link href="/tutor/pets/new">Cadastrar Pet</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="list-container">
+                {data.pets.slice(0, 4).map((pet) => (
+                  <Link key={pet.id} href={`/tutor/pets/${pet.id}`}>
+                    <div className="list-item">
+                      <div className="list-item-icon primary">
+                        <Dog />
                       </div>
+                      <div className="list-item-content">
+                        <div className="list-item-title">{pet.name}</div>
+                        <div className="list-item-subtitle">
+                          {pet.breed || "Sem raça definida"} • {pet.credits} dias
+                        </div>
+                      </div>
+                      <Badge className={
+                        pet.approvalStatus === "approved" ? "badge-green" :
+                        pet.approvalStatus === "pending" ? "badge-amber" : "badge-rose"
+                      }>
+                        {pet.approvalStatus === "approved" ? "Aprovado" : 
+                         pet.approvalStatus === "pending" ? "Pendente" : "Rejeitado"}
+                      </Badge>
                     </div>
-                    <span className={`badge ${
-                      pet.approvalStatus === "approved" 
-                        ? "badge-success" 
-                        : pet.approvalStatus === "pending"
-                        ? "badge-warning"
-                        : "badge-error"
-                    }`}>
-                      {pet.approvalStatus === "approved" ? "Aprovado" : 
-                       pet.approvalStatus === "pending" ? "Pendente" : "Rejeitado"}
-                    </span>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Próximos Eventos (7 dias) */}
+        <div className="section-card">
+          <div className="section-card-header">
+            <div>
+              <div className="section-card-title">
+                <Calendar />
+                Próximos 7 Dias
+              </div>
+              <div className="section-card-subtitle">Eventos e lembretes</div>
             </div>
-          )}
+            <Link href="/tutor/calendar" className="section-card-action">
+              Ver calendário
+              <ArrowUpRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="section-card-content">
+            {data.upcomingEvents.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-state-icon"><Calendar /></div>
+                <div className="empty-state-title">Nenhum evento próximo</div>
+                <div className="empty-state-description">
+                  Você não tem eventos nos próximos 7 dias
+                </div>
+              </div>
+            ) : (
+              <div className="list-container">
+                {data.upcomingEvents.map((event) => {
+                  const config = eventTypeConfig[event.eventType] || eventTypeConfig.general;
+                  const Icon = config.icon;
+                  return (
+                    <Link key={event.id} href="/tutor/calendar">
+                      <div className="list-item">
+                        <div className="list-item-icon primary">
+                          <Icon />
+                        </div>
+                        <div className="list-item-content">
+                          <div className="list-item-title">{event.title}</div>
+                          <div className="list-item-subtitle">
+                            {format(new Date(event.eventDate), "EEEE, d 'de' MMM", { locale: ptBR })}
+                          </div>
+                        </div>
+                        <Badge className="badge-blue">{config.label}</Badge>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Ações Rápidas */}
       <div className="section-card">
         <div className="section-card-header">
-          <div className="section-card-title">
-            Ações Rápidas
-          </div>
+          <div className="section-card-title">Ações Rápidas</div>
         </div>
         <div className="section-card-content">
           <div className="action-grid">
-            <Link href="/tutor/bookings" className="action-card">
-              <div className="action-card-icon">
-                <Calendar />
-              </div>
-              <span className="action-card-label">Fazer Reserva</span>
-            </Link>
-            <Link href="/tutor/credits" className="action-card">
-              <div className="action-card-icon">
-                <CreditCard />
-              </div>
-              <span className="action-card-label">Comprar Créditos</span>
-            </Link>
             <Link href="/tutor/calendar" className="action-card">
               <div className="action-card-icon">
                 <Calendar />
               </div>
               <span className="action-card-label">Calendário</span>
+            </Link>
+            <Link href="/tutor/health" className="action-card">
+              <div className="action-card-icon">
+                <Heart />
+              </div>
+              <span className="action-card-label">Saúde</span>
+            </Link>
+            <Link href="/tutor/pets" className="action-card">
+              <div className="action-card-icon">
+                <Dog />
+              </div>
+              <span className="action-card-label">Meus Pets</span>
             </Link>
             <Link href="/tutor/pets/new" className="action-card">
               <div className="action-card-icon">
