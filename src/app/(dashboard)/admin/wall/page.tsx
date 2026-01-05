@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,8 @@ import {
   List,
   Camera,
   X,
-  ZoomIn
+  ZoomIn,
+  Paperclip
 } from "lucide-react";
 import { toast } from "sonner";
 import { getInitials } from "@/lib/utils";
@@ -47,6 +48,10 @@ export default function AdminWall() {
   const [comment, setComment] = useState("");
   const [viewMode, setViewMode] = useState<"feed" | "gallery">("feed");
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const { data: posts, isLoading, refetch } = trpc.wall.posts.useQuery({});
   const { data: pets } = trpc.pets.list.useQuery();
@@ -88,15 +93,94 @@ export default function AdminWall() {
     },
   });
 
-  const handleCreatePost = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length + selectedImages.length > 5) {
+      toast.error("Máximo de 5 imagens por post");
+      return;
+    }
+    
+    const validFiles = files.filter(file => {
+      if (!file.type.startsWith("image/")) {
+        toast.error(`${file.name} não é uma imagem válida`);
+        return false;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`${file.name} é muito grande (máx. 10MB)`);
+        return false;
+      }
+      return true;
+    });
+
+    setSelectedImages(prev => [...prev, ...validFiles]);
+    
+    validFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreviews(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const resetForm = () => {
+    setSelectedImages([]);
+    setImagePreviews([]);
+  };
+
+  const handleCreatePost = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     
-    createPost.mutate({
-      content: formData.get("content") as string,
-      petId: formData.get("petId") ? Number(formData.get("petId")) : undefined,
-      visibility: formData.get("visibility") as "all" | "tutors" | "admin",
-    });
+    setIsUploading(true);
+    
+    try {
+      let imageUrl: string | undefined;
+
+      if (selectedImages.length > 0) {
+        const file = selectedImages[0];
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", file);
+        const petId = formData.get("petId") && formData.get("petId") !== "none" 
+          ? formData.get("petId") 
+          : "0";
+        uploadFormData.append("petId", petId as string);
+
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: uploadFormData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          imageUrl = data.url;
+        } else {
+          toast.error("Erro ao fazer upload da imagem");
+          setIsUploading(false);
+          return;
+        }
+      }
+
+      createPost.mutate({
+        content: formData.get("content") as string,
+        petId: formData.get("petId") && formData.get("petId") !== "none" 
+          ? Number(formData.get("petId")) 
+          : undefined,
+        visibility: formData.get("visibility") as "all" | "tutors" | "admin",
+        imageUrl,
+      });
+      
+      resetForm();
+    } catch (error) {
+      toast.error("Erro ao processar arquivos");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   if (isLoading) {
@@ -401,13 +485,19 @@ export default function AdminWall() {
       )}
 
       {/* Create Post Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-md">
+      <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
+        setIsCreateDialogOpen(open);
+        if (!open) resetForm();
+      }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <form onSubmit={handleCreatePost}>
             <DialogHeader>
-              <DialogTitle>Novo Post</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <Paperclip className="h-5 w-5" />
+                Novo Post
+              </DialogTitle>
               <DialogDescription>
-                Crie um post para o mural
+                Crie um post com texto e fotos
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -420,6 +510,52 @@ export default function AdminWall() {
                   rows={4}
                   required
                 />
+              </div>
+
+              {/* Upload de Imagens */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" />
+                  Fotos
+                </Label>
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleImageSelect}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => imageInputRef.current?.click()}
+                >
+                  <Camera className="h-4 w-4 mr-2" />
+                  Adicionar Fotos ({selectedImages.length}/5)
+                </Button>
+                
+                {imagePreviews.length > 0 && (
+                  <div className="grid grid-cols-4 gap-2 mt-2">
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={preview}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-16 object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -454,11 +590,21 @@ export default function AdminWall() {
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              <Button type="button" variant="outline" onClick={() => {
+                setIsCreateDialogOpen(false);
+                resetForm();
+              }}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={createPost.isPending}>
-                {createPost.isPending ? "Publicando..." : "Publicar"}
+              <Button type="submit" disabled={createPost.isPending || isUploading}>
+                {createPost.isPending || isUploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                    Publicando...
+                  </>
+                ) : (
+                  "Publicar"
+                )}
               </Button>
             </DialogFooter>
           </form>
