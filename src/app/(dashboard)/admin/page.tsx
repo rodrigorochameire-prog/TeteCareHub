@@ -20,7 +20,8 @@ import {
   Syringe,
   Pill,
   Shield,
-  Heart
+  Heart,
+  Sparkles
 } from "lucide-react";
 import Link from "next/link";
 import { LoadingPage } from "@/components/shared/loading";
