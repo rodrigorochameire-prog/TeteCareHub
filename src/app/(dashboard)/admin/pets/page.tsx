@@ -1,13 +1,62 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dog, Check, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { 
+  Dog, 
+  Check, 
+  X, 
+  Search,
+  Filter,
+  PawPrint,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  CreditCard,
+  Calendar,
+  Eye,
+  MoreVertical,
+  Sparkles,
+  AlertCircle,
+  ArrowUpRight
+} from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
+import { LoadingPage } from "@/components/shared/loading";
+import { PageHeader } from "@/components/shared/page-header";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import Link from "next/link";
 
 export default function AdminPetsPage() {
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [speciesFilter, setSpeciesFilter] = useState<string>("all");
+  const [selectedPet, setSelectedPet] = useState<any>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
   const utils = trpc.useUtils();
   const { data: pets, isLoading } = trpc.pets.list.useQuery();
   const { data: pendingPets } = trpc.pets.pending.useQuery();
@@ -34,45 +83,178 @@ export default function AdminPetsPage() {
     },
   });
 
+  // Filtered pets
+  const filteredPets = useMemo(() => {
+    if (!pets) return [];
+    return pets.filter((pet) => {
+      const matchesSearch = 
+        pet.name.toLowerCase().includes(search.toLowerCase()) ||
+        pet.breed?.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = statusFilter === "all" || pet.approvalStatus === statusFilter;
+      const matchesSpecies = speciesFilter === "all" || pet.species === speciesFilter;
+      return matchesSearch && matchesStatus && matchesSpecies;
+    });
+  }, [pets, search, statusFilter, speciesFilter]);
+
+  // Stats
+  const stats = useMemo(() => {
+    if (!pets) return { total: 0, approved: 0, pending: 0, rejected: 0, dogs: 0, cats: 0 };
+    return {
+      total: pets.length,
+      approved: pets.filter(p => p.approvalStatus === "approved").length,
+      pending: pets.filter(p => p.approvalStatus === "pending").length,
+      rejected: pets.filter(p => p.approvalStatus === "rejected").length,
+      dogs: pets.filter(p => p.species === "dog").length,
+      cats: pets.filter(p => p.species === "cat").length,
+    };
+  }, [pets]);
+
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <LoadingPage />;
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Gestão de Pets</h1>
-        <p className="text-gray-500">Gerencie todos os pets cadastrados</p>
+    <div className="space-y-6 animate-page-in">
+      {/* Header Premium */}
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-cyan-500/5 to-primary/10 rounded-2xl blur-xl" />
+        <div className="relative bg-gradient-to-br from-card via-card to-blue-500/5 rounded-2xl p-6 border shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white">
+                  <PawPrint className="h-6 w-6" />
+                </div>
+                Gestão de Pets
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                Gerencie todos os pets cadastrados no sistema
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Pending Approvals */}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <Card className="group hover:shadow-md transition-all hover:-translate-y-0.5">
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold">{stats.total}</p>
+                <p className="text-xs text-muted-foreground">Total</p>
+              </div>
+              <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
+                <PawPrint className="h-4 w-4" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="group hover:shadow-md transition-all hover:-translate-y-0.5">
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
+                <p className="text-xs text-muted-foreground">Aprovados</p>
+              </div>
+              <div className="p-2 rounded-lg bg-green-500/10 text-green-500">
+                <CheckCircle2 className="h-4 w-4" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={`group hover:shadow-md transition-all hover:-translate-y-0.5 ${stats.pending > 0 ? 'border-orange-500/50' : ''}`}>
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-2xl font-bold ${stats.pending > 0 ? 'text-orange-500' : ''}`}>{stats.pending}</p>
+                <p className="text-xs text-muted-foreground">Pendentes</p>
+              </div>
+              <div className={`p-2 rounded-lg bg-orange-500/10 text-orange-500 ${stats.pending > 0 ? 'animate-pulse' : ''}`}>
+                <Clock className="h-4 w-4" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="group hover:shadow-md transition-all hover:-translate-y-0.5">
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold text-red-500">{stats.rejected}</p>
+                <p className="text-xs text-muted-foreground">Rejeitados</p>
+              </div>
+              <div className="p-2 rounded-lg bg-red-500/10 text-red-500">
+                <XCircle className="h-4 w-4" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="group hover:shadow-md transition-all hover:-translate-y-0.5">
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold">{stats.dogs}</p>
+                <p className="text-xs text-muted-foreground">Cachorros 🐶</p>
+              </div>
+              <div className="p-2 rounded-lg bg-amber-500/10">
+                <span className="text-lg">🐶</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="group hover:shadow-md transition-all hover:-translate-y-0.5">
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold">{stats.cats}</p>
+                <p className="text-xs text-muted-foreground">Gatos 🐱</p>
+              </div>
+              <div className="p-2 rounded-lg bg-purple-500/10">
+                <span className="text-lg">🐱</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Pending Approvals - Highlighted */}
       {pendingPets && pendingPets.length > 0 && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardHeader>
-            <CardTitle className="text-orange-700">
-              ⏳ Aguardando Aprovação ({pendingPets.length})
-            </CardTitle>
+        <Card className="border-orange-500/30 bg-gradient-to-br from-orange-500/5 via-card to-amber-500/5 overflow-hidden">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-orange-500/20 animate-pulse">
+                <AlertCircle className="h-5 w-5 text-orange-500" />
+              </div>
+              <div>
+                <CardTitle className="text-orange-600 dark:text-orange-400">
+                  Aguardando Aprovação
+                </CardTitle>
+                <CardDescription>
+                  {pendingPets.length} pet{pendingPets.length > 1 ? 's' : ''} precisam de sua atenção
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {pendingPets.map((pet) => (
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {pendingPets.slice(0, 6).map((pet) => (
                 <div
                   key={pet.id}
-                  className="flex items-center justify-between p-4 bg-white rounded-lg border"
+                  className="flex items-center justify-between p-4 bg-card rounded-xl border hover:border-primary/30 hover:shadow-sm transition-all group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                      <span>{pet.species === "cat" ? "🐱" : "🐶"}</span>
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-orange-500/20 to-amber-500/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                      {pet.species === "cat" ? "🐱" : "🐶"}
                     </div>
                     <div>
                       <p className="font-medium">{pet.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {pet.breed || "Sem raça"} • Cadastrado em{" "}
-                        {formatDate(pet.createdAt)}
+                      <p className="text-sm text-muted-foreground">
+                        {pet.breed || "Sem raça"} • {formatDate(pet.createdAt)}
                       </p>
                     </div>
                   </div>
@@ -81,109 +263,281 @@ export default function AdminPetsPage() {
                       size="sm"
                       onClick={() => approveMutation.mutate({ id: pet.id })}
                       disabled={approveMutation.isPending}
+                      className="bg-green-500 hover:bg-green-600"
                     >
-                      <Check className="h-4 w-4 mr-1" />
-                      Aprovar
+                      <Check className="h-4 w-4" />
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => rejectMutation.mutate({ id: pet.id })}
                       disabled={rejectMutation.isPending}
+                      className="hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30"
                     >
-                      <X className="h-4 w-4 mr-1" />
-                      Rejeitar
+                      <X className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
               ))}
             </div>
+            {pendingPets.length > 6 && (
+              <div className="text-center mt-4">
+                <Button variant="outline" onClick={() => setStatusFilter("pending")}>
+                  Ver todos ({pendingPets.length})
+                  <ArrowUpRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
 
-      {/* All Pets */}
+      {/* Filters */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome ou raça..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="approved">Aprovados</SelectItem>
+                  <SelectItem value="pending">Pendentes</SelectItem>
+                  <SelectItem value="rejected">Rejeitados</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={speciesFilter} onValueChange={setSpeciesFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Espécie" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="dog">🐶 Cachorros</SelectItem>
+                  <SelectItem value="cat">🐱 Gatos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* All Pets Grid */}
       <Card>
         <CardHeader>
-          <CardTitle>Todos os Pets ({pets?.length || 0})</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Dog className="h-5 w-5 text-primary" />
+            Todos os Pets
+            <Badge variant="secondary" className="ml-2">
+              {filteredPets.length}
+            </Badge>
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          {!pets || pets.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Dog className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p>Nenhum pet cadastrado ainda</p>
+          {filteredPets.length === 0 ? (
+            <div className="text-center py-12">
+              <Dog className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
+              <p className="text-lg font-medium text-muted-foreground">Nenhum pet encontrado</p>
+              <p className="text-sm text-muted-foreground/70 mt-1">
+                {search || statusFilter !== "all" || speciesFilter !== "all"
+                  ? "Tente ajustar os filtros"
+                  : "Nenhum pet cadastrado ainda"}
+              </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">
-                      Pet
-                    </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">
-                      Raça
-                    </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">
-                      Status
-                    </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">
-                      Créditos
-                    </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">
-                      Cadastro
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pets.map((pet) => (
-                    <tr key={pet.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                            <span className="text-sm">
-                              {pet.species === "cat" ? "🐱" : "🐶"}
-                            </span>
-                          </div>
-                          <span className="font-medium">{pet.name}</span>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {filteredPets.map((pet) => (
+                <Card
+                  key={pet.id}
+                  className="group hover:shadow-lg transition-all hover:-translate-y-1 overflow-hidden cursor-pointer"
+                  onClick={() => {
+                    setSelectedPet(pet);
+                    setIsDetailOpen(true);
+                  }}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
+                          {pet.species === "cat" ? "🐱" : "🐶"}
                         </div>
-                      </td>
-                      <td className="py-3 px-4 text-gray-600">
-                        {pet.breed || "-"}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            pet.approvalStatus === "approved"
-                              ? "bg-green-100 text-green-700"
-                              : pet.approvalStatus === "pending"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
-                        >
-                          {pet.approvalStatus === "approved"
-                            ? "Aprovado"
+                        <div>
+                          <p className="font-semibold text-lg">{pet.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {pet.breed || "Sem raça definida"}
+                          </p>
+                        </div>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPet(pet);
+                            setIsDetailOpen(true);
+                          }}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            Ver Detalhes
+                          </DropdownMenuItem>
+                          {pet.approvalStatus === "pending" && (
+                            <>
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                approveMutation.mutate({ id: pet.id });
+                              }}>
+                                <Check className="h-4 w-4 mr-2 text-green-500" />
+                                Aprovar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                rejectMutation.mutate({ id: pet.id });
+                              }}>
+                                <X className="h-4 w-4 mr-2 text-red-500" />
+                                Rejeitar
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between">
+                      <Badge
+                        variant={pet.approvalStatus === "approved" ? "default" : "secondary"}
+                        className={
+                          pet.approvalStatus === "approved"
+                            ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30"
                             : pet.approvalStatus === "pending"
-                            ? "Pendente"
-                            : "Rejeitado"}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="font-medium text-primary">
-                          {pet.credits}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-gray-500 text-sm">
+                            ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30"
+                            : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30"
+                        }
+                      >
+                        {pet.approvalStatus === "approved"
+                          ? "✓ Aprovado"
+                          : pet.approvalStatus === "pending"
+                          ? "⏳ Pendente"
+                          : "✗ Rejeitado"}
+                      </Badge>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <CreditCard className="h-3 w-3" />
+                        <span className="font-medium text-primary">{pet.credits}</span>
+                        <span>créditos</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t flex items-center justify-between text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
                         {formatDate(pet.createdAt)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Pet Detail Dialog */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <span className="text-3xl">{selectedPet?.species === "cat" ? "🐱" : "🐶"}</span>
+              {selectedPet?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Detalhes do pet
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedPet && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">Raça</p>
+                  <p className="font-medium">{selectedPet.breed || "Não informada"}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">Espécie</p>
+                  <p className="font-medium">{selectedPet.species === "cat" ? "Gato" : "Cachorro"}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">Créditos</p>
+                  <p className="font-medium text-primary">{selectedPet.credits}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">Cadastro</p>
+                  <p className="font-medium">{formatDate(selectedPet.createdAt)}</p>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground mb-1">Status</p>
+                <Badge
+                  variant={selectedPet.approvalStatus === "approved" ? "default" : "secondary"}
+                  className={
+                    selectedPet.approvalStatus === "approved"
+                      ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30"
+                      : selectedPet.approvalStatus === "pending"
+                      ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30"
+                      : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30"
+                  }
+                >
+                  {selectedPet.approvalStatus === "approved"
+                    ? "Aprovado"
+                    : selectedPet.approvalStatus === "pending"
+                    ? "Pendente"
+                    : "Rejeitado"}
+                </Badge>
+              </div>
+
+              {selectedPet.approvalStatus === "pending" && (
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    className="flex-1 bg-green-500 hover:bg-green-600"
+                    onClick={() => {
+                      approveMutation.mutate({ id: selectedPet.id });
+                      setIsDetailOpen(false);
+                    }}
+                  >
+                    <Check className="h-4 w-4 mr-2" />
+                    Aprovar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30"
+                    onClick={() => {
+                      rejectMutation.mutate({ id: selectedPet.id });
+                      setIsDetailOpen(false);
+                    }}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Rejeitar
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
