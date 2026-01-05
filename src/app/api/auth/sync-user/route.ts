@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, users } from "@/lib/db";
 import { eq } from "drizzle-orm";
 
+// Lista de emails que são admin
+const ADMIN_EMAILS = ["rodrigorochameire@gmail.com"];
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -11,28 +14,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email é obrigatório" }, { status: 400 });
     }
 
+    const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+
     // Verificar se usuário já existe
     let user = await db.query.users.findFirst({
       where: eq(users.email, email),
     });
 
     if (!user) {
-      // Criar novo usuário (tutor) com status pendente
+      // Criar novo usuário
       const [newUser] = await db
         .insert(users)
         .values({
           name: name || email.split("@")[0],
           email,
-          role: "user",
-          emailVerified: true, // Clerk já verifica o email
-          approvalStatus: "pending", // Novo tutor precisa de aprovação
+          role: isAdmin ? "admin" : "user",
+          emailVerified: true,
+          approvalStatus: isAdmin ? "approved" : "pending",
         })
         .returning();
 
       user = newUser;
-      console.log("[SyncUser] Novo usuário criado:", email, "- Status: pending");
+      console.log("[SyncUser] Novo usuário criado:", email, "- Role:", user.role);
     } else {
-      console.log("[SyncUser] Usuário existente:", email, "- Role:", user.role, "- Status:", user.approvalStatus);
+      // Se é um admin mas não está como admin no banco, corrigir
+      if (isAdmin && (user.role !== "admin" || user.approvalStatus !== "approved")) {
+        const [updated] = await db
+          .update(users)
+          .set({
+            role: "admin",
+            approvalStatus: "approved",
+            updatedAt: new Date(),
+          })
+          .where(eq(users.email, email))
+          .returning();
+        user = updated;
+        console.log("[SyncUser] Admin corrigido:", email);
+      } else {
+        console.log("[SyncUser] Usuário existente:", email, "- Role:", user.role);
+      }
     }
 
     return NextResponse.json({

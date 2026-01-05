@@ -41,10 +41,10 @@ export default function AuthRedirectPage() {
 
         setStatus("Redirecionando...");
 
-        // Verificar o role no publicMetadata ou usar o do banco
-        const role = (user?.publicMetadata as { role?: string })?.role || data.role || "user";
+        // SEMPRE usar o role do banco de dados (fonte de verdade)
+        const role = data.role || "user";
         
-        console.log("[AuthRedirect] User synced:", email, "Role:", role);
+        console.log("[AuthRedirect] User synced:", email, "Role:", role, "ApprovalStatus:", data.approvalStatus);
 
         if (role === "admin") {
           router.push("/admin");
