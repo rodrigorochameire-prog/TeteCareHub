@@ -65,37 +65,37 @@ export default async function TutorDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="stats-grid">
-        <div className="stat-card orange">
-          <div className="stat-icon">
-            <Dog />
+      <div className="stats-row">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Meus Pets</span>
+            <Dog className="stat-card-icon primary" />
           </div>
-          <div className="stat-value">{stats.pets.length}</div>
-          <div className="stat-label">Meus pets</div>
+          <div className="stat-card-value">{stats.pets.length}</div>
         </div>
 
-        <div className="stat-card blue">
-          <div className="stat-icon">
-            <CreditCard />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Dias Disponíveis</span>
+            <CreditCard className="stat-card-icon blue" />
           </div>
-          <div className="stat-value">{stats.totalCredits}</div>
-          <div className="stat-label">Dias disponíveis</div>
+          <div className="stat-card-value">{stats.totalCredits}</div>
         </div>
 
-        <div className={`stat-card ${stats.unreadNotifications > 0 ? "warning alert" : "neutral"}`}>
-          <div className="stat-icon">
-            <Bell />
+        <div className={`stat-card ${stats.unreadNotifications > 0 ? "highlight" : ""}`}>
+          <div className="stat-card-header">
+            <span className="stat-card-title">Notificações</span>
+            <Bell className={`stat-card-icon ${stats.unreadNotifications > 0 ? "amber" : "muted"}`} />
           </div>
-          <div className="stat-value">{stats.unreadNotifications}</div>
-          <div className="stat-label">Notificações</div>
+          <div className="stat-card-value">{stats.unreadNotifications}</div>
         </div>
 
-        <div className="stat-card blue">
-          <div className="stat-icon">
-            <Calendar />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Próxima Reserva</span>
+            <Calendar className="stat-card-icon blue" />
           </div>
-          <div className="stat-value">-</div>
-          <div className="stat-label">Próxima reserva</div>
+          <div className="stat-card-value">-</div>
         </div>
       </div>
 

@@ -234,37 +234,41 @@ export default function AdminHealthPage() {
       )}
 
       {/* Stats */}
-      <div className="stats-grid">
-        <div className="stat-card blue">
-          <div className="stat-icon">
-            <Syringe />
+      <div className="stats-row">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Vacinas Próximas</span>
+            <Syringe className="stat-card-icon blue" />
           </div>
-          <div className="stat-value">{vaccineStats?.upcoming || 0}</div>
-          <div className="stat-label">Vacinas próximas</div>
+          <div className="stat-card-value">{vaccineStats?.upcoming || 0}</div>
+          <div className="stat-card-description">próximos 30 dias</div>
         </div>
         
-        <div className="stat-card orange">
-          <div className="stat-icon">
-            <Shield />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Preventivos</span>
+            <Shield className="stat-card-icon green" />
           </div>
-          <div className="stat-value">{preventiveStats?.upcoming || 0}</div>
-          <div className="stat-label">Preventivos próximos</div>
+          <div className="stat-card-value">{preventiveStats?.upcoming || 0}</div>
+          <div className="stat-card-description">próximos 30 dias</div>
         </div>
         
-        <div className="stat-card blue">
-          <div className="stat-icon">
-            <Sparkles />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Antipulgas</span>
+            <Sparkles className="stat-card-icon primary" />
           </div>
-          <div className="stat-value">{preventiveStats?.flea || 0}</div>
-          <div className="stat-label">Antipulgas</div>
+          <div className="stat-card-value">{preventiveStats?.flea || 0}</div>
+          <div className="stat-card-description">registros</div>
         </div>
         
-        <div className="stat-card orange">
-          <div className="stat-icon">
-            <CircleDot />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Vermífugos</span>
+            <CircleDot className="stat-card-icon primary" />
           </div>
-          <div className="stat-value">{preventiveStats?.deworming || 0}</div>
-          <div className="stat-label">Vermífugos</div>
+          <div className="stat-card-value">{preventiveStats?.deworming || 0}</div>
+          <div className="stat-card-description">registros</div>
         </div>
       </div>
 

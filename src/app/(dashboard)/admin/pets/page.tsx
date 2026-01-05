@@ -127,37 +127,37 @@ export default function AdminPetsPage() {
       </div>
 
       {/* Stats */}
-      <div className="stats-grid">
-        <div className="stat-card orange">
-          <div className="stat-icon">
-            <PawPrint />
+      <div className="stats-row">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Total de Pets</span>
+            <PawPrint className="stat-card-icon primary" />
           </div>
-          <div className="stat-value">{stats.total}</div>
-          <div className="stat-label">Total de pets</div>
+          <div className="stat-card-value">{stats.total}</div>
         </div>
 
-        <div className="stat-card blue">
-          <div className="stat-icon">
-            <CheckCircle2 />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Aprovados</span>
+            <CheckCircle2 className="stat-card-icon green" />
           </div>
-          <div className="stat-value">{stats.approved}</div>
-          <div className="stat-label">Aprovados</div>
+          <div className="stat-card-value">{stats.approved}</div>
         </div>
 
-        <div className={`stat-card ${stats.pending > 0 ? 'warning alert' : 'neutral'}`}>
-          <div className="stat-icon">
-            <Clock />
+        <div className={`stat-card ${stats.pending > 0 ? 'highlight' : ''}`}>
+          <div className="stat-card-header">
+            <span className="stat-card-title">Pendentes</span>
+            <Clock className={`stat-card-icon ${stats.pending > 0 ? 'amber' : 'muted'}`} />
           </div>
-          <div className="stat-value">{stats.pending}</div>
-          <div className="stat-label">Pendentes</div>
+          <div className="stat-card-value">{stats.pending}</div>
         </div>
 
-        <div className="stat-card orange">
-          <div className="stat-icon">
-            <Dog />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Cachorros</span>
+            <Dog className="stat-card-icon primary" />
           </div>
-          <div className="stat-value">{stats.dogs}</div>
-          <div className="stat-label">Cachorros</div>
+          <div className="stat-card-value">{stats.dogs}</div>
         </div>
       </div>
 

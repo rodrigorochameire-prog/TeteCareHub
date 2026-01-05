@@ -94,37 +94,37 @@ export default function AdminTutorsPage() {
       </div>
 
       {/* Stats */}
-      <div className="stats-grid">
-        <div className="stat-card blue">
-          <div className="stat-icon">
-            <Users />
+      <div className="stats-row">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Total de Tutores</span>
+            <Users className="stat-card-icon blue" />
           </div>
-          <div className="stat-value">{stats?.tutors || 0}</div>
-          <div className="stat-label">Total de tutores</div>
+          <div className="stat-card-value">{stats?.tutors || 0}</div>
         </div>
 
-        <div className="stat-card orange">
-          <div className="stat-icon">
-            <Crown />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Administradores</span>
+            <Crown className="stat-card-icon primary" />
           </div>
-          <div className="stat-value">{stats?.admins || 0}</div>
-          <div className="stat-label">Administradores</div>
+          <div className="stat-card-value">{stats?.admins || 0}</div>
         </div>
 
-        <div className="stat-card blue">
-          <div className="stat-icon">
-            <CheckCircle2 />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Verificados</span>
+            <CheckCircle2 className="stat-card-icon green" />
           </div>
-          <div className="stat-value">{stats?.verified || 0}</div>
-          <div className="stat-label">Verificados</div>
+          <div className="stat-card-value">{stats?.verified || 0}</div>
         </div>
 
-        <div className="stat-card orange">
-          <div className="stat-icon">
-            <Dog />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Pets Cadastrados</span>
+            <Dog className="stat-card-icon primary" />
           </div>
-          <div className="stat-value">{statsSummary.totalPets}</div>
-          <div className="stat-label">Pets cadastrados</div>
+          <div className="stat-card-value">{statsSummary.totalPets}</div>
         </div>
       </div>
 

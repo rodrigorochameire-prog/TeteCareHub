@@ -332,44 +332,44 @@ export default function AdminCalendarPage() {
 
       {/* Stats */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
-        <div className="stat-card orange">
-          <div className="stat-icon">
-            <Calendar />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Eventos Hoje</span>
+            <Calendar className="stat-card-icon primary" />
           </div>
-          <div className="stat-value">{todayEvents.length}</div>
-          <div className="stat-label">Eventos hoje</div>
+          <div className="stat-card-value">{todayEvents.length}</div>
         </div>
 
-        <div className="stat-card blue">
-          <div className="stat-icon">
-            <TrendingUp />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Este Mês</span>
+            <TrendingUp className="stat-card-icon blue" />
           </div>
-          <div className="stat-value">{thisMonthEvents.length}</div>
-          <div className="stat-label">Este mês</div>
+          <div className="stat-card-value">{thisMonthEvents.length}</div>
         </div>
 
-        <div className={`stat-card ${upcomingVaccinations.length > 0 ? "warning" : "neutral"}`}>
-          <div className="stat-icon">
-            <Syringe />
+        <div className={`stat-card ${upcomingVaccinations.length > 0 ? "highlight" : ""}`}>
+          <div className="stat-card-header">
+            <span className="stat-card-title">Vacinas (30d)</span>
+            <Syringe className={`stat-card-icon ${upcomingVaccinations.length > 0 ? "amber" : "muted"}`} />
           </div>
-          <div className="stat-value">{upcomingVaccinations.length}</div>
-          <div className="stat-label">Vacinas (30 dias)</div>
+          <div className="stat-card-value">{upcomingVaccinations.length}</div>
         </div>
 
-        <div className={`stat-card ${upcomingMedications.length > 0 ? "orange" : "neutral"}`}>
-          <div className="stat-icon">
-            <Pill />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Medicamentos</span>
+            <Pill className="stat-card-icon blue" />
           </div>
-          <div className="stat-value">{upcomingMedications.length}</div>
-          <div className="stat-label">Medicamentos</div>
+          <div className="stat-card-value">{upcomingMedications.length}</div>
         </div>
 
-        <div className="stat-card blue">
-          <div className="stat-icon">
-            <Shield />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Preventivos</span>
+            <Shield className="stat-card-icon green" />
           </div>
-          <div className="stat-value">{upcomingPreventives.length}</div>
-          <div className="stat-label">Preventivos</div>
+          <div className="stat-card-value">{upcomingPreventives.length}</div>
         </div>
       </div>
 

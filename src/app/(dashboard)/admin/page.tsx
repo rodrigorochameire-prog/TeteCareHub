@@ -15,9 +15,9 @@ import {
   Syringe,
   Pill,
   Shield,
-  Sparkles,
   FileText,
-  MessageSquare
+  MessageSquare,
+  Plus
 } from "lucide-react";
 import Link from "next/link";
 import { LoadingPage } from "@/components/shared/loading";
@@ -67,7 +67,6 @@ export default function AdminDashboard() {
     vaccination: { icon: Syringe, label: "Vacinação" },
     medication: { icon: Pill, label: "Medicamento" },
     preventive: { icon: Shield, label: "Preventivo" },
-    grooming: { icon: Sparkles, label: "Banho/Tosa" },
     other: { icon: Calendar, label: "Evento" },
   };
 
@@ -81,65 +80,62 @@ export default function AdminDashboard() {
           </div>
           <div className="page-header-info">
             <h1>Dashboard</h1>
-            <p className="flex items-center gap-1.5">
-              <Clock className="h-3 w-3" />
-              {format(now, "EEEE, d 'de' MMMM", { locale: ptBR })}
-            </p>
+            <p>{format(now, "EEEE, d 'de' MMMM", { locale: ptBR })}</p>
           </div>
         </div>
         <div className="page-header-actions">
-          <Button asChild variant="outline" size="sm" className="btn-sm btn-outline rounded-lg">
-            <Link href="/admin/calendar" className="flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Calendário</span>
+          <Button asChild variant="outline" size="sm" className="btn-sm btn-outline">
+            <Link href="/admin/calendar">
+              <Calendar className="h-3.5 w-3.5 mr-1.5" />
+              Calendário
             </Link>
           </Button>
-          <Button asChild size="sm" className="btn-sm btn-primary rounded-lg">
-            <Link href="/admin/pets" className="flex items-center gap-1.5">
-              <PawPrint className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Ver Pets</span>
+          <Button asChild size="sm" className="btn-sm btn-primary">
+            <Link href="/admin/pets">
+              <PawPrint className="h-3.5 w-3.5 mr-1.5" />
+              Ver Pets
             </Link>
           </Button>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="stats-grid">
-        <div className="stat-card orange">
-          <div className="stat-icon">
-            <Dog />
+      <div className="stats-row">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Pets Cadastrados</span>
+            <Dog className="stat-card-icon primary" />
           </div>
-          <div className="stat-value">{totalPets}</div>
-          <div className="stat-label">Pets cadastrados</div>
+          <div className="stat-card-value">{totalPets}</div>
         </div>
 
-        <div className="stat-card blue">
-          <div className="stat-icon">
-            <Users />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Tutores Ativos</span>
+            <Users className="stat-card-icon blue" />
           </div>
-          <div className="stat-value">{totalTutors}</div>
-          <div className="stat-label">Tutores ativos</div>
+          <div className="stat-card-value">{totalTutors}</div>
         </div>
 
-        <div className={`stat-card ${pendingCount > 0 ? 'warning alert' : 'neutral'}`}>
-          <div className="stat-icon">
-            <AlertCircle />
+        <div className={`stat-card ${pendingCount > 0 ? 'highlight' : ''}`}>
+          <div className="stat-card-header">
+            <span className="stat-card-title">Aguardando Aprovação</span>
+            <AlertCircle className={`stat-card-icon ${pendingCount > 0 ? 'amber' : 'muted'}`} />
           </div>
-          <div className="stat-value">{pendingCount}</div>
-          <div className="stat-label">Aguardando aprovação</div>
+          <div className="stat-card-value">{pendingCount}</div>
         </div>
 
-        <div className="stat-card blue">
-          <div className="stat-icon">
-            <CalendarCheck />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Eventos Hoje</span>
+            <CalendarCheck className="stat-card-icon blue" />
           </div>
-          <div className="stat-value">{todayEvents.length}</div>
-          <div className="stat-label">Eventos hoje</div>
+          <div className="stat-card-value">{todayEvents.length}</div>
         </div>
       </div>
 
       {/* Content Grid */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="content-grid">
         {/* Próximos Eventos */}
         <div className="section-card">
           <div className="section-card-header">
@@ -148,9 +144,9 @@ export default function AdminDashboard() {
                 <Calendar />
                 Próximos Eventos
               </div>
-              <div className="section-card-subtitle">Eventos dos próximos 7 dias</div>
+              <div className="section-card-subtitle">Próximos 7 dias</div>
             </div>
-            <Link href="/admin/calendar" className="link-primary">
+            <Link href="/admin/calendar" className="section-card-action">
               Ver todos
               <ArrowUpRight />
             </Link>
@@ -163,7 +159,7 @@ export default function AdminDashboard() {
                 </div>
                 <div className="empty-state-title">Nenhum evento</div>
                 <div className="empty-state-description">
-                  Crie eventos para organizar atividades
+                  Nenhum evento agendado para os próximos dias
                 </div>
               </div>
             ) : (
@@ -173,7 +169,7 @@ export default function AdminDashboard() {
                   const Icon = config.icon;
                   return (
                     <div key={event.id} className="list-item">
-                      <div className="list-item-icon orange">
+                      <div className="list-item-icon primary">
                         <Icon />
                       </div>
                       <div className="list-item-content">
@@ -183,7 +179,7 @@ export default function AdminDashboard() {
                           {event.pet?.name && ` • ${event.pet.name}`}
                         </div>
                       </div>
-                      <span className="badge badge-orange">{config.label}</span>
+                      <span className="badge badge-primary">{config.label}</span>
                     </div>
                   );
                 })}
@@ -200,9 +196,9 @@ export default function AdminDashboard() {
                 <PawPrint />
                 Pets Recentes
               </div>
-              <div className="section-card-subtitle">Últimos pets cadastrados</div>
+              <div className="section-card-subtitle">Últimos cadastrados</div>
             </div>
-            <Link href="/admin/pets" className="link-primary">
+            <Link href="/admin/pets" className="section-card-action">
               Ver todos
               <ArrowUpRight />
             </Link>
@@ -223,7 +219,7 @@ export default function AdminDashboard() {
                 {recentPets.map((pet) => (
                   <Link key={pet.id} href={`/admin/pets/${pet.id}`}>
                     <div className="list-item">
-                      <div className="list-item-icon">
+                      <div className="list-item-icon primary">
                         <Dog />
                       </div>
                       <div className="list-item-content">
@@ -255,7 +251,7 @@ export default function AdminDashboard() {
       <div className="section-card">
         <div className="section-card-header">
           <div className="section-card-title">
-            <Sparkles />
+            <Plus />
             Ações Rápidas
           </div>
         </div>
@@ -283,7 +279,7 @@ export default function AdminDashboard() {
               <div className="action-card-icon">
                 <MessageSquare />
               </div>
-              <span className="action-card-label">Publicar no Mural</span>
+              <span className="action-card-label">Publicar</span>
             </Link>
           </div>
         </div>
