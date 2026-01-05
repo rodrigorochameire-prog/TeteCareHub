@@ -1,10 +1,8 @@
-"use client";
-
-import { SignIn, useAuth, useUser } from "@clerk/nextjs";
+import { SignIn, auth } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
+import { currentUser } from "@clerk/nextjs/server";
 import { Dog, Heart, Shield, Calendar } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 const features = [
   { icon: Dog, text: "Gestão completa de pets" },
@@ -13,33 +11,18 @@ const features = [
   { icon: Heart, text: "Cuidado personalizado" },
 ];
 
-export default function SignInPage() {
-  const { isLoaded, isSignedIn } = useAuth();
-  const { user } = useUser();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (isLoaded && isSignedIn && user) {
-      // Usuário já está logado, redirecionar baseado no role
-      const role = (user.publicMetadata as { role?: string })?.role || "tutor";
-      if (role === "admin") {
-        router.replace("/admin");
-      } else {
-        router.replace("/tutor");
-      }
+export default async function SignInPage() {
+  const { userId } = await auth();
+  
+  // Se já está logado, redirecionar
+  if (userId) {
+    const user = await currentUser();
+    const role = (user?.publicMetadata as { role?: string })?.role || "tutor";
+    
+    if (role === "admin") {
+      redirect("/admin");
     }
-  }, [isLoaded, isSignedIn, user, router]);
-
-  // Se já está logado, mostrar loading enquanto redireciona
-  if (isSignedIn) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Redirecionando...</p>
-        </div>
-      </div>
-    );
+    redirect("/tutor");
   }
 
   return (
@@ -89,7 +72,7 @@ export default function SignInPage() {
             routing="path"
             path="/sign-in"
             signUpUrl="/sign-up"
-            fallbackRedirectUrl="/auth-redirect"
+            forceRedirectUrl="/auth-redirect"
           />
         </div>
       </div>

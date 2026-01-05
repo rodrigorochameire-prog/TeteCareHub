@@ -1,40 +1,21 @@
-"use client";
+import { redirect } from "next/navigation";
+import { auth, currentUser } from "@clerk/nextjs/server";
 
-import { useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+export default async function AuthRedirectPage() {
+  const { userId } = await auth();
+  
+  if (!userId) {
+    redirect("/sign-in");
+  }
 
-export default function AuthRedirectPage() {
-  const { user, isLoaded } = useUser();
-  const router = useRouter();
+  const user = await currentUser();
+  const role = (user?.publicMetadata as { role?: string })?.role || "tutor";
 
-  useEffect(() => {
-    if (!isLoaded) return;
+  console.log("[AuthRedirect] User:", user?.emailAddresses[0]?.emailAddress, "Role:", role);
 
-    if (!user) {
-      router.push("/sign-in");
-      return;
-    }
+  if (role === "admin") {
+    redirect("/admin");
+  }
 
-    // Verificar o role no publicMetadata
-    const role = (user.publicMetadata as { role?: string })?.role || "tutor";
-    
-    console.log("[AuthRedirect] User:", user.emailAddresses[0]?.emailAddress, "Role:", role);
-
-    if (role === "admin") {
-      router.push("/admin");
-    } else {
-      router.push("/tutor");
-    }
-  }, [user, isLoaded, router]);
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-muted-foreground">Redirecionando...</p>
-      </div>
-    </div>
-  );
+  redirect("/tutor");
 }
-
