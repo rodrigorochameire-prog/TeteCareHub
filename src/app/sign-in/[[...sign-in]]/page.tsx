@@ -34,9 +34,9 @@ export default async function SignInPage() {
             <Image
               src="/tetecare-logo.png"
               alt="TeteCare"
-              width={120}
-              height={120}
-              className="rounded-full shadow-2xl ring-4 ring-white/30"
+              width={140}
+              height={140}
+              className="rounded-full shadow-2xl"
             />
           </div>
           <h1 className="text-4xl font-bold mb-4 text-center">Bem-vindo ao TeteCare</h1>
@@ -58,7 +58,7 @@ export default async function SignInPage() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex flex-col items-center mb-8">
-            <Image src="/tetecare-logo.png" alt="TeteCare" width={80} height={80} className="rounded-full shadow-xl mb-4" />
+            <Image src="/tetecare-logo.png" alt="TeteCare" width={100} height={100} className="rounded-full shadow-xl mb-4" />
             <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">TeteCare</h1>
           </div>
           <SignIn
