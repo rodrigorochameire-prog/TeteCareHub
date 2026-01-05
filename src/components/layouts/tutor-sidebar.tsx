@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -189,6 +190,7 @@ function TutorSidebarContent({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { signOut } = useClerk();
   const { state, toggleSidebar, setOpen } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
@@ -239,9 +241,10 @@ function TutorSidebarContent({
   }, [isResizing, setSidebarWidth]);
 
   async function handleLogout() {
+    // Limpa a sessão customizada (cookies)
     await logoutAction();
-    router.push("/login");
-    router.refresh();
+    // Faz logout do Clerk e redireciona para a página inicial
+    await signOut({ redirectUrl: "/" });
   }
 
   return (
@@ -418,13 +421,13 @@ function TutorSidebarContent({
             <div className="flex items-center gap-3">
               <SidebarTrigger className="h-10 w-10 rounded-xl bg-accent/50 hover:bg-cyan-500/20 transition-colors" />
               <Link href="/tutor" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <div className="w-8 h-8 rounded-full overflow-hidden shadow-sm ring-1 ring-cyan-500/30">
+                <div className="w-9 h-9 rounded-full overflow-hidden shadow-sm bg-white flex items-center justify-center">
                   <Image
                     src="/tetecare-logo.png"
                     alt="Tetê Care"
-                    width={32}
-                    height={32}
-                    className="w-full h-full object-cover scale-110"
+                    width={36}
+                    height={36}
+                    className="w-full h-full object-contain"
                   />
                 </div>
                 <span className="font-semibold text-sm">
@@ -453,13 +456,13 @@ function TutorSidebarContent({
               href="/tutor"
               className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
             >
-              <div className="relative w-11 h-11 rounded-full overflow-hidden shadow-lg ring-2 ring-cyan-500/30 dark:ring-cyan-500/50">
+              <div className="relative w-12 h-12 rounded-full overflow-hidden shadow-lg bg-white flex items-center justify-center">
                 <Image
                   src="/tetecare-logo.png"
                   alt="Tetê Care"
-                  width={44}
-                  height={44}
-                  className="w-full h-full object-cover scale-110"
+                  width={48}
+                  height={48}
+                  className="w-full h-full object-contain"
                 />
               </div>
               <span

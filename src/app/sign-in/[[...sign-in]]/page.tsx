@@ -1,6 +1,6 @@
-"use client";
-
 import { SignIn } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { Dog, Heart, Shield, Calendar } from "lucide-react";
 import Image from "next/image";
 
@@ -11,7 +11,20 @@ const features = [
   { icon: Heart, text: "Cuidado personalizado" },
 ];
 
-export default function SignInPage() {
+export default async function SignInPage() {
+  const { userId } = await auth();
+  
+  // Se já está logado, redirecionar
+  if (userId) {
+    const user = await currentUser();
+    const role = (user?.publicMetadata as { role?: string })?.role || "tutor";
+    
+    if (role === "admin") {
+      redirect("/admin");
+    }
+    redirect("/tutor");
+  }
+
   return (
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
@@ -21,9 +34,9 @@ export default function SignInPage() {
             <Image
               src="/tetecare-logo.png"
               alt="TeteCare"
-              width={120}
-              height={120}
-              className="rounded-full shadow-2xl ring-4 ring-white/30"
+              width={140}
+              height={140}
+              className="rounded-full shadow-2xl"
             />
           </div>
           <h1 className="text-4xl font-bold mb-4 text-center">Bem-vindo ao TeteCare</h1>
@@ -45,7 +58,7 @@ export default function SignInPage() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex flex-col items-center mb-8">
-            <Image src="/tetecare-logo.png" alt="TeteCare" width={80} height={80} className="rounded-full shadow-xl mb-4" />
+            <Image src="/tetecare-logo.png" alt="TeteCare" width={100} height={100} className="rounded-full shadow-xl mb-4" />
             <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">TeteCare</h1>
           </div>
           <SignIn
@@ -59,7 +72,7 @@ export default function SignInPage() {
             routing="path"
             path="/sign-in"
             signUpUrl="/sign-up"
-            fallbackRedirectUrl="/auth-redirect"
+            forceRedirectUrl="/auth-redirect"
           />
         </div>
       </div>
