@@ -421,13 +421,13 @@ function TutorSidebarContent({
             <div className="flex items-center gap-3">
               <SidebarTrigger className="h-10 w-10 rounded-xl bg-accent/50 hover:bg-cyan-500/20 transition-colors" />
               <Link href="/tutor" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <div className="w-8 h-8 rounded-full overflow-hidden shadow-sm ring-1 ring-cyan-500/30">
+                <div className="w-8 h-8 rounded-full overflow-hidden shadow-sm ring-1 ring-border bg-white">
                   <Image
                     src="/tetecare-logo.png"
                     alt="Tetê Care"
                     width={32}
                     height={32}
-                    className="w-full h-full object-cover scale-110"
+                    className="w-full h-full object-cover"
                   />
                 </div>
                 <span className="font-semibold text-sm">
@@ -456,13 +456,13 @@ function TutorSidebarContent({
               href="/tutor"
               className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
             >
-              <div className="relative w-11 h-11 rounded-full overflow-hidden shadow-lg ring-2 ring-cyan-500/30 dark:ring-cyan-500/50">
+              <div className="relative w-11 h-11 rounded-full overflow-hidden shadow-lg ring-2 ring-border bg-white">
                 <Image
                   src="/tetecare-logo.png"
                   alt="Tetê Care"
                   width={44}
                   height={44}
-                  className="w-full h-full object-cover scale-110"
+                  className="w-full h-full object-cover"
                 />
               </div>
               <span

@@ -442,13 +442,13 @@ function AdminSidebarContent({
             <div className="flex items-center gap-3">
               <SidebarTrigger className="h-10 w-10 rounded-xl bg-accent/50 hover:bg-primary/20 transition-colors" />
               <Link href="/admin" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <div className="w-8 h-8 rounded-full overflow-hidden shadow-sm ring-1 ring-primary/30">
+                <div className="w-8 h-8 rounded-full overflow-hidden shadow-sm ring-1 ring-border bg-white">
                   <Image
                     src="/tetecare-logo.png"
                     alt="Tetê Care"
                     width={32}
                     height={32}
-                    className="w-full h-full object-cover scale-110"
+                    className="w-full h-full object-cover"
                   />
                 </div>
                 <span className="font-semibold text-sm">
@@ -469,13 +469,13 @@ function AdminSidebarContent({
               href="/admin"
               className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
             >
-              <div className="relative w-10 h-10 rounded-full overflow-hidden shadow-lg ring-2 ring-primary/30 dark:ring-primary/50">
+              <div className="relative w-10 h-10 rounded-full overflow-hidden shadow-lg ring-2 ring-border bg-white">
                 <Image
                   src="/tetecare-logo.png"
                   alt="Tetê Care"
                   width={40}
                   height={40}
-                  className="w-full h-full object-cover scale-110"
+                  className="w-full h-full object-cover"
                 />
               </div>
               <span
