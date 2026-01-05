@@ -50,6 +50,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { FontSizeToggle } from "@/components/font-size-toggle";
+import { NotificationsPopover } from "@/components/notifications-popover";
 import { logoutAction } from "@/app/(dashboard)/actions";
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -451,54 +453,38 @@ function AdminSidebarContent({
                 </span>
               </Link>
             </div>
-            <div className="flex items-center gap-2">
-              <Link href="/admin/notifications">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="relative h-9 w-9 rounded-full bg-muted/40 hover:bg-muted/60 transition-all duration-200"
-                  aria-label="Notificações"
-                >
-                  <Bell className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </Link>
+            <div className="flex items-center gap-1.5">
+              <NotificationsPopover />
+              <FontSizeToggle />
               <ThemeToggle />
             </div>
           </div>
         )}
         {!isMobile && (
-          <div className="flex border-b border-border/40 h-16 items-center justify-center bg-background/95 backdrop-blur-xl px-6 sticky top-0 z-40 gap-3 shadow-sm relative">
+          <div className="flex border-b border-border/40 h-14 items-center justify-center bg-background/95 backdrop-blur-xl px-6 sticky top-0 z-40 gap-3 shadow-sm relative">
             <Link
               href="/admin"
               className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
             >
-              <div className="relative w-11 h-11 rounded-full overflow-hidden shadow-lg ring-2 ring-primary/30 dark:ring-primary/50">
+              <div className="relative w-10 h-10 rounded-full overflow-hidden shadow-lg ring-2 ring-primary/30 dark:ring-primary/50">
                 <Image
                   src="/tetecare-logo.png"
                   alt="Tetê Care"
-                  width={44}
-                  height={44}
+                  width={40}
+                  height={40}
                   className="w-full h-full object-cover scale-110"
                 />
               </div>
               <span
-                className="text-2xl font-semibold tracking-tight text-foreground"
+                className="text-xl font-semibold tracking-tight text-foreground"
                 style={{ fontFamily: '"Inter", system-ui, sans-serif' }}
               >
                 Tetê Care
               </span>
             </Link>
-            <div className="flex items-center gap-2 absolute right-6">
-              <Link href="/admin/notifications">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="relative h-9 w-9 rounded-full bg-muted/40 hover:bg-muted/60 transition-all duration-200"
-                  aria-label="Notificações"
-                >
-                  <Bell className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </Link>
+            <div className="flex items-center gap-1.5 absolute right-6">
+              <NotificationsPopover />
+              <FontSizeToggle />
               <ThemeToggle />
             </div>
           </div>

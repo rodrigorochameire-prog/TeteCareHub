@@ -726,3 +726,47 @@ a, button {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ========================================
+   MODO FONTE GRANDE
+   ======================================== */
+
+html.font-large {
+  font-size: 17px;
+}
+
+html.font-large h1 {
+  @apply text-3xl;
+}
+
+html.font-large h2 {
+  @apply text-2xl;
+}
+
+html.font-large h3 {
+  @apply text-xl;
+}
+
+html.font-large h4 {
+  @apply text-lg;
+}
+
+html.font-large p {
+  @apply text-base;
+}
+
+html.font-large .stat-card-value {
+  @apply text-3xl;
+}
+
+html.font-large .section-card-title {
+  @apply text-base;
+}
+
+html.font-large .list-item-title {
+  @apply text-sm;
+}
+
+html.font-large .badge {
+  @apply text-sm px-3 py-1;
+}
