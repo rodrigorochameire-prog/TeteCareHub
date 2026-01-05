@@ -545,7 +545,7 @@ export const usersRouter = router({
         // Verificar senha atual
         const isValid = await verifyPassword(input.currentPassword, user.passwordHash);
         if (!isValid) {
-          throw Errors.unauthorized("Senha atual incorreta");
+          throw Errors.badRequest("Senha atual incorreta");
         }
 
         // Atualizar senha
