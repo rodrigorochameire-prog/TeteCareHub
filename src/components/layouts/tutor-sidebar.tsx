@@ -23,6 +23,8 @@ import {
   Heart,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Bell } from "lucide-react";
 import { getInitials } from "@/lib/utils";
 import {
   Sidebar,
@@ -428,7 +430,19 @@ function TutorSidebarContent({
                 </span>
               </Link>
             </div>
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <Link href="/tutor/notifications">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative h-9 w-9 rounded-full bg-muted/40 hover:bg-muted/60 transition-all duration-200"
+                  aria-label="Notificações"
+                >
+                  <Bell className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </Link>
+              <ThemeToggle />
+            </div>
           </div>
         )}
         {!isMobile && (
@@ -454,7 +468,17 @@ function TutorSidebarContent({
                 Tetê Care
               </span>
             </Link>
-            <div className="flex items-center gap-3 absolute right-6">
+            <div className="flex items-center gap-2 absolute right-6">
+              <Link href="/tutor/notifications">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative h-9 w-9 rounded-full bg-muted/40 hover:bg-muted/60 transition-all duration-200"
+                  aria-label="Notificações"
+                >
+                  <Bell className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </Link>
               <ThemeToggle />
             </div>
           </div>
