@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Script para configurar os buckets de storage do Supabase
@@ -102,7 +102,7 @@ export async function setupStorageBuckets() {
   };
 }
 
-async function setupStoragePolicies(supabase: ReturnType<typeof createClient>) {
+async function setupStoragePolicies(supabase: SupabaseClient) {
   const policiesSQL = `
     -- Função para extrair pet_id do path
     CREATE OR REPLACE FUNCTION storage.extract_pet_id_from_path(file_path TEXT)
