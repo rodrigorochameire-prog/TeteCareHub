@@ -214,6 +214,7 @@ export default function AdminDocuments() {
 
       // 3. Gerar URL pública do arquivo
       const publicUrl = `https://siwapjqndevuwsluncnr.supabase.co/storage/v1/object/public/documents/${uploadData.path}`;
+      const fileUrlToSave = uploadData.readUrl || publicUrl;
 
       // 4. Salvar documento no banco
       await saveDocumentMutation.mutateAsync({
@@ -221,7 +222,7 @@ export default function AdminDocuments() {
         title,
         description,
         category: selectedCategory as any,
-        fileUrl: publicUrl,
+        fileUrl: fileUrlToSave,
         fileType: selectedFile.name.split(".").pop() || "bin",
         fileSize: selectedFile.size,
       });

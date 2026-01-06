@@ -13,6 +13,42 @@ import {
 } from "drizzle-orm/pg-core";
 import { getSupabaseAdmin } from "@/lib/supabase/client";
 
+function extractDocumentsPathFromUrl(fileUrl: string): string | null {
+  // Ex: https://<project>.supabase.co/storage/v1/object/public/documents/<path>
+  const publicMarker = "/storage/v1/object/public/documents/";
+  const publicIdx = fileUrl.indexOf(publicMarker);
+  if (publicIdx !== -1) return fileUrl.slice(publicIdx + publicMarker.length);
+
+  // Ex: https://<project>.supabase.co/storage/v1/object/sign/documents/<path>?token=...
+  const signedMarker = "/storage/v1/object/sign/documents/";
+  const signedIdx = fileUrl.indexOf(signedMarker);
+  if (signedIdx !== -1) {
+    const rest = fileUrl.slice(signedIdx + signedMarker.length);
+    const qIdx = rest.indexOf("?");
+    return qIdx === -1 ? rest : rest.slice(0, qIdx);
+  }
+
+  return null;
+}
+
+async function toSignedDocumentsUrl(fileUrl: string): Promise<string> {
+  // Não mexer em URLs externas (ex: Google Drive)
+  if (!fileUrl.includes("/storage/v1/object/")) return fileUrl;
+  // Já é URL assinada do Supabase (mantém)
+  if (fileUrl.includes("/storage/v1/object/sign/")) return fileUrl;
+
+  const path = extractDocumentsPathFromUrl(fileUrl);
+  if (!path) return fileUrl;
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase.storage
+    .from("documents")
+    .createSignedUrl(path, 60 * 60 * 24 * 365); // 1 ano
+
+  if (error || !data?.signedUrl) return fileUrl;
+  return data.signedUrl;
+}
+
 // Schema para documentos
 export const documents = pgTable("documents", {
   id: serial("id").primaryKey(),
@@ -66,7 +102,14 @@ export const documentsRouter = router({
           .where(and(...conditions))
           .orderBy(desc(documents.createdAt));
 
-        return result;
+        const withSignedUrls = await Promise.all(
+          result.map(async (doc) => ({
+            ...doc,
+            fileUrl: await toSignedDocumentsUrl(doc.fileUrl),
+          }))
+        );
+
+        return withSignedUrls;
       }, "Erro ao buscar documentos");
     }),
 
@@ -114,7 +157,14 @@ export const documentsRouter = router({
           .where(and(...conditions))
           .orderBy(desc(documents.createdAt));
 
-        return result;
+        const withSignedUrls = await Promise.all(
+          result.map(async (doc) => ({
+            ...doc,
+            fileUrl: await toSignedDocumentsUrl(doc.fileUrl),
+          }))
+        );
+
+        return withSignedUrls;
       }, "Erro ao buscar documentos");
     }),
 
@@ -273,7 +323,17 @@ export const documentsRouter = router({
           .orderBy(desc(documents.createdAt))
           .limit(input?.limit || 50);
 
-        return result;
+        const withSignedUrls = await Promise.all(
+          result.map(async (row) => ({
+            ...row,
+            document: {
+              ...row.document,
+              fileUrl: await toSignedDocumentsUrl(row.document.fileUrl),
+            },
+          }))
+        );
+
+        return withSignedUrls;
       }, "Erro ao listar documentos");
     }),
 
@@ -343,10 +403,16 @@ export const documentsRouter = router({
           throw Errors.internal(`Erro ao gerar URL de upload: ${error.message}`);
         }
 
+        // Também gerar URL assinada para leitura (útil se o bucket não for público)
+        const { data: readUrlData } = await supabase.storage
+          .from("documents")
+          .createSignedUrl(data.path, 60 * 60 * 24 * 365); // 1 ano
+
         return {
           signedUrl: data.signedUrl,
           path: data.path,
           token: data.token,
+          readUrl: readUrlData?.signedUrl || null,
         };
       }, "Erro ao gerar URL de upload");
     }),

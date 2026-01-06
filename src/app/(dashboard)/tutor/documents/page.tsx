@@ -57,7 +57,15 @@ const categoryIcons: Record<string, typeof FileText> = {
   vaccination: Syringe,
   exam: TestTube,
   prescription: Pill,
+  medical_record: FileText,
   preventive: File,
+  training: FileText,
+  behavior: FileText,
+  nutrition: FileText,
+  insurance: FileText,
+  identification: FileText,
+  contract: FileText,
+  photo: File,
   other: File,
 };
 
@@ -65,7 +73,15 @@ const categoryLabels: Record<string, string> = {
   vaccination: "Vacinação",
   exam: "Exame",
   prescription: "Receita",
+  medical_record: "Prontuário",
   preventive: "Preventivo",
+  training: "Adestramento",
+  behavior: "Comportamento",
+  nutrition: "Nutrição",
+  insurance: "Seguro",
+  identification: "Identificação",
+  contract: "Contrato",
+  photo: "Foto",
   other: "Outro",
 };
 
@@ -209,6 +225,7 @@ export default function TutorDocuments() {
 
       // 3. Gerar URL pública do arquivo
       const publicUrl = `https://siwapjqndevuwsluncnr.supabase.co/storage/v1/object/public/documents/${uploadData.path}`;
+      const fileUrlToSave = uploadData.readUrl || publicUrl;
 
       // 4. Salvar documento no banco
       await saveDocumentMutation.mutateAsync({
@@ -216,7 +233,7 @@ export default function TutorDocuments() {
         title,
         description,
         category: selectedCategory as any,
-        fileUrl: publicUrl,
+        fileUrl: fileUrlToSave,
         fileType: selectedFile.name.split(".").pop() || "bin",
         fileSize: selectedFile.size,
       });
@@ -413,7 +430,15 @@ export default function TutorDocuments() {
                     <SelectItem value="vaccination">Vacinação</SelectItem>
                     <SelectItem value="exam">Exame</SelectItem>
                     <SelectItem value="prescription">Receita</SelectItem>
+                  <SelectItem value="medical_record">Prontuário</SelectItem>
                     <SelectItem value="preventive">Preventivo</SelectItem>
+                  <SelectItem value="training">Adestramento</SelectItem>
+                  <SelectItem value="behavior">Comportamento</SelectItem>
+                  <SelectItem value="nutrition">Nutrição</SelectItem>
+                  <SelectItem value="insurance">Seguro</SelectItem>
+                  <SelectItem value="identification">Identificação</SelectItem>
+                  <SelectItem value="contract">Contrato</SelectItem>
+                  <SelectItem value="photo">Foto</SelectItem>
                     <SelectItem value="other">Outro</SelectItem>
                   </SelectContent>
                 </Select>
