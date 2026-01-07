@@ -203,17 +203,24 @@ export default function AdminDocuments() {
       const uploadResponse = await fetch(uploadData.signedUrl, {
         method: "PUT",
         headers: {
+          Authorization: `Bearer ${uploadData.token}`,
           "Content-Type": selectedFile.type,
+          "x-upsert": "false",
         },
         body: selectedFile,
       });
 
       if (!uploadResponse.ok) {
-        throw new Error("Falha no upload do arquivo");
+        const details = await uploadResponse.text().catch(() => "");
+        throw new Error(
+          `Falha no upload do arquivo (${uploadResponse.status})${details ? `: ${details}` : ""}`
+        );
       }
 
       // 3. Gerar URL pública do arquivo
-      const publicUrl = `https://siwapjqndevuwsluncnr.supabase.co/storage/v1/object/public/documents/${uploadData.path}`;
+      const supabaseUrl =
+        process.env.NEXT_PUBLIC_SUPABASE_URL || "https://siwapjqndevuwsluncnr.supabase.co";
+      const publicUrl = `${supabaseUrl}/storage/v1/object/public/documents/${uploadData.path}`;
 
       // 4. Salvar documento no banco
       await saveDocumentMutation.mutateAsync({

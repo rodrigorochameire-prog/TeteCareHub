@@ -25,6 +25,7 @@ const BUCKETS_CONFIG = [
       "application/pdf",
       "image/jpeg",
       "image/png",
+      "image/webp",
       "application/msword",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ],
