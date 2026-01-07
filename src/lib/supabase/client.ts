@@ -43,13 +43,21 @@ export async function uploadDocumentClient(
     throw new Error(`Erro no upload: ${error.message}`);
   }
 
-  // Para buckets privados, usar URL assinada
-  const { data: signedUrlData } = await supabase.storage
+  // Para buckets privados, usar URL assinada (com fallback para URL pública)
+  const { data: signedUrlData, error: signedUrlError } = await supabase.storage
     .from("documents")
     .createSignedUrl(data.path, 60 * 60 * 24 * 365); // 1 ano
 
+  if (signedUrlError) {
+    console.warn("[uploadDocumentClient] Falha ao criar URL assinada:", signedUrlError.message);
+  }
+
+  const signedUrl = signedUrlData?.signedUrl;
+  const publicUrl = supabase.storage.from("documents").getPublicUrl(data.path).data.publicUrl;
+  const url = signedUrl || publicUrl;
+
   return {
-    url: signedUrlData?.signedUrl || "",
+    url,
     fileType: fileExt,
     fileSize: file.size,
     path: data.path,
