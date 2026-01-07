@@ -127,8 +127,10 @@ export const documentsRouter = router({
               description: input.description || null,
               category: input.category,
               fileUrl: input.fileUrl,
-              fileType: input.fileType || null,
-              fileSize: input.fileSize || null,
+              // NÃO force colunas opcionais: alguns ambientes legacy não têm file_type/file_size.
+              // Se for undefined, o Drizzle não inclui a coluna no INSERT.
+              fileType: input.fileType ?? undefined,
+              fileSize: input.fileSize ?? undefined,
             })
             .returning();
 

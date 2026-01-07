@@ -10,6 +10,8 @@ export async function GET() {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
+    const steps: string[] = [];
+
     /**
      * Ajusta ambientes que foram criados com schema antigo:
      * - name -> title
@@ -84,9 +86,18 @@ export async function GET() {
       END $$;
     `);
 
+    const columns = await db.execute(sql`
+      SELECT column_name, data_type
+      FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='documents'
+      ORDER BY ordinal_position
+    `);
+
     return NextResponse.json({
       success: true,
       message: "Schema de documents ajustado com sucesso.",
+      steps,
+      columns,
     });
   } catch (error: any) {
     console.error("[fix-documents-schema] Erro:", error);
