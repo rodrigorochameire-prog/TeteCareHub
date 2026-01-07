@@ -139,16 +139,13 @@ export async function GET() {
       CREATE TABLE IF NOT EXISTS documents (
         id SERIAL PRIMARY KEY,
         pet_id INTEGER NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
-        name VARCHAR(200) NOT NULL,
+        uploaded_by_id INTEGER NOT NULL REFERENCES users(id),
+        title VARCHAR(200) NOT NULL,
         category VARCHAR(100) NOT NULL,
         file_url TEXT NOT NULL,
         file_type VARCHAR(50),
         file_size INTEGER,
         description TEXT,
-        document_date TIMESTAMP,
-        expiry_date TIMESTAMP,
-        is_verified BOOLEAN DEFAULT false,
-        created_by_id INTEGER NOT NULL REFERENCES users(id),
         created_at TIMESTAMP DEFAULT NOW() NOT NULL
       )
     `);
