@@ -151,3 +151,4 @@ try {
   console.error('❌ Erro:', error.message);
   process.exit(1);
 }
+
