@@ -114,6 +114,16 @@ const BREED_ICON_MAP: Record<string, string> = {
   // Chow Chow
   'chow chow': 'chow_chow',
   'chow': 'chow_chow',
+  
+  // Maltês
+  'maltes': 'maltes',
+  'maltês': 'maltes',
+  'maltese': 'maltes',
+  
+  // Lhasa Apso
+  'lhasa apso': 'lhasaapso',
+  'lhasaapso': 'lhasaapso',
+  'lhasa': 'lhasaapso',
 };
 
 // Função auxiliar para compatibilidade com código antigo
