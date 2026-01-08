@@ -37,6 +37,8 @@ import {
   CheckCircle2,
   Clock
 } from "lucide-react";
+import { BreedIcon } from "@/components/breed-icons";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
 export default function TutorVaccines() {
@@ -51,6 +53,7 @@ export default function TutorVaccines() {
     petId: pet.id,
     petName: pet.name,
     photoUrl: pet.photoUrl,
+    breed: pet.breed,
     query: trpc.vaccines.getPetVaccinations.useQuery({ petId: pet.id }),
   })) || [];
 
@@ -110,7 +113,7 @@ export default function TutorVaccines() {
         </Card>
       ) : (
         <Accordion type="single" collapsible className="space-y-4">
-          {petVaccinesQueries.map(({ petId, petName, photoUrl, query }) => {
+          {petVaccinesQueries.map(({ petId, petName, photoUrl, breed, query }) => {
             const vaccinations = query.data || [];
             const upcomingCount = vaccinations.filter(
               v => v.vaccination.nextDueDate && new Date(v.vaccination.nextDueDate) > new Date()
@@ -127,8 +130,8 @@ export default function TutorVaccines() {
                         className="h-10 w-10 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                        <Dog className="h-5 w-5 text-primary" />
+                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+                        <BreedIcon breed={breed} className="h-5 w-5 text-slate-500" />
                       </div>
                     )}
                     <div className="text-left">
@@ -147,7 +150,7 @@ export default function TutorVaccines() {
                 <AccordionContent>
                   {query.isLoading ? (
                     <div className="flex justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      <Skeleton className="h-20 w-full rounded-[14px]" />
                     </div>
                   ) : vaccinations.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">

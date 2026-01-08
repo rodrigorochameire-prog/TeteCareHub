@@ -12,6 +12,11 @@
    LOGO - Azul Escuro e Profundo
    ======================================== */
 
+/* Ajusta o azul da logo para um tom mais escuro preservando outras cores */
+img[src*="tetecare-logo"] {
+  filter: saturate(1.2) contrast(1.08) hue-rotate(8deg);
+}
+
 @layer base {
   :root {
     /* MODO CLARO - Off-white para fundo, branco puro para cards */
@@ -354,7 +359,7 @@
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.04), 
               0 1px 2px 0 rgba(0, 0, 0, 0.02);
   transform: translateY(-1px);
-  }
+}
 
 .list-item-icon {
   @apply h-10 w-10 rounded-[14px] flex items-center justify-center flex-shrink-0;
@@ -421,7 +426,7 @@
   background: hsl(142 65% 96%);
   color: hsl(142 58% 32%);
   box-shadow: 0 1px 2px 0 rgba(34, 197, 94, 0.12);
-  }
+}
 
 .dark .badge-green {
   background: hsl(142 50% 25% / 0.4);
@@ -491,7 +496,7 @@
 .dark .badge-error {
   background: hsl(0 72% 51% / 0.2);
   color: hsl(0 72% 65%);
-  }
+}
 
 /* ========================================
    EMPTY STATE
@@ -815,7 +820,7 @@ select {
   * {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
-}
+  }
 }
 
 /* ========================================

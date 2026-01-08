@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { getInitials } from "@/lib/utils";
+import { WallSkeleton } from "@/components/shared/skeletons";
 
 export default function AdminWall() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -184,11 +185,7 @@ export default function AdminWall() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <WallSkeleton />;
   }
 
   // Filtrar posts com imagens para a galeria

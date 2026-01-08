@@ -1,30 +1,12 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db, pets, petTutors } from "@/lib/db";
+import { db, pets, petTutors, documents } from "@/lib/db";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
-import {
-  pgTable,
-  serial,
-  text,
-  varchar,
-  timestamp,
-  integer,
-} from "drizzle-orm/pg-core";
 
-// Schema para documentos
-export const documents = pgTable("documents", {
-  id: serial("id").primaryKey(),
-  petId: integer("pet_id").notNull(),
-  uploadedById: integer("uploaded_by_id").notNull(),
-  title: varchar("title", { length: 200 }).notNull(),
-  description: text("description"),
-  category: varchar("category", { length: 100 }).notNull(), // 'vaccination' | 'exam' | 'prescription' | 'other'
-  fileUrl: text("file_url").notNull(),
-  fileType: varchar("file_type", { length: 50 }),
-  fileSize: integer("file_size"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+import { getSupabaseAdmin } from "@/lib/supabase/client";
+
+
 
 export const documentsRouter = router({
   /**
@@ -94,7 +76,8 @@ export const documentsRouter = router({
           "other"
         ]),
         fileUrl: z.string().url(),
-        fileType: z.string().optional(),
+        fileName: z.string().optional(),
+        mimeType: z.string().optional(),
         fileSize: z.number().optional(),
         eventDate: z.string().or(z.date()).optional(), // Para integrar com calendário
         expirationDate: z.string().or(z.date()).optional(), // Data de vencimento
@@ -102,6 +85,9 @@ export const documentsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
+        // Log detalhado para debug
+        console.log('[documents.upload] ctx.user:', JSON.stringify(ctx.user));
+        console.log('[documents.upload] input:', JSON.stringify(input));
         // Verificar acesso ao pet
         if (ctx.user.role !== "admin") {
           const relation = await db.query.petTutors.findFirst({
@@ -125,7 +111,8 @@ export const documentsRouter = router({
             description: input.description || null,
             category: input.category,
             fileUrl: input.fileUrl,
-            fileType: input.fileType || null,
+            fileName: input.fileName || null,
+            mimeType: input.mimeType || null,
             fileSize: input.fileSize || null,
           })
           .returning();
@@ -250,4 +237,121 @@ export const documentsRouter = router({
       };
     }, "Erro ao buscar estatísticas de documentos");
   }),
+
+  /**
+   * Gera URL assinada para upload direto ao Storage (usando service key)
+   */
+  getUploadUrl: protectedProcedure
+    .input(
+      z.object({
+        petId: z.number(),
+        category: z.string(),
+        fileName: z.string(),
+        mimeType: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        // Verificar acesso ao pet
+        if (ctx.user.role !== "admin") {
+          const relation = await db.query.petTutors.findFirst({
+            where: and(
+              eq(petTutors.petId, input.petId),
+              eq(petTutors.tutorId, ctx.user.id)
+            ),
+          });
+
+          if (!relation) {
+            throw Errors.forbidden();
+          }
+        }
+
+        const supabase = getSupabaseAdmin();
+        
+        // Gerar nome único para o arquivo
+        const fileExt = input.fileName.split(".").pop()?.toLowerCase() || "bin";
+        const filePath = `pets/${input.petId}/${input.category}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        // Criar URL assinada para upload
+        const { data, error } = await supabase.storage
+          .from("documents")
+          .createSignedUploadUrl(filePath);
+
+        if (error) {
+          throw Errors.internal(`Erro ao gerar URL de upload: ${error.message}`);
+        }
+
+        return {
+          signedUrl: data.signedUrl,
+          path: data.path,
+          token: data.token,
+        };
+      }, "Erro ao gerar URL de upload");
+    }),
+
+  /**
+   * Upload de arquivo via servidor (usando service key - sem RLS)
+   */
+  uploadFile: protectedProcedure
+    .input(
+      z.object({
+        petId: z.number(),
+        category: z.string(),
+        fileName: z.string(),
+        fileBase64: z.string(), // Arquivo em base64
+        mimeType: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        // Verificar acesso ao pet
+        if (ctx.user.role !== "admin") {
+          const relation = await db.query.petTutors.findFirst({
+            where: and(
+              eq(petTutors.petId, input.petId),
+              eq(petTutors.tutorId, ctx.user.id)
+            ),
+          });
+
+          if (!relation) {
+            throw Errors.forbidden();
+          }
+        }
+
+        const supabase = getSupabaseAdmin();
+        
+        // Gerar nome único para o arquivo
+        const fileExt = input.fileName.split(".").pop()?.toLowerCase() || "bin";
+        const filePath = `pets/${input.petId}/${input.category}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        // Converter base64 para buffer
+        const base64Data = input.fileBase64.replace(/^data:[^;]+;base64,/, "");
+        const buffer = Buffer.from(base64Data, "base64");
+
+        // Upload usando service key (sem RLS)
+        const { data, error } = await supabase.storage
+          .from("documents")
+          .upload(filePath, buffer, {
+            contentType: input.mimeType,
+            upsert: false,
+          });
+
+        if (error) {
+          throw Errors.internal(`Erro no upload: ${error.message}`);
+        }
+
+        // Gerar URL pública
+        const { data: urlData } = supabase.storage
+          .from("documents")
+          .getPublicUrl(data.path);
+
+        return {
+          url: urlData.publicUrl,
+          path: data.path,
+          fileName: input.fileName,
+          mimeType: input.mimeType,
+          fileSize: buffer.length,
+        };
+      }, "Erro ao fazer upload do arquivo");
+    }),
 });

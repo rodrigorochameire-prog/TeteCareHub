@@ -1,8 +1,6 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
-import { currentUser } from "@clerk/nextjs/server";
-import { db, users } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { getSession } from "@/lib/auth/session";
 import { toTRPCError } from "@/lib/errors";
 import type { User } from "@/lib/db/schema";
 
@@ -15,34 +13,11 @@ export interface TRPCContext {
 
 /**
  * Cria o contexto para cada requisição
- * Usa Clerk para autenticação e busca o usuário no banco pelo email
  */
 export async function createTRPCContext(): Promise<TRPCContext> {
   try {
-    const clerkUser = await currentUser();
-    
-    if (!clerkUser) {
-      return { user: null };
-    }
-
-    // Buscar usuário no banco de dados pelo email do Clerk
-    const email = clerkUser.emailAddresses[0]?.emailAddress;
-    
-    if (!email) {
-      console.error("[tRPC Context] Usuário Clerk sem email");
-      return { user: null };
-    }
-
-    const dbUser = await db.query.users.findFirst({
-      where: eq(users.email, email),
-    });
-
-    if (!dbUser) {
-      console.log("[tRPC Context] Usuário não encontrado no banco:", email);
-      return { user: null };
-    }
-
-    return { user: dbUser };
+    const user = await getSession();
+    return { user };
   } catch (error) {
     console.error("Erro ao criar contexto tRPC:", error);
     return { user: null };

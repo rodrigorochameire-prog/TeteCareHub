@@ -24,9 +24,9 @@ export function LandingPage() {
             <Image
               src="/tetecare-logo.png"
               alt="Tetê Care"
-              width={40}
-              height={40}
-              className="rounded-xl object-cover shadow-sm"
+              width={44}
+              height={44}
+              className="rounded-full object-contain shadow-sm"
             />
             <span className="text-xl font-semibold tracking-tight">Tetê Care</span>
           </div>
@@ -58,7 +58,7 @@ export function LandingPage() {
             <div className="space-y-6">
               <div className="space-y-3">
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground">
-                Cuidado profissional
+                  Cuidado profissional
                 </h1>
                 <p className="text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-primary">
                   para seu melhor amigo
@@ -241,9 +241,9 @@ export function LandingPage() {
                   <Image
                     src="/tetecare-logo.png"
                     alt="Tetê Care"
-                    width={192}
-                    height={192}
-                    className="rounded-3xl object-cover mx-auto shadow-2xl border-4 border-white"
+                    width={200}
+                    height={200}
+                    className="rounded-full object-contain mx-auto shadow-2xl"
                   />
                   <div className="bg-white rounded-xl p-4 shadow-lg">
                     <p className="text-2xl font-bold text-primary">260+</p>
@@ -288,9 +288,9 @@ export function LandingPage() {
               <Image
                 src="/tetecare-logo.png"
                 alt="Tetê Care"
-                width={32}
-                height={32}
-                className="rounded-lg object-cover"
+                width={36}
+                height={36}
+                className="rounded-full object-contain"
               />
               <span className="text-sm text-muted-foreground">
                 © 2025 Tetê Care. Todos os direitos reservados.

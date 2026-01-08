@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
-import { AdminSidebar } from "@/components/layouts/admin-sidebar";
 import { db, users } from "@/lib/db";
 import { eq } from "drizzle-orm";
+import { AdminSidebar } from "@/components/layouts/admin-sidebar";
 
 export default async function AdminLayout({
   children,
@@ -15,26 +15,23 @@ export default async function AdminLayout({
     redirect("/sign-in");
   }
 
-  // Buscar usuário do banco pelo email do Clerk
-  const email = clerkUser.emailAddresses[0]?.emailAddress;
-  if (!email) {
-    redirect("/sign-in");
-  }
-
+  // Buscar usuário no banco de dados pelo email do Clerk
   const dbUser = await db.query.users.findFirst({
-    where: eq(users.email, email),
+    where: eq(users.email, clerkUser.emailAddresses[0]?.emailAddress || ""),
   });
 
-  // Verificar se é admin NO BANCO DE DADOS
-  if (!dbUser || dbUser.role !== "admin") {
+  if (!dbUser) {
+    // Usuário existe no Clerk mas não no banco - redirecionar para sincronizar
+    redirect("/auth-redirect");
+  }
+
+  // Verificar se é admin
+  if (dbUser.role !== "admin") {
     redirect("/tutor");
   }
 
   return (
-    <AdminSidebar 
-      userName={dbUser.name || clerkUser.firstName || "Admin"} 
-      userEmail={email}
-    >
+    <AdminSidebar userName={dbUser.name} userEmail={dbUser.email}>
       {children}
     </AdminSidebar>
   );

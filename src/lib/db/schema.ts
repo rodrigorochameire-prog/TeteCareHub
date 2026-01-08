@@ -22,6 +22,7 @@ export const users = pgTable("users", {
   role: varchar("role", { length: 20 }).default("user").notNull(), // 'admin' | 'user'
   phone: text("phone"),
   emailVerified: boolean("email_verified").default(false).notNull(),
+  approvalStatus: varchar("approval_status", { length: 20 }).default("pending").notNull(), // 'pending' | 'approved' | 'rejected'
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -352,7 +353,9 @@ export const documents = pgTable("documents", {
   description: text("description"),
   category: varchar("category", { length: 100 }).notNull(), // 'vaccination' | 'exam' | 'prescription' | 'other'
   fileUrl: text("file_url").notNull(),
-  fileType: varchar("file_type", { length: 50 }),
+  fileKey: text("file_key"),
+  fileName: varchar("file_name", { length: 255 }),
+  mimeType: varchar("mime_type", { length: 100 }),
   fileSize: integer("file_size"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

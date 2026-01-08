@@ -383,42 +383,62 @@ export function PremiumCalendar({
             {/* View Mode & Filters */}
             <div className="flex flex-wrap items-center gap-1.5">
               {/* View Mode Toggle */}
-              <div className="flex items-center bg-muted/60 rounded-lg p-0.5">
+              <div className="flex items-center bg-muted/40 rounded-[14px] p-1">
                 <Button
                   variant={viewMode === "month" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("month")}
-                  className="rounded-md h-7 px-2.5 text-xs"
+                  className={cn(
+                    "rounded-[10px] h-8 px-3 text-xs font-semibold transition-all duration-300",
+                    viewMode === "month" 
+                      ? "bg-primary hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)] [&_span]:!text-white [&_svg]:!text-white" 
+                      : "text-[hsl(220_13%_45%)] hover:text-[hsl(220_16%_38%)] hover:bg-muted/60 [&_span]:text-[hsl(220_13%_45%)] [&_svg]:text-[hsl(220_13%_45%)]"
+                  )}
                 >
-                  <LayoutGrid className="h-3.5 w-3.5 mr-1" />
-                  <span className="hidden sm:inline">Mês</span>
+                  <LayoutGrid className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="hidden sm:inline font-semibold">Mês</span>
                 </Button>
                 <Button
                   variant={viewMode === "week" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("week")}
-                  className="rounded-md h-7 px-2.5 text-xs"
+                  className={cn(
+                    "rounded-[10px] h-8 px-3 text-xs font-semibold transition-all duration-300",
+                    viewMode === "week" 
+                      ? "bg-primary hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)] [&_span]:!text-white [&_svg]:!text-white" 
+                      : "text-[hsl(220_13%_45%)] hover:text-[hsl(220_16%_38%)] hover:bg-muted/60 [&_span]:text-[hsl(220_13%_45%)] [&_svg]:text-[hsl(220_13%_45%)]"
+                  )}
                 >
-                  <CalendarDays className="h-3.5 w-3.5 mr-1" />
-                  <span className="hidden sm:inline">Semana</span>
+                  <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="hidden sm:inline font-semibold">Semana</span>
                 </Button>
                 <Button
                   variant={viewMode === "day" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("day")}
-                  className="rounded-md h-7 px-2.5 text-xs"
+                  className={cn(
+                    "rounded-[10px] h-8 px-3 text-xs font-semibold transition-all duration-300",
+                    viewMode === "day" 
+                      ? "bg-primary hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)] [&_span]:!text-white [&_svg]:!text-white" 
+                      : "text-[hsl(220_13%_45%)] hover:text-[hsl(220_16%_38%)] hover:bg-muted/60 [&_span]:text-[hsl(220_13%_45%)] [&_svg]:text-[hsl(220_13%_45%)]"
+                  )}
                 >
-                  <Sun className="h-3.5 w-3.5 mr-1" />
-                  <span className="hidden sm:inline">Dia</span>
+                  <Sun className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="hidden sm:inline font-semibold">Dia</span>
                 </Button>
                 <Button
                   variant={viewMode === "list" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("list")}
-                  className="rounded-md h-7 px-2.5 text-xs"
+                  className={cn(
+                    "rounded-[10px] h-8 px-3 text-xs font-semibold transition-all duration-300",
+                    viewMode === "list" 
+                      ? "bg-primary hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)] [&_span]:!text-white [&_svg]:!text-white" 
+                      : "text-[hsl(220_13%_45%)] hover:text-[hsl(220_16%_38%)] hover:bg-muted/60 [&_span]:text-[hsl(220_13%_45%)] [&_svg]:text-[hsl(220_13%_45%)]"
+                  )}
                 >
-                  <List className="h-3.5 w-3.5 mr-1" />
-                  <span className="hidden sm:inline">Lista</span>
+                  <List className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="hidden sm:inline font-semibold">Lista</span>
                 </Button>
               </div>
 
@@ -482,7 +502,7 @@ export function PremiumCalendar({
               {showCreateButton && onCreateEvent && (
                 <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="rounded-lg shadow-sm h-8 px-3 text-sm gap-1.5">
+                    <Button className="rounded-[14px] shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)] h-8 px-3 text-sm gap-1.5 bg-primary text-white hover:bg-primary/90 [&_svg]:text-white [&_span]:text-white font-semibold">
                       <Plus className="h-3.5 w-3.5" />
                       <span className="hidden sm:inline">Novo</span>
                     </Button>

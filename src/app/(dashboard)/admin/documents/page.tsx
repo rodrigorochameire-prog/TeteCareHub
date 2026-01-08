@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import { trpc } from "@/lib/trpc/client";
-import { uploadDocumentClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +59,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { PageSkeleton } from "@/components/shared/skeletons";
 
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 Bytes";
@@ -125,6 +125,12 @@ export default function AdminDocuments() {
     },
   });
 
+  const getUploadUrlMutation = trpc.documents.getUploadUrl.useMutation({
+    onError: (error) => {
+      toast.error("Erro ao gerar URL de upload: " + error.message);
+    },
+  });
+
   const resetForm = () => {
     setSelectedFile(null);
     setSelectedCategory("");
@@ -173,7 +179,8 @@ export default function AdminDocuments() {
         description,
         category: selectedCategory as any,
         fileUrl,
-        fileType: formData.get("fileType") as string || undefined,
+        fileName: formData.get("fileName") as string || undefined,
+        mimeType: formData.get("mimeType") as string || undefined,
       });
       return;
     }
@@ -186,20 +193,40 @@ export default function AdminDocuments() {
 
     setUploading(true);
     try {
-      const result = await uploadDocumentClient(
-        selectedFile,
-        parseInt(selectedPetId),
-        selectedCategory
-      );
+      // 1. Obter URL assinada do servidor
+      const uploadData = await getUploadUrlMutation.mutateAsync({
+        petId: parseInt(selectedPetId),
+        category: selectedCategory,
+        fileName: selectedFile.name,
+        mimeType: selectedFile.type,
+      });
 
+      // 2. Fazer upload direto para o Supabase Storage
+      const uploadResponse = await fetch(uploadData.signedUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": selectedFile.type,
+        },
+        body: selectedFile,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Falha no upload do arquivo");
+      }
+
+      // 3. Gerar URL pública do arquivo
+      const publicUrl = `https://siwapjqndevuwsluncnr.supabase.co/storage/v1/object/public/documents/${uploadData.path}`;
+
+      // 4. Salvar documento no banco
       await saveDocumentMutation.mutateAsync({
         petId: parseInt(selectedPetId),
         title,
         description,
         category: selectedCategory as any,
-        fileUrl: result.url,
-        fileType: result.fileType,
-        fileSize: result.fileSize,
+        fileUrl: publicUrl,
+        fileName: selectedFile.name,
+        mimeType: selectedFile.type,
+        fileSize: selectedFile.size,
       });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao fazer upload");
@@ -227,11 +254,7 @@ export default function AdminDocuments() {
   }));
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   return (
@@ -394,7 +417,7 @@ export default function AdminDocuments() {
                           variant="destructive"
                           onClick={() => {
                             if (confirm("Remover este documento?")) {
-                              deleteDocument.mutate({ id: item.document.id });
+                              deleteDocument.mutate({ id: Number(item.document.id) });
                             }
                           }}
                         >
@@ -479,7 +502,7 @@ export default function AdminDocuments() {
                             variant="ghost"
                             onClick={() => {
                               if (confirm("Remover este documento?")) {
-                                deleteDocument.mutate({ id: item.document.id });
+                                deleteDocument.mutate({ id: Number(item.document.id) });
                               }
                             }}
                           >
@@ -598,13 +621,13 @@ export default function AdminDocuments() {
                   <p className="text-xs text-muted-foreground">Cole a URL do arquivo</p>
                   <div className="space-y-2">
                     <Label>Tipo do Arquivo</Label>
-                    <Select name="fileType">
+                    <Select name="mimeType">
                       <SelectTrigger><SelectValue placeholder="Selecione (opcional)" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pdf">PDF</SelectItem>
-                        <SelectItem value="jpg">Imagem (JPG, PNG)</SelectItem>
-                        <SelectItem value="doc">Documento (DOC)</SelectItem>
-                        <SelectItem value="other">Outro</SelectItem>
+                        <SelectItem value="application/pdf">PDF</SelectItem>
+                        <SelectItem value="image/jpeg">Imagem (JPG, PNG)</SelectItem>
+                        <SelectItem value="application/msword">Documento (DOC)</SelectItem>
+                        <SelectItem value="application/octet-stream">Outro</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

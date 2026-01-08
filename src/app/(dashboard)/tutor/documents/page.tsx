@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import { trpc } from "@/lib/trpc/client";
-import { uploadDocumentClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +43,8 @@ import {
   Loader2,
   Link2,
 } from "lucide-react";
+import { BreedIcon } from "@/components/breed-icons";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
 function formatFileSize(bytes: number): string {
@@ -86,6 +87,7 @@ export default function TutorDocuments() {
     petId: pet.id,
     petName: pet.name,
     photoUrl: pet.photoUrl,
+    breed: pet.breed,
     query: trpc.documents.byPet.useQuery({ petId: pet.id }),
   })) || [];
 
@@ -108,6 +110,12 @@ export default function TutorDocuments() {
     },
     onError: (error) => {
       toast.error("Erro ao remover documento: " + error.message);
+    },
+  });
+
+  const getUploadUrlMutation = trpc.documents.getUploadUrl.useMutation({
+    onError: (error) => {
+      toast.error("Erro ao gerar URL de upload: " + error.message);
     },
   });
 
@@ -171,20 +179,40 @@ export default function TutorDocuments() {
 
     setUploading(true);
     try {
-      const result = await uploadDocumentClient(
-        selectedFile,
-        parseInt(selectedPetId),
-        selectedCategory
-      );
+      // 1. Obter URL assinada do servidor
+      const uploadData = await getUploadUrlMutation.mutateAsync({
+        petId: parseInt(selectedPetId),
+        category: selectedCategory,
+        fileName: selectedFile.name,
+        mimeType: selectedFile.type,
+      });
 
+      // 2. Fazer upload direto para o Supabase Storage
+      const uploadResponse = await fetch(uploadData.signedUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": selectedFile.type,
+        },
+        body: selectedFile,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Falha no upload do arquivo");
+      }
+
+      // 3. Gerar URL pública do arquivo
+      const publicUrl = `https://siwapjqndevuwsluncnr.supabase.co/storage/v1/object/public/documents/${uploadData.path}`;
+
+      // 4. Salvar documento no banco
       await saveDocumentMutation.mutateAsync({
         petId: parseInt(selectedPetId),
         title,
         description,
         category: selectedCategory as any,
-        fileUrl: result.url,
-        fileType: result.fileType,
-        fileSize: result.fileSize,
+        fileUrl: publicUrl,
+        fileName: selectedFile.name,
+        mimeType: selectedFile.type,
+        fileSize: selectedFile.size,
       });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao fazer upload");
@@ -221,7 +249,7 @@ export default function TutorDocuments() {
         </Card>
       ) : (
         <Accordion type="single" collapsible className="space-y-4">
-          {petDocumentsQueries.map(({ petId, petName, photoUrl, query }) => {
+          {petDocumentsQueries.map(({ petId, petName, photoUrl, breed, query }) => {
             const documents = query.data || [];
 
             return (
@@ -235,8 +263,8 @@ export default function TutorDocuments() {
                         className="h-10 w-10 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                        <Dog className="h-5 w-5 text-primary" />
+                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+                        <BreedIcon breed={breed} className="h-5 w-5 text-slate-500" />
                       </div>
                     )}
                     <div className="text-left">
@@ -250,7 +278,7 @@ export default function TutorDocuments() {
                 <AccordionContent>
                   {query.isLoading ? (
                     <div className="flex justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      <Skeleton className="h-20 w-full rounded-[14px]" />
                     </div>
                   ) : documents.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
@@ -312,7 +340,7 @@ export default function TutorDocuments() {
                                   size="sm"
                                   onClick={() => {
                                     if (confirm("Remover este documento?")) {
-                                      deleteDocument.mutate({ id: doc.id });
+                                      deleteDocument.mutate({ id: Number(doc.id) });
                                     }
                                   }}
                                 >

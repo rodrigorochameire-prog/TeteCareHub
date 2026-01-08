@@ -33,7 +33,9 @@ import {
   Dog,
   Calendar
 } from "lucide-react";
+import { BreedIcon } from "@/components/breed-icons";
 import { toast } from "sonner";
+import { BehaviorSkeleton } from "@/components/shared/skeletons";
 
 const socializationOptions = [
   { value: "excellent", label: "Excelente", color: "text-green-600" },
@@ -93,11 +95,7 @@ export default function AdminBehavior() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <BehaviorSkeleton />;
   }
 
   return (
@@ -172,8 +170,8 @@ export default function AdminBehavior() {
                           className="h-10 w-10 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                          <Dog className="h-5 w-5 text-primary" />
+                        <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+                          <BreedIcon breed={item.pet?.breed} className="h-5 w-5 text-slate-500" />
                         </div>
                       )}
                       <div>

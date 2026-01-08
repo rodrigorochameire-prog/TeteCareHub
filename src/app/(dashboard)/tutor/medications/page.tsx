@@ -38,6 +38,8 @@ import {
   Clock,
   AlertCircle
 } from "lucide-react";
+import { BreedIcon } from "@/components/breed-icons";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
 export default function TutorMedications() {
@@ -52,6 +54,7 @@ export default function TutorMedications() {
     petId: pet.id,
     petName: pet.name,
     photoUrl: pet.photoUrl,
+    breed: pet.breed,
     query: trpc.medications.getPetMedications.useQuery({ petId: pet.id }),
   })) || [];
 
@@ -114,7 +117,7 @@ export default function TutorMedications() {
         </Card>
       ) : (
         <Accordion type="single" collapsible className="space-y-4">
-          {petMedicationsQueries.map(({ petId, petName, photoUrl, query }) => {
+          {petMedicationsQueries.map(({ petId, petName, photoUrl, breed, query }) => {
             const medications = query.data || [];
             const activeCount = medications.filter(m => m.medication.isActive).length;
 
@@ -129,8 +132,8 @@ export default function TutorMedications() {
                         className="h-10 w-10 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                        <Dog className="h-5 w-5 text-primary" />
+                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+                        <BreedIcon breed={breed} className="h-5 w-5 text-slate-500" />
                       </div>
                     )}
                     <div className="text-left">
@@ -149,7 +152,7 @@ export default function TutorMedications() {
                 <AccordionContent>
                   {query.isLoading ? (
                     <div className="flex justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      <Skeleton className="h-20 w-full rounded-[14px]" />
                     </div>
                   ) : medications.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">

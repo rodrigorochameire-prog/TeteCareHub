@@ -4,7 +4,7 @@ import { db, users, petTutors, pets } from "@/lib/db";
 import { eq, desc, sql, and, ne } from "drizzle-orm";
 import { Errors, safeAsync } from "@/lib/errors";
 import { idSchema, emailSchema, nameSchema, phoneSchema } from "@/lib/validations";
-import { hashPassword } from "@/lib/auth/password";
+import { hashPassword, verifyPassword } from "@/lib/auth/password";
 
 export const usersRouter = router({
   /**
@@ -61,6 +61,7 @@ export const usersRouter = router({
       z
         .object({
           search: z.string().optional(),
+          approvalStatus: z.enum(["pending", "approved", "rejected"]).optional(),
         })
         .optional()
     )
@@ -73,11 +74,16 @@ export const usersRouter = router({
             email: users.email,
             phone: users.phone,
             emailVerified: users.emailVerified,
+            approvalStatus: users.approvalStatus,
             createdAt: users.createdAt,
           })
           .from(users)
           .where(eq(users.role, "user"))
           .orderBy(desc(users.createdAt));
+
+        if (input?.approvalStatus) {
+          result = result.filter((u) => u.approvalStatus === input.approvalStatus);
+        }
 
         if (input?.search) {
           const search = input.search.toLowerCase();
@@ -105,6 +111,69 @@ export const usersRouter = router({
 
         return tutorsWithPets;
       }, "Erro ao listar tutores");
+    }),
+
+  /**
+   * Lista tutores pendentes de aprovação
+   */
+  pendingTutors: adminProcedure.query(async () => {
+    return safeAsync(async () => {
+      const pending = await db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          phone: users.phone,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .where(and(eq(users.role, "user"), eq(users.approvalStatus, "pending")))
+        .orderBy(desc(users.createdAt));
+
+      return pending;
+    }, "Erro ao listar tutores pendentes");
+  }),
+
+  /**
+   * Aprova um tutor
+   */
+  approveTutor: adminProcedure
+    .input(z.object({ id: idSchema }))
+    .mutation(async ({ input }) => {
+      return safeAsync(async () => {
+        const [updated] = await db
+          .update(users)
+          .set({ approvalStatus: "approved", updatedAt: new Date() })
+          .where(eq(users.id, input.id))
+          .returning();
+
+        if (!updated) {
+          throw Errors.notFound("Usuário");
+        }
+
+        return updated;
+      }, "Erro ao aprovar tutor");
+    }),
+
+  /**
+   * Rejeita um tutor
+   */
+  rejectTutor: adminProcedure
+    .input(z.object({ id: idSchema, reason: z.string().optional() }))
+    .mutation(async ({ input }) => {
+      return safeAsync(async () => {
+        const [updated] = await db
+          .update(users)
+          .set({ approvalStatus: "rejected", updatedAt: new Date() })
+          .where(eq(users.id, input.id))
+          .returning();
+
+        if (!updated) {
+          throw Errors.notFound("Usuário");
+        }
+
+        return updated;
+      }, "Erro ao rejeitar tutor");
     }),
 
   /**
@@ -185,6 +254,7 @@ export const usersRouter = router({
             role: input.role,
             phone: input.phone || null,
             emailVerified: true, // Admin criando, já verificado
+            approvalStatus: "approved", // Admin criando, já aprovado
           })
           .returning();
 
@@ -341,16 +411,22 @@ export const usersRouter = router({
         .from(users)
         .where(eq(users.role, "user"));
 
-      const [verified] = await db
+      const [pendingTutors] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(users)
-        .where(eq(users.emailVerified, true));
+        .where(and(eq(users.role, "user"), eq(users.approvalStatus, "pending")));
+
+      const [approvedTutors] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(users)
+        .where(and(eq(users.role, "user"), eq(users.approvalStatus, "approved")));
 
       return {
         total: totalUsers.count,
         admins: admins.count,
         tutors: tutors.count,
-        verified: verified.count,
+        pendingTutors: pendingTutors.count,
+        approvedTutors: approvedTutors.count,
       };
     }, "Erro ao buscar estatísticas");
   }),
@@ -384,5 +460,103 @@ export const usersRouter = router({
           phone: updated.phone,
         };
       }, "Erro ao atualizar perfil");
+    }),
+
+  /**
+   * Verifica se o usuário tem senha definida
+   */
+  hasPassword: protectedProcedure.query(async ({ ctx }) => {
+    return safeAsync(async () => {
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, ctx.user!.id),
+        columns: { passwordHash: true },
+      });
+
+      return {
+        hasPassword: !!user?.passwordHash,
+      };
+    }, "Erro ao verificar senha");
+  }),
+
+  /**
+   * Criar senha (para usuários que entraram via Google)
+   */
+  createPassword: protectedProcedure
+    .input(
+      z.object({
+        newPassword: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
+        confirmPassword: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        if (input.newPassword !== input.confirmPassword) {
+          throw Errors.badRequest("As senhas não conferem");
+        }
+
+        // Verificar se já tem senha
+        const user = await db.query.users.findFirst({
+          where: eq(users.id, ctx.user!.id),
+          columns: { passwordHash: true },
+        });
+
+        if (user?.passwordHash) {
+          throw Errors.badRequest("Você já possui uma senha. Use a opção de alterar senha.");
+        }
+
+        const passwordHash = await hashPassword(input.newPassword);
+
+        await db
+          .update(users)
+          .set({ passwordHash, updatedAt: new Date() })
+          .where(eq(users.id, ctx.user!.id));
+
+        return { success: true };
+      }, "Erro ao criar senha");
+    }),
+
+  /**
+   * Alterar senha (para usuários que já têm senha)
+   */
+  changePassword: protectedProcedure
+    .input(
+      z.object({
+        currentPassword: z.string().min(1, "Senha atual é obrigatória"),
+        newPassword: z.string().min(6, "Nova senha deve ter no mínimo 6 caracteres"),
+        confirmPassword: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        if (input.newPassword !== input.confirmPassword) {
+          throw Errors.badRequest("As senhas não conferem");
+        }
+
+        // Buscar usuário com senha
+        const user = await db.query.users.findFirst({
+          where: eq(users.id, ctx.user!.id),
+          columns: { passwordHash: true },
+        });
+
+        if (!user?.passwordHash) {
+          throw Errors.badRequest("Você não possui uma senha. Use a opção de criar senha.");
+        }
+
+        // Verificar senha atual
+        const isValid = await verifyPassword(input.currentPassword, user.passwordHash);
+        if (!isValid) {
+          throw Errors.badRequest("Senha atual incorreta");
+        }
+
+        // Atualizar senha
+        const passwordHash = await hashPassword(input.newPassword);
+
+        await db
+          .update(users)
+          .set({ passwordHash, updatedAt: new Date() })
+          .where(eq(users.id, ctx.user!.id));
+
+        return { success: true };
+      }, "Erro ao alterar senha");
     }),
 });

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -9,9 +9,9 @@ export default async function DashboardRootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await currentUser();
+  const { userId } = await auth();
 
-  if (!user) {
+  if (!userId) {
     redirect("/sign-in");
   }
 

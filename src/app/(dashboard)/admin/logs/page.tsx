@@ -33,14 +33,16 @@ import {
   Home,
   Building2
 } from "lucide-react";
+import { BreedIcon } from "@/components/breed-icons";
 import { toast } from "sonner";
+import { LogsSkeleton } from "@/components/shared/skeletons";
 
 const moodOptions = [
-  { value: "happy", label: "Feliz", icon: Smile, color: "text-green-600" },
-  { value: "calm", label: "Calmo", icon: Meh, color: "text-blue-600" },
-  { value: "anxious", label: "Ansioso", icon: Frown, color: "text-yellow-600" },
-  { value: "tired", label: "Cansado", icon: Meh, color: "text-gray-600" },
-  { value: "agitated", label: "Agitado", icon: Frown, color: "text-red-600" },
+  { value: "happy", label: "Feliz", icon: Smile, color: "text-emerald-600 dark:text-emerald-400" },
+  { value: "calm", label: "Calmo", icon: Meh, color: "text-sky-600 dark:text-sky-400" },
+  { value: "anxious", label: "Ansioso", icon: Frown, color: "text-amber-600 dark:text-amber-400" },
+  { value: "tired", label: "Cansado", icon: Meh, color: "text-muted-foreground" },
+  { value: "agitated", label: "Agitado", icon: Frown, color: "text-primary" },
 ];
 
 const stoolOptions = [
@@ -99,11 +101,7 @@ export default function AdminLogs() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <LogsSkeleton />;
   }
 
   return (
@@ -128,31 +126,30 @@ export default function AdminLogs() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total de Logs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.total || 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Logs de Hoje</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats?.today || 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Creche Hoje</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats?.daycareToday || 0}</div>
-          </CardContent>
-        </Card>
+      <div className="stats-row">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Total de Logs</span>
+            <Calendar className="stat-card-icon muted" />
+          </div>
+          <div className="stat-card-value">{stats?.total || 0}</div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Logs de Hoje</span>
+            <Smile className="stat-card-icon green" />
+          </div>
+          <div className="stat-card-value">{stats?.today || 0}</div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Creche Hoje</span>
+            <Building2 className="stat-card-icon blue" />
+          </div>
+          <div className="stat-card-value">{stats?.daycareToday || 0}</div>
+        </div>
       </div>
 
       {/* Filters */}
@@ -214,8 +211,8 @@ export default function AdminLogs() {
                           className="h-10 w-10 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                          <Dog className="h-5 w-5 text-primary" />
+                        <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+                          <BreedIcon breed={item.pet?.breed} className="h-5 w-5 text-slate-500" />
                         </div>
                       )}
                       <div>
