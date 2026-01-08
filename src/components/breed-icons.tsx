@@ -124,6 +124,32 @@ const BREED_ICON_MAP: Record<string, string> = {
   'lhasa apso': 'lhasaapso',
   'lhasaapso': 'lhasaapso',
   'lhasa': 'lhasaapso',
+  
+  // Jack Russell Terrier
+  'jack russell terrier': 'jackrussel',
+  'jack russell': 'jackrussel',
+  'jackrussel': 'jackrussel',
+  
+  // Vira-Lata Caramelo
+  'vira-lata caramelo': 'viralatacaramelo',
+  'vira lata caramelo': 'viralatacaramelo',
+  'caramelo': 'viralatacaramelo',
+  
+  // Vira-Lata Pretinho
+  'vira-lata preto': 'viralatapretinho',
+  'vira lata preto': 'viralatapretinho',
+  'vira-lata pretinho': 'viralatapretinho',
+  'vira lata pretinho': 'viralatapretinho',
+  
+  // Vira-Lata Fiapo de Manga
+  'vira-lata fiapo de manga': 'viralatafiapodemanga',
+  'vira lata fiapo de manga': 'viralatafiapodemanga',
+  'fiapo de manga': 'viralatafiapodemanga',
+  
+  // Vira-Lata Preto e Caramelo
+  'vira-lata preto e caramelo': 'viralatapretocaramelo',
+  'vira lata preto e caramelo': 'viralatapretocaramelo',
+  'preto e caramelo': 'viralatapretocaramelo',
 };
 
 // Função auxiliar para compatibilidade com código antigo
