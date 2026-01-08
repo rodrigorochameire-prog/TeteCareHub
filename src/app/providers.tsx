@@ -87,7 +87,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <ClerkProvider localization={ptBR}>
+    <ClerkProvider 
+      localization={ptBR}
+      afterSignInUrl="/auth-redirect"
+      afterSignUpUrl="/auth-redirect"
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+    >
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
