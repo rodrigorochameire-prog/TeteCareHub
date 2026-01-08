@@ -1,40 +1,36 @@
-"use client";
+import { redirect } from "next/navigation";
+import { currentUser } from "@clerk/nextjs/server";
+import { db, users } from "@/lib/db";
+import { eq } from "drizzle-orm";
 
-import { useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
 
-export default function AuthRedirectPage() {
-  const { user, isLoaded } = useUser();
-  const router = useRouter();
+export default async function AuthRedirectPage() {
+  const clerkUser = await currentUser();
 
-  useEffect(() => {
-    if (!isLoaded) return;
+  if (!clerkUser) {
+    redirect("/sign-in");
+  }
 
-    if (!user) {
-      router.push("/sign-in");
-      return;
-    }
+  // Buscar usuário do banco pelo email do Clerk
+  const email = clerkUser.emailAddresses[0]?.emailAddress;
+  
+  if (!email) {
+    redirect("/sign-in");
+  }
 
-    // Verificar o role no publicMetadata
-    const role = (user.publicMetadata as { role?: string })?.role || "tutor";
-    
-    console.log("[AuthRedirect] User:", user.emailAddresses[0]?.emailAddress, "Role:", role);
+  const dbUser = await db.query.users.findFirst({
+    where: eq(users.email, email),
+  });
 
-    if (role === "admin") {
-      router.push("/admin");
-    } else {
-      router.push("/tutor");
-    }
-  }, [user, isLoaded, router]);
+  console.log("[AuthRedirect] Email:", email, "DB Role:", dbUser?.role);
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-muted-foreground">Redirecionando...</p>
-      </div>
-    </div>
-  );
+  // Redirecionar baseado no role DO BANCO DE DADOS
+  if (dbUser?.role === "admin") {
+    redirect("/admin");
+  } else {
+    redirect("/tutor");
+  }
 }
 

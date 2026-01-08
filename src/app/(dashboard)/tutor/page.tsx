@@ -68,7 +68,7 @@ export default async function TutorDashboard() {
             <Home />
           </div>
           <div className="page-header-info">
-            <h1>Olá, {session.name.split(" ")[0]}!</h1>
+            <h1>Olá, {dbUser.name.split(" ")[0]}!</h1>
             <p>Bem-vindo ao seu painel</p>
           </div>
         </div>

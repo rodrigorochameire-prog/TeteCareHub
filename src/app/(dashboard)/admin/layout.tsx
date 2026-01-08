@@ -1,29 +1,39 @@
 import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
 import { AdminSidebar } from "@/components/layouts/admin-sidebar";
+import { db, users } from "@/lib/db";
+import { eq } from "drizzle-orm";
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = await currentUser();
+  const clerkUser = await currentUser();
 
-  if (!user) {
+  if (!clerkUser) {
     redirect("/sign-in");
   }
 
-  const role = (user.publicMetadata as { role?: string })?.role || "tutor";
+  // Buscar usuário do banco pelo email do Clerk
+  const email = clerkUser.emailAddresses[0]?.emailAddress;
+  if (!email) {
+    redirect("/sign-in");
+  }
 
-  // Verificar se é admin
-  if (role !== "admin") {
+  const dbUser = await db.query.users.findFirst({
+    where: eq(users.email, email),
+  });
+
+  // Verificar se é admin NO BANCO DE DADOS
+  if (!dbUser || dbUser.role !== "admin") {
     redirect("/tutor");
   }
 
   return (
     <AdminSidebar 
-      userName={user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || "Admin"} 
-      userEmail={user.emailAddresses[0]?.emailAddress || ""}
+      userName={dbUser.name || clerkUser.firstName || "Admin"} 
+      userEmail={email}
     >
       {children}
     </AdminSidebar>

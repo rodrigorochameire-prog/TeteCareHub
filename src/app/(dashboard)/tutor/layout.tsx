@@ -1,29 +1,39 @@
 import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
 import { TutorSidebar } from "@/components/layouts/tutor-sidebar";
+import { db, users } from "@/lib/db";
+import { eq } from "drizzle-orm";
 
 export default async function TutorLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = await currentUser();
+  const clerkUser = await currentUser();
 
-  if (!user) {
+  if (!clerkUser) {
     redirect("/sign-in");
   }
 
-  const role = (user.publicMetadata as { role?: string })?.role || "tutor";
-  
-  // Se for admin, redirecionar para área de admin
-  if (role === "admin") {
+  // Buscar usuário do banco pelo email do Clerk
+  const email = clerkUser.emailAddresses[0]?.emailAddress;
+  if (!email) {
+    redirect("/sign-in");
+  }
+
+  const dbUser = await db.query.users.findFirst({
+    where: eq(users.email, email),
+  });
+
+  // Se for admin NO BANCO DE DADOS, redirecionar para área de admin
+  if (dbUser?.role === "admin") {
     redirect("/admin");
   }
 
   return (
     <TutorSidebar 
-      userName={user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || "Usuário"} 
-      userEmail={user.emailAddresses[0]?.emailAddress || ""}
+      userName={dbUser?.name || clerkUser.firstName || "Usuário"} 
+      userEmail={email}
     >
       {children}
     </TutorSidebar>
