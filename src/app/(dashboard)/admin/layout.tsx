@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth/session";
+import { currentUser } from "@clerk/nextjs/server";
 import { AdminSidebar } from "@/components/layouts/admin-sidebar";
 
 export default async function AdminLayout({
@@ -7,15 +7,24 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSession();
+  const user = await currentUser();
+
+  if (!user) {
+    redirect("/sign-in");
+  }
+
+  const role = (user.publicMetadata as { role?: string })?.role || "tutor";
 
   // Verificar se é admin
-  if (!session || session.role !== "admin") {
+  if (role !== "admin") {
     redirect("/tutor");
   }
 
   return (
-    <AdminSidebar userName={session.name} userEmail={session.email}>
+    <AdminSidebar 
+      userName={user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || "Admin"} 
+      userEmail={user.emailAddresses[0]?.emailAddress || ""}
+    >
       {children}
     </AdminSidebar>
   );
