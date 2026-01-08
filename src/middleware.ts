@@ -15,33 +15,38 @@ const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isTutorRoute = createRouteMatcher(["/tutor(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId, sessionClaims } = await auth();
-
+  // Permitir rotas públicas sem verificação
   if (isPublicRoute(req)) {
     return NextResponse.next();
   }
 
+  // Proteger todas as outras rotas
+  const { userId, sessionClaims } = await auth();
+
+  // Se não estiver autenticado, redirecionar para sign-in
   if (!userId) {
     const signInUrl = new URL("/sign-in", req.url);
     signInUrl.searchParams.set("redirect_url", req.url);
     return NextResponse.redirect(signInUrl);
   }
 
-  // O Clerk armazena em publicMetadata ou public_metadata
+  // Usuário está autenticado - verificar role apenas para redirecionamentos entre áreas
   const publicMeta = (sessionClaims as any)?.publicMetadata || (sessionClaims as any)?.public_metadata || {};
   const userRole = publicMeta?.role || "tutor";
   
-  // Debug: log para verificar
-  console.log("[Middleware] userId:", userId, "role:", userRole, "claims:", JSON.stringify(sessionClaims));
+  console.log("[Middleware] Path:", req.nextUrl.pathname, "userId:", userId, "role:", userRole);
 
-  if (isAdminRoute(req) && userRole !== "admin") {
-    return NextResponse.redirect(new URL("/tutor", req.url));
-  }
-
+  // Redirecionar admin tentando acessar área de tutor
   if (isTutorRoute(req) && userRole === "admin") {
     return NextResponse.redirect(new URL("/admin", req.url));
   }
 
+  // Redirecionar tutor tentando acessar área de admin
+  if (isAdminRoute(req) && userRole !== "admin") {
+    return NextResponse.redirect(new URL("/tutor", req.url));
+  }
+
+  // Permitir acesso
   return NextResponse.next();
 });
 
