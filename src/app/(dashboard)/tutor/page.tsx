@@ -1,9 +1,10 @@
-import { getSession } from "@/lib/auth/session";
-import { db, pets, petTutors, notifications } from "@/lib/db";
+import { currentUser } from "@clerk/nextjs/server";
+import { db, pets, petTutors, notifications, users } from "@/lib/db";
 import { eq, and, desc, count } from "drizzle-orm";
 import { Dog, Bell, Calendar, CreditCard, Home, Plus, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { redirect } from "next/navigation";
 
 // Force dynamic rendering (não pre-renderizar no build)
 export const dynamic = "force-dynamic";
@@ -36,10 +37,27 @@ async function getTutorStats(userId: number) {
 }
 
 export default async function TutorDashboard() {
-  const session = await getSession();
-  if (!session) return null;
+  const clerkUser = await currentUser();
+  if (!clerkUser) {
+    redirect("/sign-in");
+  }
 
-  const stats = await getTutorStats(session.id);
+  // Buscar usuário do banco pelo email do Clerk
+  const email = clerkUser.emailAddresses[0]?.emailAddress;
+  if (!email) {
+    redirect("/sign-in");
+  }
+
+  const dbUser = await db.query.users.findFirst({
+    where: eq(users.email, email),
+  });
+
+  if (!dbUser) {
+    // Usuário Clerk não tem conta no banco - redirecionar para registro ou criar automaticamente
+    redirect("/sign-in");
+  }
+
+  const stats = await getTutorStats(dbUser.id);
 
   return (
     <div className="page-container">
