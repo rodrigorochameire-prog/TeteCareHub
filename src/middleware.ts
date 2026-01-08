@@ -7,10 +7,6 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/auth-redirect",
   "/api/webhooks(.*)",
-  "/login(.*)",
-  "/register(.*)",
-  "/forgot-password(.*)",
-  "/reset-password(.*)",
 ]);
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
