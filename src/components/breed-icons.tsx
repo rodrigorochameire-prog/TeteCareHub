@@ -197,7 +197,7 @@ export function BreedIcon({ breed, className, size = 48 }: BreedIconProps) {
         style={{ width: size, height: size }}
       >
         <Image
-          src={`/breed-icons/${iconFile}.png?v=8`}
+          src={`/breed-icons/${iconFile}.png?v=9`}
           alt={breed || 'Pet'}
           fill
           className="object-cover scale-[1.02]"
