@@ -338,13 +338,14 @@ function AdminSidebarContent({
                               }
                             }}
                           >
-                            {/* Ícone SEMPRE colorido */}
+                            {/* Ícone com destaque quando ativo */}
                             <item.icon
-                              className={`h-6 w-6 relative z-10 transition-all duration-300 ease ${
+                              className={`relative z-10 transition-all duration-300 ease ${
                                 isActive
-                                  ? `${colors.iconActive} scale-105`
-                                  : `text-[hsl(220_13%_45%)] group-hover:text-[hsl(220_16%_38%)] group-hover:scale-105`
+                                  ? `${colors.iconActive} h-[26px] w-[26px] drop-shadow-[0_0_3px_currentColor]`
+                                  : `h-6 w-6 text-[hsl(220_13%_45%)] group-hover:text-[hsl(220_16%_38%)] group-hover:scale-105`
                               }`}
+                              strokeWidth={isActive ? 2.5 : 2}
                             />
                             {/* Texto com hierarquia melhorada */}
                             <span className={`relative z-10 text-sm transition-colors duration-300 ${
@@ -355,7 +356,7 @@ function AdminSidebarContent({
                               {item.label}
                             </span>
                             {isActive && !isCollapsed && (
-                              <div className={`ml-auto w-1.5 h-1.5 rounded-full ${colors.icon}`} />
+                              <div className={`ml-auto w-2 h-2 rounded-full ${colors.icon} shadow-[0_0_4px_currentColor]`} />
                             )}
                           </Link>
                         </SidebarMenuButton>
