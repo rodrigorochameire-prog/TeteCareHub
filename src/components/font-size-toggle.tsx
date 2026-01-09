@@ -34,8 +34,8 @@ export function FontSizeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" className="h-8 w-8" disabled>
-        <ALargeSmall className="h-4 w-4" />
+      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full" disabled>
+        <ALargeSmall className="h-5 w-5" />
       </Button>
     );
   }
@@ -45,13 +45,13 @@ export function FontSizeToggle() {
       variant="ghost"
       size="icon"
       onClick={toggleFontSize}
-      className="h-8 w-8 hover:bg-muted"
+      className="h-10 w-10 rounded-full hover:bg-muted/60 transition-all duration-200"
       aria-label={isLarge ? "Fonte Normal" : "Fonte Grande"}
     >
       {isLarge ? (
-        <Type className="h-4 w-4" />
+        <Type className="h-5 w-5" />
       ) : (
-        <ALargeSmall className="h-4 w-4" />
+        <ALargeSmall className="h-5 w-5" />
       )}
       <span className="sr-only">
         {isLarge ? "Fonte Normal" : "Fonte Grande"}
