@@ -473,28 +473,28 @@ function AdminSidebarContent({
           </div>
         )}
         {!isMobile && (
-          <div className="flex border-b border-border/30 h-14 items-center justify-center bg-card/95 backdrop-blur-xl px-6 sticky top-0 z-40 gap-3 shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] relative">
+          <div className="flex border-b border-border/30 h-[72px] items-center justify-center bg-card/95 backdrop-blur-xl px-6 sticky top-0 z-40 gap-4 shadow-[0_2px_8px_0_rgba(0,0,0,0.04)] relative">
             <Link
               href="/admin"
-              className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-300 cursor-pointer"
+              className="flex items-center gap-3.5 hover:opacity-90 transition-all duration-300 cursor-pointer hover:scale-[1.02]"
             >
-              <div className="relative w-12 h-12 rounded-full overflow-hidden shadow-lg bg-white flex items-center justify-center">
+              <div className="relative w-14 h-14 rounded-full overflow-hidden shadow-xl bg-white flex items-center justify-center ring-2 ring-primary/10">
                 <Image
                   src="/tetecare-logo.png"
                   alt="Tetê Care"
-                  width={48}
-                  height={48}
+                  width={56}
+                  height={56}
                   className="w-full h-full object-contain"
                 />
               </div>
               <span
-                className="text-xl font-bold tracking-tight text-foreground"
+                className="text-2xl font-bold tracking-tight text-foreground"
                 style={{ fontFamily: '"Inter", system-ui, sans-serif' }}
               >
                 Tetê Care
               </span>
             </Link>
-            <div className="flex items-center gap-1.5 absolute right-6">
+            <div className="flex items-center gap-2 absolute right-6">
               <NotificationsPopover />
               <FontSizeToggle />
               <ThemeToggle />
