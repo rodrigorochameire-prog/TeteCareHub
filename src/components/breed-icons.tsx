@@ -134,7 +134,7 @@ export function BreedIcon({ breed, className, size = 48 }: BreedIconProps) {
     return (
       <div 
         className={cn(
-          "relative rounded-full overflow-hidden bg-white shadow-sm ring-1 ring-black/5",
+          "relative rounded-md overflow-hidden bg-white shadow-sm ring-1 ring-black/5 flex items-center justify-center",
           className
         )} 
         style={{ width: size, height: size }}
