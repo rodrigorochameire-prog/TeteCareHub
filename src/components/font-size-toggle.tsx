@@ -3,11 +3,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ALargeSmall, Type } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 const FONT_SIZE_KEY = "tetecare-font-size";
 
@@ -46,28 +41,21 @@ export function FontSizeToggle() {
   }
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleFontSize}
-          className="h-8 w-8 hover:bg-muted"
-        >
-          {isLarge ? (
-            <Type className="h-4 w-4" />
-          ) : (
-            <ALargeSmall className="h-4 w-4" />
-          )}
-          <span className="sr-only">
-            {isLarge ? "Fonte Normal" : "Fonte Grande"}
-          </span>
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>{isLarge ? "Fonte Normal" : "Fonte Grande"}</p>
-      </TooltipContent>
-    </Tooltip>
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={toggleFontSize}
+      className="h-8 w-8 hover:bg-muted"
+      aria-label={isLarge ? "Fonte Normal" : "Fonte Grande"}
+    >
+      {isLarge ? (
+        <Type className="h-4 w-4" />
+      ) : (
+        <ALargeSmall className="h-4 w-4" />
+      )}
+      <span className="sr-only">
+        {isLarge ? "Fonte Normal" : "Fonte Grande"}
+      </span>
+    </Button>
   );
 }
-
