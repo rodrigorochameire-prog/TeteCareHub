@@ -150,21 +150,6 @@ const BREED_ICON_MAP: Record<string, string> = {
   'vira-lata preto e caramelo': 'viralatapretocaramelo',
   'vira lata preto e caramelo': 'viralatapretocaramelo',
   'preto e caramelo': 'viralatapretocaramelo',
-  
-  // English Bulldog (Buldogue Inglês)
-  'english bulldog': 'bulldogingles',
-  'bulldog ingles': 'bulldogingles',
-  'buldogue ingles': 'bulldogingles',
-  'bulldog inglês': 'bulldogingles',
-  'buldogue inglês': 'bulldogingles',
-  
-  // Labrador Preto
-  'labrador preto': 'labradorpreto',
-  'labrador black': 'labradorpreto',
-  
-  // Lebrel Italiano (Italian Greyhound)
-  'lebrel italiano': 'lebrelitaliano',
-  'italian greyhound': 'lebrelitaliano',
 };
 
 // Função auxiliar para compatibilidade com código antigo
@@ -190,20 +175,18 @@ export function BreedIcon({ breed, className, size = 48 }: BreedIconProps) {
     
     return (
       <div 
-        className={cn(
-          "relative rounded-full overflow-hidden bg-white shadow-sm ring-1 ring-black/5",
-          className
-        )} 
-        style={{ width: size, height: size }}
-      >
-        <Image
-          src={`/breed-icons/${iconFile}.png?v=6`}
-          alt={breed || 'Pet'}
-          fill
-          className="object-cover scale-[1.02]"
-          sizes={`${size}px`}
-        />
-      </div>
+        className={cn("relative flex-shrink-0", className)} 
+        style={{ 
+          width: size, 
+          height: size,
+          backgroundImage: `url(${imageUrl})`,
+          backgroundSize: 'contain',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+        role="img"
+        aria-label={breed || 'Pet'}
+      />
     );
   }
   
