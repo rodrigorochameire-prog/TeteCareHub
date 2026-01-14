@@ -169,9 +169,10 @@ export function BreedIcon({ breed, className, size = 56 }: BreedIconProps) {
   // Buscar o ícone correspondente
   const iconFile = normalizedBreed ? BREED_ICON_MAP[normalizedBreed] : null;
   
-  // Tamanho da imagem interna (90% da largura, altura completa)
-  const imageWidth = Math.round(size * 0.88);
-  const imageHeight = Math.round(size * 0.92);
+  // Imagem maior que o container para ser cortada na parte de baixo
+  // A imagem tem 95% da largura e 110% da altura (para "sair" do container)
+  const imageWidth = Math.round(size * 0.92);
+  const imageHeight = Math.round(size * 1.15);
   
   if (iconFile) {
     return (
@@ -184,17 +185,24 @@ export function BreedIcon({ breed, className, size = 56 }: BreedIconProps) {
           "hover:shadow-[0_4px_12px_rgba(0,0,0,0.12),0_2px_6px_rgba(0,0,0,0.08)]",
           "hover:ring-slate-300/80 dark:hover:ring-slate-600/60",
           "hover:-translate-y-0.5",
-          "flex items-end justify-center pt-1",
           className
         )} 
         style={{ width: size, height: size }}
       >
-        <div className="relative" style={{ width: imageWidth, height: imageHeight }}>
+        {/* Container posicionado para a imagem "sair" na parte de baixo */}
+        <div 
+          className="absolute left-1/2 -translate-x-1/2" 
+          style={{ 
+            width: imageWidth, 
+            height: imageHeight,
+            top: Math.round(size * 0.08), // Espaço no topo (~8% do tamanho)
+          }}
+        >
           <Image
             src={`/breed-icons/${iconFile}.png?v=17`}
             alt={breed || 'Pet'}
             fill
-            className="object-contain object-bottom"
+            className="object-contain object-top"
             sizes={`${imageWidth}px`}
           />
         </div>
