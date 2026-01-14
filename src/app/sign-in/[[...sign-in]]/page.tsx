@@ -124,15 +124,12 @@ export default async function SignInPage() {
                   formFieldLabel: "text-sm font-bold text-slate-800 dark:text-slate-200 mb-2.5",
                   socialButtonsBlockButton: "h-12 rounded-[14px] border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-500 transition-all duration-300 shadow-sm hover:shadow-md",
                   socialButtonsBlockButtonText: "text-base font-semibold text-slate-800 dark:text-slate-200",
-                  socialButtonsBlockButtonArrow: "text-slate-600 dark:text-slate-400",
                   dividerLine: "bg-slate-200 dark:bg-slate-700",
                   dividerText: "text-slate-500 dark:text-slate-400 text-sm px-4 font-medium",
                   footerActionLink: "text-primary hover:text-primary/80 font-bold transition-colors text-base",
                   footerActionText: "text-slate-600 dark:text-slate-400 text-base",
                   identityPreviewText: "text-base font-semibold text-foreground",
                   identityPreviewEditButton: "text-primary hover:text-primary/80 text-sm font-semibold",
-                  headerTitle: "text-slate-900 dark:text-slate-100",
-                  headerSubtitle: "text-slate-600 dark:text-slate-400",
                 },
               }}
               routing="path"
