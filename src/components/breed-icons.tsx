@@ -199,7 +199,7 @@ export function BreedIcon({ breed, className, size = 56 }: BreedIconProps) {
           }}
         >
           <Image
-            src={`/breed-icons/${iconFile}.png?v=17`}
+            src={`/breed-icons/${iconFile}.png?v=18`}
             alt={breed || 'Pet'}
             fill
             className="object-contain object-top"
