@@ -21,6 +21,11 @@ const envSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
 
+  // Evolution API (WhatsApp)
+  EVOLUTION_API_URL: z.string().optional(),
+  EVOLUTION_API_KEY: z.string().optional(),
+  EVOLUTION_INSTANCE_NAME: z.string().optional(),
+
   // App
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   NEXT_PUBLIC_APP_URL: z.string().default("http://localhost:3000"),
@@ -62,6 +67,33 @@ export function requireAuthSecret(): string {
     throw new Error("AUTH_SECRET deve ter no mínimo 16 caracteres");
   }
   return env.AUTH_SECRET;
+}
+
+/**
+ * Verifica se Evolution API está configurada
+ */
+export function isEvolutionApiConfigured(): boolean {
+  return !!(env.EVOLUTION_API_URL && env.EVOLUTION_API_KEY && env.EVOLUTION_INSTANCE_NAME);
+}
+
+/**
+ * Retorna configuração da Evolution API (lança erro se não configurada)
+ */
+export function requireEvolutionApiConfig() {
+  if (!env.EVOLUTION_API_URL) {
+    throw new Error("EVOLUTION_API_URL não está configurada");
+  }
+  if (!env.EVOLUTION_API_KEY) {
+    throw new Error("EVOLUTION_API_KEY não está configurada");
+  }
+  if (!env.EVOLUTION_INSTANCE_NAME) {
+    throw new Error("EVOLUTION_INSTANCE_NAME não está configurada");
+  }
+  return {
+    url: env.EVOLUTION_API_URL,
+    apiKey: env.EVOLUTION_API_KEY,
+    instanceName: env.EVOLUTION_INSTANCE_NAME,
+  };
 }
 
 // Helpers

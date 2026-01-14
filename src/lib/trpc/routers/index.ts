@@ -25,6 +25,7 @@ import { packagesRouter } from "./packages";
 import { reviewsRouter } from "./reviews";
 import { notificationTemplatesRouter } from "./notificationTemplates";
 import { trainingRouter } from "./training";
+import { whatsappRouter } from "./whatsapp";
 
 export const appRouter = router({
   // Autenticação
@@ -70,6 +71,7 @@ export const appRouter = router({
   notificationTemplates: notificationTemplatesRouter,
   wall: wallRouter,
   reviews: reviewsRouter,
+  whatsapp: whatsappRouter,
   
   // Dashboard e estatísticas
   dashboard: dashboardRouter,
