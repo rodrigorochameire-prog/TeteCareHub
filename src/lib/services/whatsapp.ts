@@ -186,8 +186,7 @@ export class WhatsAppService {
     }
 
     // Remove o accessToken por segurança
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { accessToken, ...safeConfig } = config;
+    const { accessToken: _, ...safeConfig } = config;
     return safeConfig;
   }
 
