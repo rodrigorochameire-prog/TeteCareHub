@@ -565,7 +565,63 @@ export default function AdminHealthPage() {
 
         {/* ========== ANÁLISES ========== */}
         <TabsContent value="analytics" className="space-y-6">
-          {/* Resumo Geral */}
+          {/* Métricas de Saúde */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <Card className="shadow-sm">
+              <CardContent className="pt-4 pb-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Syringe className="h-4 w-4 text-slate-500" />
+                  <span className="text-xs text-muted-foreground">Vacinas</span>
+                </div>
+                <p className="text-2xl font-bold">{vaccineStats?.total || 0}</p>
+                <p className="text-xs text-muted-foreground">registradas</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardContent className="pt-4 pb-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Shield className="h-4 w-4 text-slate-500" />
+                  <span className="text-xs text-muted-foreground">Preventivos</span>
+                </div>
+                <p className="text-2xl font-bold">
+                  {(preventiveStats?.flea || 0) + (preventiveStats?.deworming || 0) + (preventiveStats?.tick || 0)}
+                </p>
+                <p className="text-xs text-muted-foreground">registrados</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardContent className="pt-4 pb-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Calendar className="h-4 w-4 text-slate-500" />
+                  <span className="text-xs text-muted-foreground">Próximas</span>
+                </div>
+                <p className="text-2xl font-bold">{vaccineStats?.upcoming || 0}</p>
+                <p className="text-xs text-muted-foreground">em 30 dias</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardContent className="pt-4 pb-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle className="h-4 w-4 text-slate-500" />
+                  <span className="text-xs text-muted-foreground">Atrasadas</span>
+                </div>
+                <p className="text-2xl font-bold">{vaccineStats?.overdue || 0}</p>
+                <p className="text-xs text-muted-foreground">precisam atenção</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardContent className="pt-4 pb-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Pill className="h-4 w-4 text-slate-500" />
+                  <span className="text-xs text-muted-foreground">Medicamentos</span>
+                </div>
+                <p className="text-2xl font-bold">{medicationLibrary?.length || 0}</p>
+                <p className="text-xs text-muted-foreground">cadastrados</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Gráficos */}
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Gráfico de Vacinas por Status */}
             <Card className="shadow-sm">
