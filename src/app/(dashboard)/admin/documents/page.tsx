@@ -59,6 +59,9 @@ import {
   BarChart3,
   PieChart,
   TrendingUp,
+  Activity,
+  Heart,
+  Clipboard,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -75,6 +78,8 @@ import {
   Pie,
   Cell,
   Legend,
+  AreaChart,
+  Area,
 } from "recharts";
 
 const NEUTRAL_COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"];
@@ -87,31 +92,45 @@ function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
-// Categorias de documentos expandidas
+// Categorias de documentos expandidas com módulos relacionados
 const DOCUMENT_CATEGORIES = [
-  { value: "vaccination", label: "Vacinação", icon: Syringe, color: "text-blue-500", bgColor: "bg-blue-100" },
-  { value: "exam", label: "Exame", icon: TestTube, color: "text-purple-500", bgColor: "bg-purple-100" },
-  { value: "prescription", label: "Receita", icon: Pill, color: "text-pink-500", bgColor: "bg-pink-100" },
-  { value: "medical_record", label: "Prontuário", icon: FileText, color: "text-red-500", bgColor: "bg-red-100" },
-  { value: "preventive", label: "Preventivo", icon: Shield, color: "text-green-500", bgColor: "bg-green-100" },
-  { value: "training", label: "Adestramento", icon: GraduationCap, color: "text-orange-500", bgColor: "bg-orange-100" },
-  { value: "behavior", label: "Comportamento", icon: Brain, color: "text-indigo-500", bgColor: "bg-indigo-100" },
-  { value: "nutrition", label: "Nutrição", icon: Apple, color: "text-lime-500", bgColor: "bg-lime-100" },
-  { value: "insurance", label: "Seguro", icon: ShieldCheck, color: "text-cyan-500", bgColor: "bg-cyan-100" },
-  { value: "identification", label: "Identificação", icon: CreditCard, color: "text-amber-500", bgColor: "bg-amber-100" },
-  { value: "contract", label: "Contrato", icon: FileCheck, color: "text-slate-500", bgColor: "bg-slate-100" },
-  { value: "photo", label: "Foto", icon: Camera, color: "text-rose-500", bgColor: "bg-rose-100" },
-  { value: "other", label: "Outro", icon: File, color: "text-gray-500", bgColor: "bg-gray-100" },
+  { value: "vaccination", label: "Vacinação", icon: Syringe, color: "text-blue-500", bgColor: "bg-blue-100", module: "health" },
+  { value: "exam", label: "Exame", icon: TestTube, color: "text-purple-500", bgColor: "bg-purple-100", module: "health" },
+  { value: "prescription", label: "Receita", icon: Pill, color: "text-pink-500", bgColor: "bg-pink-100", module: "health" },
+  { value: "medical_record", label: "Prontuário", icon: FileText, color: "text-red-500", bgColor: "bg-red-100", module: "health" },
+  { value: "preventive", label: "Preventivo", icon: Shield, color: "text-green-500", bgColor: "bg-green-100", module: "health" },
+  { value: "daily_log", label: "Log Diário", icon: Clipboard, color: "text-teal-500", bgColor: "bg-teal-100", module: "daily_log" },
+  { value: "training", label: "Adestramento", icon: GraduationCap, color: "text-orange-500", bgColor: "bg-orange-100", module: "training" },
+  { value: "behavior", label: "Comportamento", icon: Brain, color: "text-indigo-500", bgColor: "bg-indigo-100", module: "behavior" },
+  { value: "nutrition", label: "Nutrição", icon: Apple, color: "text-lime-500", bgColor: "bg-lime-100", module: "nutrition" },
+  { value: "insurance", label: "Seguro", icon: ShieldCheck, color: "text-cyan-500", bgColor: "bg-cyan-100", module: "other" },
+  { value: "identification", label: "Identificação", icon: CreditCard, color: "text-amber-500", bgColor: "bg-amber-100", module: "other" },
+  { value: "contract", label: "Contrato", icon: FileCheck, color: "text-slate-500", bgColor: "bg-slate-100", module: "other" },
+  { value: "photo", label: "Foto", icon: Camera, color: "text-rose-500", bgColor: "bg-rose-100", module: "other" },
+  { value: "other", label: "Outro", icon: File, color: "text-gray-500", bgColor: "bg-gray-100", module: "other" },
+];
+
+// Módulos do sistema
+const MODULES = [
+  { value: "all", label: "Todos", icon: FolderOpen },
+  { value: "health", label: "Saúde", icon: Heart },
+  { value: "daily_log", label: "Logs Diários", icon: Clipboard },
+  { value: "behavior", label: "Comportamento", icon: Brain },
+  { value: "training", label: "Treinamento", icon: GraduationCap },
+  { value: "nutrition", label: "Nutrição", icon: Apple },
+  { value: "other", label: "Outros", icon: File },
 ];
 
 export default function AdminDocuments() {
   const [mainTab, setMainTab] = useState("documents");
+  const [moduleFilter, setModuleFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedPetId, setSelectedPetId] = useState<string>("");
+  const [selectedModule, setSelectedModule] = useState<string>("");
   const [uploadMode, setUploadMode] = useState<"file" | "url">("file");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -123,19 +142,37 @@ export default function AdminDocuments() {
   const { data: allDocuments } = trpc.documents.list.useQuery({});
   const { data: pets } = trpc.pets.list.useQuery();
 
-  // Dados para infográficos
+  // Dados para infográficos expandidos
   const chartData = useMemo(() => {
-    if (!allDocuments) return { byCategory: [], byPet: [], timeline: [], stats: { total: 0, thisMonth: 0, categories: 0 } };
+    if (!allDocuments) return { 
+      byCategory: [], byPet: [], timeline: [], byModule: [],
+      stats: { total: 0, thisMonth: 0, thisWeek: 0, categories: 0 },
+      moduleStats: []
+    };
 
     // Por categoria
     const categoryCount: Record<string, number> = {};
     const petCount: Record<string, number> = {};
     const monthCount: Record<string, number> = {};
+    const moduleCount: Record<string, number> = {};
+    
+    // Contagem desta semana e mês
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay());
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    let thisWeek = 0;
+    let thisMonth = 0;
     
     allDocuments.forEach(doc => {
       // Por categoria
       const cat = doc.document.category || "other";
       categoryCount[cat] = (categoryCount[cat] || 0) + 1;
+      
+      // Por módulo
+      const catInfo = DOCUMENT_CATEGORIES.find(c => c.value === cat);
+      const module = catInfo?.module || "other";
+      moduleCount[module] = (moduleCount[module] || 0) + 1;
       
       // Por pet
       if (doc.pet?.name) {
@@ -146,39 +183,82 @@ export default function AdminDocuments() {
       const date = new Date(doc.document.createdAt);
       const monthKey = date.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
       monthCount[monthKey] = (monthCount[monthKey] || 0) + 1;
+      
+      // Stats
+      if (date >= monthStart) thisMonth++;
+      if (date >= weekStart) thisWeek++;
     });
 
     const byCategory = Object.entries(categoryCount).map(([key, value]) => {
       const cat = DOCUMENT_CATEGORIES.find(c => c.value === key);
-      return { name: cat?.label || key, value };
-    }).sort((a, b) => b.value - a.value).slice(0, 6);
+      return { name: cat?.label || key, value, category: key };
+    }).sort((a, b) => b.value - a.value).slice(0, 8);
 
     const byPet = Object.entries(petCount)
       .map(([name, value]) => ({ name: name.length > 10 ? name.slice(0, 10) + '...' : name, value }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 6);
+      .slice(0, 8);
+
+    const byModule = MODULES.filter(m => m.value !== "all").map(m => ({
+      name: m.label,
+      value: moduleCount[m.value] || 0,
+      module: m.value,
+    })).filter(m => m.value > 0);
 
     // Últimos 6 meses
-    const timeline = Object.entries(monthCount).slice(-6).map(([month, value]) => ({ month, docs: value }));
+    const timeline = Array.from({ length: 6 }, (_, i) => {
+      const date = new Date();
+      date.setMonth(date.getMonth() - (5 - i));
+      const monthKey = date.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
+      return { month: monthKey, docs: monthCount[monthKey] || 0 };
+    });
 
-    // Stats
-    const now = new Date();
-    const thisMonth = allDocuments.filter(d => {
-      const date = new Date(d.document.createdAt);
-      return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-    }).length;
+    // Stats por módulo
+    const moduleStats = MODULES.filter(m => m.value !== "all").map(m => ({
+      ...m,
+      count: moduleCount[m.value] || 0,
+      percent: allDocuments.length > 0 
+        ? Math.round((moduleCount[m.value] || 0) / allDocuments.length * 100) 
+        : 0
+    }));
 
     return {
       byCategory,
       byPet,
       timeline,
+      byModule,
       stats: {
         total: allDocuments.length,
         thisMonth,
+        thisWeek,
         categories: Object.keys(categoryCount).length,
-      }
+      },
+      moduleStats
     };
   }, [allDocuments]);
+
+  // Filtrar documentos por módulo
+  const filteredByModule = useMemo(() => {
+    if (!documents) return [];
+    if (moduleFilter === "all") return documents;
+    
+    return documents.filter((doc: any) => {
+      const cat = DOCUMENT_CATEGORIES.find(c => c.value === doc.document.category);
+      return cat?.module === moduleFilter;
+    });
+  }, [documents, moduleFilter]);
+
+  // Filtrar documentos por busca
+  const filteredDocuments = useMemo(() => {
+    if (!filteredByModule) return [];
+    if (!searchTerm) return filteredByModule;
+    
+    const term = searchTerm.toLowerCase();
+    return filteredByModule.filter((doc: any) => 
+      doc.document.title.toLowerCase().includes(term) ||
+      doc.pet?.name?.toLowerCase().includes(term)
+    );
+  }, [filteredByModule, searchTerm]);
 
   const saveDocumentMutation = trpc.documents.upload.useMutation({
     onSuccess: () => {
@@ -212,6 +292,7 @@ export default function AdminDocuments() {
     setSelectedFile(null);
     setSelectedCategory("");
     setSelectedPetId("");
+    setSelectedModule("");
     setUploadMode("file");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -220,13 +301,14 @@ export default function AdminDocuments() {
     const file = e.target.files?.[0];
     if (!file) return;
     const allowedTypes = ["application/pdf", "image/jpeg", "image/png", "image/webp", 
-      "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+      "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "video/mp4", "video/quicktime", "video/webm"];
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Tipo de arquivo não permitido. Use PDF, JPG, PNG ou DOC.");
+      toast.error("Tipo de arquivo não permitido. Use PDF, JPG, PNG, DOC ou vídeo.");
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Arquivo muito grande. Tamanho máximo: 10MB.");
+    if (file.size > 100 * 1024 * 1024) {
+      toast.error("Arquivo muito grande. Tamanho máximo: 100MB.");
       return;
     }
     setSelectedFile(file);
@@ -312,18 +394,6 @@ export default function AdminDocuments() {
     }
   };
 
-  // Filtrar documentos
-  const filteredDocuments = (documents || []).filter((doc: any) => {
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      return (
-        doc.document.title.toLowerCase().includes(term) ||
-        doc.pet?.name?.toLowerCase().includes(term)
-      );
-    }
-    return true;
-  });
-
   // Agrupar por categoria para estatísticas
   const categoryStats = DOCUMENT_CATEGORIES.map(cat => ({
     ...cat,
@@ -344,7 +414,7 @@ export default function AdminDocuments() {
           </div>
           <div className="page-header-info">
             <h1>Central de Documentos</h1>
-            <p>Documentos e registros dos pets</p>
+            <p>Documentos e registros dos pets por funcionalidade</p>
           </div>
         </div>
         <div className="page-header-actions">
@@ -355,12 +425,48 @@ export default function AdminDocuments() {
         </div>
       </div>
 
+      {/* Stats Cards */}
+      <div className="stats-row">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Total</span>
+            <FolderOpen className="stat-card-icon muted" />
+          </div>
+          <div className="stat-card-value">{chartData.stats.total}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Esta Semana</span>
+            <Calendar className="stat-card-icon blue" />
+          </div>
+          <div className="stat-card-value">{chartData.stats.thisWeek}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Este Mês</span>
+            <TrendingUp className="stat-card-icon green" />
+          </div>
+          <div className="stat-card-value">{chartData.stats.thisMonth}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Categorias</span>
+            <BarChart3 className="stat-card-icon amber" />
+          </div>
+          <div className="stat-card-value">{chartData.stats.categories}</div>
+        </div>
+      </div>
+
       {/* Main Tabs */}
       <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-4">
         <TabsList className="bg-muted/50">
           <TabsTrigger value="documents" className="gap-2">
             <FolderOpen className="h-4 w-4" />
             Documentos
+          </TabsTrigger>
+          <TabsTrigger value="by-module" className="gap-2">
+            <Activity className="h-4 w-4" />
+            Por Funcionalidade
           </TabsTrigger>
           <TabsTrigger value="analytics" className="gap-2">
             <BarChart3 className="h-4 w-4" />
@@ -370,108 +476,90 @@ export default function AdminDocuments() {
 
         {/* Tab: Documentos */}
         <TabsContent value="documents" className="space-y-4">
-          {/* Stats Cards por Categoria */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-        {categoryStats.slice(0, 6).filter(cat => cat.count > 0).map((cat) => {
-          const Icon = cat.icon;
-          return (
-            <Card 
-              key={cat.value} 
-              className={`cursor-pointer transition-all hover:shadow-md ${categoryFilter === cat.value ? 'ring-2 ring-primary' : ''}`}
-              onClick={() => setCategoryFilter(categoryFilter === cat.value ? "all" : cat.value)}
-            >
-              <CardContent className="flex items-center gap-3 p-4">
-                <div className={`p-2 rounded-lg ${cat.bgColor}`}>
-                  <Icon className={`h-4 w-4 ${cat.color}`} />
+          {/* Filtro por Módulo */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-wrap gap-2 mb-4">
+                {MODULES.map((mod) => {
+                  const IconComponent = mod.icon;
+                  const isActive = moduleFilter === mod.value;
+                  return (
+                    <Button
+                      key={mod.value}
+                      variant={isActive ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setModuleFilter(mod.value)}
+                      className="gap-1.5"
+                    >
+                      <IconComponent className="h-3.5 w-3.5" />
+                      {mod.label}
+                      {mod.value !== "all" && (
+                        <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                          {chartData.moduleStats.find(m => m.value === mod.value)?.count || 0}
+                        </Badge>
+                      )}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center justify-between gap-4">
+                {/* Search */}
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por título ou pet..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
-                <div>
-                  <p className="text-2xl font-bold">{cat.count}</p>
-                  <p className="text-xs text-muted-foreground">{cat.label}</p>
+
+                {/* Category Filter */}
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="w-48">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas Categorias</SelectItem>
+                    {DOCUMENT_CATEGORIES.map(cat => (
+                      <SelectItem key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* View Toggle */}
+                <div className="flex items-center border rounded-lg p-1">
+                  <Button
+                    variant={viewMode === "grid" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("grid")}
+                  >
+                    <Grid3X3 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "list" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("list")}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Tabs por Categoria */}
-      <Tabs value={categoryFilter} onValueChange={setCategoryFilter}>
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <TabsList className="flex-wrap h-auto gap-1 p-1">
-            <TabsTrigger value="all" className="text-xs gap-1">
-              <FolderOpen className="h-3 w-3" />
-              Todos
-            </TabsTrigger>
-            <TabsTrigger value="vaccination" className="text-xs gap-1">
-              <Syringe className="h-3 w-3" />
-              Vacinas
-            </TabsTrigger>
-            <TabsTrigger value="exam" className="text-xs gap-1">
-              <TestTube className="h-3 w-3" />
-              Exames
-            </TabsTrigger>
-            <TabsTrigger value="prescription" className="text-xs gap-1">
-              <Pill className="h-3 w-3" />
-              Receitas
-            </TabsTrigger>
-            <TabsTrigger value="preventive" className="text-xs gap-1">
-              <Shield className="h-3 w-3" />
-              Preventivos
-            </TabsTrigger>
-            <TabsTrigger value="training" className="text-xs gap-1">
-              <GraduationCap className="h-3 w-3" />
-              Adestramento
-            </TabsTrigger>
-            <TabsTrigger value="photo" className="text-xs gap-1">
-              <Camera className="h-3 w-3" />
-              Fotos
-            </TabsTrigger>
-            <TabsTrigger value="other" className="text-xs gap-1">
-              <File className="h-3 w-3" />
-              Outros
-            </TabsTrigger>
-          </TabsList>
-
-          <div className="flex items-center gap-2">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-48"
-              />
-            </div>
-
-            {/* View Toggle */}
-            <div className="flex items-center border rounded-lg p-1">
-              <Button
-                variant={viewMode === "grid" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("grid")}
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <TabsContent value={categoryFilter} className="mt-6">
+          {/* Documents */}
           {filteredDocuments.length === 0 ? (
             <Card className="p-12 text-center">
               <FolderOpen className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">Nenhum documento encontrado</h3>
               <p className="text-muted-foreground mb-4">
-                {categoryFilter !== "all" 
-                  ? `Não há documentos na categoria "${DOCUMENT_CATEGORIES.find(c => c.value === categoryFilter)?.label}"`
+                {moduleFilter !== "all" 
+                  ? `Não há documentos no módulo "${MODULES.find(m => m.value === moduleFilter)?.label}"`
                   : "Comece adicionando o primeiro documento"}
               </p>
               <Button onClick={() => setIsUploadOpen(true)}>
@@ -480,7 +568,6 @@ export default function AdminDocuments() {
               </Button>
             </Card>
           ) : viewMode === "grid" ? (
-            /* Grid View */
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filteredDocuments.map((item: any) => {
                 const category = DOCUMENT_CATEGORIES.find(c => c.value === item.document.category);
@@ -488,11 +575,9 @@ export default function AdminDocuments() {
                 
                 return (
                   <Card key={item.document.id} className="group hover:shadow-lg transition-all overflow-hidden">
-                    {/* Preview Area */}
                     <div className={`h-32 ${category?.bgColor || 'bg-gray-100'} flex items-center justify-center relative`}>
                       <Icon className={`h-16 w-16 ${category?.color || 'text-gray-400'} opacity-50`} />
                       
-                      {/* Quick Actions Overlay */}
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <Button size="sm" variant="secondary" asChild>
                           <a href={item.document.fileUrl} target="_blank" rel="noopener noreferrer">
@@ -521,7 +606,7 @@ export default function AdminDocuments() {
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <h3 className="font-medium line-clamp-1">{item.document.title}</h3>
-                        <Badge variant="outline" className={`shrink-0 ${category?.color}`}>
+                        <Badge variant="outline" className={`shrink-0 text-xs ${category?.color}`}>
                           {category?.label}
                         </Badge>
                       </div>
@@ -535,19 +620,12 @@ export default function AdminDocuments() {
                         <Calendar className="h-3 w-3" />
                         <span>{new Date(item.document.createdAt).toLocaleDateString("pt-BR")}</span>
                       </div>
-                      
-                      {item.document.description && (
-                        <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                          {item.document.description}
-                        </p>
-                      )}
                     </CardContent>
                   </Card>
                 );
               })}
             </div>
           ) : (
-            /* List View */
             <Card>
               <CardContent className="p-0">
                 <div className="divide-y">
@@ -609,11 +687,250 @@ export default function AdminDocuments() {
             </Card>
           )}
         </TabsContent>
+
+        {/* Tab: Por Funcionalidade */}
+        <TabsContent value="by-module" className="space-y-6">
+          {/* Resumo por Módulo */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {chartData.moduleStats.map((mod) => {
+              const ModIcon = mod.icon;
+              return (
+                <Card 
+                  key={mod.value} 
+                  className="cursor-pointer hover:shadow-md transition-all"
+                  onClick={() => { setModuleFilter(mod.value); setMainTab("documents"); }}
+                >
+                  <CardContent className="pt-6 text-center">
+                    <ModIcon className="h-8 w-8 mx-auto mb-2 text-slate-500" />
+                    <p className="text-2xl font-bold">{mod.count}</p>
+                    <p className="text-xs text-muted-foreground">{mod.label}</p>
+                    <div className="mt-2 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-slate-500 rounded-full transition-all" 
+                        style={{ width: `${mod.percent}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{mod.percent}%</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Detalhamento por Módulo */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {MODULES.filter(m => m.value !== "all").map((mod) => {
+              const ModIcon = mod.icon;
+              const moduleDocs = (allDocuments || []).filter((d: any) => {
+                const cat = DOCUMENT_CATEGORIES.find(c => c.value === d.document.category);
+                return cat?.module === mod.value;
+              });
+              const categories = DOCUMENT_CATEGORIES.filter(c => c.module === mod.value);
+              
+              return (
+                <Card key={mod.value} className="shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <ModIcon className="h-4 w-4" />
+                      {mod.label}
+                      <Badge variant="secondary" className="ml-auto">{moduleDocs.length}</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {moduleDocs.length === 0 ? (
+                      <div className="text-center py-6 text-muted-foreground text-sm">
+                        Nenhum documento neste módulo
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {categories.map(cat => {
+                          const catDocs = moduleDocs.filter((d: any) => d.document.category === cat.value);
+                          if (catDocs.length === 0) return null;
+                          
+                          return (
+                            <div key={cat.value} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                              <div className="flex items-center gap-2">
+                                <cat.icon className={`h-4 w-4 ${cat.color}`} />
+                                <span className="text-sm">{cat.label}</span>
+                              </div>
+                              <Badge variant="outline">{catDocs.length}</Badge>
+                            </div>
+                          );
+                        })}
+                        
+                        {/* Últimos documentos do módulo */}
+                        <div className="pt-3 border-t mt-3">
+                          <p className="text-xs text-muted-foreground mb-2">Últimos documentos:</p>
+                          {moduleDocs.slice(0, 3).map((doc: any) => (
+                            <div key={doc.document.id} className="flex items-center gap-2 text-sm py-1">
+                              <span className="truncate flex-1">{doc.document.title}</span>
+                              <span className="text-xs text-muted-foreground">{doc.pet?.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </TabsContent>
+
+        {/* Tab: Analytics */}
+        <TabsContent value="analytics" className="space-y-6">
+          {/* Gráficos */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Por Módulo */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <PieChart className="h-5 w-5" />
+                  Por Funcionalidade
+                </CardTitle>
+                <CardDescription>Distribuição de documentos por módulo</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {chartData.byModule.length > 0 ? (
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsPie>
+                        <Pie
+                          data={chartData.byModule}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={90}
+                          paddingAngle={2}
+                          dataKey="value"
+                          label={({ name, value }) => `${name}: ${value}`}
+                          labelLine={false}
+                        >
+                          {chartData.byModule.map((_, index) => (
+                            <Cell key={`mod-${index}`} fill={NEUTRAL_COLORS[index % NEUTRAL_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </RechartsPie>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+                    Sem dados disponíveis
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Por Pet */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Por Pet
+                </CardTitle>
+                <CardDescription>Pets com mais documentos</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {chartData.byPet.length > 0 ? (
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={chartData.byPet} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis type="number" stroke="#94a3b8" fontSize={11} />
+                        <YAxis type="category" dataKey="name" width={80} stroke="#94a3b8" fontSize={11} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'white', 
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '8px'
+                          }} 
+                        />
+                        <Bar dataKey="value" name="Documentos" fill="#64748b" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+                    Sem dados disponíveis
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Por Categoria */}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                Por Categoria
+              </CardTitle>
+              <CardDescription>Distribuição detalhada por tipo de documento</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                {chartData.byCategory.map((cat, i) => {
+                  const catInfo = DOCUMENT_CATEGORIES.find(c => c.value === cat.category);
+                  const CatIcon = catInfo?.icon || File;
+                  const total = chartData.stats.total;
+                  const percent = total > 0 ? Math.round((cat.value / total) * 100) : 0;
+                  
+                  return (
+                    <div key={cat.category} className={`p-4 rounded-lg ${catInfo?.bgColor || 'bg-gray-100'} text-center`}>
+                      <CatIcon className={`h-6 w-6 mx-auto mb-2 ${catInfo?.color || 'text-gray-500'}`} />
+                      <p className="text-xl font-bold">{cat.value}</p>
+                      <p className="text-xs text-muted-foreground">{cat.name}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{percent}%</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Timeline */}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Uploads por Mês
+              </CardTitle>
+              <CardDescription>Histórico de documentos enviados</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {chartData.timeline.length > 0 ? (
+                <div className="h-[250px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData.timeline}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} />
+                      <YAxis stroke="#94a3b8" fontSize={11} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'white', 
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px'
+                        }} 
+                      />
+                      <Area type="monotone" dataKey="docs" name="Documentos" stroke="#475569" fill="#475569" fillOpacity={0.3} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+                  Sem dados disponíveis
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Upload Dialog */}
       <Dialog open={isUploadOpen} onOpenChange={(open) => { setIsUploadOpen(open); if (!open) resetForm(); }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FolderOpen className="h-5 w-5 text-primary" />
@@ -687,7 +1004,7 @@ export default function AdminDocuments() {
                   className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 cursor-pointer transition-all ${selectedFile ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"}`}
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <input ref={fileInputRef} type="file" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx" className="hidden" />
+                  <input ref={fileInputRef} type="file" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.mp4,.mov,.webm" className="hidden" />
                   {selectedFile ? (
                     <div className="flex items-center gap-3 w-full">
                       <div className="p-2 bg-primary/10 rounded-lg"><File className="h-6 w-6 text-primary" /></div>
@@ -703,7 +1020,7 @@ export default function AdminDocuments() {
                     <>
                       <Upload className="h-8 w-8 text-muted-foreground mb-3" />
                       <p className="text-sm font-medium">Clique para selecionar</p>
-                      <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, DOC (máx. 10MB)</p>
+                      <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, DOC, Vídeo (máx. 100MB)</p>
                     </>
                   )}
                 </div>
@@ -718,6 +1035,7 @@ export default function AdminDocuments() {
                       <SelectContent>
                         <SelectItem value="application/pdf">PDF</SelectItem>
                         <SelectItem value="image/jpeg">Imagem (JPG, PNG)</SelectItem>
+                        <SelectItem value="video/mp4">Vídeo</SelectItem>
                         <SelectItem value="application/msword">Documento (DOC)</SelectItem>
                         <SelectItem value="application/octet-stream">Outro</SelectItem>
                       </SelectContent>
@@ -741,171 +1059,6 @@ export default function AdminDocuments() {
           </form>
         </DialogContent>
       </Dialog>
-        </TabsContent>
-
-        {/* Tab: Analytics */}
-        <TabsContent value="analytics" className="space-y-6">
-          {/* Stats resumo */}
-          <div className="grid grid-cols-3 gap-4">
-            <Card className="shadow-sm">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total de Documentos</p>
-                    <p className="text-3xl font-bold">{chartData.stats.total}</p>
-                  </div>
-                  <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                    <FileText className="h-6 w-6 text-slate-500" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="shadow-sm">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Este Mês</p>
-                    <p className="text-3xl font-bold">{chartData.stats.thisMonth}</p>
-                  </div>
-                  <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                    <Calendar className="h-6 w-6 text-slate-500" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="shadow-sm">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Categorias</p>
-                    <p className="text-3xl font-bold">{chartData.stats.categories}</p>
-                  </div>
-                  <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                    <FolderOpen className="h-6 w-6 text-slate-500" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Gráficos */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Por Categoria */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <PieChart className="h-5 w-5" />
-                  Por Categoria
-                </CardTitle>
-                <CardDescription>Distribuição de documentos</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {chartData.byCategory.length > 0 ? (
-                  <div className="h-[280px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RechartsPie>
-                        <Pie
-                          data={chartData.byCategory}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={50}
-                          outerRadius={90}
-                          paddingAngle={2}
-                          dataKey="value"
-                          label={({ name, value }) => `${name}: ${value}`}
-                          labelLine={false}
-                        >
-                          {chartData.byCategory.map((_, index) => (
-                            <Cell key={`cat-${index}`} fill={NEUTRAL_COLORS[index % NEUTRAL_COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend />
-                      </RechartsPie>
-                    </ResponsiveContainer>
-                  </div>
-                ) : (
-                  <div className="h-[280px] flex items-center justify-center text-muted-foreground">
-                    Sem dados disponíveis
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Por Pet */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Por Pet
-                </CardTitle>
-                <CardDescription>Pets com mais documentos</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {chartData.byPet.length > 0 ? (
-                  <div className="h-[280px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData.byPet} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                        <XAxis type="number" stroke="#94a3b8" fontSize={11} />
-                        <YAxis type="category" dataKey="name" width={80} stroke="#94a3b8" fontSize={11} />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'white', 
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '8px'
-                          }} 
-                        />
-                        <Bar dataKey="value" name="Documentos" fill="#64748b" radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                ) : (
-                  <div className="h-[280px] flex items-center justify-center text-muted-foreground">
-                    Sem dados disponíveis
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Timeline */}
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Uploads por Mês
-              </CardTitle>
-              <CardDescription>Histórico de documentos enviados</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {chartData.timeline.length > 0 ? (
-                <div className="h-[250px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData.timeline}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} />
-                      <YAxis stroke="#94a3b8" fontSize={11} />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'white', 
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '8px'
-                        }} 
-                      />
-                      <Bar dataKey="docs" name="Documentos" fill="#475569" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="h-[250px] flex items-center justify-center text-muted-foreground">
-                  Sem dados disponíveis
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }
