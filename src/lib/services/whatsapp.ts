@@ -1,17 +1,27 @@
 /**
  * Serviço de integração com WhatsApp Business API (Meta Cloud API)
  * 
- * Documentação: https://developers.facebook.com/docs/whatsapp/cloud-api
+ * Suporta duas formas de configuração:
+ * 1. Variáveis de ambiente (global/fallback)
+ * 2. Configurações por admin no banco de dados (multi-tenant)
  * 
- * Esta implementação usa a API oficial da Meta, que funciona perfeitamente
- * com arquitetura serverless (Vercel).
+ * Documentação: https://developers.facebook.com/docs/whatsapp/cloud-api
  */
 
 import { env } from "@/lib/env";
+import { db } from "@/lib/db";
+import { whatsappConfig, whatsappMessages, type WhatsAppConfig } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
 // ============================================
 // Tipos
 // ============================================
+
+export interface WhatsAppCredentials {
+  accessToken: string;
+  phoneNumberId: string;
+  businessAccountId?: string;
+}
 
 export interface WhatsAppMessageResponse {
   messaging_product: "whatsapp";
@@ -45,7 +55,8 @@ export interface WhatsAppBusinessProfile {
   };
 }
 
-export type MessageStatus = "sent" | "delivered" | "read" | "failed";
+export type MessageStatus = "pending" | "sent" | "delivered" | "read" | "failed";
+export type MessageContext = "checkin" | "checkout" | "daily_log" | "booking" | "manual";
 
 // ============================================
 // Configuração
@@ -54,19 +65,21 @@ export type MessageStatus = "sent" | "delivered" | "read" | "failed";
 const GRAPH_API_VERSION = "v18.0";
 const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 
-function getConfig() {
+/**
+ * Obtém credenciais das variáveis de ambiente (fallback global)
+ */
+function getEnvCredentials(): WhatsAppCredentials | null {
   const accessToken = env.WHATSAPP_ACCESS_TOKEN;
   const phoneNumberId = env.WHATSAPP_PHONE_NUMBER_ID;
-  const businessAccountId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
 
   if (!accessToken || !phoneNumberId) {
-    throw new Error("WhatsApp Business API não está configurada. Configure WHATSAPP_ACCESS_TOKEN e WHATSAPP_PHONE_NUMBER_ID.");
+    return null;
   }
 
   return {
     accessToken,
     phoneNumberId,
-    businessAccountId,
+    businessAccountId: env.WHATSAPP_BUSINESS_ACCOUNT_ID,
   };
 }
 
@@ -75,28 +88,201 @@ function getConfig() {
 // ============================================
 
 export class WhatsAppService {
+  private credentials: WhatsAppCredentials;
+  private configId?: number;
+  private adminId?: number;
+
+  constructor(credentials: WhatsAppCredentials, configId?: number, adminId?: number) {
+    this.credentials = credentials;
+    this.configId = configId;
+    this.adminId = adminId;
+  }
+
+  // ============================================
+  // Factory Methods
+  // ============================================
+
   /**
-   * Verifica se o serviço está configurado
+   * Cria instância usando credenciais do banco de dados (por admin)
    */
-  static isConfigured(): boolean {
-    return !!(env.WHATSAPP_ACCESS_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID);
+  static async forAdmin(adminId: number): Promise<WhatsAppService | null> {
+    const config = await db.query.whatsappConfig.findFirst({
+      where: eq(whatsappConfig.adminId, adminId),
+    });
+
+    if (!config || !config.accessToken || !config.phoneNumberId || !config.isActive) {
+      return null;
+    }
+
+    return new WhatsAppService(
+      {
+        accessToken: config.accessToken,
+        phoneNumberId: config.phoneNumberId,
+        businessAccountId: config.businessAccountId || undefined,
+      },
+      config.id,
+      adminId
+    );
   }
 
   /**
+   * Cria instância usando variáveis de ambiente (fallback global)
+   */
+  static fromEnv(): WhatsAppService | null {
+    const credentials = getEnvCredentials();
+    if (!credentials) {
+      return null;
+    }
+    return new WhatsAppService(credentials);
+  }
+
+  /**
+   * Cria instância preferindo config do admin, com fallback para env
+   */
+  static async forAdminOrEnv(adminId?: number): Promise<WhatsAppService | null> {
+    // Tenta primeiro pelo admin
+    if (adminId) {
+      const service = await WhatsAppService.forAdmin(adminId);
+      if (service) {
+        return service;
+      }
+    }
+
+    // Fallback para variáveis de ambiente
+    return WhatsAppService.fromEnv();
+  }
+
+  // ============================================
+  // Static Methods (verificação de configuração)
+  // ============================================
+
+  /**
+   * Verifica se há configuração global (env vars)
+   */
+  static isEnvConfigured(): boolean {
+    return getEnvCredentials() !== null;
+  }
+
+  /**
+   * Verifica se um admin tem configuração ativa
+   */
+  static async isAdminConfigured(adminId: number): Promise<boolean> {
+    const config = await db.query.whatsappConfig.findFirst({
+      where: eq(whatsappConfig.adminId, adminId),
+    });
+    return !!(config?.isActive && config?.accessToken && config?.phoneNumberId);
+  }
+
+  /**
+   * Obtém configuração do admin (sem credentials sensíveis)
+   */
+  static async getAdminConfig(adminId: number): Promise<Omit<WhatsAppConfig, "accessToken"> | null> {
+    const config = await db.query.whatsappConfig.findFirst({
+      where: eq(whatsappConfig.adminId, adminId),
+    });
+
+    if (!config) {
+      return null;
+    }
+
+    // Remove o accessToken por segurança
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { accessToken, ...safeConfig } = config;
+    return safeConfig;
+  }
+
+  /**
+   * Salva/atualiza configuração do admin
+   */
+  static async saveAdminConfig(
+    adminId: number,
+    data: {
+      accessToken?: string;
+      phoneNumberId?: string;
+      businessAccountId?: string;
+      webhookVerifyToken?: string;
+      autoNotifyCheckin?: boolean;
+      autoNotifyCheckout?: boolean;
+      autoNotifyDailyLog?: boolean;
+      autoNotifyBooking?: boolean;
+    }
+  ): Promise<WhatsAppConfig> {
+    const existing = await db.query.whatsappConfig.findFirst({
+      where: eq(whatsappConfig.adminId, adminId),
+    });
+
+    if (existing) {
+      // Update
+      const [updated] = await db
+        .update(whatsappConfig)
+        .set({
+          ...data,
+          updatedAt: new Date(),
+        })
+        .where(eq(whatsappConfig.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      // Insert
+      const [created] = await db
+        .insert(whatsappConfig)
+        .values({
+          adminId,
+          ...data,
+          isActive: false,
+        })
+        .returning();
+      return created;
+    }
+  }
+
+  /**
+   * Ativa/desativa configuração do admin
+   */
+  static async setAdminConfigActive(adminId: number, isActive: boolean): Promise<void> {
+    await db
+      .update(whatsappConfig)
+      .set({ 
+        isActive, 
+        updatedAt: new Date(),
+        lastVerifiedAt: isActive ? new Date() : undefined,
+      })
+      .where(eq(whatsappConfig.adminId, adminId));
+  }
+
+  /**
+   * Atualiza informações do perfil na configuração
+   */
+  static async updateAdminProfile(
+    adminId: number,
+    profile: {
+      displayPhoneNumber?: string;
+      verifiedName?: string;
+      qualityRating?: string;
+    }
+  ): Promise<void> {
+    await db
+      .update(whatsappConfig)
+      .set({
+        ...profile,
+        lastVerifiedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(whatsappConfig.adminId, adminId));
+  }
+
+  // ============================================
+  // Instance Methods
+  // ============================================
+
+  /**
    * Formata o número para o padrão internacional (E.164)
-   * Remove caracteres não numéricos e adiciona código do país se necessário
-   * 
-   * Exemplo: (11) 98888-7777 -> 5511988887777
    */
   static formatNumber(phone: string): string {
-    // Remove todos os caracteres não numéricos
     const cleanNumber = phone.replace(/\D/g, "");
-    
-    // Adiciona o código do Brasil se não houver
     if (cleanNumber.startsWith("55")) {
       return cleanNumber;
     }
-    
     return `55${cleanNumber}`;
   }
 
@@ -106,7 +292,6 @@ export class WhatsAppService {
   static validateNumber(phone: string): { valid: boolean; reason?: string } {
     const formatted = this.formatNumber(phone);
     
-    // Verifica tamanho (55 + 2 DDD + 8-9 número = 12-13 dígitos)
     if (formatted.length < 12 || formatted.length > 13) {
       return {
         valid: false,
@@ -114,7 +299,6 @@ export class WhatsAppService {
       };
     }
     
-    // Verifica se começa com 55 (Brasil)
     if (!formatted.startsWith("55")) {
       return { valid: false, reason: "Número deve ser brasileiro (começar com 55)" };
     }
@@ -123,32 +307,32 @@ export class WhatsAppService {
   }
 
   /**
-   * Envia uma mensagem de texto simples
-   * 
-   * NOTA: Mensagens de texto só podem ser enviadas para números que
-   * iniciaram conversa nas últimas 24 horas. Para mensagens proativas,
-   * use sendTemplate().
+   * Envia uma mensagem de texto
    */
-  static async sendText(
+  async sendText(
     to: string,
-    message: string
+    message: string,
+    options?: {
+      petId?: number;
+      context?: MessageContext;
+      sentById?: number;
+    }
   ): Promise<WhatsAppMessageResponse> {
-    const config = getConfig();
-    const formattedNumber = this.formatNumber(to);
+    const formattedNumber = WhatsAppService.formatNumber(to);
     
-    const validation = this.validateNumber(to);
+    const validation = WhatsAppService.validateNumber(to);
     if (!validation.valid) {
       throw new Error(`Número inválido: ${validation.reason}`);
     }
 
     try {
       const response = await fetch(
-        `${GRAPH_API_BASE}/${config.phoneNumberId}/messages`,
+        `${GRAPH_API_BASE}/${this.credentials.phoneNumberId}/messages`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${config.accessToken}`,
+            "Authorization": `Bearer ${this.credentials.accessToken}`,
           },
           body: JSON.stringify({
             messaging_product: "whatsapp",
@@ -165,10 +349,43 @@ export class WhatsAppService {
 
       if (!response.ok) {
         const errorData = await response.json() as WhatsAppError;
-        throw new Error(errorData.error?.message || `Erro ao enviar mensagem: ${response.status}`);
+        const errorMessage = errorData.error?.message || `Erro ao enviar mensagem: ${response.status}`;
+        
+        // Log no histórico se tiver configId
+        if (this.configId) {
+          await this.logMessage({
+            toPhone: formattedNumber,
+            messageType: "text",
+            content: message,
+            status: "failed",
+            errorMessage,
+            context: options?.context,
+            petId: options?.petId,
+            sentById: options?.sentById,
+          });
+        }
+        
+        throw new Error(errorMessage);
       }
 
-      return await response.json() as WhatsAppMessageResponse;
+      const result = await response.json() as WhatsAppMessageResponse;
+
+      // Log no histórico se tiver configId
+      if (this.configId) {
+        await this.logMessage({
+          toPhone: formattedNumber,
+          messageType: "text",
+          content: message,
+          messageId: result.messages[0]?.id,
+          status: "sent",
+          sentAt: new Date(),
+          context: options?.context,
+          petId: options?.petId,
+          sentById: options?.sentById,
+        });
+      }
+
+      return result;
     } catch (error) {
       console.error("[WhatsApp Service] Erro ao enviar mensagem:", error);
       throw error;
@@ -176,12 +393,9 @@ export class WhatsAppService {
   }
 
   /**
-   * Envia uma mensagem usando template aprovado
-   * 
-   * Templates são obrigatórios para iniciar conversas (mensagens proativas).
-   * Os templates precisam ser aprovados pela Meta antes de usar.
+   * Envia uma mensagem usando template
    */
-  static async sendTemplate(
+  async sendTemplate(
     to: string,
     templateName: string,
     languageCode: string = "pt_BR",
@@ -193,24 +407,28 @@ export class WhatsAppService {
         image?: { link: string };
         document?: { link: string; filename: string };
       }>;
-    }>
+    }>,
+    options?: {
+      petId?: number;
+      context?: MessageContext;
+      sentById?: number;
+    }
   ): Promise<WhatsAppMessageResponse> {
-    const config = getConfig();
-    const formattedNumber = this.formatNumber(to);
+    const formattedNumber = WhatsAppService.formatNumber(to);
     
-    const validation = this.validateNumber(to);
+    const validation = WhatsAppService.validateNumber(to);
     if (!validation.valid) {
       throw new Error(`Número inválido: ${validation.reason}`);
     }
 
     try {
       const response = await fetch(
-        `${GRAPH_API_BASE}/${config.phoneNumberId}/messages`,
+        `${GRAPH_API_BASE}/${this.credentials.phoneNumberId}/messages`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${config.accessToken}`,
+            "Authorization": `Bearer ${this.credentials.accessToken}`,
           },
           body: JSON.stringify({
             messaging_product: "whatsapp",
@@ -219,9 +437,7 @@ export class WhatsAppService {
             type: "template",
             template: {
               name: templateName,
-              language: {
-                code: languageCode,
-              },
+              language: { code: languageCode },
               components: components || [],
             },
           }),
@@ -233,7 +449,23 @@ export class WhatsAppService {
         throw new Error(errorData.error?.message || `Erro ao enviar template: ${response.status}`);
       }
 
-      return await response.json() as WhatsAppMessageResponse;
+      const result = await response.json() as WhatsAppMessageResponse;
+
+      if (this.configId) {
+        await this.logMessage({
+          toPhone: formattedNumber,
+          messageType: "template",
+          templateName,
+          messageId: result.messages[0]?.id,
+          status: "sent",
+          sentAt: new Date(),
+          context: options?.context,
+          petId: options?.petId,
+          sentById: options?.sentById,
+        });
+      }
+
+      return result;
     } catch (error) {
       console.error("[WhatsApp Service] Erro ao enviar template:", error);
       throw error;
@@ -243,27 +475,31 @@ export class WhatsAppService {
   /**
    * Envia uma imagem
    */
-  static async sendImage(
+  async sendImage(
     to: string,
     imageUrl: string,
-    caption?: string
+    caption?: string,
+    options?: {
+      petId?: number;
+      context?: MessageContext;
+      sentById?: number;
+    }
   ): Promise<WhatsAppMessageResponse> {
-    const config = getConfig();
-    const formattedNumber = this.formatNumber(to);
+    const formattedNumber = WhatsAppService.formatNumber(to);
     
-    const validation = this.validateNumber(to);
+    const validation = WhatsAppService.validateNumber(to);
     if (!validation.valid) {
       throw new Error(`Número inválido: ${validation.reason}`);
     }
 
     try {
       const response = await fetch(
-        `${GRAPH_API_BASE}/${config.phoneNumberId}/messages`,
+        `${GRAPH_API_BASE}/${this.credentials.phoneNumberId}/messages`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${config.accessToken}`,
+            "Authorization": `Bearer ${this.credentials.accessToken}`,
           },
           body: JSON.stringify({
             messaging_product: "whatsapp",
@@ -283,7 +519,23 @@ export class WhatsAppService {
         throw new Error(errorData.error?.message || `Erro ao enviar imagem: ${response.status}`);
       }
 
-      return await response.json() as WhatsAppMessageResponse;
+      const result = await response.json() as WhatsAppMessageResponse;
+
+      if (this.configId) {
+        await this.logMessage({
+          toPhone: formattedNumber,
+          messageType: "image",
+          content: caption,
+          messageId: result.messages[0]?.id,
+          status: "sent",
+          sentAt: new Date(),
+          context: options?.context,
+          petId: options?.petId,
+          sentById: options?.sentById,
+        });
+      }
+
+      return result;
     } catch (error) {
       console.error("[WhatsApp Service] Erro ao enviar imagem:", error);
       throw error;
@@ -293,28 +545,32 @@ export class WhatsAppService {
   /**
    * Envia um documento
    */
-  static async sendDocument(
+  async sendDocument(
     to: string,
     documentUrl: string,
     fileName: string,
-    caption?: string
+    caption?: string,
+    options?: {
+      petId?: number;
+      context?: MessageContext;
+      sentById?: number;
+    }
   ): Promise<WhatsAppMessageResponse> {
-    const config = getConfig();
-    const formattedNumber = this.formatNumber(to);
+    const formattedNumber = WhatsAppService.formatNumber(to);
     
-    const validation = this.validateNumber(to);
+    const validation = WhatsAppService.validateNumber(to);
     if (!validation.valid) {
       throw new Error(`Número inválido: ${validation.reason}`);
     }
 
     try {
       const response = await fetch(
-        `${GRAPH_API_BASE}/${config.phoneNumberId}/messages`,
+        `${GRAPH_API_BASE}/${this.credentials.phoneNumberId}/messages`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${config.accessToken}`,
+            "Authorization": `Bearer ${this.credentials.accessToken}`,
           },
           body: JSON.stringify({
             messaging_product: "whatsapp",
@@ -335,7 +591,23 @@ export class WhatsAppService {
         throw new Error(errorData.error?.message || `Erro ao enviar documento: ${response.status}`);
       }
 
-      return await response.json() as WhatsAppMessageResponse;
+      const result = await response.json() as WhatsAppMessageResponse;
+
+      if (this.configId) {
+        await this.logMessage({
+          toPhone: formattedNumber,
+          messageType: "document",
+          content: `${fileName}: ${caption || ""}`,
+          messageId: result.messages[0]?.id,
+          status: "sent",
+          sentAt: new Date(),
+          context: options?.context,
+          petId: options?.petId,
+          sentById: options?.sentById,
+        });
+      }
+
+      return result;
     } catch (error) {
       console.error("[WhatsApp Service] Erro ao enviar documento:", error);
       throw error;
@@ -343,18 +615,16 @@ export class WhatsAppService {
   }
 
   /**
-   * Obtém informações do perfil do número de telefone
+   * Obtém informações do perfil do número
    */
-  static async getBusinessProfile(): Promise<WhatsAppBusinessProfile> {
-    const config = getConfig();
-
+  async getBusinessProfile(): Promise<WhatsAppBusinessProfile> {
     try {
       const response = await fetch(
-        `${GRAPH_API_BASE}/${config.phoneNumberId}?fields=verified_name,code_verification_status,display_phone_number,quality_rating,platform_type,throughput`,
+        `${GRAPH_API_BASE}/${this.credentials.phoneNumberId}?fields=verified_name,code_verification_status,display_phone_number,quality_rating,platform_type,throughput`,
         {
           method: "GET",
           headers: {
-            "Authorization": `Bearer ${config.accessToken}`,
+            "Authorization": `Bearer ${this.credentials.accessToken}`,
           },
         }
       );
@@ -372,15 +642,25 @@ export class WhatsAppService {
   }
 
   /**
-   * Verifica o status da API (faz uma chamada simples para validar token)
+   * Verifica o status da API
    */
-  static async checkConnection(): Promise<{
+  async checkConnection(): Promise<{
     connected: boolean;
     profile?: WhatsAppBusinessProfile;
     error?: string;
   }> {
     try {
       const profile = await this.getBusinessProfile();
+      
+      // Atualiza o perfil no banco se tiver adminId
+      if (this.adminId) {
+        await WhatsAppService.updateAdminProfile(this.adminId, {
+          displayPhoneNumber: profile.display_phone_number,
+          verifiedName: profile.verified_name,
+          qualityRating: profile.quality_rating,
+        });
+      }
+
       return {
         connected: true,
         profile,
@@ -394,27 +674,25 @@ export class WhatsAppService {
   }
 
   /**
-   * Lista templates disponíveis na conta
+   * Lista templates disponíveis
    */
-  static async listTemplates(): Promise<Array<{
+  async listTemplates(): Promise<Array<{
     name: string;
     status: string;
     category: string;
     language: string;
   }>> {
-    const config = getConfig();
-    
-    if (!config.businessAccountId) {
+    if (!this.credentials.businessAccountId) {
       throw new Error("WHATSAPP_BUSINESS_ACCOUNT_ID é necessário para listar templates");
     }
 
     try {
       const response = await fetch(
-        `${GRAPH_API_BASE}/${config.businessAccountId}/message_templates?fields=name,status,category,language`,
+        `${GRAPH_API_BASE}/${this.credentials.businessAccountId}/message_templates?fields=name,status,category,language`,
         {
           method: "GET",
           headers: {
-            "Authorization": `Bearer ${config.accessToken}`,
+            "Authorization": `Bearer ${this.credentials.accessToken}`,
           },
         }
       );
@@ -431,81 +709,79 @@ export class WhatsAppService {
       throw error;
     }
   }
+
+  /**
+   * Registra mensagem no histórico
+   */
+  private async logMessage(data: {
+    toPhone: string;
+    toName?: string;
+    messageType: string;
+    templateName?: string;
+    content?: string;
+    messageId?: string;
+    status: MessageStatus;
+    errorMessage?: string;
+    context?: MessageContext;
+    petId?: number;
+    sentById?: number;
+    sentAt?: Date;
+  }): Promise<void> {
+    if (!this.configId) return;
+
+    try {
+      await db.insert(whatsappMessages).values({
+        configId: this.configId,
+        toPhone: data.toPhone,
+        toName: data.toName,
+        messageType: data.messageType,
+        templateName: data.templateName,
+        content: data.content,
+        messageId: data.messageId,
+        status: data.status,
+        errorMessage: data.errorMessage,
+        context: data.context,
+        petId: data.petId,
+        sentById: data.sentById,
+        sentAt: data.sentAt,
+      });
+    } catch (error) {
+      console.error("[WhatsApp Service] Erro ao registrar mensagem:", error);
+      // Não propaga o erro para não interromper o envio
+    }
+  }
 }
 
 // ============================================
 // Templates de Mensagens para TeteCare
 // ============================================
 
-/**
- * Templates de mensagens pré-definidos.
- * 
- * IMPORTANTE: Para usar esses templates em produção, você precisa:
- * 1. Criar os templates no Meta Business Manager
- * 2. Aguardar aprovação da Meta (pode levar até 24h)
- * 3. Usar sendTemplate() com o nome exato do template aprovado
- * 
- * Esses exemplos são para referência e podem ser usados
- * como mensagens de texto em conversas ativas (janela de 24h).
- */
 export const WhatsAppTemplates = {
-  /**
-   * Mensagem de check-in do pet
-   */
   checkin: (petName: string, tutorName: string) =>
     `Olá ${tutorName}! 🐾\n\nO(a) ${petName} acabou de fazer check-in na TeteCare!\n\nQualquer novidade, entraremos em contato. Tenha um ótimo dia! 💙`,
 
-  /**
-   * Mensagem de check-out do pet
-   */
   checkout: (petName: string, tutorName: string) =>
     `Olá ${tutorName}! 🐾\n\nO(a) ${petName} está pronto(a) para ir para casa!\n\nFoi um prazer cuidar do(a) seu(sua) pet hoje. Até a próxima! 💙`,
 
-  /**
-   * Lembrete de vacina
-   */
   vaccineReminder: (petName: string, vaccineName: string, date: string) =>
     `🔔 Lembrete de Vacina\n\nOlá! O(a) ${petName} tem vacina de ${vaccineName} agendada para ${date}.\n\nNão se esqueça de trazer a carteirinha de vacinação! 💉`,
 
-  /**
-   * Lembrete de medicação
-   */
   medicationReminder: (petName: string, medicationName: string, dosage: string) =>
     `💊 Lembrete de Medicação\n\nHora de dar ${medicationName} para o(a) ${petName}!\n\nDosagem: ${dosage}`,
 
-  /**
-   * Atualização do mural/daily log
-   */
   dailyUpdate: (petName: string, updateType: string) =>
     `📸 Atualização de ${petName}\n\nAcabamos de publicar ${updateType} no mural do(a) ${petName}!\n\nAcesse o app para ver as novidades. 🐕`,
 
-  /**
-   * Confirmação de reserva
-   */
   bookingConfirmation: (petName: string, date: string, service: string) =>
     `✅ Reserva Confirmada\n\nA reserva para ${petName} foi confirmada!\n\n📅 Data: ${date}\n🐾 Serviço: ${service}\n\nAguardamos vocês! 💙`,
 
-  /**
-   * Lembrete de reserva
-   */
   bookingReminder: (petName: string, date: string, time: string) =>
     `⏰ Lembrete de Reserva\n\nOlá! Lembrando que amanhã (${date}) às ${time} você tem reserva para o(a) ${petName}.\n\nAté lá! 🐾`,
 
-  /**
-   * Alerta de comportamento
-   */
   behaviorAlert: (petName: string, observation: string) =>
     `⚠️ Observação Importante\n\nNotamos algo sobre o(a) ${petName}:\n\n${observation}\n\nEntre em contato se precisar de mais informações.`,
 };
 
-// ============================================
-// Nomes de Templates para Meta Business
-// ============================================
-
-/**
- * Nomes sugeridos para templates no Meta Business Manager.
- * Use esses nomes ao criar os templates para manter consistência.
- */
 export const MetaTemplateNames = {
   CHECKIN: "tetecare_pet_checkin",
   CHECKOUT: "tetecare_pet_checkout",

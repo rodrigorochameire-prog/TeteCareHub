@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -36,6 +37,12 @@ import {
   Shield,
   Star,
   Info,
+  Key,
+  History,
+  Save,
+  Power,
+  PowerOff,
+  Bell,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -44,27 +51,69 @@ export default function WhatsAppPage() {
   const [testPhone, setTestPhone] = useState("");
   const [customMessage, setCustomMessage] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("");
+  
+  // Form de configuração
+  const [configForm, setConfigForm] = useState({
+    accessToken: "",
+    phoneNumberId: "",
+    businessAccountId: "",
+  });
 
   // Queries
   const { data: isConfigured, isLoading: checkingConfig } = trpc.whatsapp.isConfigured.useQuery();
+  const { data: myConfig, refetch: refetchConfig } = trpc.whatsapp.getMyConfig.useQuery();
   const { data: connectionStatus, refetch: refetchStatus, isLoading: checkingStatus } = trpc.whatsapp.getConnectionStatus.useQuery(
     undefined,
     { enabled: isConfigured === true, retry: false }
   );
   const { data: templates } = trpc.whatsapp.getTemplates.useQuery();
-  const { data: configInfo } = trpc.whatsapp.getConfigInfo.useQuery(
+  const { data: configInfo } = trpc.whatsapp.getConfigInfo.useQuery();
+  const { data: approvedTemplates } = trpc.whatsapp.listApprovedTemplates.useQuery(
     undefined,
     { enabled: isConfigured === true }
   );
-  const { data: approvedTemplates } = trpc.whatsapp.listTemplates.useQuery(
-    undefined,
-    { enabled: isConfigured === true }
+  const { data: messageHistory } = trpc.whatsapp.getMessageHistory.useQuery(
+    { limit: 20 },
+    { enabled: myConfig?.hasConfig }
   );
 
   // Mutations
+  const saveConfigMutation = trpc.whatsapp.saveConfig.useMutation({
+    onSuccess: () => {
+      toast.success("Configuração salva!");
+      refetchConfig();
+      setConfigForm({ accessToken: "", phoneNumberId: "", businessAccountId: "" });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const testAndActivateMutation = trpc.whatsapp.testAndActivate.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Conectado! Número: ${data.profile?.phone}`);
+      refetchConfig();
+      refetchStatus();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const deactivateMutation = trpc.whatsapp.deactivate.useMutation({
+    onSuccess: () => {
+      toast.success("Configuração desativada");
+      refetchConfig();
+      refetchStatus();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
   const sendTestMutation = trpc.whatsapp.sendTestMessage.useMutation({
     onSuccess: () => {
-      toast.success("Mensagem de teste enviada com sucesso!");
+      toast.success("Mensagem de teste enviada!");
       setTestPhone("");
     },
     onError: (error) => {
@@ -74,7 +123,7 @@ export default function WhatsAppPage() {
 
   const sendTextMutation = trpc.whatsapp.sendText.useMutation({
     onSuccess: () => {
-      toast.success("Mensagem enviada com sucesso!");
+      toast.success("Mensagem enviada!");
       setCustomMessage("");
     },
     onError: (error) => {
@@ -86,6 +135,20 @@ export default function WhatsAppPage() {
     { phone: testPhone },
     { enabled: testPhone.length >= 10 }
   );
+
+  const handleSaveConfig = () => {
+    if (!configForm.accessToken && !configForm.phoneNumberId) {
+      toast.error("Preencha pelo menos o Access Token e Phone Number ID");
+      return;
+    }
+    
+    const data: Record<string, string> = {};
+    if (configForm.accessToken) data.accessToken = configForm.accessToken;
+    if (configForm.phoneNumberId) data.phoneNumberId = configForm.phoneNumberId;
+    if (configForm.businessAccountId) data.businessAccountId = configForm.businessAccountId;
+    
+    saveConfigMutation.mutate(data);
+  };
 
   const handleSendTest = () => {
     if (!testPhone) {
@@ -119,120 +182,6 @@ export default function WhatsAppPage() {
     );
   }
 
-  // Not configured state
-  if (!isConfigured) {
-    return (
-      <div className="page-container">
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="page-header-icon">
-              <MessageCircle />
-            </div>
-            <div className="page-header-info">
-              <h1>WhatsApp Business</h1>
-              <p>Integração com API oficial da Meta</p>
-            </div>
-          </div>
-        </div>
-
-        <Card className="max-w-3xl mx-auto">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-full bg-amber-100 dark:bg-amber-900/30">
-                <AlertTriangle className="h-6 w-6 text-amber-600" />
-              </div>
-              <div>
-                <CardTitle>Configuração Necessária</CardTitle>
-                <CardDescription>Configure a API do WhatsApp Business para começar</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Passo a passo */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Como configurar:</h3>
-              
-              <div className="space-y-3">
-                <div className="flex gap-3 p-4 rounded-lg bg-muted/50">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">1</div>
-                  <div>
-                    <p className="font-medium">Criar conta no Meta for Developers</p>
-                    <p className="text-sm text-muted-foreground">Acesse developers.facebook.com e crie um app do tipo "Business"</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 p-4 rounded-lg bg-muted/50">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">2</div>
-                  <div>
-                    <p className="font-medium">Adicionar produto WhatsApp</p>
-                    <p className="text-sm text-muted-foreground">No painel do app, adicione "WhatsApp" como produto</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 p-4 rounded-lg bg-muted/50">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">3</div>
-                  <div>
-                    <p className="font-medium">Obter credenciais</p>
-                    <p className="text-sm text-muted-foreground">Em "API Setup", copie o Access Token e Phone Number ID</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 p-4 rounded-lg bg-muted/50">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">4</div>
-                  <div>
-                    <p className="font-medium">Configurar no Vercel</p>
-                    <p className="text-sm text-muted-foreground">Adicione as variáveis de ambiente no projeto</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Variáveis necessárias */}
-            <div className="space-y-3">
-              <h4 className="font-medium">Variáveis de ambiente:</h4>
-              <div className="p-4 rounded-lg bg-muted/50 font-mono text-sm space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-green-600">WHATSAPP_ACCESS_TOKEN</span>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard("WHATSAPP_ACCESS_TOKEN")}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-green-600">WHATSAPP_PHONE_NUMBER_ID</span>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard("WHATSAPP_PHONE_NUMBER_ID")}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">WHATSAPP_BUSINESS_ACCOUNT_ID <span className="text-xs">(opcional)</span></span>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard("WHATSAPP_BUSINESS_ACCOUNT_ID")}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Botões de ação */}
-            <div className="flex gap-3 pt-4">
-              <Button asChild>
-                <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Abrir Meta for Developers
-                </a>
-              </Button>
-              <Button variant="outline" asChild>
-                <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" target="_blank" rel="noopener noreferrer">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Ver Documentação
-                </a>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="page-container">
       {/* Header */}
@@ -243,14 +192,17 @@ export default function WhatsAppPage() {
           </div>
           <div className="page-header-info">
             <h1>WhatsApp Business</h1>
-            <p>API oficial da Meta</p>
+            <p>Configuração da sua conta</p>
           </div>
         </div>
         <div className="page-header-actions">
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => refetchStatus()}
+            onClick={() => {
+              refetchStatus();
+              refetchConfig();
+            }}
             disabled={checkingStatus}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${checkingStatus ? 'animate-spin' : ''}`} />
@@ -272,7 +224,20 @@ export default function WhatsAppPage() {
           </div>
           <div className="stat-card-value">
             <Badge variant={connectionStatus?.connected ? "default" : "secondary"}>
-              {connectionStatus?.connected ? "Conectado" : "Verificando..."}
+              {connectionStatus?.connected ? "Conectado" : "Desconectado"}
+            </Badge>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Fonte</span>
+            <Key className="stat-card-icon blue" />
+          </div>
+          <div className="stat-card-value">
+            <Badge variant="outline">
+              {connectionStatus?.source === "admin" ? "Sua Config" : 
+               connectionStatus?.source === "env" ? "Global" : "—"}
             </Badge>
           </div>
         </div>
@@ -280,10 +245,10 @@ export default function WhatsAppPage() {
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Número</span>
-            <Smartphone className="stat-card-icon blue" />
+            <Smartphone className="stat-card-icon primary" />
           </div>
           <div className="stat-card-value text-sm font-medium">
-            {connectionStatus?.profile?.phone || "—"}
+            {connectionStatus?.profile?.phone || myConfig?.config?.displayPhoneNumber || "—"}
           </div>
         </div>
 
@@ -301,18 +266,6 @@ export default function WhatsAppPage() {
             </Badge>
           </div>
         </div>
-
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-title">Verificação</span>
-            <Shield className="stat-card-icon primary" />
-          </div>
-          <div className="stat-card-value">
-            <Badge variant="outline">
-              {connectionStatus?.profile?.status || "—"}
-            </Badge>
-          </div>
-        </div>
       </div>
 
       {/* Main Tabs */}
@@ -322,6 +275,10 @@ export default function WhatsAppPage() {
             <Wifi className="h-4 w-4" />
             Status
           </TabsTrigger>
+          <TabsTrigger value="config" className="gap-2">
+            <Key className="h-4 w-4" />
+            Configuração
+          </TabsTrigger>
           <TabsTrigger value="send" className="gap-2">
             <Send className="h-4 w-4" />
             Enviar
@@ -330,9 +287,9 @@ export default function WhatsAppPage() {
             <FileText className="h-4 w-4" />
             Templates
           </TabsTrigger>
-          <TabsTrigger value="config" className="gap-2">
-            <Settings className="h-4 w-4" />
-            Configuração
+          <TabsTrigger value="history" className="gap-2">
+            <History className="h-4 w-4" />
+            Histórico
           </TabsTrigger>
         </TabsList>
 
@@ -379,6 +336,10 @@ export default function WhatsAppPage() {
                     <p className="font-medium">Erro de conexão:</p>
                     <p className="text-sm">{connectionStatus.error}</p>
                   </div>
+                ) : !isConfigured ? (
+                  <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600">
+                    <p>Configure suas credenciais na aba "Configuração"</p>
+                  </div>
                 ) : (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -395,19 +356,18 @@ export default function WhatsAppPage() {
                   Teste Rápido
                 </CardTitle>
                 <CardDescription>
-                  Envie uma mensagem de teste para verificar a conexão
+                  Envie uma mensagem de teste
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm">
-                  <div className="flex gap-2">
-                    <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                    <p>
-                      <strong>Importante:</strong> Mensagens de texto só podem ser enviadas para números que 
-                      enviaram mensagem nas últimas 24h. Para mensagens proativas, use Templates aprovados.
-                    </p>
+                {!isConfigured && (
+                  <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm">
+                    <div className="flex gap-2">
+                      <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                      <p>Configure suas credenciais primeiro na aba "Configuração"</p>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="space-y-2">
                   <Label>Número de Telefone</Label>
@@ -418,6 +378,7 @@ export default function WhatsAppPage() {
                       value={testPhone}
                       onChange={(e) => setTestPhone(e.target.value)}
                       className="pl-10"
+                      disabled={!isConfigured}
                     />
                   </div>
                   {formatNumber.data && testPhone.length >= 10 && (
@@ -434,7 +395,7 @@ export default function WhatsAppPage() {
 
                 <Button 
                   onClick={handleSendTest} 
-                  disabled={!testPhone || sendTestMutation.isPending || !connectionStatus?.connected}
+                  disabled={!testPhone || sendTestMutation.isPending || !isConfigured}
                   className="w-full"
                 >
                   {sendTestMutation.isPending ? (
@@ -449,6 +410,236 @@ export default function WhatsAppPage() {
           </div>
         </TabsContent>
 
+        {/* Tab: Configuração */}
+        <TabsContent value="config" className="space-y-4">
+          <div className="grid gap-4 lg:grid-cols-2">
+            {/* Configuração Atual */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Sua Configuração
+                </CardTitle>
+                <CardDescription>
+                  Configure suas próprias credenciais do WhatsApp Business
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {myConfig?.config ? (
+                  <>
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+                      <div>
+                        <p className="font-medium">Status</p>
+                        <p className="text-sm text-muted-foreground">
+                          {myConfig.config.isActive ? "Ativa" : "Inativa"}
+                        </p>
+                      </div>
+                      <Badge variant={myConfig.config.isActive ? "default" : "secondary"}>
+                        {myConfig.config.isActive ? (
+                          <><Power className="h-3 w-3 mr-1" /> Ativa</>
+                        ) : (
+                          <><PowerOff className="h-3 w-3 mr-1" /> Inativa</>
+                        )}
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Phone Number ID:</span>
+                        <span className="font-mono">{myConfig.config.phoneNumberId || "—"}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Business Account ID:</span>
+                        <span className="font-mono">{myConfig.config.businessAccountId || "—"}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Access Token:</span>
+                        <span className="font-mono">
+                          {myConfig.config.hasAccessToken ? "••••••••" : "Não configurado"}
+                        </span>
+                      </div>
+                      {myConfig.config.verifiedName && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Nome Verificado:</span>
+                          <span>{myConfig.config.verifiedName}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      {myConfig.config.isActive ? (
+                        <Button 
+                          variant="destructive" 
+                          className="flex-1"
+                          onClick={() => deactivateMutation.mutate()}
+                          disabled={deactivateMutation.isPending}
+                        >
+                          {deactivateMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <PowerOff className="h-4 w-4 mr-2" />
+                          )}
+                          Desativar
+                        </Button>
+                      ) : (
+                        <Button 
+                          className="flex-1"
+                          onClick={() => testAndActivateMutation.mutate()}
+                          disabled={testAndActivateMutation.isPending}
+                        >
+                          {testAndActivateMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Power className="h-4 w-4 mr-2" />
+                          )}
+                          Testar e Ativar
+                        </Button>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <Key className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground mb-4">
+                      Você ainda não configurou suas credenciais
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Preencha o formulário ao lado para começar
+                    </p>
+                  </div>
+                )}
+
+                {myConfig?.hasEnvFallback && !myConfig?.config?.isActive && (
+                  <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-sm">
+                    <Info className="inline h-4 w-4 mr-1" />
+                    Usando configuração global como fallback
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Formulário de Configuração */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  {myConfig?.config ? "Atualizar Credenciais" : "Configurar Credenciais"}
+                </CardTitle>
+                <CardDescription>
+                  Obtenha as credenciais no Meta for Developers
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Access Token *</Label>
+                  <Input
+                    type="password"
+                    placeholder="EAAxxxxx..."
+                    value={configForm.accessToken}
+                    onChange={(e) => setConfigForm(f => ({ ...f, accessToken: e.target.value }))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Encontre em: App Dashboard → WhatsApp → API Setup
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Phone Number ID *</Label>
+                  <Input
+                    placeholder="123456789012345"
+                    value={configForm.phoneNumberId}
+                    onChange={(e) => setConfigForm(f => ({ ...f, phoneNumberId: e.target.value }))}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Business Account ID (opcional)</Label>
+                  <Input
+                    placeholder="123456789012345"
+                    value={configForm.businessAccountId}
+                    onChange={(e) => setConfigForm(f => ({ ...f, businessAccountId: e.target.value }))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Necessário apenas para listar templates aprovados
+                  </p>
+                </div>
+
+                <Button 
+                  className="w-full"
+                  onClick={handleSaveConfig}
+                  disabled={saveConfigMutation.isPending || (!configForm.accessToken && !configForm.phoneNumberId)}
+                >
+                  {saveConfigMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  Salvar Configuração
+                </Button>
+
+                <div className="pt-4 border-t">
+                  <Button variant="outline" className="w-full" asChild>
+                    <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Abrir Meta for Developers
+                    </a>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Notificações Automáticas */}
+          {myConfig?.config && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Notificações Automáticas
+                </CardTitle>
+                <CardDescription>
+                  Configure quais eventos enviam notificações automáticas
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <div className="flex items-center justify-between p-4 rounded-lg border">
+                    <div>
+                      <p className="font-medium">Check-in</p>
+                      <p className="text-xs text-muted-foreground">Quando pet faz check-in</p>
+                    </div>
+                    <Switch checked={myConfig.config.autoNotifyCheckin} disabled />
+                  </div>
+                  <div className="flex items-center justify-between p-4 rounded-lg border">
+                    <div>
+                      <p className="font-medium">Check-out</p>
+                      <p className="text-xs text-muted-foreground">Quando pet está pronto</p>
+                    </div>
+                    <Switch checked={myConfig.config.autoNotifyCheckout} disabled />
+                  </div>
+                  <div className="flex items-center justify-between p-4 rounded-lg border">
+                    <div>
+                      <p className="font-medium">Mural</p>
+                      <p className="text-xs text-muted-foreground">Nova postagem no mural</p>
+                    </div>
+                    <Switch checked={myConfig.config.autoNotifyDailyLog} disabled />
+                  </div>
+                  <div className="flex items-center justify-between p-4 rounded-lg border">
+                    <div>
+                      <p className="font-medium">Reservas</p>
+                      <p className="text-xs text-muted-foreground">Confirmação de reserva</p>
+                    </div>
+                    <Switch checked={myConfig.config.autoNotifyBooking} disabled />
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mt-4">
+                  Em breve: Configure as notificações automáticas para cada evento
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
         {/* Tab: Enviar Mensagem */}
         <TabsContent value="send" className="space-y-4">
           <Card>
@@ -458,10 +649,19 @@ export default function WhatsAppPage() {
                 Enviar Mensagem
               </CardTitle>
               <CardDescription>
-                Envie uma mensagem personalizada (requer janela de 24h ativa)
+                Envie uma mensagem personalizada
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {!isConfigured && (
+                <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm">
+                  <div className="flex gap-2">
+                    <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                    <p>Configure suas credenciais na aba "Configuração" para enviar mensagens</p>
+                  </div>
+                </div>
+              )}
+
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Número de Telefone</Label>
@@ -472,18 +672,23 @@ export default function WhatsAppPage() {
                       value={testPhone}
                       onChange={(e) => setTestPhone(e.target.value)}
                       className="pl-10"
+                      disabled={!isConfigured}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label>Usar Template de Exemplo</Label>
-                  <Select value={selectedTemplate} onValueChange={(value) => {
-                    setSelectedTemplate(value);
-                    if (templates && value && templates[value as keyof typeof templates]) {
-                      setCustomMessage(templates[value as keyof typeof templates].example);
-                    }
-                  }}>
+                  <Select 
+                    value={selectedTemplate} 
+                    onValueChange={(value) => {
+                      setSelectedTemplate(value);
+                      if (templates && value && templates[value as keyof typeof templates]) {
+                        setCustomMessage(templates[value as keyof typeof templates].example);
+                      }
+                    }}
+                    disabled={!isConfigured}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um template" />
                     </SelectTrigger>
@@ -505,6 +710,7 @@ export default function WhatsAppPage() {
                   value={customMessage}
                   onChange={(e) => setCustomMessage(e.target.value)}
                   rows={5}
+                  disabled={!isConfigured}
                 />
                 <p className="text-xs text-muted-foreground">
                   {customMessage.length}/4096 caracteres
@@ -513,7 +719,7 @@ export default function WhatsAppPage() {
 
               <Button 
                 onClick={handleSendCustom} 
-                disabled={!testPhone || !customMessage || sendTextMutation.isPending || !connectionStatus?.connected}
+                disabled={!testPhone || !customMessage || sendTextMutation.isPending || !isConfigured}
                 className="w-full"
               >
                 {sendTextMutation.isPending ? (
@@ -529,7 +735,7 @@ export default function WhatsAppPage() {
 
         {/* Tab: Templates */}
         <TabsContent value="templates" className="space-y-4">
-          {/* Templates aprovados na conta */}
+          {/* Templates aprovados */}
           {approvedTemplates && approvedTemplates.length > 0 && (
             <Card>
               <CardHeader>
@@ -609,76 +815,60 @@ export default function WhatsAppPage() {
           </Card>
         </TabsContent>
 
-        {/* Tab: Configuração */}
-        <TabsContent value="config" className="space-y-4">
+        {/* Tab: Histórico */}
+        <TabsContent value="history" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Configuração da API
+                <History className="h-5 w-5" />
+                Histórico de Mensagens
               </CardTitle>
               <CardDescription>
-                Informações sobre a configuração atual
+                Últimas mensagens enviadas
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center gap-3 p-4 rounded-lg bg-green-50 dark:bg-green-900/20">
-                <CheckCircle2 className="h-6 w-6 text-green-600" />
-                <div>
-                  <p className="font-medium text-green-800 dark:text-green-200">API Configurada</p>
-                  <p className="text-sm text-green-600 dark:text-green-300">
-                    As variáveis de ambiente estão configuradas corretamente
-                  </p>
+            <CardContent>
+              {!myConfig?.hasConfig ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Configure suas credenciais para ver o histórico</p>
                 </div>
-              </div>
-
-              {configInfo && (
-                <>
-                  <div className="space-y-3">
-                    <h4 className="font-medium">Variáveis Obrigatórias</h4>
-                    <div className="space-y-2">
-                      {configInfo.requiredVars.map((v) => (
-                        <div key={v.name} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
-                          <div>
-                            <span className="font-mono text-sm">{v.name}</span>
-                            <span className="text-muted-foreground text-sm ml-2">— {v.description}</span>
-                          </div>
+              ) : messageHistory?.messages && messageHistory.messages.length > 0 ? (
+                <div className="space-y-3">
+                  {messageHistory.messages.map((msg) => (
+                    <div key={msg.id} className="flex items-start gap-3 p-3 rounded-lg border">
+                      <div className={`p-2 rounded-full ${
+                        msg.status === "sent" ? "bg-green-100 text-green-600" :
+                        msg.status === "failed" ? "bg-red-100 text-red-600" :
+                        "bg-muted text-muted-foreground"
+                      }`}>
+                        {msg.status === "sent" ? <CheckCircle2 className="h-4 w-4" /> :
+                         msg.status === "failed" ? <XCircle className="h-4 w-4" /> :
+                         <Loader2 className="h-4 w-4" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{msg.toPhone}</span>
+                          {msg.context && (
+                            <Badge variant="outline" className="text-xs">{msg.context}</Badge>
+                          )}
                         </div>
-                      ))}
+                        <p className="text-sm text-muted-foreground truncate">
+                          {msg.content || msg.templateName || "—"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {msg.sentAt ? new Date(msg.sentAt).toLocaleString("pt-BR") : 
+                           new Date(msg.createdAt).toLocaleString("pt-BR")}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h4 className="font-medium">Variáveis Opcionais</h4>
-                    <div className="space-y-2">
-                      {configInfo.optionalVars.map((v) => (
-                        <div key={v.name} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                          <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />
-                          <div>
-                            <span className="font-mono text-sm">{v.name}</span>
-                            <span className="text-muted-foreground text-sm ml-2">— {v.description}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
-                    <Button variant="outline" asChild>
-                      <a href={configInfo.docsUrl} target="_blank" rel="noopener noreferrer">
-                        <FileText className="h-4 w-4 mr-2" />
-                        Documentação
-                      </a>
-                    </Button>
-                    <Button variant="outline" asChild>
-                      <a href={configInfo.setupUrl} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Meta for Developers
-                      </a>
-                    </Button>
-                  </div>
-                </>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Nenhuma mensagem enviada ainda</p>
+                </div>
               )}
             </CardContent>
           </Card>

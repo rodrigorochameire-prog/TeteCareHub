@@ -850,3 +850,96 @@ export const petNaturalFoodRelations = relations(petNaturalFood, ({ one }) => ({
   pet: one(pets, { fields: [petNaturalFood.petId], references: [pets.id] }),
   createdBy: one(users, { fields: [petNaturalFood.createdById], references: [users.id] }),
 }));
+
+// ==========================================
+// CONFIGURAÇÕES WHATSAPP (por admin/organização)
+// ==========================================
+
+export const whatsappConfig = pgTable("whatsapp_config", {
+  id: serial("id").primaryKey(),
+  // Cada admin pode ter sua própria configuração
+  adminId: integer("admin_id")
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+  // Credenciais da Meta Cloud API
+  accessToken: text("access_token"), // Token criptografado
+  phoneNumberId: text("phone_number_id"),
+  businessAccountId: text("business_account_id"),
+  webhookVerifyToken: text("webhook_verify_token"),
+  // Informações do número
+  displayPhoneNumber: text("display_phone_number"),
+  verifiedName: text("verified_name"),
+  qualityRating: varchar("quality_rating", { length: 20 }),
+  // Status
+  isActive: boolean("is_active").default(false).notNull(),
+  lastVerifiedAt: timestamp("last_verified_at"),
+  // Configurações de envio
+  autoNotifyCheckin: boolean("auto_notify_checkin").default(false).notNull(),
+  autoNotifyCheckout: boolean("auto_notify_checkout").default(false).notNull(),
+  autoNotifyDailyLog: boolean("auto_notify_daily_log").default(false).notNull(),
+  autoNotifyBooking: boolean("auto_notify_booking").default(false).notNull(),
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("whatsapp_config_admin_id_idx").on(table.adminId),
+  index("whatsapp_config_is_active_idx").on(table.isActive),
+]);
+
+export type WhatsAppConfig = typeof whatsappConfig.$inferSelect;
+export type InsertWhatsAppConfig = typeof whatsappConfig.$inferInsert;
+
+// Relações do WhatsApp Config
+export const whatsappConfigRelations = relations(whatsappConfig, ({ one }) => ({
+  admin: one(users, { fields: [whatsappConfig.adminId], references: [users.id] }),
+}));
+
+// ==========================================
+// HISTÓRICO DE MENSAGENS WHATSAPP
+// ==========================================
+
+export const whatsappMessages = pgTable("whatsapp_messages", {
+  id: serial("id").primaryKey(),
+  configId: integer("config_id")
+    .notNull()
+    .references(() => whatsappConfig.id, { onDelete: "cascade" }),
+  // Destinatário
+  toPhone: text("to_phone").notNull(),
+  toName: text("to_name"),
+  petId: integer("pet_id")
+    .references(() => pets.id, { onDelete: "set null" }),
+  // Mensagem
+  messageType: varchar("message_type", { length: 50 }).notNull(), // 'text' | 'template' | 'image' | 'document'
+  templateName: text("template_name"),
+  content: text("content"),
+  // Status da API
+  messageId: text("message_id"), // ID retornado pela API
+  status: varchar("status", { length: 20 }).default("pending").notNull(), // 'pending' | 'sent' | 'delivered' | 'read' | 'failed'
+  errorMessage: text("error_message"),
+  // Contexto
+  context: varchar("context", { length: 50 }), // 'checkin' | 'checkout' | 'daily_log' | 'booking' | 'manual'
+  sentById: integer("sent_by_id")
+    .references(() => users.id, { onDelete: "set null" }),
+  // Timestamps
+  sentAt: timestamp("sent_at"),
+  deliveredAt: timestamp("delivered_at"),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("whatsapp_messages_config_id_idx").on(table.configId),
+  index("whatsapp_messages_pet_id_idx").on(table.petId),
+  index("whatsapp_messages_status_idx").on(table.status),
+  index("whatsapp_messages_context_idx").on(table.context),
+  index("whatsapp_messages_created_at_idx").on(table.createdAt),
+]);
+
+export type WhatsAppMessage = typeof whatsappMessages.$inferSelect;
+export type InsertWhatsAppMessage = typeof whatsappMessages.$inferInsert;
+
+// Relações de mensagens WhatsApp
+export const whatsappMessagesRelations = relations(whatsappMessages, ({ one }) => ({
+  config: one(whatsappConfig, { fields: [whatsappMessages.configId], references: [whatsappConfig.id] }),
+  pet: one(pets, { fields: [whatsappMessages.petId], references: [pets.id] }),
+  sentBy: one(users, { fields: [whatsappMessages.sentById], references: [users.id] }),
+}));
