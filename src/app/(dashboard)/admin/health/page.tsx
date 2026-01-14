@@ -593,7 +593,7 @@ export default function AdminHealthPage() {
                           outerRadius={90}
                           paddingAngle={2}
                           dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                           labelLine={false}
                         >
                           {[0, 1, 2].map((index) => (
@@ -630,7 +630,7 @@ export default function AdminHealthPage() {
                         data={[
                           { name: "Antipulgas", value: preventiveStats.flea || 0 },
                           { name: "Vermífugo", value: preventiveStats.deworming || 0 },
-                          { name: "Cardioprotetor", value: preventiveStats.heartworm || 0 },
+                          { name: "Carrapaticida", value: preventiveStats.tick || 0 },
                         ]}
                         layout="vertical"
                       >
@@ -693,7 +693,7 @@ export default function AdminHealthPage() {
                     <span className="text-sm text-muted-foreground">Preventivos</span>
                     <Shield className="h-4 w-4 text-slate-500" />
                   </div>
-                  <p className="text-2xl font-bold">{(preventiveStats?.flea || 0) + (preventiveStats?.deworming || 0) + (preventiveStats?.heartworm || 0)}</p>
+                  <p className="text-2xl font-bold">{(preventiveStats?.flea || 0) + (preventiveStats?.deworming || 0) + (preventiveStats?.tick || 0)}</p>
                   <p className="text-xs text-muted-foreground mt-2">
                     {preventiveStats?.upcoming || 0} próximos 30 dias
                   </p>

@@ -290,7 +290,7 @@ export default function AdminFinances() {
                           border: '1px solid #e2e8f0',
                           borderRadius: '8px'
                         }}
-                        formatter={(value: number) => [`R$ ${value.toFixed(2)}`, '']}
+                        formatter={(value) => [`R$ ${Number(value || 0).toFixed(2)}`, '']}
                       />
                       <Legend />
                       <Area 
@@ -368,7 +368,7 @@ export default function AdminFinances() {
                         outerRadius={100}
                         paddingAngle={2}
                         dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                         labelLine={false}
                       >
                         {chartData.packageData.map((_, index) => (

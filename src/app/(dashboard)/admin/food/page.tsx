@@ -359,7 +359,7 @@ export default function AdminFoodPage() {
                         const typeCount: Record<string, number> = {};
                         summaries.forEach(s => {
                           if (s.plan) {
-                            const type = s.plan.type || "dry";
+                            const type = s.plan.foodType || "dry";
                             typeCount[type] = (typeCount[type] || 0) + 1;
                           }
                         });
@@ -374,7 +374,7 @@ export default function AdminFoodPage() {
                       outerRadius={70}
                       paddingAngle={2}
                       dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                       labelLine={false}
                     >
                       {[0, 1, 2, 3].map((index) => (

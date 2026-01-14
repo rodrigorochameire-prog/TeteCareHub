@@ -348,7 +348,7 @@ export default function AdminPetsPage() {
                       outerRadius={65}
                       paddingAngle={2}
                       dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                       labelLine={false}
                     >
                       {[0, 1, 2].map((index) => (
