@@ -267,6 +267,71 @@ export default function AdminFinances() {
 
         {/* Tab: Análises */}
         <TabsContent value="analytics" className="space-y-6">
+          {/* Métricas Detalhadas */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="shadow-sm">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <TrendingUp className="h-5 w-5 text-slate-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Média Mensal</p>
+                    <p className="text-lg font-bold">
+                      {formatCurrency((chartData.months.reduce((acc, m) => acc + m.vendas, 0) / 6) * 100)}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <CreditCard className="h-5 w-5 text-slate-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Créditos Vendidos</p>
+                    <p className="text-lg font-bold">
+                      {chartData.months.reduce((acc, m) => acc + m.creditos, 0)}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <ArrowDownRight className="h-5 w-5 text-slate-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Taxa de Reembolso</p>
+                    <p className="text-lg font-bold">
+                      {((chartData.months.reduce((acc, m) => acc + m.reembolsos, 0) / 
+                        chartData.months.reduce((acc, m) => acc + m.vendas, 0)) * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <Package className="h-5 w-5 text-slate-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Pacotes Ativos</p>
+                    <p className="text-lg font-bold">
+                      {summary?.packages?.length || 0}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Evolução Mensal */}
             <Card className="shadow-sm">
