@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -41,6 +42,7 @@ import {
   PieChart,
   TrendingUp,
   Heart,
+  ListFilter,
 } from "lucide-react";
 import {
   BarChart,
@@ -54,6 +56,8 @@ import {
   Pie,
   Cell,
   Legend,
+  LineChart,
+  Line,
 } from "recharts";
 
 const NEUTRAL_COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"];
@@ -88,6 +92,7 @@ export default function AdminPetsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("pets");
 
   const utils = trpc.useUtils();
   const { data: pets, isLoading } = trpc.pets.list.useQuery();
@@ -171,6 +176,118 @@ export default function AdminPetsPage() {
       totalCredits: pets.reduce((sum, p) => sum + (p.credits || 0), 0),
     };
   }, [pets]);
+
+  // Analytics data
+  const analyticsData = useMemo(() => {
+    if (!pets || pets.length === 0) return {
+      breedDistribution: [],
+      statusDistribution: [],
+      weightDistribution: [],
+      ageDistribution: [],
+      creditsDistribution: [],
+      monthlyGrowth: [],
+    };
+
+    // Breed distribution
+    const breedCount: Record<string, number> = {};
+    pets.forEach(pet => {
+      const breed = pet.breed || "Sem raça";
+      breedCount[breed] = (breedCount[breed] || 0) + 1;
+    });
+    const breedDistribution = Object.entries(breedCount)
+      .map(([name, value]) => ({ 
+        name: name.length > 12 ? name.slice(0, 12) + '...' : name, 
+        value 
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
+
+    // Status distribution
+    const statusDistribution = [
+      { name: "Aprovados", value: stats.approved },
+      { name: "Pendentes", value: stats.pending },
+      { name: "Rejeitados", value: stats.total - stats.approved - stats.pending },
+    ].filter(d => d.value > 0);
+
+    // Weight distribution
+    const small = pets.filter(p => p.weight && p.weight <= 10).length;
+    const medium = pets.filter(p => p.weight && p.weight > 10 && p.weight <= 25).length;
+    const large = pets.filter(p => p.weight && p.weight > 25 && p.weight <= 45).length;
+    const giant = pets.filter(p => p.weight && p.weight > 45).length;
+    const noWeight = pets.filter(p => !p.weight).length;
+    const weightDistribution = [
+      { name: "Pequeno (≤10kg)", value: small },
+      { name: "Médio (10-25kg)", value: medium },
+      { name: "Grande (25-45kg)", value: large },
+      { name: "Gigante (>45kg)", value: giant },
+      { name: "Não informado", value: noWeight },
+    ].filter(d => d.value > 0);
+
+    // Age distribution
+    const now = new Date();
+    const puppy = pets.filter(p => {
+      if (!p.birthDate) return false;
+      const age = (now.getTime() - new Date(p.birthDate).getTime()) / (1000 * 60 * 60 * 24 * 365);
+      return age < 1;
+    }).length;
+    const young = pets.filter(p => {
+      if (!p.birthDate) return false;
+      const age = (now.getTime() - new Date(p.birthDate).getTime()) / (1000 * 60 * 60 * 24 * 365);
+      return age >= 1 && age < 3;
+    }).length;
+    const adult = pets.filter(p => {
+      if (!p.birthDate) return false;
+      const age = (now.getTime() - new Date(p.birthDate).getTime()) / (1000 * 60 * 60 * 24 * 365);
+      return age >= 3 && age < 8;
+    }).length;
+    const senior = pets.filter(p => {
+      if (!p.birthDate) return false;
+      const age = (now.getTime() - new Date(p.birthDate).getTime()) / (1000 * 60 * 60 * 24 * 365);
+      return age >= 8;
+    }).length;
+    const noAge = pets.filter(p => !p.birthDate).length;
+    const ageDistribution = [
+      { name: "Filhote (<1a)", value: puppy },
+      { name: "Jovem (1-3a)", value: young },
+      { name: "Adulto (3-8a)", value: adult },
+      { name: "Sênior (>8a)", value: senior },
+      { name: "Não informado", value: noAge },
+    ].filter(d => d.value > 0);
+
+    // Credits distribution
+    const noCredits = pets.filter(p => !p.credits || p.credits === 0).length;
+    const lowCredits = pets.filter(p => p.credits && p.credits > 0 && p.credits <= 5).length;
+    const medCredits = pets.filter(p => p.credits && p.credits > 5 && p.credits <= 15).length;
+    const highCredits = pets.filter(p => p.credits && p.credits > 15).length;
+    const creditsDistribution = [
+      { name: "Sem créditos", value: noCredits },
+      { name: "1-5 créditos", value: lowCredits },
+      { name: "6-15 créditos", value: medCredits },
+      { name: ">15 créditos", value: highCredits },
+    ].filter(d => d.value > 0);
+
+    // Monthly growth (últimos 6 meses)
+    const monthlyGrowth = Array.from({ length: 6 }, (_, i) => {
+      const date = new Date();
+      date.setMonth(date.getMonth() - (5 - i));
+      const monthStr = date.toLocaleDateString("pt-BR", { month: "short" });
+      const monthPets = pets.filter(p => {
+        const created = new Date(p.createdAt);
+        return created.getMonth() === date.getMonth() && 
+               created.getFullYear() === date.getFullYear();
+      }).length;
+      return { month: monthStr, pets: monthPets };
+    });
+
+    return {
+      breedDistribution,
+      statusDistribution,
+      weightDistribution,
+      ageDistribution,
+      creditsDistribution,
+      monthlyGrowth,
+    };
+  }, [pets, stats]);
 
   const handleCreatePet = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -269,337 +386,512 @@ export default function AdminPetsPage() {
         </div>
       </div>
 
-      {/* Análises de Pets */}
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
-            Análises de Pets
-          </CardTitle>
-          <CardDescription>Visão geral do cadastro de pets</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Métricas Resumidas */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="p-4 rounded-lg bg-muted/50">
-              <div className="flex items-center gap-2 mb-1">
-                <Dog className="h-4 w-4 text-slate-500" />
-                <span className="text-xs text-muted-foreground">Total</span>
+      {/* Main Tabs - Separando Pets e Análises */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="bg-muted/50">
+          <TabsTrigger value="pets" className="gap-2">
+            <ListFilter className="h-4 w-4" />
+            Todos os Pets
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Análises
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Tab: Todos os Pets */}
+        <TabsContent value="pets" className="space-y-4">
+          {/* Pending Approvals */}
+          {pendingPets && pendingPets.length > 0 && (
+            <div className="section-card border-amber-200/50 dark:border-amber-800/30 bg-amber-50/30 dark:bg-amber-950/10">
+              <div className="section-card-header">
+                <div className="section-card-title">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                  Aguardando Aprovação ({pendingPets.length})
+                </div>
               </div>
-              <p className="text-2xl font-bold">{stats.total}</p>
-            </div>
-            <div className="p-4 rounded-lg bg-muted/50">
-              <div className="flex items-center gap-2 mb-1">
-                <CheckCircle2 className="h-4 w-4 text-slate-500" />
-                <span className="text-xs text-muted-foreground">Aprovados</span>
+              <div className="section-card-content">
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  {pendingPets.slice(0, 6).map((pet) => (
+                    <div key={pet.id} className="flex items-center justify-between p-3 bg-card rounded-xl border">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Dog className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{pet.name}</p>
+                          <p className="text-xs text-muted-foreground">{pet.breed || "Sem raça"}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-1.5">
+                        <Button
+                          size="sm"
+                          onClick={() => approveMutation.mutate({ id: pet.id })}
+                          className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600"
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => rejectMutation.mutate({ id: pet.id })}
+                          className="h-8 w-8 p-0"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <p className="text-2xl font-bold">{stats.approved}</p>
             </div>
-            <div className="p-4 rounded-lg bg-muted/50">
-              <div className="flex items-center gap-2 mb-1">
-                <Clock className="h-4 w-4 text-slate-500" />
-                <span className="text-xs text-muted-foreground">Pendentes</span>
-              </div>
-              <p className="text-2xl font-bold">{stats.pending}</p>
+          )}
+
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome ou raça..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
+              />
             </div>
-            <div className="p-4 rounded-lg bg-muted/50">
-              <div className="flex items-center gap-2 mb-1">
-                <Heart className="h-4 w-4 text-slate-500" />
-                <span className="text-xs text-muted-foreground">Raças</span>
-              </div>
-              <p className="text-2xl font-bold">{new Set(pets?.map(p => p.breed).filter(Boolean)).size || 0}</p>
-            </div>
-            <div className="p-4 rounded-lg bg-muted/50">
-              <div className="flex items-center gap-2 mb-1">
-                <CreditCard className="h-4 w-4 text-slate-500" />
-                <span className="text-xs text-muted-foreground">Créditos</span>
-              </div>
-              <p className="text-2xl font-bold">{stats.totalCredits}</p>
-            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[160px]">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="approved">Aprovados</SelectItem>
+                <SelectItem value="pending">Pendentes</SelectItem>
+                <SelectItem value="rejected">Rejeitados</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Gráficos */}
+          {/* Pets Grid */}
+          <div className="section-card">
+            <div className="section-card-header">
+              <div className="section-card-title">
+                <Dog />
+                Todos os Pets
+                <Badge variant="secondary" className="ml-2">{filteredPets.length}</Badge>
+              </div>
+            </div>
+            <div className="section-card-content">
+              {filteredPets.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-state-icon"><Dog /></div>
+                  <p className="empty-state-text">Nenhum pet encontrado</p>
+                </div>
+              ) : (
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  {filteredPets.map((pet) => (
+                    <div key={pet.id} className="p-5 rounded-[14px] bg-card hover:shadow-[0_4px_8px_0_rgba(0,0,0,0.06),0_2px_4px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.04)] transition-all duration-300 ease group border-0 shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_1px_3px_0_rgba(0,0,0,0.05),0_2px_6px_0_rgba(0,0,0,0.02)] hover:translate-y-[-2px]">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-4">
+                          <BreedIcon breed={pet.breed} className="h-14 w-14" />
+                          <div className="flex-1 min-w-0">
+                            <p className="pet-card-name font-bold text-base text-foreground leading-tight">{pet.name}</p>
+                            <p className="pet-card-breed text-sm font-medium text-[hsl(220_13%_45%)] mt-0.5 leading-tight">{pet.breed || "Sem raça"}</p>
+                          </div>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => { setSelectedPet(pet); setIsDetailOpen(true); }}>
+                              <Eye className="h-4 w-4 mr-2" /> Ver Detalhes
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setSelectedPet(pet); setIsEditOpen(true); }}>
+                              <Edit className="h-4 w-4 mr-2" /> Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleQuickAddCredits(pet.id, 5)}>
+                              <CreditCard className="h-4 w-4 mr-2" /> +5 Créditos
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleQuickAddCredits(pet.id, 10)}>
+                              <CreditCard className="h-4 w-4 mr-2" /> +10 Créditos
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            {pet.approvalStatus !== "approved" && (
+                              <DropdownMenuItem onClick={() => approveMutation.mutate({ id: pet.id })}>
+                                <Check className="h-4 w-4 mr-2 text-green-500" /> Aprovar
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem 
+                              onClick={() => { setSelectedPet(pet); setIsDeleteConfirmOpen(true); }}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                      <div className="mt-4 flex items-center justify-between">
+                        <Badge className={
+                          pet.approvalStatus === "approved" ? "badge-success" :
+                          pet.approvalStatus === "pending" ? "badge-warning" : "badge-error"
+                        }>
+                          {pet.approvalStatus === "approved" ? "Aprovado" :
+                           pet.approvalStatus === "pending" ? "Pendente" : "Rejeitado"}
+                        </Badge>
+                        <div className="flex items-center gap-1.5 pet-card-credits text-sm">
+                          <CreditCard className="h-4 w-4 text-[hsl(220_13%_45%)]" />
+                          <span className="font-semibold text-[hsl(220_16%_38%)]">{pet.credits}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Tab: Análises */}
+        <TabsContent value="analytics" className="space-y-6">
+          {/* Métricas Resumidas */}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Visão Geral dos Pets
+              </CardTitle>
+              <CardDescription>Estatísticas e métricas do cadastro</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Dog className="h-4 w-4 text-slate-500" />
+                    <span className="text-xs text-muted-foreground">Total</span>
+                  </div>
+                  <p className="text-2xl font-bold">{stats.total}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle2 className="h-4 w-4 text-slate-500" />
+                    <span className="text-xs text-muted-foreground">Aprovados</span>
+                  </div>
+                  <p className="text-2xl font-bold">{stats.approved}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock className="h-4 w-4 text-slate-500" />
+                    <span className="text-xs text-muted-foreground">Pendentes</span>
+                  </div>
+                  <p className="text-2xl font-bold">{stats.pending}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Heart className="h-4 w-4 text-slate-500" />
+                    <span className="text-xs text-muted-foreground">Raças</span>
+                  </div>
+                  <p className="text-2xl font-bold">{new Set(pets?.map(p => p.breed).filter(Boolean)).size || 0}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CreditCard className="h-4 w-4 text-slate-500" />
+                    <span className="text-xs text-muted-foreground">Créditos</span>
+                  </div>
+                  <p className="text-2xl font-bold">{stats.totalCredits}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Gráficos Principais */}
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Distribuição por Raça */}
-            <div>
-              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" />
-                Top Raças
-              </h4>
-              {pets && pets.length > 0 ? (
-                <div className="h-[220px]">
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Top Raças
+                </CardTitle>
+                <CardDescription className="text-xs">Raças mais frequentes</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {analyticsData.breedDistribution.length > 0 ? (
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={analyticsData.breedDistribution}
+                        layout="vertical"
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis type="number" stroke="#94a3b8" fontSize={11} />
+                        <YAxis type="category" dataKey="name" width={90} stroke="#94a3b8" fontSize={10} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'white', 
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '8px',
+                            fontSize: '12px'
+                          }} 
+                        />
+                        <Bar dataKey="value" name="Pets" fill="#64748b" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[280px] flex items-center justify-center text-muted-foreground text-sm">
+                    Sem dados disponíveis
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Status de Aprovação */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <PieChart className="h-4 w-4" />
+                  Status de Aprovação
+                </CardTitle>
+                <CardDescription className="text-xs">Distribuição por status</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {analyticsData.statusDistribution.length > 0 ? (
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsPie>
+                        <Pie
+                          data={analyticsData.statusDistribution}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={45}
+                          outerRadius={90}
+                          paddingAngle={2}
+                          dataKey="value"
+                          label={({ name, value }) => `${name}: ${value}`}
+                          labelLine={false}
+                        >
+                          {analyticsData.statusDistribution.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={NEUTRAL_COLORS[index]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </RechartsPie>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[280px] flex items-center justify-center text-muted-foreground text-sm">
+                    Sem dados disponíveis
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Gráficos Secundários */}
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Distribuição por Peso */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Por Porte
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {analyticsData.weightDistribution.length > 0 ? (
+                  <div className="h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsPie>
+                        <Pie
+                          data={analyticsData.weightDistribution}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={30}
+                          outerRadius={60}
+                          paddingAngle={2}
+                          dataKey="value"
+                          label={({ name }) => name.split(" ")[0]}
+                          labelLine={false}
+                        >
+                          {analyticsData.weightDistribution.map((_, index) => (
+                            <Cell key={`weight-${index}`} fill={NEUTRAL_COLORS[index % NEUTRAL_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </RechartsPie>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+                    Sem dados
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Distribuição por Idade */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Por Idade
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {analyticsData.ageDistribution.length > 0 ? (
+                  <div className="h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsPie>
+                        <Pie
+                          data={analyticsData.ageDistribution}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={30}
+                          outerRadius={60}
+                          paddingAngle={2}
+                          dataKey="value"
+                          label={({ name }) => name.split(" ")[0]}
+                          labelLine={false}
+                        >
+                          {analyticsData.ageDistribution.map((_, index) => (
+                            <Cell key={`age-${index}`} fill={NEUTRAL_COLORS[index % NEUTRAL_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </RechartsPie>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+                    Sem dados
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Distribuição por Créditos */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  Por Créditos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {analyticsData.creditsDistribution.length > 0 ? (
+                  <div className="h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsPie>
+                        <Pie
+                          data={analyticsData.creditsDistribution}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={30}
+                          outerRadius={60}
+                          paddingAngle={2}
+                          dataKey="value"
+                          label={({ name }) => name.split(" ")[0]}
+                          labelLine={false}
+                        >
+                          {analyticsData.creditsDistribution.map((_, index) => (
+                            <Cell key={`credits-${index}`} fill={NEUTRAL_COLORS[index % NEUTRAL_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </RechartsPie>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+                    Sem dados
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Crescimento Mensal */}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Cadastros por Mês
+              </CardTitle>
+              <CardDescription>Novos pets cadastrados nos últimos 6 meses</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {analyticsData.monthlyGrowth.some(m => m.pets > 0) ? (
+                <div className="h-[250px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={(() => {
-                        const breedCount: Record<string, number> = {};
-                        pets.forEach(pet => {
-                          const breed = pet.breed || "Sem raça";
-                          breedCount[breed] = (breedCount[breed] || 0) + 1;
-                        });
-                        return Object.entries(breedCount)
-                          .map(([name, value]) => ({ 
-                            name: name.length > 12 ? name.slice(0, 12) + '...' : name, 
-                            value 
-                          }))
-                          .sort((a, b) => b.value - a.value)
-                          .slice(0, 6);
-                      })()}
-                      layout="vertical"
-                    >
+                    <BarChart data={analyticsData.monthlyGrowth}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis type="number" stroke="#94a3b8" fontSize={11} />
-                      <YAxis type="category" dataKey="name" width={90} stroke="#94a3b8" fontSize={10} />
+                      <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} />
+                      <YAxis stroke="#94a3b8" fontSize={11} />
                       <Tooltip 
                         contentStyle={{ 
                           backgroundColor: 'white', 
                           border: '1px solid #e2e8f0',
-                          borderRadius: '8px',
-                          fontSize: '12px'
+                          borderRadius: '8px'
                         }} 
                       />
-                      <Bar dataKey="value" name="Pets" fill="#64748b" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="pets" name="Novos Pets" fill="#475569" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
+                <div className="h-[250px] flex items-center justify-center text-muted-foreground text-sm">
                   Sem dados disponíveis
                 </div>
               )}
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Status de Aprovação */}
-            <div>
-              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-                <PieChart className="h-4 w-4" />
-                Status de Aprovação
-              </h4>
-              {pets && pets.length > 0 ? (
-                <div className="h-[220px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsPie>
-                      <Pie
-                        data={[
-                          { name: "Aprovados", value: stats.approved },
-                          { name: "Pendentes", value: stats.pending },
-                          { name: "Rejeitados", value: stats.total - stats.approved - stats.pending },
-                        ].filter(d => d.value > 0)}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={45}
-                        outerRadius={75}
-                        paddingAngle={2}
-                        dataKey="value"
-                        label={({ name, value }) => `${name}: ${value}`}
-                        labelLine={false}
-                      >
-                        {[0, 1, 2].map((index) => (
-                          <Cell key={`cell-${index}`} fill={NEUTRAL_COLORS[index]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </RechartsPie>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
-                  Sem dados disponíveis
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Distribuição por Porte */}
-          <div>
-            <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Distribuição por Peso
-            </h4>
-            <div className="grid grid-cols-4 gap-4">
-              {(() => {
-                const small = pets?.filter(p => p.weight && p.weight <= 10).length || 0;
-                const medium = pets?.filter(p => p.weight && p.weight > 10 && p.weight <= 25).length || 0;
-                const large = pets?.filter(p => p.weight && p.weight > 25 && p.weight <= 45).length || 0;
-                const giant = pets?.filter(p => p.weight && p.weight > 45).length || 0;
-                const total = small + medium + large + giant;
-                return [
-                  { label: "Pequeno", subtitle: "até 10kg", value: small, percent: total > 0 ? (small / total * 100).toFixed(0) : 0 },
-                  { label: "Médio", subtitle: "10-25kg", value: medium, percent: total > 0 ? (medium / total * 100).toFixed(0) : 0 },
-                  { label: "Grande", subtitle: "25-45kg", value: large, percent: total > 0 ? (large / total * 100).toFixed(0) : 0 },
-                  { label: "Gigante", subtitle: "+45kg", value: giant, percent: total > 0 ? (giant / total * 100).toFixed(0) : 0 },
-                ].map((item, idx) => (
-                  <div key={idx} className="p-3 rounded-lg border bg-muted/30 text-center">
-                    <p className="text-lg font-bold">{item.value}</p>
-                    <p className="text-xs font-medium">{item.label}</p>
-                    <p className="text-xs text-muted-foreground">{item.subtitle}</p>
-                    <div className="mt-2 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-slate-500 rounded-full transition-all" 
-                        style={{ width: `${item.percent}%` }}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">{item.percent}%</p>
-                  </div>
-                ));
-              })()}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Pending Approvals */}
-      {pendingPets && pendingPets.length > 0 && (
-        <div className="section-card border-amber-200/50 dark:border-amber-800/30 bg-amber-50/30 dark:bg-amber-950/10">
-          <div className="section-card-header">
-            <div className="section-card-title">
-              <AlertCircle className="h-4 w-4 text-amber-600" />
-              Aguardando Aprovação ({pendingPets.length})
-            </div>
-          </div>
-          <div className="section-card-content">
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {pendingPets.slice(0, 6).map((pet) => (
-                <div key={pet.id} className="flex items-center justify-between p-3 bg-card rounded-xl border">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Dog className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">{pet.name}</p>
-                      <p className="text-xs text-muted-foreground">{pet.breed || "Sem raça"}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-1.5">
-                    <Button
-                      size="sm"
-                      onClick={() => approveMutation.mutate({ id: pet.id })}
-                      className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600"
-                    >
-                      <Check className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => rejectMutation.mutate({ id: pet.id })}
-                      className="h-8 w-8 p-0"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome ou raça..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[160px]">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="approved">Aprovados</SelectItem>
-            <SelectItem value="pending">Pendentes</SelectItem>
-            <SelectItem value="rejected">Rejeitados</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Pets Grid */}
-      <div className="section-card">
-        <div className="section-card-header">
-          <div className="section-card-title">
-            <Dog />
-            Todos os Pets
-            <Badge variant="secondary" className="ml-2">{filteredPets.length}</Badge>
-          </div>
-        </div>
-        <div className="section-card-content">
-          {filteredPets.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon"><Dog /></div>
-              <p className="empty-state-text">Nenhum pet encontrado</p>
-            </div>
-          ) : (
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {filteredPets.map((pet) => (
-                <div key={pet.id} className="p-5 rounded-[14px] bg-card hover:shadow-[0_4px_8px_0_rgba(0,0,0,0.06),0_2px_4px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.04)] transition-all duration-300 ease group border-0 shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_1px_3px_0_rgba(0,0,0,0.05),0_2px_6px_0_rgba(0,0,0,0.02)] hover:translate-y-[-2px]">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-4">
-                      <BreedIcon breed={pet.breed} className="h-14 w-14" />
-                      <div className="flex-1 min-w-0">
-                        <p className="pet-card-name font-bold text-base text-foreground leading-tight">{pet.name}</p>
-                        <p className="pet-card-breed text-sm font-medium text-[hsl(220_13%_45%)] mt-0.5 leading-tight">{pet.breed || "Sem raça"}</p>
+          {/* Distribuição por Porte - Cards */}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Dog className="h-5 w-5" />
+                Distribuição por Peso (Detalhado)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-4 gap-4">
+                {(() => {
+                  const small = pets?.filter(p => p.weight && p.weight <= 10).length || 0;
+                  const medium = pets?.filter(p => p.weight && p.weight > 10 && p.weight <= 25).length || 0;
+                  const large = pets?.filter(p => p.weight && p.weight > 25 && p.weight <= 45).length || 0;
+                  const giant = pets?.filter(p => p.weight && p.weight > 45).length || 0;
+                  const total = small + medium + large + giant;
+                  return [
+                    { label: "Pequeno", subtitle: "até 10kg", value: small, percent: total > 0 ? (small / total * 100).toFixed(0) : 0 },
+                    { label: "Médio", subtitle: "10-25kg", value: medium, percent: total > 0 ? (medium / total * 100).toFixed(0) : 0 },
+                    { label: "Grande", subtitle: "25-45kg", value: large, percent: total > 0 ? (large / total * 100).toFixed(0) : 0 },
+                    { label: "Gigante", subtitle: "+45kg", value: giant, percent: total > 0 ? (giant / total * 100).toFixed(0) : 0 },
+                  ].map((item, idx) => (
+                    <div key={idx} className="p-3 rounded-lg border bg-muted/30 text-center">
+                      <p className="text-lg font-bold">{item.value}</p>
+                      <p className="text-xs font-medium">{item.label}</p>
+                      <p className="text-xs text-muted-foreground">{item.subtitle}</p>
+                      <div className="mt-2 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-slate-500 rounded-full transition-all" 
+                          style={{ width: `${item.percent}%` }}
+                        />
                       </div>
+                      <p className="text-xs text-muted-foreground mt-1">{item.percent}%</p>
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => { setSelectedPet(pet); setIsDetailOpen(true); }}>
-                          <Eye className="h-4 w-4 mr-2" /> Ver Detalhes
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => { setSelectedPet(pet); setIsEditOpen(true); }}>
-                          <Edit className="h-4 w-4 mr-2" /> Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleQuickAddCredits(pet.id, 5)}>
-                          <CreditCard className="h-4 w-4 mr-2" /> +5 Créditos
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleQuickAddCredits(pet.id, 10)}>
-                          <CreditCard className="h-4 w-4 mr-2" /> +10 Créditos
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        {pet.approvalStatus !== "approved" && (
-                          <DropdownMenuItem onClick={() => approveMutation.mutate({ id: pet.id })}>
-                            <Check className="h-4 w-4 mr-2 text-green-500" /> Aprovar
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem 
-                          onClick={() => { setSelectedPet(pet); setIsDeleteConfirmOpen(true); }}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between">
-                    <Badge className={
-                      pet.approvalStatus === "approved" ? "badge-success" :
-                      pet.approvalStatus === "pending" ? "badge-warning" : "badge-error"
-                    }>
-                      {pet.approvalStatus === "approved" ? "Aprovado" :
-                       pet.approvalStatus === "pending" ? "Pendente" : "Rejeitado"}
-                    </Badge>
-                    <div className="flex items-center gap-1.5 pet-card-credits text-sm">
-                      <CreditCard className="h-4 w-4 text-[hsl(220_13%_45%)]" />
-                      <span className="font-semibold text-[hsl(220_16%_38%)]">{pet.credits}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+                  ));
+                })()}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Create Pet Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

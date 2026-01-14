@@ -234,18 +234,44 @@ export const dailyLogs = pgTable("daily_logs", {
     .references(() => pets.id, { onDelete: "cascade" }),
   logDate: timestamp("log_date").notNull(),
   source: varchar("source", { length: 50 }).notNull(), // 'daycare' | 'home'
-  mood: varchar("mood", { length: 50 }), // 'happy' | 'calm' | 'anxious' | 'tired'
-  stool: varchar("stool", { length: 50 }), // 'normal' | 'soft' | 'diarrhea' | 'none'
-  appetite: varchar("appetite", { length: 50 }), // 'good' | 'moderate' | 'poor'
+  logType: varchar("log_type", { length: 50 }).default("general"), // 'general' | 'health' | 'feeding' | 'exercise' | 'grooming' | 'incident'
+  mood: varchar("mood", { length: 50 }), // 'happy' | 'calm' | 'anxious' | 'tired' | 'agitated' | 'sick'
+  stool: varchar("stool", { length: 50 }), // 'normal' | 'soft' | 'hard' | 'diarrhea' | 'bloody' | 'mucus' | 'none'
+  appetite: varchar("appetite", { length: 50 }), // 'excellent' | 'good' | 'moderate' | 'poor' | 'none'
+  energy: varchar("energy", { length: 50 }), // 'high' | 'normal' | 'low' | 'very_low'
+  waterIntake: varchar("water_intake", { length: 50 }), // 'normal' | 'increased' | 'decreased' | 'none'
   notes: text("notes"),
+  attachments: text("attachments"), // JSON array de URLs de anexos
   createdById: integer("created_by_id")
     .notNull()
     .references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export type DailyLog = typeof dailyLogs.$inferSelect;
 export type InsertDailyLog = typeof dailyLogs.$inferInsert;
+
+// ==========================================
+// ANEXOS DE LOGS (DOCUMENTOS VINCULADOS)
+// ==========================================
+
+export const logAttachments = pgTable("log_attachments", {
+  id: serial("id").primaryKey(),
+  logId: integer("log_id")
+    .notNull()
+    .references(() => dailyLogs.id, { onDelete: "cascade" }),
+  documentId: integer("document_id").references(() => documents.id, { onDelete: "set null" }),
+  fileUrl: text("file_url").notNull(),
+  fileName: varchar("file_name", { length: 255 }),
+  mimeType: varchar("mime_type", { length: 100 }),
+  fileSize: integer("file_size"),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type LogAttachment = typeof logAttachments.$inferSelect;
+export type InsertLogAttachment = typeof logAttachments.$inferInsert;
 
 // ==========================================
 // RELAÇÕES
@@ -356,13 +382,17 @@ export const documents = pgTable("documents", {
     .references(() => users.id),
   title: varchar("title", { length: 200 }).notNull(),
   description: text("description"),
-  category: varchar("category", { length: 100 }).notNull(), // 'vaccination' | 'exam' | 'prescription' | 'other'
+  category: varchar("category", { length: 100 }).notNull(), // 'vaccination' | 'exam' | 'prescription' | 'daily_log' | 'behavior' | 'training' | 'other'
   fileUrl: text("file_url").notNull(),
   fileKey: text("file_key"),
   fileName: varchar("file_name", { length: 255 }),
   mimeType: varchar("mime_type", { length: 100 }),
   fileSize: integer("file_size"),
+  // Campos para integração com funcionalidades
+  relatedModule: varchar("related_module", { length: 50 }), // 'daily_log' | 'behavior' | 'training' | 'health' | 'vaccination' | null
+  relatedId: integer("related_id"), // ID do registro relacionado
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export type Document = typeof documents.$inferSelect;
@@ -385,14 +415,38 @@ export const behaviorLogs = pgTable("behavior_logs", {
   aggression: varchar("aggression", { length: 50 }), // 'none' | 'mild' | 'moderate' | 'severe'
   notes: text("notes"),
   activities: text("activities"), // JSON array
+  attachments: text("attachments"), // JSON array de URLs de anexos (fotos, vídeos, docs)
   createdById: integer("created_by_id")
     .notNull()
     .references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export type BehaviorLog = typeof behaviorLogs.$inferSelect;
 export type InsertBehaviorLog = typeof behaviorLogs.$inferInsert;
+
+// ==========================================
+// ANEXOS DE COMPORTAMENTO
+// ==========================================
+
+export const behaviorAttachments = pgTable("behavior_attachments", {
+  id: serial("id").primaryKey(),
+  behaviorLogId: integer("behavior_log_id")
+    .notNull()
+    .references(() => behaviorLogs.id, { onDelete: "cascade" }),
+  documentId: integer("document_id").references(() => documents.id, { onDelete: "set null" }),
+  fileUrl: text("file_url").notNull(),
+  fileName: varchar("file_name", { length: 255 }),
+  mimeType: varchar("mime_type", { length: 100 }),
+  fileSize: integer("file_size"),
+  fileType: varchar("file_type", { length: 20 }), // 'image' | 'video' | 'document'
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type BehaviorAttachment = typeof behaviorAttachments.$inferSelect;
+export type InsertBehaviorAttachment = typeof behaviorAttachments.$inferInsert;
 
 // ==========================================
 // MURAL - POSTS
@@ -490,14 +544,38 @@ export const trainingLogs = pgTable("training_logs", {
   method: varchar("method", { length: 100 }), // 'positive_reinforcement' | 'clicker' | 'lure' | 'capture'
   notes: text("notes"),
   videoUrl: text("video_url"),
+  attachments: text("attachments"), // JSON array de URLs de anexos (fotos, vídeos, docs)
   createdById: integer("created_by_id")
     .notNull()
     .references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export type TrainingLog = typeof trainingLogs.$inferSelect;
 export type InsertTrainingLog = typeof trainingLogs.$inferInsert;
+
+// ==========================================
+// ANEXOS DE TREINAMENTO
+// ==========================================
+
+export const trainingAttachments = pgTable("training_attachments", {
+  id: serial("id").primaryKey(),
+  trainingLogId: integer("training_log_id")
+    .notNull()
+    .references(() => trainingLogs.id, { onDelete: "cascade" }),
+  documentId: integer("document_id").references(() => documents.id, { onDelete: "set null" }),
+  fileUrl: text("file_url").notNull(),
+  fileName: varchar("file_name", { length: 255 }),
+  mimeType: varchar("mime_type", { length: 100 }),
+  fileSize: integer("file_size"),
+  fileType: varchar("file_type", { length: 20 }), // 'image' | 'video' | 'document'
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type TrainingAttachment = typeof trainingAttachments.$inferSelect;
+export type InsertTrainingAttachment = typeof trainingAttachments.$inferInsert;
 
 // ==========================================
 // COMANDOS DE TREINAMENTO (BIBLIOTECA)
