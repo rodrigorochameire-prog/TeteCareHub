@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,10 +56,28 @@ import {
   X,
   Loader2,
   Link2,
+  BarChart3,
+  PieChart,
+  TrendingUp,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageSkeleton } from "@/components/shared/skeletons";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart as RechartsPie,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
+
+const NEUTRAL_COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"];
 
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 Bytes";
@@ -87,6 +105,7 @@ const DOCUMENT_CATEGORIES = [
 ];
 
 export default function AdminDocuments() {
+  const [mainTab, setMainTab] = useState("documents");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -101,7 +120,65 @@ export default function AdminDocuments() {
   const { data: documents, isLoading, refetch } = trpc.documents.list.useQuery({
     category: categoryFilter === "all" ? undefined : categoryFilter,
   });
+  const { data: allDocuments } = trpc.documents.list.useQuery({});
   const { data: pets } = trpc.pets.list.useQuery();
+
+  // Dados para infográficos
+  const chartData = useMemo(() => {
+    if (!allDocuments) return { byCategory: [], byPet: [], timeline: [], stats: { total: 0, thisMonth: 0, categories: 0 } };
+
+    // Por categoria
+    const categoryCount: Record<string, number> = {};
+    const petCount: Record<string, number> = {};
+    const monthCount: Record<string, number> = {};
+    
+    allDocuments.forEach(doc => {
+      // Por categoria
+      const cat = doc.document.category || "other";
+      categoryCount[cat] = (categoryCount[cat] || 0) + 1;
+      
+      // Por pet
+      if (doc.pet?.name) {
+        petCount[doc.pet.name] = (petCount[doc.pet.name] || 0) + 1;
+      }
+      
+      // Por mês
+      const date = new Date(doc.document.createdAt);
+      const monthKey = date.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
+      monthCount[monthKey] = (monthCount[monthKey] || 0) + 1;
+    });
+
+    const byCategory = Object.entries(categoryCount).map(([key, value]) => {
+      const cat = DOCUMENT_CATEGORIES.find(c => c.value === key);
+      return { name: cat?.label || key, value };
+    }).sort((a, b) => b.value - a.value).slice(0, 6);
+
+    const byPet = Object.entries(petCount)
+      .map(([name, value]) => ({ name: name.length > 10 ? name.slice(0, 10) + '...' : name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 6);
+
+    // Últimos 6 meses
+    const timeline = Object.entries(monthCount).slice(-6).map(([month, value]) => ({ month, docs: value }));
+
+    // Stats
+    const now = new Date();
+    const thisMonth = allDocuments.filter(d => {
+      const date = new Date(d.document.createdAt);
+      return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+    }).length;
+
+    return {
+      byCategory,
+      byPet,
+      timeline,
+      stats: {
+        total: allDocuments.length,
+        thisMonth,
+        categories: Object.keys(categoryCount).length,
+      }
+    };
+  }, [allDocuments]);
 
   const saveDocumentMutation = trpc.documents.upload.useMutation({
     onSuccess: () => {
@@ -278,8 +355,23 @@ export default function AdminDocuments() {
         </div>
       </div>
 
-      {/* Stats Cards por Categoria */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+      {/* Main Tabs */}
+      <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-4">
+        <TabsList className="bg-muted/50">
+          <TabsTrigger value="documents" className="gap-2">
+            <FolderOpen className="h-4 w-4" />
+            Documentos
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Análises
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Tab: Documentos */}
+        <TabsContent value="documents" className="space-y-4">
+          {/* Stats Cards por Categoria */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
         {categoryStats.slice(0, 6).filter(cat => cat.count > 0).map((cat) => {
           const Icon = cat.icon;
           return (
@@ -649,6 +741,171 @@ export default function AdminDocuments() {
           </form>
         </DialogContent>
       </Dialog>
+        </TabsContent>
+
+        {/* Tab: Analytics */}
+        <TabsContent value="analytics" className="space-y-6">
+          {/* Stats resumo */}
+          <div className="grid grid-cols-3 gap-4">
+            <Card className="shadow-sm">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total de Documentos</p>
+                    <p className="text-3xl font-bold">{chartData.stats.total}</p>
+                  </div>
+                  <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <FileText className="h-6 w-6 text-slate-500" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Este Mês</p>
+                    <p className="text-3xl font-bold">{chartData.stats.thisMonth}</p>
+                  </div>
+                  <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <Calendar className="h-6 w-6 text-slate-500" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Categorias</p>
+                    <p className="text-3xl font-bold">{chartData.stats.categories}</p>
+                  </div>
+                  <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <FolderOpen className="h-6 w-6 text-slate-500" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Gráficos */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Por Categoria */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <PieChart className="h-5 w-5" />
+                  Por Categoria
+                </CardTitle>
+                <CardDescription>Distribuição de documentos</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {chartData.byCategory.length > 0 ? (
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsPie>
+                        <Pie
+                          data={chartData.byCategory}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={90}
+                          paddingAngle={2}
+                          dataKey="value"
+                          label={({ name, value }) => `${name}: ${value}`}
+                          labelLine={false}
+                        >
+                          {chartData.byCategory.map((_, index) => (
+                            <Cell key={`cat-${index}`} fill={NEUTRAL_COLORS[index % NEUTRAL_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </RechartsPie>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+                    Sem dados disponíveis
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Por Pet */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Por Pet
+                </CardTitle>
+                <CardDescription>Pets com mais documentos</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {chartData.byPet.length > 0 ? (
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={chartData.byPet} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis type="number" stroke="#94a3b8" fontSize={11} />
+                        <YAxis type="category" dataKey="name" width={80} stroke="#94a3b8" fontSize={11} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'white', 
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '8px'
+                          }} 
+                        />
+                        <Bar dataKey="value" name="Documentos" fill="#64748b" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+                    Sem dados disponíveis
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Timeline */}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Uploads por Mês
+              </CardTitle>
+              <CardDescription>Histórico de documentos enviados</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {chartData.timeline.length > 0 ? (
+                <div className="h-[250px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData.timeline}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} />
+                      <YAxis stroke="#94a3b8" fontSize={11} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'white', 
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px'
+                        }} 
+                      />
+                      <Bar dataKey="docs" name="Documentos" fill="#475569" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+                  Sem dados disponíveis
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
