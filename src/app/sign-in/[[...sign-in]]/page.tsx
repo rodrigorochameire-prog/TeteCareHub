@@ -14,20 +14,14 @@ const features = [
 ];
 
 export default async function SignInPage() {
-  // Tentar verificar se já está logado usando Clerk
+  // Verificar se já está logado usando Clerk
   try {
-    const { auth, currentUser } = await import("@clerk/nextjs/server");
+    const { auth } = await import("@clerk/nextjs/server");
     const { userId } = await auth();
     
-    // Se já está logado, redirecionar
+    // Se já está logado, redirecionar para auth-redirect que faz a lógica correta
     if (userId) {
-      const user = await currentUser();
-      const role = (user?.publicMetadata as { role?: string })?.role || "tutor";
-      
-      if (role === "admin") {
-        redirect("/admin");
-      }
-      redirect("/tutor");
+      redirect("/auth-redirect");
     }
   } catch {
     // Clerk não disponível, continuar para renderizar a página
@@ -135,7 +129,7 @@ export default async function SignInPage() {
               routing="path"
               path="/sign-in"
               signUpUrl="/sign-up"
-              forceRedirectUrl="/auth-redirect"
+              fallbackRedirectUrl="/auth-redirect"
             />
           </div>
         </div>
