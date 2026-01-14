@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,10 +45,28 @@ import {
   Package,
   Bug,
   Droplets,
+  BarChart3,
+  TrendingUp,
+  PieChart,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart as RechartsPie,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
+
+const NEUTRAL_COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"];
 
 // Tipos de preventivos - ícones minimalistas, cor única
 const PREVENTIVE_TYPES: Array<{ value: string; label: string; icon: LucideIcon }> = [
@@ -295,6 +313,10 @@ export default function AdminHealthPage() {
             <Pill className="h-3.5 w-3.5" />
             Medicamentos
           </TabsTrigger>
+          <TabsTrigger value="analytics" className="text-sm gap-1.5 px-3">
+            <BarChart3 className="h-3.5 w-3.5" />
+            Análises
+          </TabsTrigger>
         </TabsList>
 
         {/* ========== VACINAS ========== */}
@@ -538,6 +560,239 @@ export default function AdminHealthPage() {
                 })}
               </div>
             )}
+          </div>
+        </TabsContent>
+
+        {/* ========== ANÁLISES ========== */}
+        <TabsContent value="analytics" className="space-y-6">
+          {/* Resumo Geral */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Gráfico de Vacinas por Status */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <PieChart className="h-5 w-5" />
+                  Status de Vacinas
+                </CardTitle>
+                <CardDescription>Distribuição por status de vacinação</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {vaccineStats ? (
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsPie>
+                        <Pie
+                          data={[
+                            { name: "Em dia", value: Math.max(0, (vaccineStats.total || 0) - (vaccineStats.upcoming || 0) - (vaccineStats.overdue || 0)) },
+                            { name: "Próximas", value: vaccineStats.upcoming || 0 },
+                            { name: "Atrasadas", value: vaccineStats.overdue || 0 },
+                          ].filter(d => d.value > 0)}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={90}
+                          paddingAngle={2}
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          labelLine={false}
+                        >
+                          {[0, 1, 2].map((index) => (
+                            <Cell key={`cell-${index}`} fill={NEUTRAL_COLORS[index]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </RechartsPie>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+                    Carregando dados...
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Gráfico de Preventivos por Tipo */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Preventivos por Tipo
+                </CardTitle>
+                <CardDescription>Registros por categoria de tratamento</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {preventiveStats ? (
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={[
+                          { name: "Antipulgas", value: preventiveStats.flea || 0 },
+                          { name: "Vermífugo", value: preventiveStats.deworming || 0 },
+                          { name: "Cardioprotetor", value: preventiveStats.heartworm || 0 },
+                        ]}
+                        layout="vertical"
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis type="number" stroke="#94a3b8" fontSize={12} />
+                        <YAxis type="category" dataKey="name" width={100} stroke="#94a3b8" fontSize={12} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'white', 
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '8px'
+                          }} 
+                        />
+                        <Bar dataKey="value" fill="#64748b" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+                    Carregando dados...
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Indicadores de Saúde */}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Indicadores de Saúde
+              </CardTitle>
+              <CardDescription>Métricas consolidadas do período</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">Vacinas Totais</span>
+                    <Syringe className="h-4 w-4 text-slate-500" />
+                  </div>
+                  <p className="text-2xl font-bold">{vaccineStats?.total || 0}</p>
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span>Em dia</span>
+                      <span>{vaccineStats ? Math.round(((vaccineStats.total - (vaccineStats.overdue || 0)) / Math.max(1, vaccineStats.total)) * 100) : 0}%</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-slate-500 rounded-full"
+                        style={{ width: `${vaccineStats ? ((vaccineStats.total - (vaccineStats.overdue || 0)) / Math.max(1, vaccineStats.total)) * 100 : 0}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">Preventivos</span>
+                    <Shield className="h-4 w-4 text-slate-500" />
+                  </div>
+                  <p className="text-2xl font-bold">{(preventiveStats?.flea || 0) + (preventiveStats?.deworming || 0) + (preventiveStats?.heartworm || 0)}</p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {preventiveStats?.upcoming || 0} próximos 30 dias
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">Pendências</span>
+                    <AlertTriangle className="h-4 w-4 text-slate-500" />
+                  </div>
+                  <p className="text-2xl font-bold">
+                    {(vaccineStats?.overdue || 0) + (overduePreventives?.length || 0)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Vacinas + Preventivos atrasados
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">Medicamentos</span>
+                    <Pill className="h-4 w-4 text-slate-500" />
+                  </div>
+                  <p className="text-2xl font-bold">{medicationLibrary?.length || 0}</p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Cadastrados na biblioteca
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Próximos Eventos de Saúde */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-base">Próximas Vacinas (30 dias)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {upcomingVaccines && upcomingVaccines.length > 0 ? (
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {upcomingVaccines.slice(0, 8).map((item: any) => (
+                      <div key={item.vaccination.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                            <Dog className="h-4 w-4 text-slate-500" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">{item.pet?.name}</p>
+                            <p className="text-xs text-muted-foreground">{item.vaccine?.name}</p>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {new Date(item.vaccination.nextDueDate).toLocaleDateString("pt-BR")}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-8 text-center text-muted-foreground">
+                    <Syringe className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                    <p className="text-sm">Nenhuma vacina programada</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-base">Próximos Preventivos (30 dias)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {upcomingPreventives && upcomingPreventives.length > 0 ? (
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {upcomingPreventives.slice(0, 8).map((item: any) => (
+                      <div key={item.treatment.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                            <Shield className="h-4 w-4 text-slate-500" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">{item.pet?.name}</p>
+                            <p className="text-xs text-muted-foreground">{item.treatment.productName}</p>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {new Date(item.treatment.nextDueDate).toLocaleDateString("pt-BR")}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-8 text-center text-muted-foreground">
+                    <Shield className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                    <p className="text-sm">Nenhum preventivo programado</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>

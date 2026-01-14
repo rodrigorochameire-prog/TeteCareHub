@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,12 +36,31 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  BarChart3,
+  PieChart,
+  TrendingUp,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingPage } from "@/components/shared/loading";
 import Image from "next/image";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart as RechartsPie,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
+
+const NEUTRAL_COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"];
 
 // Tipos
 type FoodType = "dry" | "wet" | "natural" | "mixed";
@@ -317,6 +336,109 @@ export default function AdminFoodPage() {
           <div className={`text-2xl font-bold ${criticalStockPets > 0 ? "text-slate-900 dark:text-slate-100" : "text-foreground"}`}>{criticalStockPets}</div>
           {criticalStockPets > 0 && <p className="text-xs text-muted-foreground mt-1">Menos de 3 dias</p>}
         </div>
+      </div>
+
+      {/* Análises de Alimentação */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Distribuição por Tipo de Ração */}
+        <Card className="shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <PieChart className="h-4 w-4" />
+              Tipos de Alimentação
+            </CardTitle>
+            <CardDescription className="text-xs">Distribuição dos planos ativos</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {summaries && summaries.length > 0 ? (
+              <div className="h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPie>
+                    <Pie
+                      data={(() => {
+                        const typeCount: Record<string, number> = {};
+                        summaries.forEach(s => {
+                          if (s.plan) {
+                            const type = s.plan.type || "dry";
+                            typeCount[type] = (typeCount[type] || 0) + 1;
+                          }
+                        });
+                        return Object.entries(typeCount).map(([name, value]) => ({
+                          name: name === "dry" ? "Seca" : name === "wet" ? "Úmida" : name === "natural" ? "Natural" : "Mista",
+                          value
+                        }));
+                      })()}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={70}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      labelLine={false}
+                    >
+                      {[0, 1, 2, 3].map((index) => (
+                        <Cell key={`cell-${index}`} fill={NEUTRAL_COLORS[index % NEUTRAL_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </RechartsPie>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+                Sem dados disponíveis
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Situação de Estoque */}
+        <Card className="shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Situação de Estoque
+            </CardTitle>
+            <CardDescription className="text-xs">Dias restantes por pet</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {summaries && summaries.length > 0 ? (
+              <div className="h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={summaries
+                      .filter(s => s.hasPlan)
+                      .sort((a, b) => a.daysRemaining - b.daysRemaining)
+                      .slice(0, 6)
+                      .map(s => ({
+                        name: s.pet.name.length > 8 ? s.pet.name.slice(0, 8) + '...' : s.pet.name,
+                        dias: s.daysRemaining
+                      }))}
+                    layout="vertical"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis type="number" stroke="#94a3b8" fontSize={11} />
+                    <YAxis type="category" dataKey="name" width={60} stroke="#94a3b8" fontSize={11} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'white', 
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        fontSize: '12px'
+                      }} 
+                    />
+                    <Bar dataKey="dias" name="Dias" fill="#64748b" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+                Sem dados disponíveis
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Pets Grid - Premium */}
