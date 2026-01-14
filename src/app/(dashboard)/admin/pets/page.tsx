@@ -40,6 +40,7 @@ import {
   BarChart3,
   PieChart,
   TrendingUp,
+  Heart,
 } from "lucide-react";
 import {
   BarChart,
@@ -52,6 +53,7 @@ import {
   PieChart as RechartsPie,
   Pie,
   Cell,
+  Legend,
 } from "recharts";
 
 const NEUTRAL_COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"];
@@ -268,105 +270,183 @@ export default function AdminPetsPage() {
       </div>
 
       {/* Análises de Pets */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        {/* Distribuição por Raça */}
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Top Raças
-            </CardTitle>
-            <CardDescription className="text-xs">Raças mais cadastradas</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {pets && pets.length > 0 ? (
-              <div className="h-[180px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={(() => {
-                      const breedCount: Record<string, number> = {};
-                      pets.forEach(pet => {
-                        const breed = pet.breed || "Sem raça";
-                        breedCount[breed] = (breedCount[breed] || 0) + 1;
-                      });
-                      return Object.entries(breedCount)
-                        .map(([name, value]) => ({ 
-                          name: name.length > 12 ? name.slice(0, 12) + '...' : name, 
-                          value 
-                        }))
-                        .sort((a, b) => b.value - a.value)
-                        .slice(0, 5);
-                    })()}
-                    layout="vertical"
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis type="number" stroke="#94a3b8" fontSize={11} />
-                    <YAxis type="category" dataKey="name" width={80} stroke="#94a3b8" fontSize={10} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'white', 
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '8px',
-                        fontSize: '12px'
-                      }} 
-                    />
-                    <Bar dataKey="value" name="Pets" fill="#64748b" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Análises de Pets
+          </CardTitle>
+          <CardDescription>Visão geral do cadastro de pets</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Métricas Resumidas */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="p-4 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2 mb-1">
+                <Dog className="h-4 w-4 text-slate-500" />
+                <span className="text-xs text-muted-foreground">Total</span>
               </div>
-            ) : (
-              <div className="h-[180px] flex items-center justify-center text-muted-foreground text-sm">
-                Sem dados disponíveis
+              <p className="text-2xl font-bold">{stats.total}</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2 mb-1">
+                <CheckCircle2 className="h-4 w-4 text-slate-500" />
+                <span className="text-xs text-muted-foreground">Aprovados</span>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <p className="text-2xl font-bold">{stats.approved}</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2 mb-1">
+                <Clock className="h-4 w-4 text-slate-500" />
+                <span className="text-xs text-muted-foreground">Pendentes</span>
+              </div>
+              <p className="text-2xl font-bold">{stats.pending}</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2 mb-1">
+                <Heart className="h-4 w-4 text-slate-500" />
+                <span className="text-xs text-muted-foreground">Raças</span>
+              </div>
+              <p className="text-2xl font-bold">{new Set(pets?.map(p => p.breed).filter(Boolean)).size || 0}</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2 mb-1">
+                <CreditCard className="h-4 w-4 text-slate-500" />
+                <span className="text-xs text-muted-foreground">Créditos</span>
+              </div>
+              <p className="text-2xl font-bold">{stats.totalCredits}</p>
+            </div>
+          </div>
 
-        {/* Status de Aprovação */}
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <PieChart className="h-4 w-4" />
-              Status de Aprovação
-            </CardTitle>
-            <CardDescription className="text-xs">Distribuição por status</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {pets && pets.length > 0 ? (
-              <div className="h-[180px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsPie>
-                    <Pie
-                      data={[
-                        { name: "Aprovados", value: stats.approved },
-                        { name: "Pendentes", value: stats.pending },
-                        { name: "Rejeitados", value: stats.total - stats.approved - stats.pending },
-                      ].filter(d => d.value > 0)}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={35}
-                      outerRadius={65}
-                      paddingAngle={2}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-                      labelLine={false}
+          {/* Gráficos */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Distribuição por Raça */}
+            <div>
+              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Top Raças
+              </h4>
+              {pets && pets.length > 0 ? (
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={(() => {
+                        const breedCount: Record<string, number> = {};
+                        pets.forEach(pet => {
+                          const breed = pet.breed || "Sem raça";
+                          breedCount[breed] = (breedCount[breed] || 0) + 1;
+                        });
+                        return Object.entries(breedCount)
+                          .map(([name, value]) => ({ 
+                            name: name.length > 12 ? name.slice(0, 12) + '...' : name, 
+                            value 
+                          }))
+                          .sort((a, b) => b.value - a.value)
+                          .slice(0, 6);
+                      })()}
+                      layout="vertical"
                     >
-                      {[0, 1, 2].map((index) => (
-                        <Cell key={`cell-${index}`} fill={NEUTRAL_COLORS[index]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </RechartsPie>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <div className="h-[180px] flex items-center justify-center text-muted-foreground text-sm">
-                Sem dados disponíveis
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis type="number" stroke="#94a3b8" fontSize={11} />
+                      <YAxis type="category" dataKey="name" width={90} stroke="#94a3b8" fontSize={10} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'white', 
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          fontSize: '12px'
+                        }} 
+                      />
+                      <Bar dataKey="value" name="Pets" fill="#64748b" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
+                  Sem dados disponíveis
+                </div>
+              )}
+            </div>
+
+            {/* Status de Aprovação */}
+            <div>
+              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                <PieChart className="h-4 w-4" />
+                Status de Aprovação
+              </h4>
+              {pets && pets.length > 0 ? (
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPie>
+                      <Pie
+                        data={[
+                          { name: "Aprovados", value: stats.approved },
+                          { name: "Pendentes", value: stats.pending },
+                          { name: "Rejeitados", value: stats.total - stats.approved - stats.pending },
+                        ].filter(d => d.value > 0)}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={45}
+                        outerRadius={75}
+                        paddingAngle={2}
+                        dataKey="value"
+                        label={({ name, value }) => `${name}: ${value}`}
+                        labelLine={false}
+                      >
+                        {[0, 1, 2].map((index) => (
+                          <Cell key={`cell-${index}`} fill={NEUTRAL_COLORS[index]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </RechartsPie>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
+                  Sem dados disponíveis
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Distribuição por Porte */}
+          <div>
+            <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Distribuição por Peso
+            </h4>
+            <div className="grid grid-cols-4 gap-4">
+              {(() => {
+                const small = pets?.filter(p => p.weight && p.weight <= 10).length || 0;
+                const medium = pets?.filter(p => p.weight && p.weight > 10 && p.weight <= 25).length || 0;
+                const large = pets?.filter(p => p.weight && p.weight > 25 && p.weight <= 45).length || 0;
+                const giant = pets?.filter(p => p.weight && p.weight > 45).length || 0;
+                const total = small + medium + large + giant;
+                return [
+                  { label: "Pequeno", subtitle: "até 10kg", value: small, percent: total > 0 ? (small / total * 100).toFixed(0) : 0 },
+                  { label: "Médio", subtitle: "10-25kg", value: medium, percent: total > 0 ? (medium / total * 100).toFixed(0) : 0 },
+                  { label: "Grande", subtitle: "25-45kg", value: large, percent: total > 0 ? (large / total * 100).toFixed(0) : 0 },
+                  { label: "Gigante", subtitle: "+45kg", value: giant, percent: total > 0 ? (giant / total * 100).toFixed(0) : 0 },
+                ].map((item, idx) => (
+                  <div key={idx} className="p-3 rounded-lg border bg-muted/30 text-center">
+                    <p className="text-lg font-bold">{item.value}</p>
+                    <p className="text-xs font-medium">{item.label}</p>
+                    <p className="text-xs text-muted-foreground">{item.subtitle}</p>
+                    <div className="mt-2 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-slate-500 rounded-full transition-all" 
+                        style={{ width: `${item.percent}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{item.percent}%</p>
+                  </div>
+                ));
+              })()}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Pending Approvals */}
       {pendingPets && pendingPets.length > 0 && (
