@@ -339,107 +339,189 @@ export default function AdminFoodPage() {
       </div>
 
       {/* Análises de Alimentação */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        {/* Distribuição por Tipo de Ração */}
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <PieChart className="h-4 w-4" />
-              Tipos de Alimentação
-            </CardTitle>
-            <CardDescription className="text-xs">Distribuição dos planos ativos</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {summaries && summaries.length > 0 ? (
-              <div className="h-[200px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsPie>
-                    <Pie
-                      data={(() => {
-                        const typeCount: Record<string, number> = {};
-                        summaries.forEach(s => {
-                          if (s.plan) {
-                            const type = s.plan.foodType || "dry";
-                            typeCount[type] = (typeCount[type] || 0) + 1;
-                          }
-                        });
-                        return Object.entries(typeCount).map(([name, value]) => ({
-                          name: name === "dry" ? "Seca" : name === "wet" ? "Úmida" : name === "natural" ? "Natural" : "Mista",
-                          value
-                        }));
-                      })()}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={40}
-                      outerRadius={70}
-                      paddingAngle={2}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-                      labelLine={false}
-                    >
-                      {[0, 1, 2, 3].map((index) => (
-                        <Cell key={`cell-${index}`} fill={NEUTRAL_COLORS[index % NEUTRAL_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </RechartsPie>
-                </ResponsiveContainer>
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Análises de Alimentação
+          </CardTitle>
+          <CardDescription>Visão geral do consumo e estoque</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Métricas Resumidas */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-4 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2 mb-1">
+                <UtensilsCrossed className="h-4 w-4 text-slate-500" />
+                <span className="text-xs text-muted-foreground">Com Plano</span>
               </div>
-            ) : (
-              <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
-                Sem dados disponíveis
+              <p className="text-2xl font-bold">{summaries?.filter(s => s.hasPlan).length || 0}</p>
+              <p className="text-xs text-muted-foreground">pets com plano ativo</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2 mb-1">
+                <AlertTriangle className="h-4 w-4 text-slate-500" />
+                <span className="text-xs text-muted-foreground">Estoque Baixo</span>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <p className="text-2xl font-bold">{summaries?.filter(s => s.isLowStock).length || 0}</p>
+              <p className="text-xs text-muted-foreground">precisam de reposição</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2 mb-1">
+                <Cookie className="h-4 w-4 text-slate-500" />
+                <span className="text-xs text-muted-foreground">Ração Úmida</span>
+              </div>
+              <p className="text-2xl font-bold">{summaries?.filter(s => s.plan?.foodType === "wet" || s.plan?.foodType === "mixed").length || 0}</p>
+              <p className="text-xs text-muted-foreground">incluem ração úmida</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2 mb-1">
+                <Leaf className="h-4 w-4 text-slate-500" />
+                <span className="text-xs text-muted-foreground">Natural</span>
+              </div>
+              <p className="text-2xl font-bold">{summaries?.filter(s => s.plan?.foodType === "natural").length || 0}</p>
+              <p className="text-xs text-muted-foreground">alimentação natural</p>
+            </div>
+          </div>
 
-        {/* Situação de Estoque */}
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Situação de Estoque
-            </CardTitle>
-            <CardDescription className="text-xs">Dias restantes por pet</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {summaries && summaries.length > 0 ? (
-              <div className="h-[200px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={summaries
-                      .filter(s => s.hasPlan)
-                      .sort((a, b) => a.daysRemaining - b.daysRemaining)
-                      .slice(0, 6)
-                      .map(s => ({
-                        name: s.pet.name.length > 8 ? s.pet.name.slice(0, 8) + '...' : s.pet.name,
-                        dias: s.daysRemaining
-                      }))}
-                    layout="vertical"
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis type="number" stroke="#94a3b8" fontSize={11} />
-                    <YAxis type="category" dataKey="name" width={60} stroke="#94a3b8" fontSize={11} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'white', 
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '8px',
-                        fontSize: '12px'
-                      }} 
-                    />
-                    <Bar dataKey="dias" name="Dias" fill="#64748b" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+          {/* Gráficos */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Distribuição por Tipo de Ração */}
+            <div>
+              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                <PieChart className="h-4 w-4" />
+                Tipos de Alimentação
+              </h4>
+              {summaries && summaries.length > 0 ? (
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPie>
+                      <Pie
+                        data={(() => {
+                          const typeCount: Record<string, number> = {};
+                          summaries.forEach(s => {
+                            if (s.plan) {
+                              const type = s.plan.foodType || "dry";
+                              typeCount[type] = (typeCount[type] || 0) + 1;
+                            }
+                          });
+                          return Object.entries(typeCount).map(([name, value]) => ({
+                            name: name === "dry" ? "Seca" : name === "wet" ? "Úmida" : name === "natural" ? "Natural" : "Mista",
+                            value
+                          }));
+                        })()}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={45}
+                        outerRadius={75}
+                        paddingAngle={2}
+                        dataKey="value"
+                        label={({ name, value }) => `${name}: ${value}`}
+                        labelLine={false}
+                      >
+                        {[0, 1, 2, 3].map((index) => (
+                          <Cell key={`cell-${index}`} fill={NEUTRAL_COLORS[index % NEUTRAL_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </RechartsPie>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
+                  Sem dados disponíveis
+                </div>
+              )}
+            </div>
+
+            {/* Situação de Estoque */}
+            <div>
+              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                <TrendingDown className="h-4 w-4" />
+                Estoque por Pet
+              </h4>
+              {summaries && summaries.length > 0 ? (
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={summaries
+                        .filter(s => s.hasPlan)
+                        .sort((a, b) => a.daysRemaining - b.daysRemaining)
+                        .slice(0, 6)
+                        .map(s => ({
+                          name: s.pet.name.length > 8 ? s.pet.name.slice(0, 8) + '...' : s.pet.name,
+                          dias: s.daysRemaining,
+                          critico: s.isCriticalStock ? 1 : 0
+                        }))}
+                      layout="vertical"
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis type="number" stroke="#94a3b8" fontSize={11} />
+                      <YAxis type="category" dataKey="name" width={70} stroke="#94a3b8" fontSize={11} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'white', 
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          fontSize: '12px'
+                        }}
+                        formatter={(value) => [`${value} dias`, 'Restante']}
+                      />
+                      <Bar dataKey="dias" name="Dias" fill="#64748b" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
+                  Sem dados disponíveis
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Alertas de Estoque */}
+          {summaries && summaries.filter(s => s.isCriticalStock || s.isLowStock).length > 0 && (
+            <div>
+              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                Alertas de Reposição
+              </h4>
+              <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                {summaries
+                  .filter(s => s.isCriticalStock || s.isLowStock)
+                  .sort((a, b) => a.daysRemaining - b.daysRemaining)
+                  .slice(0, 6)
+                  .map(item => (
+                    <div 
+                      key={item.pet.id} 
+                      className={`p-3 rounded-lg border ${
+                        item.isCriticalStock 
+                          ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600' 
+                          : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                          <Dog className="h-4 w-4 text-slate-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{item.pet.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.daysRemaining <= 0 ? 'Esgotado!' : `${item.daysRemaining} dias restantes`}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className={item.isCriticalStock ? 'border-slate-400 text-slate-600' : 'border-slate-300 text-slate-500'}>
+                          {item.isCriticalStock ? 'Crítico' : 'Baixo'}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
               </div>
-            ) : (
-              <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
-                Sem dados disponíveis
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Pets Grid - Premium */}
       <div className="bg-card rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] border-0">
