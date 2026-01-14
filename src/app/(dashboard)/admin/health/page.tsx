@@ -233,41 +233,49 @@ export default function AdminHealthPage() {
         </div>
       )}
 
-      {/* Stats - Layout compacto */}
+      {/* Stats - Layout compacto com estilo premium */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-card border rounded-lg p-4">
+        <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Vacinas</span>
-            <Syringe className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-muted-foreground">Vacinas</span>
+            <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <Syringe className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            </div>
           </div>
-          <div className="text-2xl font-semibold">{vaccineStats?.upcoming || 0}</div>
+          <div className="text-2xl font-bold text-foreground">{vaccineStats?.upcoming || 0}</div>
           <div className="text-xs text-muted-foreground">próximos 30 dias</div>
         </div>
         
-        <div className="bg-card border rounded-lg p-4">
+        <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Preventivos</span>
-            <Shield className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-muted-foreground">Preventivos</span>
+            <div className="h-8 w-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+              <Shield className="h-4 w-4 text-green-600 dark:text-green-400" />
+            </div>
           </div>
-          <div className="text-2xl font-semibold">{preventiveStats?.upcoming || 0}</div>
+          <div className="text-2xl font-bold text-foreground">{preventiveStats?.upcoming || 0}</div>
           <div className="text-xs text-muted-foreground">próximos 30 dias</div>
         </div>
         
-        <div className="bg-card border rounded-lg p-4">
+        <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Antipulgas</span>
-            <Bug className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-muted-foreground">Antipulgas</span>
+            <div className="h-8 w-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+              <Bug className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            </div>
           </div>
-          <div className="text-2xl font-semibold">{preventiveStats?.flea || 0}</div>
+          <div className="text-2xl font-bold text-foreground">{preventiveStats?.flea || 0}</div>
           <div className="text-xs text-muted-foreground">registros</div>
         </div>
         
-        <div className="bg-card border rounded-lg p-4">
+        <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Vermífugos</span>
-            <Droplets className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-muted-foreground">Vermífugos</span>
+            <div className="h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+              <Droplets className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            </div>
           </div>
-          <div className="text-2xl font-semibold">{preventiveStats?.deworming || 0}</div>
+          <div className="text-2xl font-bold text-foreground">{preventiveStats?.deworming || 0}</div>
           <div className="text-xs text-muted-foreground">registros</div>
         </div>
       </div>
@@ -305,24 +313,28 @@ export default function AdminHealthPage() {
 
           {/* Próximas vacinas */}
           {upcomingVaccines && upcomingVaccines.length > 0 && (
-            <div className="bg-card border rounded-lg p-4">
-              <h4 className="text-sm font-medium flex items-center gap-2 mb-3">
-                <Clock className="h-4 w-4 text-muted-foreground" />
+            <div className="bg-card rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] border-0">
+              <h4 className="text-sm font-semibold flex items-center gap-2 mb-4">
+                <div className="h-7 w-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                  <Clock className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                </div>
                 Próximas 30 dias
               </h4>
               <div className="space-y-2">
                 {upcomingVaccines.slice(0, 5).map((item: any) => (
-                  <div key={item.vaccination.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                    <div className="flex items-center gap-2">
-                      <Dog className="h-4 w-4 text-muted-foreground" />
+                  <div key={item.vaccination.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Dog className="h-4 w-4 text-primary" />
+                      </div>
                       <div>
                         <p className="text-sm font-medium">{item.pet?.name}</p>
                         <p className="text-xs text-muted-foreground">{item.vaccine?.name}</p>
                       </div>
                     </div>
-                    <span className="text-xs text-muted-foreground">
+                    <Badge variant="outline" className="text-xs">
                       {new Date(item.vaccination.nextDueDate).toLocaleDateString("pt-BR")}
-                    </span>
+                    </Badge>
                   </div>
                 ))}
               </div>
@@ -330,16 +342,16 @@ export default function AdminHealthPage() {
           )}
 
           {/* Biblioteca de Vacinas */}
-          <div className="bg-card border rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium">Vacinas cadastradas</h4>
+          <div className="bg-card rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] border-0">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-sm font-semibold">Vacinas cadastradas</h4>
               <div className="relative w-48">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
                   placeholder="Buscar..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 h-8 text-sm"
+                  className="pl-8 h-8 text-sm rounded-lg"
                 />
               </div>
             </div>
@@ -347,7 +359,7 @@ export default function AdminHealthPage() {
               {(vaccineLibrary || [])
                 .filter((v: any) => v.name.toLowerCase().includes(searchTerm.toLowerCase()))
                 .map((vaccine: any) => (
-                  <div key={vaccine.id} className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <div key={vaccine.id} className="p-3 rounded-lg bg-muted/30 hover:bg-muted/50 hover:shadow-sm transition-all duration-200 cursor-pointer">
                     <p className="text-sm font-medium">{vaccine.name}</p>
                     {vaccine.intervalDays && (
                       <p className="text-xs text-muted-foreground mt-1">A cada {vaccine.intervalDays} dias</p>
@@ -372,34 +384,49 @@ export default function AdminHealthPage() {
             </Button>
           </div>
 
-          {/* Tipos de Preventivos - Grid limpo */}
+          {/* Tipos de Preventivos - Grid premium */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {PREVENTIVE_TYPES.map((type) => (
-              <button
-                key={type.value}
-                onClick={() => setIsAddPreventiveOpen(true)}
-                className="flex flex-col items-center gap-2 p-4 bg-card border rounded-lg hover:border-primary/50 hover:bg-muted/50 transition-all"
-              >
-                <type.icon className="h-5 w-5 text-muted-foreground" />
-                <span className="text-sm font-medium">{type.label}</span>
-              </button>
-            ))}
+            {PREVENTIVE_TYPES.map((type, index) => {
+              const colors = [
+                { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-600 dark:text-amber-400" },
+                { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-600 dark:text-purple-400" },
+                { bg: "bg-rose-100 dark:bg-rose-900/30", text: "text-rose-600 dark:text-rose-400" },
+                { bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-600 dark:text-green-400" },
+              ];
+              const color = colors[index % colors.length];
+              return (
+                <button
+                  key={type.value}
+                  onClick={() => setIsAddPreventiveOpen(true)}
+                  className="flex flex-col items-center gap-3 p-5 bg-card rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all duration-300 hover:-translate-y-0.5 border-0"
+                >
+                  <div className={`h-10 w-10 rounded-xl ${color.bg} flex items-center justify-center`}>
+                    <type.icon className={`h-5 w-5 ${color.text}`} />
+                  </div>
+                  <span className="text-sm font-medium">{type.label}</span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Listas lado a lado */}
+          {/* Listas lado a lado - Premium */}
           <div className="grid md:grid-cols-2 gap-4">
             {/* Atrasados */}
-            <div className="bg-card border rounded-lg p-4">
-              <h4 className="text-sm font-medium text-destructive flex items-center gap-2 mb-3">
-                <AlertTriangle className="h-4 w-4" />
+            <div className="bg-card rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] border-0">
+              <h4 className="text-sm font-semibold text-destructive flex items-center gap-2 mb-4">
+                <div className="h-7 w-7 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                  <AlertTriangle className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+                </div>
                 Atrasados
               </h4>
               {overduePreventives && overduePreventives.length > 0 ? (
                 <div className="space-y-2">
                   {overduePreventives.slice(0, 5).map((item: any) => (
-                    <div key={item.treatment.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                      <div className="flex items-center gap-2">
-                        <Dog className="h-4 w-4 text-muted-foreground" />
+                    <div key={item.treatment.id} className="flex items-center justify-between p-3 rounded-lg bg-red-50/50 dark:bg-red-950/20 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
+                          <Dog className="h-4 w-4 text-red-600 dark:text-red-400" />
+                        </div>
                         <div>
                           <p className="text-sm font-medium">{item.pet?.name}</p>
                           <p className="text-xs text-muted-foreground">{item.treatment.productName}</p>
@@ -409,38 +436,46 @@ export default function AdminHealthPage() {
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col items-center py-6 text-muted-foreground">
-                  <CheckCircle className="h-8 w-8 mb-2 text-green-500/50" />
-                  <p className="text-sm">Nenhum atrasado</p>
+                <div className="flex flex-col items-center py-8 text-muted-foreground">
+                  <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3">
+                    <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  </div>
+                  <p className="text-sm font-medium">Tudo em dia!</p>
+                  <p className="text-xs">Nenhum tratamento atrasado</p>
                 </div>
               )}
             </div>
 
             {/* Próximos */}
-            <div className="bg-card border rounded-lg p-4">
-              <h4 className="text-sm font-medium flex items-center gap-2 mb-3">
-                <Clock className="h-4 w-4 text-muted-foreground" />
+            <div className="bg-card rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] border-0">
+              <h4 className="text-sm font-semibold flex items-center gap-2 mb-4">
+                <div className="h-7 w-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                  <Clock className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                </div>
                 Próximos 30 dias
               </h4>
               {upcomingPreventives && upcomingPreventives.length > 0 ? (
                 <div className="space-y-2">
                   {upcomingPreventives.slice(0, 5).map((item: any) => (
-                    <div key={item.treatment.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                      <div className="flex items-center gap-2">
-                        <Dog className="h-4 w-4 text-muted-foreground" />
+                    <div key={item.treatment.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Dog className="h-4 w-4 text-primary" />
+                        </div>
                         <div>
                           <p className="text-sm font-medium">{item.pet?.name}</p>
                           <p className="text-xs text-muted-foreground">{item.treatment.productName}</p>
                         </div>
                       </div>
-                      <span className="text-xs text-muted-foreground">
+                      <Badge variant="outline" className="text-xs">
                         {new Date(item.treatment.nextDueDate).toLocaleDateString("pt-BR")}
-                      </span>
+                      </Badge>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col items-center py-6 text-muted-foreground">
+                <div className="flex flex-col items-center py-8 text-muted-foreground">
+                  <Calendar className="h-8 w-8 mb-2 opacity-30" />
                   <p className="text-sm">Nenhum agendado</p>
                 </div>
               )}
@@ -462,43 +497,68 @@ export default function AdminHealthPage() {
             </Button>
           </div>
 
-          {/* Tipos de Medicamentos - Grid limpo */}
+          {/* Tipos de Medicamentos - Grid premium */}
           <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
-            {MEDICATION_TYPES.map((type) => (
-              <button
-                key={type.value}
-                onClick={() => setIsAddMedicationOpen(true)}
-                className="flex flex-col items-center gap-2 p-3 bg-card border rounded-lg hover:border-primary/50 hover:bg-muted/50 transition-all"
-              >
-                <type.icon className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs font-medium">{type.label}</span>
-              </button>
-            ))}
+            {MEDICATION_TYPES.map((type, index) => {
+              const colors = [
+                { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-600 dark:text-blue-400" },
+                { bg: "bg-orange-100 dark:bg-orange-900/30", text: "text-orange-600 dark:text-orange-400" },
+                { bg: "bg-rose-100 dark:bg-rose-900/30", text: "text-rose-600 dark:text-rose-400" },
+                { bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-600 dark:text-green-400" },
+                { bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-600 dark:text-slate-400" },
+              ];
+              const color = colors[index % colors.length];
+              return (
+                <button
+                  key={type.value}
+                  onClick={() => setIsAddMedicationOpen(true)}
+                  className="flex flex-col items-center gap-2 p-4 bg-card rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all duration-300 hover:-translate-y-0.5 border-0"
+                >
+                  <div className={`h-9 w-9 rounded-lg ${color.bg} flex items-center justify-center`}>
+                    <type.icon className={`h-4 w-4 ${color.text}`} />
+                  </div>
+                  <span className="text-xs font-medium">{type.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Medicamentos cadastrados */}
-          <div className="bg-card border rounded-lg p-4">
-            <h4 className="text-sm font-medium mb-3">Cadastrados</h4>
+          <div className="bg-card rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] border-0">
+            <h4 className="text-sm font-semibold mb-4">Cadastrados</h4>
             {medicationsOnly.length === 0 ? (
-              <div className="flex flex-col items-center py-8 text-muted-foreground">
-                <Pill className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Nenhum medicamento</p>
-                <Button variant="link" size="sm" onClick={() => setIsAddMedicationOpen(true)}>
-                  Adicionar
+              <div className="flex flex-col items-center py-10 text-muted-foreground">
+                <div className="h-14 w-14 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-3">
+                  <Pill className="h-7 w-7 text-purple-600 dark:text-purple-400 opacity-50" />
+                </div>
+                <p className="text-sm font-medium">Nenhum medicamento</p>
+                <Button variant="link" size="sm" onClick={() => setIsAddMedicationOpen(true)} className="mt-1">
+                  Adicionar primeiro
                 </Button>
               </div>
             ) : (
               <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                {medicationsOnly.map((med: any) => {
+                {medicationsOnly.map((med: any, index: number) => {
                   const type = MEDICATION_TYPES.find(t => t.value === med.type);
                   const Icon = type?.icon || Pill;
+                  const colors = [
+                    { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-600 dark:text-blue-400" },
+                    { bg: "bg-orange-100 dark:bg-orange-900/30", text: "text-orange-600 dark:text-orange-400" },
+                    { bg: "bg-rose-100 dark:bg-rose-900/30", text: "text-rose-600 dark:text-rose-400" },
+                    { bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-600 dark:text-green-400" },
+                    { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-600 dark:text-purple-400" },
+                  ];
+                  const typeIndex = MEDICATION_TYPES.findIndex(t => t.value === med.type);
+                  const color = colors[typeIndex >= 0 ? typeIndex : index % colors.length];
                   return (
-                    <div key={med.id} className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                      <Icon className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">{med.name}</p>
+                    <div key={med.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 hover:shadow-sm transition-all duration-200 cursor-pointer">
+                      <div className={`h-8 w-8 rounded-lg ${color.bg} flex items-center justify-center flex-shrink-0`}>
+                        <Icon className={`h-4 w-4 ${color.text}`} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{med.name}</p>
                         {med.commonDosage && (
-                          <p className="text-xs text-muted-foreground">{med.commonDosage}</p>
+                          <p className="text-xs text-muted-foreground truncate">{med.commonDosage}</p>
                         )}
                       </div>
                     </div>

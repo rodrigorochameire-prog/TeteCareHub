@@ -274,72 +274,80 @@ export default function AdminFoodPage() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="stats-grid grid-cols-4">
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="title">Total de Pets</span>
-            <Dog className="icon text-primary" />
+      {/* Stats - Premium */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-muted-foreground">Total de Pets</span>
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Dog className="h-4 w-4 text-primary" />
+            </div>
           </div>
-          <div className="stat-card-value">{totalPets}</div>
+          <div className="text-2xl font-bold text-foreground">{totalPets}</div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="title">Com Plano Ativo</span>
-            <CheckCircle2 className="icon text-green-500" />
+        <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-muted-foreground">Com Plano Ativo</span>
+            <div className="h-8 w-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+              <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+            </div>
           </div>
-          <div className="stat-card-value">{petsWithPlan}</div>
+          <div className="text-2xl font-bold text-foreground">{petsWithPlan}</div>
         </div>
 
-        <div className={`stat-card ${lowStockPets > 0 ? "alert" : ""}`}>
-          <div className="stat-card-header">
-            <span className="title">Estoque Baixo</span>
-            <TrendingDown className={`icon ${lowStockPets > 0 ? "text-amber-500" : "text-muted-foreground"}`} />
+        <div className={`bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0 ${lowStockPets > 0 ? "ring-1 ring-amber-200 dark:ring-amber-900/50" : ""}`}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-muted-foreground">Estoque Baixo</span>
+            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${lowStockPets > 0 ? "bg-amber-100 dark:bg-amber-900/30" : "bg-muted"}`}>
+              <TrendingDown className={`h-4 w-4 ${lowStockPets > 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`} />
+            </div>
           </div>
-          <div className="stat-card-value">{lowStockPets}</div>
-          {lowStockPets > 0 && <p className="stat-card-description">Menos de 7 dias</p>}
+          <div className={`text-2xl font-bold ${lowStockPets > 0 ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`}>{lowStockPets}</div>
+          {lowStockPets > 0 && <p className="text-xs text-amber-600/80 dark:text-amber-400/80 mt-1">Menos de 7 dias</p>}
         </div>
 
-        <div className={`stat-card ${criticalStockPets > 0 ? "alert" : ""}`}>
-          <div className="stat-card-header">
-            <span className="title">Estoque Crítico</span>
-            <AlertTriangle className={`icon ${criticalStockPets > 0 ? "text-rose-500" : "text-muted-foreground"}`} />
+        <div className={`bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0 ${criticalStockPets > 0 ? "ring-1 ring-rose-200 dark:ring-rose-900/50" : ""}`}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-muted-foreground">Estoque Crítico</span>
+            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${criticalStockPets > 0 ? "bg-rose-100 dark:bg-rose-900/30" : "bg-muted"}`}>
+              <AlertTriangle className={`h-4 w-4 ${criticalStockPets > 0 ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground"}`} />
+            </div>
           </div>
-          <div className="stat-card-value">{criticalStockPets}</div>
-          {criticalStockPets > 0 && <p className="stat-card-description">Menos de 3 dias</p>}
+          <div className={`text-2xl font-bold ${criticalStockPets > 0 ? "text-rose-600 dark:text-rose-400" : "text-foreground"}`}>{criticalStockPets}</div>
+          {criticalStockPets > 0 && <p className="text-xs text-rose-600/80 dark:text-rose-400/80 mt-1">Menos de 3 dias</p>}
         </div>
       </div>
 
-      {/* Pets Grid */}
-      <Card className="section-card">
-        <CardHeader className="section-card-header">
-          <CardTitle className="section-card-title">
-            <Dog className="icon" />
-            Alimentação por Pet
-          </CardTitle>
-          <CardDescription className="section-card-description">
-            Clique em um pet para ver detalhes completos
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="section-card-content">
+      {/* Pets Grid - Premium */}
+      <div className="bg-card rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] border-0">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Dog className="h-4.5 w-4.5 text-primary" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold">Alimentação por Pet</h3>
+            <p className="text-xs text-muted-foreground">Clique em um pet para ver detalhes completos</p>
+          </div>
+        </div>
+        <div>
           {summaries && summaries.length > 0 ? (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {summaries.map((item) => (
                 <div
                   key={item.pet.id}
                   onClick={() => openPetDetail(item.pet.id)}
-                  className={`list-item border rounded-xl p-4 cursor-pointer ${
+                  className={`rounded-xl p-4 cursor-pointer transition-all duration-300 hover:-translate-y-0.5 ${
                     item.isCriticalStock
-                      ? "border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20"
+                      ? "bg-rose-50 dark:bg-rose-950/30 ring-1 ring-rose-200 dark:ring-rose-900/50 hover:shadow-[0_4px_12px_rgba(244,63,94,0.15)]"
                       : item.isLowStock
-                      ? "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20"
-                      : ""
+                      ? "bg-amber-50 dark:bg-amber-950/30 ring-1 ring-amber-200 dark:ring-amber-900/50 hover:shadow-[0_4px_12px_rgba(245,158,11,0.15)]"
+                      : "bg-muted/30 hover:bg-muted/50 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
                   }`}
                 >
                   <div className="flex items-center gap-4">
                     {item.pet.photoUrl ? (
-                      <div className="relative w-14 h-14 rounded-full overflow-hidden flex-shrink-0 border-2 border-border">
+                      <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-white dark:ring-slate-800 shadow-sm">
                         <Image
                           src={item.pet.photoUrl}
                           alt={item.pet.name}
@@ -348,13 +356,13 @@ export default function AdminFoodPage() {
                         />
                       </div>
                     ) : (
-                      <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Dog className="h-6 w-6 text-primary" />
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 ring-2 ring-white dark:ring-slate-800 shadow-sm">
+                        <Dog className="h-5 w-5 text-primary" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-base">{item.pet.name}</p>
-                      <p className="text-sm text-muted-foreground truncate">
+                      <p className="font-semibold text-sm">{item.pet.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">
                         {item.plan ? item.plan.brand : "Sem plano definido"}
                       </p>
                       {item.plan && (
@@ -373,7 +381,7 @@ export default function AdminFoodPage() {
                     <div className="flex flex-col items-end gap-1.5">
                       {item.hasPlan ? (
                         <>
-                          <Badge className={item.isCriticalStock ? "badge-rose" : item.isLowStock ? "badge-amber" : "badge-green"}>
+                          <Badge className={item.isCriticalStock ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300 border-0" : item.isLowStock ? "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 border-0" : "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 border-0"}>
                             {item.daysRemaining > 0 ? `${item.daysRemaining} dias` : "Sem estoque"}
                           </Badge>
                           {item.totalStock > 0 && (
@@ -383,7 +391,7 @@ export default function AdminFoodPage() {
                           )}
                         </>
                       ) : (
-                        <Badge className="badge-neutral">Configurar</Badge>
+                        <Badge variant="outline" className="text-xs">Configurar</Badge>
                       )}
                       <ChevronRight className="h-4 w-4 text-muted-foreground mt-1" />
                     </div>
@@ -392,13 +400,15 @@ export default function AdminFoodPage() {
               ))}
             </div>
           ) : (
-            <div className="empty-state">
-              <Dog className="empty-state-icon" />
-              <p className="empty-state-text">Nenhum pet cadastrado</p>
+            <div className="flex flex-col items-center py-10 text-muted-foreground">
+              <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center mb-3">
+                <Dog className="h-7 w-7 opacity-50" />
+              </div>
+              <p className="text-sm font-medium">Nenhum pet cadastrado</p>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Pet Detail Modal */}
       <Dialog open={isPetDetailOpen} onOpenChange={setIsPetDetailOpen}>
