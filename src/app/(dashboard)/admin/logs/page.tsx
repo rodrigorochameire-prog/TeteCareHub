@@ -214,7 +214,7 @@ export default function AdminLogs() {
   const chartData = useMemo(() => {
     if (!allLogs) return { 
       mood: [], stool: [], appetite: [], timeline: [], byPet: [], 
-      energy: [], water: [], healthAlerts: [], byLogType: [],
+      energy: [], water: [], healthAlerts: 0, byLogType: [],
       weeklyTrend: [], monthlyComparison: []
     };
 
