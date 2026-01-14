@@ -169,32 +169,33 @@ export function BreedIcon({ breed, className, size = 56 }: BreedIconProps) {
   // Buscar o ícone correspondente
   const iconFile = normalizedBreed ? BREED_ICON_MAP[normalizedBreed] : null;
   
-  // Tamanho da imagem interna (85% do container para deixar margem)
-  const imageSize = Math.round(size * 0.82);
+  // Tamanho da imagem interna (90% da largura, altura completa)
+  const imageWidth = Math.round(size * 0.88);
+  const imageHeight = Math.round(size * 0.92);
   
   if (iconFile) {
     return (
       <div 
         className={cn(
-          "relative rounded-xl overflow-hidden bg-gradient-to-br from-white to-slate-50/80 dark:from-slate-800 dark:to-slate-900",
+          "relative rounded-xl overflow-hidden bg-gradient-to-b from-slate-50 to-white dark:from-slate-800 dark:to-slate-900",
           "shadow-[0_2px_8px_rgba(0,0,0,0.08),0_1px_4px_rgba(0,0,0,0.06)]",
           "ring-1 ring-slate-200/60 dark:ring-slate-700/40",
           "transition-all duration-200 ease-out",
           "hover:shadow-[0_4px_12px_rgba(0,0,0,0.12),0_2px_6px_rgba(0,0,0,0.08)]",
           "hover:ring-slate-300/80 dark:hover:ring-slate-600/60",
           "hover:-translate-y-0.5",
-          "flex items-center justify-center p-1",
+          "flex items-end justify-center pt-1",
           className
         )} 
         style={{ width: size, height: size }}
       >
-        <div className="relative" style={{ width: imageSize, height: imageSize }}>
+        <div className="relative" style={{ width: imageWidth, height: imageHeight }}>
           <Image
             src={`/breed-icons/${iconFile}.png?v=17`}
             alt={breed || 'Pet'}
             fill
-            className="object-contain"
-            sizes={`${imageSize}px`}
+            className="object-contain object-bottom"
+            sizes={`${imageWidth}px`}
           />
         </div>
       </div>
@@ -205,12 +206,12 @@ export function BreedIcon({ breed, className, size = 56 }: BreedIconProps) {
   return (
     <div 
       className={cn(
-        "rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center shadow-sm ring-1 ring-black/5",
+        "rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shadow-sm ring-1 ring-slate-200/60 dark:ring-slate-700/40",
         className
       )} 
       style={{ width: size, height: size }}
     >
-      <Dog className="text-primary" style={{ width: size * 0.45, height: size * 0.45 }} />
+      <Dog className="text-slate-400 dark:text-slate-500" style={{ width: size * 0.45, height: size * 0.45 }} />
     </div>
   );
 }

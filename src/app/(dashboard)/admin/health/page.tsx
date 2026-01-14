@@ -213,14 +213,14 @@ export default function AdminHealthPage() {
 
       {/* Alertas */}
       {((overduePreventives?.length || 0) > 0 || (vaccineStats?.overdue || 0) > 0) && (
-        <div className="p-4 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20">
+        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-red-100 dark:bg-red-900/40">
-              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+            <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-slate-200 dark:bg-slate-800">
+              <AlertTriangle className="h-4 w-4 text-slate-600 dark:text-slate-400" />
             </div>
             <div>
-              <p className="font-medium text-sm text-red-700 dark:text-red-300">Tratamentos atrasados</p>
-              <div className="flex gap-3 mt-0.5 text-xs text-red-600/80 dark:text-red-400/80">
+              <p className="font-medium text-sm text-slate-700 dark:text-slate-300">Tratamentos atrasados</p>
+              <div className="flex gap-3 mt-0.5 text-xs text-slate-600/80 dark:text-slate-400/80">
                 {(vaccineStats?.overdue || 0) > 0 && (
                   <span>{vaccineStats?.overdue} vacina(s) vencida(s)</span>
                 )}
@@ -233,13 +233,13 @@ export default function AdminHealthPage() {
         </div>
       )}
 
-      {/* Stats - Layout compacto com estilo premium */}
+      {/* Stats - Layout compacto e limpo */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-muted-foreground">Vacinas</span>
-            <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-              <Syringe className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+              <Syringe className="h-4 w-4 text-slate-500 dark:text-slate-400" />
             </div>
           </div>
           <div className="text-2xl font-bold text-foreground">{vaccineStats?.upcoming || 0}</div>
@@ -249,8 +249,8 @@ export default function AdminHealthPage() {
         <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-muted-foreground">Preventivos</span>
-            <div className="h-8 w-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-              <Shield className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+              <Shield className="h-4 w-4 text-slate-500 dark:text-slate-400" />
             </div>
           </div>
           <div className="text-2xl font-bold text-foreground">{preventiveStats?.upcoming || 0}</div>
@@ -260,8 +260,8 @@ export default function AdminHealthPage() {
         <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-muted-foreground">Antipulgas</span>
-            <div className="h-8 w-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-              <Bug className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+              <Bug className="h-4 w-4 text-slate-500 dark:text-slate-400" />
             </div>
           </div>
           <div className="text-2xl font-bold text-foreground">{preventiveStats?.flea || 0}</div>
@@ -271,8 +271,8 @@ export default function AdminHealthPage() {
         <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-muted-foreground">Vermífugos</span>
-            <div className="h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-              <Droplets className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+              <Droplets className="h-4 w-4 text-slate-500 dark:text-slate-400" />
             </div>
           </div>
           <div className="text-2xl font-bold text-foreground">{preventiveStats?.deworming || 0}</div>
@@ -315,8 +315,8 @@ export default function AdminHealthPage() {
           {upcomingVaccines && upcomingVaccines.length > 0 && (
             <div className="bg-card rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] border-0">
               <h4 className="text-sm font-semibold flex items-center gap-2 mb-4">
-                <div className="h-7 w-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                  <Clock className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                <div className="h-7 w-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  <Clock className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
                 </div>
                 Próximas 30 dias
               </h4>
@@ -324,8 +324,8 @@ export default function AdminHealthPage() {
                 {upcomingVaccines.slice(0, 5).map((item: any) => (
                   <div key={item.vaccination.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Dog className="h-4 w-4 text-primary" />
+                      <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                        <Dog className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                       </div>
                       <div>
                         <p className="text-sm font-medium">{item.pet?.name}</p>
@@ -384,48 +384,39 @@ export default function AdminHealthPage() {
             </Button>
           </div>
 
-          {/* Tipos de Preventivos - Grid premium */}
+          {/* Tipos de Preventivos - Grid limpo */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {PREVENTIVE_TYPES.map((type, index) => {
-              const colors = [
-                { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-600 dark:text-amber-400" },
-                { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-600 dark:text-purple-400" },
-                { bg: "bg-rose-100 dark:bg-rose-900/30", text: "text-rose-600 dark:text-rose-400" },
-                { bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-600 dark:text-green-400" },
-              ];
-              const color = colors[index % colors.length];
-              return (
-                <button
-                  key={type.value}
-                  onClick={() => setIsAddPreventiveOpen(true)}
-                  className="flex flex-col items-center gap-3 p-5 bg-card rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all duration-300 hover:-translate-y-0.5 border-0"
-                >
-                  <div className={`h-10 w-10 rounded-xl ${color.bg} flex items-center justify-center`}>
-                    <type.icon className={`h-5 w-5 ${color.text}`} />
-                  </div>
-                  <span className="text-sm font-medium">{type.label}</span>
-                </button>
-              );
-            })}
+            {PREVENTIVE_TYPES.map((type) => (
+              <button
+                key={type.value}
+                onClick={() => setIsAddPreventiveOpen(true)}
+                className="flex flex-col items-center gap-3 p-5 bg-card rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all duration-300 hover:-translate-y-0.5 border-0"
+              >
+                <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  <type.icon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                </div>
+                <span className="text-sm font-medium">{type.label}</span>
+              </button>
+            ))}
           </div>
 
-          {/* Listas lado a lado - Premium */}
+          {/* Listas lado a lado */}
           <div className="grid md:grid-cols-2 gap-4">
             {/* Atrasados */}
             <div className="bg-card rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] border-0">
               <h4 className="text-sm font-semibold text-destructive flex items-center gap-2 mb-4">
-                <div className="h-7 w-7 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                  <AlertTriangle className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+                <div className="h-7 w-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  <AlertTriangle className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                 </div>
                 Atrasados
               </h4>
               {overduePreventives && overduePreventives.length > 0 ? (
                 <div className="space-y-2">
                   {overduePreventives.slice(0, 5).map((item: any) => (
-                    <div key={item.treatment.id} className="flex items-center justify-between p-3 rounded-lg bg-red-50/50 dark:bg-red-950/20 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
+                    <div key={item.treatment.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
-                          <Dog className="h-4 w-4 text-red-600 dark:text-red-400" />
+                        <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                          <Dog className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                         </div>
                         <div>
                           <p className="text-sm font-medium">{item.pet?.name}</p>
@@ -437,8 +428,8 @@ export default function AdminHealthPage() {
                 </div>
               ) : (
                 <div className="flex flex-col items-center py-8 text-muted-foreground">
-                  <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3">
-                    <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+                    <CheckCircle className="h-6 w-6 text-slate-400 dark:text-slate-500" />
                   </div>
                   <p className="text-sm font-medium">Tudo em dia!</p>
                   <p className="text-xs">Nenhum tratamento atrasado</p>
@@ -449,8 +440,8 @@ export default function AdminHealthPage() {
             {/* Próximos */}
             <div className="bg-card rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] border-0">
               <h4 className="text-sm font-semibold flex items-center gap-2 mb-4">
-                <div className="h-7 w-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                  <Clock className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                <div className="h-7 w-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  <Clock className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
                 </div>
                 Próximos 30 dias
               </h4>
@@ -459,8 +450,8 @@ export default function AdminHealthPage() {
                   {upcomingPreventives.slice(0, 5).map((item: any) => (
                     <div key={item.treatment.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Dog className="h-4 w-4 text-primary" />
+                        <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                          <Dog className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                         </div>
                         <div>
                           <p className="text-sm font-medium">{item.pet?.name}</p>
@@ -497,30 +488,20 @@ export default function AdminHealthPage() {
             </Button>
           </div>
 
-          {/* Tipos de Medicamentos - Grid premium */}
+          {/* Tipos de Medicamentos - Grid limpo */}
           <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
-            {MEDICATION_TYPES.map((type, index) => {
-              const colors = [
-                { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-600 dark:text-blue-400" },
-                { bg: "bg-orange-100 dark:bg-orange-900/30", text: "text-orange-600 dark:text-orange-400" },
-                { bg: "bg-rose-100 dark:bg-rose-900/30", text: "text-rose-600 dark:text-rose-400" },
-                { bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-600 dark:text-green-400" },
-                { bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-600 dark:text-slate-400" },
-              ];
-              const color = colors[index % colors.length];
-              return (
-                <button
-                  key={type.value}
-                  onClick={() => setIsAddMedicationOpen(true)}
-                  className="flex flex-col items-center gap-2 p-4 bg-card rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all duration-300 hover:-translate-y-0.5 border-0"
-                >
-                  <div className={`h-9 w-9 rounded-lg ${color.bg} flex items-center justify-center`}>
-                    <type.icon className={`h-4 w-4 ${color.text}`} />
-                  </div>
-                  <span className="text-xs font-medium">{type.label}</span>
-                </button>
-              );
-            })}
+            {MEDICATION_TYPES.map((type) => (
+              <button
+                key={type.value}
+                onClick={() => setIsAddMedicationOpen(true)}
+                className="flex flex-col items-center gap-2 p-4 bg-card rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all duration-300 hover:-translate-y-0.5 border-0"
+              >
+                <div className="h-9 w-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  <type.icon className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                </div>
+                <span className="text-xs font-medium">{type.label}</span>
+              </button>
+            ))}
           </div>
 
           {/* Medicamentos cadastrados */}
@@ -528,8 +509,8 @@ export default function AdminHealthPage() {
             <h4 className="text-sm font-semibold mb-4">Cadastrados</h4>
             {medicationsOnly.length === 0 ? (
               <div className="flex flex-col items-center py-10 text-muted-foreground">
-                <div className="h-14 w-14 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-3">
-                  <Pill className="h-7 w-7 text-purple-600 dark:text-purple-400 opacity-50" />
+                <div className="h-14 w-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+                  <Pill className="h-7 w-7 text-slate-400 dark:text-slate-500 opacity-50" />
                 </div>
                 <p className="text-sm font-medium">Nenhum medicamento</p>
                 <Button variant="link" size="sm" onClick={() => setIsAddMedicationOpen(true)} className="mt-1">
@@ -538,22 +519,13 @@ export default function AdminHealthPage() {
               </div>
             ) : (
               <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                {medicationsOnly.map((med: any, index: number) => {
+                {medicationsOnly.map((med: any) => {
                   const type = MEDICATION_TYPES.find(t => t.value === med.type);
                   const Icon = type?.icon || Pill;
-                  const colors = [
-                    { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-600 dark:text-blue-400" },
-                    { bg: "bg-orange-100 dark:bg-orange-900/30", text: "text-orange-600 dark:text-orange-400" },
-                    { bg: "bg-rose-100 dark:bg-rose-900/30", text: "text-rose-600 dark:text-rose-400" },
-                    { bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-600 dark:text-green-400" },
-                    { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-600 dark:text-purple-400" },
-                  ];
-                  const typeIndex = MEDICATION_TYPES.findIndex(t => t.value === med.type);
-                  const color = colors[typeIndex >= 0 ? typeIndex : index % colors.length];
                   return (
                     <div key={med.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 hover:shadow-sm transition-all duration-200 cursor-pointer">
-                      <div className={`h-8 w-8 rounded-lg ${color.bg} flex items-center justify-center flex-shrink-0`}>
-                        <Icon className={`h-4 w-4 ${color.text}`} />
+                      <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+                        <Icon className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-medium truncate">{med.name}</p>

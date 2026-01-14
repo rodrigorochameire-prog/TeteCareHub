@@ -289,33 +289,33 @@ export default function AdminFoodPage() {
         <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-muted-foreground">Com Plano Ativo</span>
-            <div className="h-8 w-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-              <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+              <CheckCircle2 className="h-4 w-4 text-slate-500 dark:text-slate-400" />
             </div>
           </div>
           <div className="text-2xl font-bold text-foreground">{petsWithPlan}</div>
         </div>
 
-        <div className={`bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0 ${lowStockPets > 0 ? "ring-1 ring-amber-200 dark:ring-amber-900/50" : ""}`}>
+        <div className={`bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0 ${lowStockPets > 0 ? "ring-1 ring-slate-300 dark:ring-slate-700" : ""}`}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-muted-foreground">Estoque Baixo</span>
-            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${lowStockPets > 0 ? "bg-amber-100 dark:bg-amber-900/30" : "bg-muted"}`}>
-              <TrendingDown className={`h-4 w-4 ${lowStockPets > 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`} />
+            <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+              <TrendingDown className="h-4 w-4 text-slate-500 dark:text-slate-400" />
             </div>
           </div>
-          <div className={`text-2xl font-bold ${lowStockPets > 0 ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`}>{lowStockPets}</div>
-          {lowStockPets > 0 && <p className="text-xs text-amber-600/80 dark:text-amber-400/80 mt-1">Menos de 7 dias</p>}
+          <div className={`text-2xl font-bold ${lowStockPets > 0 ? "text-slate-700 dark:text-slate-300" : "text-foreground"}`}>{lowStockPets}</div>
+          {lowStockPets > 0 && <p className="text-xs text-muted-foreground mt-1">Menos de 7 dias</p>}
         </div>
 
-        <div className={`bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0 ${criticalStockPets > 0 ? "ring-1 ring-rose-200 dark:ring-rose-900/50" : ""}`}>
+        <div className={`bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0 ${criticalStockPets > 0 ? "ring-1 ring-slate-400 dark:ring-slate-600" : ""}`}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-muted-foreground">Estoque Crítico</span>
-            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${criticalStockPets > 0 ? "bg-rose-100 dark:bg-rose-900/30" : "bg-muted"}`}>
-              <AlertTriangle className={`h-4 w-4 ${criticalStockPets > 0 ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground"}`} />
+            <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+              <AlertTriangle className="h-4 w-4 text-slate-500 dark:text-slate-400" />
             </div>
           </div>
-          <div className={`text-2xl font-bold ${criticalStockPets > 0 ? "text-rose-600 dark:text-rose-400" : "text-foreground"}`}>{criticalStockPets}</div>
-          {criticalStockPets > 0 && <p className="text-xs text-rose-600/80 dark:text-rose-400/80 mt-1">Menos de 3 dias</p>}
+          <div className={`text-2xl font-bold ${criticalStockPets > 0 ? "text-slate-900 dark:text-slate-100" : "text-foreground"}`}>{criticalStockPets}</div>
+          {criticalStockPets > 0 && <p className="text-xs text-muted-foreground mt-1">Menos de 3 dias</p>}
         </div>
       </div>
 
@@ -339,9 +339,9 @@ export default function AdminFoodPage() {
                   onClick={() => openPetDetail(item.pet.id)}
                   className={`rounded-xl p-4 cursor-pointer transition-all duration-300 hover:-translate-y-0.5 ${
                     item.isCriticalStock
-                      ? "bg-rose-50 dark:bg-rose-950/30 ring-1 ring-rose-200 dark:ring-rose-900/50 hover:shadow-[0_4px_12px_rgba(244,63,94,0.15)]"
+                      ? "bg-slate-100 dark:bg-slate-800 ring-1 ring-slate-300 dark:ring-slate-700 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
                       : item.isLowStock
-                      ? "bg-amber-50 dark:bg-amber-950/30 ring-1 ring-amber-200 dark:ring-amber-900/50 hover:shadow-[0_4px_12px_rgba(245,158,11,0.15)]"
+                      ? "bg-slate-50 dark:bg-slate-800/50 ring-1 ring-slate-200 dark:ring-slate-700/50 hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)]"
                       : "bg-muted/30 hover:bg-muted/50 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
                   }`}
                 >
@@ -381,7 +381,7 @@ export default function AdminFoodPage() {
                     <div className="flex flex-col items-end gap-1.5">
                       {item.hasPlan ? (
                         <>
-                          <Badge className={item.isCriticalStock ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300 border-0" : item.isLowStock ? "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 border-0" : "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 border-0"}>
+                          <Badge className={item.isCriticalStock ? "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 border-0" : item.isLowStock ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-0" : "bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-0"}>
                             {item.daysRemaining > 0 ? `${item.daysRemaining} dias` : "Sem estoque"}
                           </Badge>
                           {item.totalStock > 0 && (
@@ -564,10 +564,10 @@ export default function AdminFoodPage() {
                           <div className="text-center">
                             <p className={`text-2xl font-bold ${
                               petSummary.inventory.daysRemaining < 3
-                                ? "text-rose-500"
+                                ? "text-slate-900 dark:text-slate-100"
                                 : petSummary.inventory.daysRemaining < 7
-                                ? "text-amber-500"
-                                : "text-green-500"
+                                ? "text-slate-700 dark:text-slate-300"
+                                : "text-slate-600 dark:text-slate-400"
                             }`}>
                               {petSummary.inventory.daysRemaining}
                             </p>
@@ -578,10 +578,10 @@ export default function AdminFoodPage() {
                               <div
                                 className={`h-full transition-all ${
                                   petSummary.inventory.daysRemaining > 14
-                                    ? "bg-green-500"
+                                    ? "bg-slate-400 dark:bg-slate-500"
                                     : petSummary.inventory.daysRemaining > 7
-                                    ? "bg-amber-500"
-                                    : "bg-rose-500"
+                                    ? "bg-slate-500 dark:bg-slate-400"
+                                    : "bg-slate-700 dark:bg-slate-300"
                                 }`}
                                 style={{
                                   width: `${Math.min((petSummary.inventory.daysRemaining / 30) * 100, 100)}%`,
@@ -641,8 +641,8 @@ export default function AdminFoodPage() {
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                                <Cookie className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                              <div className="h-10 w-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                <Cookie className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                               </div>
                               <div>
                                 <p className="font-medium">{treat.name}</p>
@@ -696,8 +696,8 @@ export default function AdminFoodPage() {
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                                <Leaf className="h-5 w-5 text-green-600 dark:text-green-400" />
+                              <div className="h-10 w-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                <Leaf className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                               </div>
                               <div>
                                 <p className="font-medium">{food.name}</p>
@@ -768,7 +768,7 @@ export default function AdminFoodPage() {
                                       key={i}
                                       className={`h-3.5 w-3.5 ${
                                         i < record.overallRating!
-                                          ? "fill-amber-400 text-amber-400"
+                                          ? "fill-slate-500 text-slate-500 dark:fill-slate-400 dark:text-slate-400"
                                           : "text-muted-foreground/30"
                                       }`}
                                     />
@@ -788,9 +788,9 @@ export default function AdminFoodPage() {
                             </p>
                           )}
                           {record.allergicReaction && (
-                            <div className="flex items-center gap-2 mt-2 p-2 rounded bg-rose-50 dark:bg-rose-950/30">
-                              <AlertCircle className="h-4 w-4 text-rose-500" />
-                              <span className="text-sm text-rose-600 dark:text-rose-400">
+                            <div className="flex items-center gap-2 mt-2 p-2 rounded bg-slate-100 dark:bg-slate-800">
+                              <AlertCircle className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                              <span className="text-sm text-slate-700 dark:text-slate-300">
                                 Reação alérgica reportada
                               </span>
                             </div>
