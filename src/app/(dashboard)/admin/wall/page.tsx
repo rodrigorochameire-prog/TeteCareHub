@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -37,13 +38,33 @@ import {
   Camera,
   X,
   ZoomIn,
-  Paperclip
+  Paperclip,
+  BarChart3,
+  TrendingUp,
+  Users,
+  FileText,
+  Eye
 } from "lucide-react";
 import { toast } from "sonner";
 import { getInitials } from "@/lib/utils";
 import { WallSkeleton } from "@/components/shared/skeletons";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  Legend,
+} from "recharts";
+
+const NEUTRAL_COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"];
 
 export default function AdminWall() {
+  const [mainTab, setMainTab] = useState("feed");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<number | null>(null);
   const [comment, setComment] = useState("");
@@ -56,6 +77,61 @@ export default function AdminWall() {
 
   const { data: posts, isLoading, refetch } = trpc.wall.posts.useQuery({});
   const { data: pets } = trpc.pets.list.useQuery();
+
+  // Dados para infográficos
+  const chartData = useMemo(() => {
+    if (!posts) return { timeline: [], engagement: [], stats: { total: 0, likes: 0, comments: 0, images: 0 } };
+
+    // Stats
+    let totalLikes = 0;
+    let totalComments = 0;
+    let totalImages = 0;
+    const dailyData: Record<string, { posts: number; likes: number; comments: number }> = {};
+
+    posts.forEach((p: any) => {
+      totalLikes += p.post.likesCount || 0;
+      totalComments += p.post.commentsCount || 0;
+      if (p.post.images && p.post.images.length > 0) totalImages++;
+
+      // Por dia
+      const date = new Date(p.post.createdAt);
+      const dateKey = date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+      if (!dailyData[dateKey]) {
+        dailyData[dateKey] = { posts: 0, likes: 0, comments: 0 };
+      }
+      dailyData[dateKey].posts += 1;
+      dailyData[dateKey].likes += p.post.likesCount || 0;
+      dailyData[dateKey].comments += p.post.commentsCount || 0;
+    });
+
+    const timeline = Object.entries(dailyData).slice(-7).map(([date, data]) => ({
+      date,
+      posts: data.posts,
+      likes: data.likes,
+      comments: data.comments,
+    }));
+
+    // Engagement por post (top 5)
+    const engagement = posts
+      .map((p: any) => ({
+        title: p.post.content?.slice(0, 20) + "..." || "Post",
+        likes: p.post.likesCount || 0,
+        comments: p.post.commentsCount || 0,
+      }))
+      .sort((a: any, b: any) => (b.likes + b.comments) - (a.likes + a.comments))
+      .slice(0, 5);
+
+    return {
+      timeline,
+      engagement,
+      stats: {
+        total: posts.length,
+        likes: totalLikes,
+        comments: totalComments,
+        images: totalImages,
+      }
+    };
+  }, [posts]);
 
   const createPost = trpc.wall.createPost.useMutation({
     onSuccess: () => {
@@ -231,39 +307,61 @@ export default function AdminWall() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Posts</CardTitle>
-            <MessageCircle className="h-4 w-4 text-muted-foreground" />
+            <FileText className="h-4 w-4 text-slate-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{posts?.length || 0}</div>
+            <div className="text-2xl font-bold">{chartData.stats.total}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Fotos Compartilhadas</CardTitle>
-            <Camera className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Curtidas</CardTitle>
+            <Heart className="h-4 w-4 text-slate-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">{postsWithImages.length}</div>
+            <div className="text-2xl font-bold">{chartData.stats.likes}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Curtidas Totais</CardTitle>
-            <Heart className="h-4 w-4 text-red-500" />
+            <CardTitle className="text-sm font-medium">Comentários</CardTitle>
+            <MessageCircle className="h-4 w-4 text-slate-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-500">
-              {posts?.reduce((acc, p) => acc + (p.likesCount || 0), 0) || 0}
-            </div>
+            <div className="text-2xl font-bold">{chartData.stats.comments}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Com Imagens</CardTitle>
+            <Camera className="h-4 w-4 text-slate-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{chartData.stats.images}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Gallery View */}
+      {/* Main Tabs */}
+      <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-4">
+        <TabsList className="bg-muted/50">
+          <TabsTrigger value="feed" className="gap-2">
+            <MessageCircle className="h-4 w-4" />
+            Feed
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Análises
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Tab: Feed */}
+        <TabsContent value="feed" className="space-y-4">
+          {/* Gallery View */}
       {viewMode === "gallery" && (
         <Card>
           <CardHeader>
@@ -608,6 +706,146 @@ export default function AdminWall() {
           </form>
         </DialogContent>
       </Dialog>
+        </TabsContent>
+
+        {/* Tab: Analytics */}
+        <TabsContent value="analytics" className="space-y-6">
+          {/* Atividade por Dia */}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Atividade nos Últimos 7 Dias
+              </CardTitle>
+              <CardDescription>Posts, curtidas e comentários por dia</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {chartData.timeline.length > 0 ? (
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData.timeline}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} />
+                      <YAxis stroke="#94a3b8" fontSize={11} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'white', 
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px'
+                        }} 
+                      />
+                      <Legend />
+                      <Line type="monotone" dataKey="posts" name="Posts" stroke="#475569" strokeWidth={2} dot={{ r: 4 }} />
+                      <Line type="monotone" dataKey="likes" name="Curtidas" stroke="#64748b" strokeWidth={2} dot={{ r: 4 }} />
+                      <Line type="monotone" dataKey="comments" name="Comentários" stroke="#94a3b8" strokeWidth={2} dot={{ r: 4 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                  Sem dados disponíveis
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Engajamento por Post */}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Posts com Mais Engajamento
+              </CardTitle>
+              <CardDescription>Top 5 posts por curtidas e comentários</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {chartData.engagement.length > 0 ? (
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData.engagement} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis type="number" stroke="#94a3b8" fontSize={11} />
+                      <YAxis type="category" dataKey="title" width={100} stroke="#94a3b8" fontSize={10} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'white', 
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px'
+                        }} 
+                      />
+                      <Legend />
+                      <Bar dataKey="likes" name="Curtidas" fill="#475569" stackId="a" />
+                      <Bar dataKey="comments" name="Comentários" fill="#94a3b8" stackId="a" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+                  Sem dados disponíveis
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Métricas de Engajamento */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card className="shadow-sm">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <Heart className="h-6 w-6 text-slate-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Média de Curtidas</p>
+                    <p className="text-2xl font-bold">
+                      {chartData.stats.total > 0 
+                        ? (chartData.stats.likes / chartData.stats.total).toFixed(1) 
+                        : 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground">por post</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <MessageCircle className="h-6 w-6 text-slate-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Média de Comentários</p>
+                    <p className="text-2xl font-bold">
+                      {chartData.stats.total > 0 
+                        ? (chartData.stats.comments / chartData.stats.total).toFixed(1) 
+                        : 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground">por post</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <Camera className="h-6 w-6 text-slate-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Taxa de Imagens</p>
+                    <p className="text-2xl font-bold">
+                      {chartData.stats.total > 0 
+                        ? ((chartData.stats.images / chartData.stats.total) * 100).toFixed(0) 
+                        : 0}%
+                    </p>
+                    <p className="text-xs text-muted-foreground">dos posts</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
