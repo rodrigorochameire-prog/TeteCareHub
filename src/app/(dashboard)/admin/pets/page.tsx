@@ -715,7 +715,7 @@ export default function AdminPetsPage() {
                           outerRadius={60}
                           paddingAngle={2}
                           dataKey="value"
-                          label={({ name }) => name.split(" ")[0]}
+                          label={({ name }) => (name ?? "").split(" ")[0]}
                           labelLine={false}
                         >
                           {analyticsData.weightDistribution.map((_, index) => (
@@ -755,7 +755,7 @@ export default function AdminPetsPage() {
                           outerRadius={60}
                           paddingAngle={2}
                           dataKey="value"
-                          label={({ name }) => name.split(" ")[0]}
+                          label={({ name }) => (name ?? "").split(" ")[0]}
                           labelLine={false}
                         >
                           {analyticsData.ageDistribution.map((_, index) => (
@@ -795,7 +795,7 @@ export default function AdminPetsPage() {
                           outerRadius={60}
                           paddingAngle={2}
                           dataKey="value"
-                          label={({ name }) => name.split(" ")[0]}
+                          label={({ name }) => (name ?? "").split(" ")[0]}
                           labelLine={false}
                         >
                           {analyticsData.creditsDistribution.map((_, index) => (

@@ -171,8 +171,8 @@ export default function AdminDocuments() {
       
       // Por módulo
       const catInfo = DOCUMENT_CATEGORIES.find(c => c.value === cat);
-      const module = catInfo?.module || "other";
-      moduleCount[module] = (moduleCount[module] || 0) + 1;
+      const docModule = catInfo?.module || "other";
+      moduleCount[docModule] = (moduleCount[docModule] || 0) + 1;
       
       // Por pet
       if (doc.pet?.name) {

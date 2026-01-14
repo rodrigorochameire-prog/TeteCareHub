@@ -7,8 +7,10 @@ import {
   timestamp,
   integer,
   jsonb,
+  index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 // ==========================================
 // USUÁRIOS
@@ -23,9 +25,16 @@ export const users = pgTable("users", {
   phone: text("phone"),
   emailVerified: boolean("email_verified").default(false).notNull(),
   approvalStatus: varchar("approval_status", { length: 20 }).default("pending").notNull(), // 'pending' | 'approved' | 'rejected'
+  // Soft delete
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  // Índices para buscas frequentes
+  index("users_role_idx").on(table.role),
+  index("users_approval_status_idx").on(table.approvalStatus),
+  index("users_deleted_at_idx").on(table.deletedAt),
+]);
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
@@ -48,9 +57,17 @@ export const pets = pgTable("pets", {
   foodBrand: varchar("food_brand", { length: 200 }),
   foodAmount: integer("food_amount"), // quantidade diária em gramas
   credits: integer("credits").default(0).notNull(), // créditos de creche
+  // Soft delete
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  // Índices para buscas frequentes
+  index("pets_status_idx").on(table.status),
+  index("pets_approval_status_idx").on(table.approvalStatus),
+  index("pets_species_idx").on(table.species),
+  index("pets_deleted_at_idx").on(table.deletedAt),
+]);
 
 export type Pet = typeof pets.$inferSelect;
 export type InsertPet = typeof pets.$inferInsert;
@@ -69,7 +86,13 @@ export const petTutors = pgTable("pet_tutors", {
     .references(() => users.id, { onDelete: "cascade" }),
   isPrimary: boolean("is_primary").default(false).notNull(), // tutor principal
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => [
+  // Índices para joins rápidos
+  index("pet_tutors_pet_id_idx").on(table.petId),
+  index("pet_tutors_tutor_id_idx").on(table.tutorId),
+  // Índice único para evitar duplicatas
+  uniqueIndex("pet_tutors_pet_tutor_unique").on(table.petId, table.tutorId),
+]);
 
 export type PetTutor = typeof petTutors.$inferSelect;
 export type InsertPetTutor = typeof petTutors.$inferInsert;
@@ -102,13 +125,24 @@ export const calendarEvents = pgTable("calendar_events", {
   recurrenceCount: integer("recurrence_count"), // Número de ocorrências (alternativa a endDate)
   recurrenceDays: varchar("recurrence_days", { length: 50 }), // Para weekly: "0,1,2,3,4" (Dom-Qui)
   parentEventId: integer("parent_event_id"), // Referência ao evento pai (para séries)
+  // Soft delete
+  deletedAt: timestamp("deleted_at"),
   // Metadados
   createdById: integer("created_by_id")
     .notNull()
     .references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // Índices para carregamento rápido do calendário
+  index("calendar_events_event_date_idx").on(table.eventDate),
+  index("calendar_events_pet_id_idx").on(table.petId),
+  index("calendar_events_event_type_idx").on(table.eventType),
+  index("calendar_events_status_idx").on(table.status),
+  index("calendar_events_deleted_at_idx").on(table.deletedAt),
+  // Índice composto para range queries de data
+  index("calendar_events_date_range_idx").on(table.eventDate, table.endDate),
+]);
 
 export type CalendarEvent = typeof calendarEvents.$inferSelect;
 export type InsertCalendarEvent = typeof calendarEvents.$inferInsert;
@@ -197,7 +231,15 @@ export const bookingRequests = pgTable("booking_requests", {
   approvedAt: timestamp("approved_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  // Índices para filtragem no dashboard admin
+  index("booking_requests_status_idx").on(table.status),
+  index("booking_requests_pet_id_idx").on(table.petId),
+  index("booking_requests_tutor_id_idx").on(table.tutorId),
+  index("booking_requests_request_type_idx").on(table.requestType),
+  // Índice para range queries de data
+  index("booking_requests_date_range_idx").on(table.startDate, table.endDate),
+]);
 
 export type BookingRequest = typeof bookingRequests.$inferSelect;
 export type InsertBookingRequest = typeof bookingRequests.$inferInsert;
@@ -218,7 +260,13 @@ export const notifications = pgTable("notifications", {
   actionUrl: text("action_url"),
   isRead: boolean("is_read").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => [
+  // Índices para notificações do usuário
+  index("notifications_user_id_idx").on(table.userId),
+  index("notifications_is_read_idx").on(table.isRead),
+  // Índice composto para buscar notificações não lidas de um usuário
+  index("notifications_user_unread_idx").on(table.userId, table.isRead),
+]);
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
@@ -247,7 +295,15 @@ export const dailyLogs = pgTable("daily_logs", {
     .references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // Índices para filtragem e análise de logs
+  index("daily_logs_pet_id_idx").on(table.petId),
+  index("daily_logs_log_date_idx").on(table.logDate),
+  index("daily_logs_source_idx").on(table.source),
+  index("daily_logs_log_type_idx").on(table.logType),
+  // Índice composto para queries frequentes
+  index("daily_logs_pet_date_idx").on(table.petId, table.logDate),
+]);
 
 export type DailyLog = typeof dailyLogs.$inferSelect;
 export type InsertDailyLog = typeof dailyLogs.$inferInsert;
@@ -393,7 +449,14 @@ export const documents = pgTable("documents", {
   relatedId: integer("related_id"), // ID do registro relacionado
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // Índices para filtragem e análise de documentos
+  index("documents_pet_id_idx").on(table.petId),
+  index("documents_category_idx").on(table.category),
+  index("documents_related_module_idx").on(table.relatedModule),
+  // Índice composto para buscar documentos por módulo e ID relacionado
+  index("documents_module_related_idx").on(table.relatedModule, table.relatedId),
+]);
 
 export type Document = typeof documents.$inferSelect;
 export type InsertDocument = typeof documents.$inferInsert;
@@ -421,7 +484,13 @@ export const behaviorLogs = pgTable("behavior_logs", {
     .references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // Índices para filtragem e análise de comportamento
+  index("behavior_logs_pet_id_idx").on(table.petId),
+  index("behavior_logs_log_date_idx").on(table.logDate),
+  // Índice composto para queries frequentes
+  index("behavior_logs_pet_date_idx").on(table.petId, table.logDate),
+]);
 
 export type BehaviorLog = typeof behaviorLogs.$inferSelect;
 export type InsertBehaviorLog = typeof behaviorLogs.$inferInsert;
@@ -550,7 +619,15 @@ export const trainingLogs = pgTable("training_logs", {
     .references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // Índices para filtragem e análise de treinamento
+  index("training_logs_pet_id_idx").on(table.petId),
+  index("training_logs_log_date_idx").on(table.logDate),
+  index("training_logs_category_idx").on(table.category),
+  index("training_logs_status_idx").on(table.status),
+  // Índice composto para queries frequentes
+  index("training_logs_pet_date_idx").on(table.petId, table.logDate),
+]);
 
 export type TrainingLog = typeof trainingLogs.$inferSelect;
 export type InsertTrainingLog = typeof trainingLogs.$inferInsert;
