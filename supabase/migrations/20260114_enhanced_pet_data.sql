@@ -253,10 +253,10 @@ CREATE INDEX IF NOT EXISTS idx_pet_compatibility_other_pet_id ON pet_compatibili
 -- 10. ATUALIZAR PREVENTIVOS COM MAIS DETALHES
 -- ============================================
 
-ALTER TABLE pet_preventives ADD COLUMN IF NOT EXISTS product_brand VARCHAR(100);
-ALTER TABLE pet_preventives ADD COLUMN IF NOT EXISTS frequency_days INTEGER DEFAULT 30;
-ALTER TABLE pet_preventives ADD COLUMN IF NOT EXISTS reminder_days_before INTEGER DEFAULT 7;
-ALTER TABLE pet_preventives ADD COLUMN IF NOT EXISTS auto_renew BOOLEAN DEFAULT false;
+ALTER TABLE preventive_treatments ADD COLUMN IF NOT EXISTS product_brand VARCHAR(100);
+ALTER TABLE preventive_treatments ADD COLUMN IF NOT EXISTS frequency_days INTEGER DEFAULT 30;
+ALTER TABLE preventive_treatments ADD COLUMN IF NOT EXISTS reminder_days_before INTEGER DEFAULT 7;
+ALTER TABLE preventive_treatments ADD COLUMN IF NOT EXISTS auto_renew BOOLEAN DEFAULT false;
 
 -- ============================================
 -- 11. ATUALIZAR VACINAS COM MAIS DETALHES
