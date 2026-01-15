@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db, pets, users } from "@/lib/db";
-import { sql } from "drizzle-orm";
+import { sql, desc } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +15,14 @@ export async function GET() {
     // Contar usuários
     const usersCount = await db.execute(sql`SELECT COUNT(*) as count FROM users`);
     
-    // Listar primeiros 5 pets (apenas id e nome)
-    const samplePets = await db.execute(sql`SELECT id, name, approval_status FROM pets LIMIT 5`);
+    // Listar primeiros 5 pets (apenas id e nome) - query SQL raw
+    const samplePetsRaw = await db.execute(sql`SELECT id, name, approval_status, deleted_at FROM pets ORDER BY created_at DESC LIMIT 10`);
+    
+    // Testar a mesma query que o router usa
+    const petsFromDrizzle = await db
+      .select()
+      .from(pets)
+      .orderBy(desc(pets.createdAt));
     
     // Verificar se DATABASE_URL está definida
     const hasDbUrl = !!process.env.DATABASE_URL;
@@ -36,13 +42,23 @@ export async function GET() {
         pets: petsCount[0]?.count || 0,
         users: usersCount[0]?.count || 0,
       },
-      samplePets: samplePets || [],
+      samplePetsRaw: samplePetsRaw || [],
+      drizzleQuery: {
+        count: petsFromDrizzle.length,
+        pets: petsFromDrizzle.map(p => ({
+          id: p.id,
+          name: p.name,
+          approvalStatus: p.approvalStatus,
+          deletedAt: p.deletedAt,
+        })),
+      },
     });
   } catch (error) {
     return NextResponse.json({
       status: "error",
       timestamp: new Date().toISOString(),
       error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
       database: {
         connected: false,
         urlConfigured: !!process.env.DATABASE_URL,
