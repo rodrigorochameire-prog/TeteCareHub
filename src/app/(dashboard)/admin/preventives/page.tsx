@@ -38,6 +38,7 @@ import {
   Dog
 } from "lucide-react";
 import { BreedIcon } from "@/components/breed-icons";
+import { PetAvatar } from "@/components/pet-avatar";
 import { toast } from "sonner";
 
 const treatmentTypes = [
@@ -169,17 +170,12 @@ export default function AdminPreventives() {
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
-                          {item.pet?.photoUrl ? (
-                            <img 
-                              src={item.pet.photoUrl} 
-                              alt={item.pet.name}
-                              className="h-10 w-10 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
-                              <BreedIcon breed={item.pet?.breed} className="h-5 w-5 text-slate-500" />
-                            </div>
-                          )}
+                          <PetAvatar
+                            photoUrl={item.pet?.photoUrl}
+                            breed={item.pet?.breed}
+                            name={item.pet?.name}
+                            size="md"
+                          />
                           <div>
                             <CardTitle className="text-base">{item.pet?.name}</CardTitle>
                             <CardDescription className="text-xs flex items-center gap-1">

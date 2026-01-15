@@ -56,6 +56,7 @@ import {
   type LucideIcon
 } from "lucide-react";
 import { BreedIcon } from "@/components/breed-icons";
+import { PetAvatar } from "@/components/pet-avatar";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/shared/skeletons";
 import {
@@ -482,17 +483,12 @@ export default function AdminTraining() {
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
-                          {log.pet?.photoUrl ? (
-                            <img
-                              src={log.pet.photoUrl}
-                              alt={log.pet.name}
-                              className="h-12 w-12 rounded-full object-cover border-2 border-border"
-                            />
-                          ) : (
-                            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                              <BreedIcon breed={log.pet?.breed} className="h-6 w-6 text-muted-foreground" />
-                            </div>
-                          )}
+                          <PetAvatar
+                            photoUrl={log.pet?.photoUrl}
+                            breed={log.pet?.breed}
+                            name={log.pet?.name}
+                            size="lg"
+                          />
                           <div>
                             <CardTitle className="text-base">{log.pet?.name}</CardTitle>
                             <CardDescription className="text-xs">
@@ -1068,17 +1064,12 @@ export default function AdminTraining() {
           {selectedLog && (
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                {selectedLog.pet?.photoUrl ? (
-                  <img 
-                    src={selectedLog.pet.photoUrl} 
-                    alt={selectedLog.pet.name}
-                    className="h-16 w-16 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center">
-                    <BreedIcon breed={selectedLog.pet?.breed} className="h-8 w-8 text-slate-500" />
-                  </div>
-                )}
+                <PetAvatar
+                  photoUrl={selectedLog.pet?.photoUrl}
+                  breed={selectedLog.pet?.breed}
+                  name={selectedLog.pet?.name}
+                  size="xl"
+                />
                 <div>
                   <h3 className="font-semibold text-lg">{selectedLog.pet?.name}</h3>
                   <p className="text-sm text-muted-foreground">

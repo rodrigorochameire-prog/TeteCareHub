@@ -44,6 +44,7 @@ import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Link from "next/link";
+import { PetAvatar } from "@/components/pet-avatar";
 
 // Tipos de alerta
 type AlertType = "vaccine" | "medication" | "credits" | "stock" | "behavior" | "incompatibility";
@@ -363,13 +364,12 @@ export default function DaycarePage() {
                       >
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              {pet.photoUrl ? (
-                                <img src={pet.photoUrl} alt="" className="w-full h-full rounded-full object-cover" />
-                              ) : (
-                                <Dog className="h-5 w-5 text-primary" />
-                              )}
-                            </div>
+                            <PetAvatar
+                              photoUrl={pet.photoUrl}
+                              breed={pet.breed}
+                              name={pet.name}
+                              size="md"
+                            />
                             <div>
                               <Link href={`/admin/pets/${pet.id}`} className="font-semibold hover:underline">
                                 {pet.name}
@@ -463,13 +463,12 @@ export default function DaycarePage() {
                       >
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              {pet.photoUrl ? (
-                                <img src={pet.photoUrl} alt="" className="w-full h-full rounded-full object-cover" />
-                              ) : (
-                                <Dog className="h-5 w-5 text-primary" />
-                              )}
-                            </div>
+                            <PetAvatar
+                              photoUrl={pet.photoUrl}
+                              breed={pet.breed}
+                              name={pet.name}
+                              size="md"
+                            />
                             <div>
                               <Link href={`/admin/pets/${pet.id}`} className="font-semibold hover:underline">
                                 {pet.name}

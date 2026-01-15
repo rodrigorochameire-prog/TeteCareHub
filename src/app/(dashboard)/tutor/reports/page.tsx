@@ -27,6 +27,7 @@ import {
   BarChart3
 } from "lucide-react";
 import { BreedIcon } from "@/components/breed-icons";
+import { PetAvatar } from "@/components/pet-avatar";
 import { PageSkeleton } from "@/components/shared/skeletons";
 
 const moodLabels: Record<string, string> = {
@@ -143,17 +144,12 @@ export default function TutorReports() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-4">
-                {report.pet?.photoUrl ? (
-                  <img 
-                    src={report.pet.photoUrl} 
-                    alt={report.pet.name}
-                    className="h-16 w-16 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center">
-                    <BreedIcon breed={report.pet?.breed} className="h-8 w-8 text-slate-500" />
-                  </div>
-                )}
+                <PetAvatar
+                  photoUrl={report.pet?.photoUrl}
+                  breed={report.pet?.breed}
+                  name={report.pet?.name}
+                  size="xl"
+                />
                 <div>
                   <CardTitle className="text-2xl">{report.pet?.name}</CardTitle>
                   <CardDescription>

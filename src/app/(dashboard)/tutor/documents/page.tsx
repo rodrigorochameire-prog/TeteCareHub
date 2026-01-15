@@ -44,6 +44,7 @@ import {
   Link2,
 } from "lucide-react";
 import { BreedIcon } from "@/components/breed-icons";
+import { PetAvatar } from "@/components/pet-avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
@@ -256,17 +257,12 @@ export default function TutorDocuments() {
               <AccordionItem key={petId} value={String(petId)} className="border rounded-lg px-4">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3">
-                    {photoUrl ? (
-                      <img 
-                        src={photoUrl} 
-                        alt={petName}
-                        className="h-10 w-10 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
-                        <BreedIcon breed={breed} className="h-5 w-5 text-slate-500" />
-                      </div>
-                    )}
+                    <PetAvatar
+                      photoUrl={photoUrl}
+                      breed={breed}
+                      name={petName}
+                      size="md"
+                    />
                     <div className="text-left">
                       <p className="font-medium">{petName}</p>
                       <p className="text-sm text-muted-foreground">
