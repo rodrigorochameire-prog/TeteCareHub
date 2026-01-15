@@ -217,4 +217,5 @@ export async function withTransaction<T>(
 
 // Re-exportar tipos, schema e helpers
 export * from "./schema";
+export * from "./schema-enhanced";
 export * from "./helpers";
