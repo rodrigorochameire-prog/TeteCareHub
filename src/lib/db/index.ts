@@ -42,7 +42,7 @@ const globalForDb = globalThis as unknown as {
  * Suporta tanto DATABASE_URL quanto POSTGRES_URL
  */
 function getDatabaseUrl(): string {
-  const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  let url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
   
   if (!url) {
     throw new Error(
@@ -50,8 +50,18 @@ function getDatabaseUrl(): string {
     );
   }
   
-  // Se estiver usando Supabase com pgbouncer, garante que está configurado corretamente
-  // A URL do Supabase com pooler já vem configurada corretamente
+  // Corrigir senha com caracteres especiais (URL encode se necessário)
+  // Detecta padrão postgresql://user:password@host
+  const match = url.match(/^(postgresql:\/\/[^:]+:)([^@]+)(@.+)$/);
+  if (match) {
+    const [, prefix, password, suffix] = match;
+    // Se a senha tem caracteres que precisam de encoding
+    if (password.includes('[') || password.includes(']') || password.includes('*')) {
+      const encodedPassword = encodeURIComponent(password);
+      url = prefix + encodedPassword + suffix;
+    }
+  }
+  
   return url;
 }
 
