@@ -8,28 +8,27 @@ import * as schema from "./schema";
 
 /**
  * Configurações do pool de conexões
- * Otimizado para ambiente serverless (Vercel)
+ * Otimizado para ambiente serverless (Vercel) com Supabase
  */
 const POOL_CONFIG = {
   // Número máximo de conexões no pool
-  // Em serverless, manter baixo para evitar "too many connections"
-  max: process.env.NODE_ENV === "production" ? 5 : 10,
+  // Em serverless, manter MUITO baixo para evitar "too many connections"
+  max: 1,
   
-  // Timeout de conexão ociosa (segundos)
-  idle_timeout: 20,
+  // Timeout de conexão ociosa (segundos) - mais curto para serverless
+  idle_timeout: 10,
   
   // Timeout para estabelecer conexão (segundos)
-  connect_timeout: 10,
+  connect_timeout: 15,
   
-  // Desabilitar prepared statements (melhor para serverless/pgbouncer)
-  // PgBouncer em modo "transaction" não suporta prepared statements
+  // Desabilitar prepared statements (OBRIGATÓRIO para PgBouncer em modo transaction)
   prepare: false,
   
-  // Timeout máximo para queries (milissegundos)
-  max_lifetime: 60 * 1000, // 1 minuto
-  
   // Configurações SSL para Supabase
-  ssl: process.env.NODE_ENV === "production" ? "require" : undefined,
+  ssl: "require",
+  
+  // Não fazer fetch de tipos - mais rápido
+  fetch_types: false,
 } as const;
 
 // Singleton para conexão do banco
@@ -70,13 +69,8 @@ function createConnection(): postgres.Sql {
     console.log(`🔌 Conectando ao PostgreSQL: ${host}`);
   }
   
-  const conn = postgres(databaseUrl, {
-    ...POOL_CONFIG,
-    // Callback para log de erros de conexão
-    onnotice: process.env.NODE_ENV === "development" 
-      ? (notice) => console.log(`[PostgreSQL Notice] ${notice.message}`)
-      : undefined,
-  });
+  // Conexão otimizada para serverless
+  const conn = postgres(databaseUrl, POOL_CONFIG);
 
   return conn;
 }
