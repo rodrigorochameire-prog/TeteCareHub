@@ -1,52 +1,54 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { pets, users } from "@/lib/db/schema";
-import { sql } from "drizzle-orm";
+import { supabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/client";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 export async function GET() {
+  const results: Record<string, unknown> = {
+    timestamp: new Date().toISOString(),
+    supabase: {
+      configured: isSupabaseConfigured(),
+      url: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 40) + "...",
+    },
+    database: {
+      urlConfigured: Boolean(process.env.DATABASE_URL),
+      urlPreview: process.env.DATABASE_URL?.substring(0, 50) + "...",
+    },
+  };
+
+  // Test Supabase REST API
   try {
-    // Test database connection
-    const dbUrl = process.env.DATABASE_URL || "";
-    const urlPreview = dbUrl.substring(0, 50) + "...";
-
-    // Count pets and users
-    const petCount = await db.select({ count: sql<number>`count(*)` }).from(pets);
-    const userCount = await db.select({ count: sql<number>`count(*)` }).from(users);
-
-    // Get sample pets
-    const samplePets = await db
-      .select({
-        id: pets.id,
-        name: pets.name,
-        approvalStatus: pets.approvalStatus,
-      })
-      .from(pets)
+    const { data: pets, error: petsError } = await supabaseAdmin
+      .from("pets")
+      .select("id, name, approval_status")
       .limit(5);
 
-    return NextResponse.json({
-      status: "ok",
-      timestamp: new Date().toISOString(),
-      database: {
-        connected: true,
-        urlPreview,
-      },
-      counts: {
-        pets: petCount[0]?.count?.toString() || "0",
-        users: userCount[0]?.count?.toString() || "0",
-      },
-      samplePets,
-    });
+    if (petsError) {
+      results.supabaseError = petsError.message;
+    } else {
+      results.supabaseConnected = true;
+      results.samplePets = pets;
+    }
+
+    const { count: petsCount } = await supabaseAdmin
+      .from("pets")
+      .select("*", { count: "exact", head: true });
+
+    const { count: usersCount } = await supabaseAdmin
+      .from("users")
+      .select("*", { count: "exact", head: true });
+
+    results.counts = {
+      pets: petsCount,
+      users: usersCount,
+    };
+
+    results.status = "ok";
   } catch (error) {
-    return NextResponse.json(
-      {
-        status: "error",
-        error: error instanceof Error ? error.message : "Unknown error",
-        stack: error instanceof Error ? error.stack : undefined,
-      },
-      { status: 500 }
-    );
+    results.status = "error";
+    results.error = error instanceof Error ? error.message : "Unknown error";
   }
+
+  return NextResponse.json(results);
 }
