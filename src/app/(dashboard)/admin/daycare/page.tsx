@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -39,12 +40,24 @@ import {
   Calendar,
   Zap,
   AlertCircle,
+  Eye,
+  Ear,
+  Hand,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Link from "next/link";
 import { PetAvatar } from "@/components/pet-avatar";
+
+// Importar constantes de inspeção
+import {
+  SKIN_COAT_STATUS,
+  EAR_STATUS,
+  EYE_STATUS,
+  PAW_STATUS,
+  CHECKIN_OBSERVATIONS,
+} from "@/lib/constants/pet-options";
 
 // Tipos de alerta
 type AlertType = "vaccine" | "medication" | "credits" | "stock" | "behavior" | "incompatibility";
@@ -65,6 +78,14 @@ export default function DaycarePage() {
   const [checkoutNotes, setCheckoutNotes] = useState("");
   const [bypassReason, setBypassReason] = useState("");
   const [showBypassDialog, setShowBypassDialog] = useState(false);
+  
+  // Estados para inspeção de check-in
+  const [inspectionSkinCoat, setInspectionSkinCoat] = useState<string>("");
+  const [inspectionEars, setInspectionEars] = useState<string>("");
+  const [inspectionEyes, setInspectionEyes] = useState<string>("");
+  const [inspectionPaws, setInspectionPaws] = useState<string>("");
+  const [inspectionNotes, setInspectionNotes] = useState("");
+  const [checkinObservations, setCheckinObservations] = useState<string[]>([]);
 
   const utils = trpc.useUtils();
 
@@ -103,6 +124,16 @@ export default function DaycarePage() {
       }
     },
     onError: (error) => toast.error(error.message),
+  });
+  
+  // Mutation para criar inspeção de check-in
+  const createInspectionMutation = trpc.inspections.create.useMutation({
+    onSuccess: () => {
+      // Inspeção criada silenciosamente
+    },
+    onError: () => {
+      // Ignora erros de inspeção
+    },
   });
 
   // Configurações de thresholds
@@ -193,13 +224,38 @@ export default function DaycarePage() {
   };
 
   // Confirmar check-in (com ou sem bypass)
-  const confirmCheckin = (bypass = false) => {
+  const confirmCheckin = async (bypass = false) => {
     if (!selectedPet) return;
 
+    // Primeiro faz o check-in
     checkinMutation.mutate({
       petId: selectedPet.id,
     });
-
+    
+    // Depois cria a inspeção de entrada (se houver dados)
+    if (inspectionSkinCoat || inspectionEars || inspectionEyes || inspectionPaws || inspectionNotes) {
+      try {
+        await createInspectionMutation.mutateAsync({
+          petId: selectedPet.id,
+          skinCoat: inspectionSkinCoat || "intact",
+          ears: inspectionEars || "clean",
+          eyes: inspectionEyes || "clean",
+          paws: inspectionPaws || "normal",
+          notes: inspectionNotes || undefined,
+          observations: checkinObservations.length > 0 ? checkinObservations : undefined,
+        });
+      } catch {
+        // Ignora erro de inspeção - o check-in já foi feito
+      }
+    }
+    
+    // Limpar estados de inspeção
+    setInspectionSkinCoat("");
+    setInspectionEars("");
+    setInspectionEyes("");
+    setInspectionPaws("");
+    setInspectionNotes("");
+    setCheckinObservations([]);
     setShowBypassDialog(false);
     setBypassReason("");
   };
@@ -531,7 +587,7 @@ export default function DaycarePage() {
 
       {/* Dialog: Confirmar Check-in */}
       <Dialog open={isCheckinDialogOpen} onOpenChange={setIsCheckinDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserCheck className="h-5 w-5 text-green-600" />
@@ -581,6 +637,133 @@ export default function DaycarePage() {
                   <p className="text-sm mt-1">{selectedPet.severeAllergies}</p>
                 </div>
               )}
+              
+              {/* === INSPEÇÃO FÍSICA DE ENTRADA === */}
+              <div className="border-t pt-4 mt-4">
+                <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
+                  <Eye className="h-4 w-4" />
+                  Inspeção Física de Entrada
+                </h4>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Pele/Pelagem */}
+                  <div className="space-y-1">
+                    <Label className="text-xs">Pele/Pelagem</Label>
+                    <Select value={inspectionSkinCoat} onValueChange={setInspectionSkinCoat}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SKIN_COAT_STATUS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.icon} {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Ouvidos */}
+                  <div className="space-y-1">
+                    <Label className="text-xs flex items-center gap-1">
+                      <Ear className="h-3 w-3" /> Ouvidos
+                    </Label>
+                    <Select value={inspectionEars} onValueChange={setInspectionEars}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {EAR_STATUS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.icon} {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Olhos */}
+                  <div className="space-y-1">
+                    <Label className="text-xs flex items-center gap-1">
+                      <Eye className="h-3 w-3" /> Olhos
+                    </Label>
+                    <Select value={inspectionEyes} onValueChange={setInspectionEyes}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {EYE_STATUS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.icon} {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Patas */}
+                  <div className="space-y-1">
+                    <Label className="text-xs flex items-center gap-1">
+                      <Hand className="h-3 w-3" /> Patas
+                    </Label>
+                    <Select value={inspectionPaws} onValueChange={setInspectionPaws}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PAW_STATUS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.icon} {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                {/* Observações de Entrada */}
+                <div className="mt-3">
+                  <Label className="text-xs">Observações de Chegada</Label>
+                  <div className="grid grid-cols-2 gap-1 mt-1">
+                    {CHECKIN_OBSERVATIONS.map((opt) => (
+                      <label 
+                        key={opt.value}
+                        className={`flex items-center gap-2 p-1.5 rounded border text-xs cursor-pointer ${
+                          checkinObservations.includes(opt.value) 
+                            ? "bg-primary/10 border-primary" 
+                            : "hover:bg-accent"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checkinObservations.includes(opt.value)}
+                          onChange={() => {
+                            if (checkinObservations.includes(opt.value)) {
+                              setCheckinObservations(checkinObservations.filter(v => v !== opt.value));
+                            } else {
+                              setCheckinObservations([...checkinObservations, opt.value]);
+                            }
+                          }}
+                          className="sr-only"
+                        />
+                        <span>{opt.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Notas adicionais */}
+                <div className="mt-3">
+                  <Label className="text-xs">Notas Adicionais</Label>
+                  <Textarea
+                    value={inspectionNotes}
+                    onChange={(e) => setInspectionNotes(e.target.value)}
+                    placeholder="Observações sobre o estado do pet na chegada..."
+                    rows={2}
+                    className="text-sm mt-1"
+                  />
+                </div>
+              </div>
             </div>
           )}
 
