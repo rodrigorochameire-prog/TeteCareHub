@@ -77,6 +77,12 @@ import {
   Area,
 } from "recharts";
 
+import {
+  TRAINING_COMMANDS,
+  COMMAND_CATEGORIES,
+  COMMAND_PROFICIENCY,
+} from "@/lib/constants/pet-options";
+
 const NEUTRAL_COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"];
 
 const categoryOptions: { value: string; label: string; icon: LucideIcon }[] = [
@@ -85,19 +91,34 @@ const categoryOptions: { value: string; label: string; icon: LucideIcon }[] = [
   { value: "behavior", label: "Comportamento", icon: Brain },
   { value: "agility", label: "Agilidade", icon: Zap },
   { value: "tricks", label: "Truques", icon: Sparkles },
+  { value: "basic", label: "Básico", icon: BookOpen },
+  { value: "intermediate", label: "Intermediário", icon: Target },
+  { value: "advanced", label: "Avançado", icon: Trophy },
 ];
 
-const statusOptions: { value: string; label: string; icon: LucideIcon; color: string }[] = [
-  { value: "learning", label: "Aprendendo", icon: BookOpen, color: "text-blue-600" },
-  { value: "practicing", label: "Praticando", icon: RefreshCw, color: "text-yellow-600" },
-  { value: "mastered", label: "Dominado", icon: Star, color: "text-green-600" },
+// Opções de status agora com mais granularidade
+const statusOptions: { value: string; label: string; icon: LucideIcon; color: string; percent: number }[] = [
+  { value: "not_started", label: "Não Iniciado", icon: BookOpen, color: "text-gray-500", percent: 0 },
+  { value: "learning", label: "Entendendo o Sinal", icon: BookOpen, color: "text-blue-600", percent: 25 },
+  { value: "practicing", label: "Faz com Petisco", icon: RefreshCw, color: "text-yellow-600", percent: 50 },
+  { value: "mastered", label: "Dominado", icon: Star, color: "text-green-600", percent: 75 },
+  { value: "proofed", label: "Dominado com Distração", icon: Trophy, color: "text-emerald-600", percent: 100 },
 ];
+
+// Lista completa de comandos para seleção
+const commandOptions = TRAINING_COMMANDS.map(cmd => ({
+  value: cmd.value,
+  label: cmd.label,
+  icon: cmd.icon,
+  category: cmd.category,
+}));
 
 const methodOptions = [
   { value: "positive_reinforcement", label: "Reforço Positivo" },
   { value: "clicker", label: "Clicker" },
   { value: "lure", label: "Isca/Lure" },
   { value: "capture", label: "Captura" },
+  { value: "shaping", label: "Modelagem (Shaping)" },
 ];
 
 const periodOptions = [
@@ -847,12 +868,29 @@ export default function AdminTraining() {
 
             <div className="space-y-2">
               <Label htmlFor="command">Comando *</Label>
-              <Input
-                id="command"
-                name="command"
-                placeholder="Ex: Senta, Fica, Deita, Vem..."
-                required
-              />
+              <Select name="command" required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o comando" />
+                </SelectTrigger>
+                <SelectContent>
+                  {/* Agrupar por categoria */}
+                  {COMMAND_CATEGORIES.map((cat) => (
+                    <div key={cat.value}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                        {cat.label}
+                      </div>
+                      {commandOptions
+                        .filter(cmd => cmd.category === cat.value)
+                        .map((cmd) => (
+                          <SelectItem key={cmd.value} value={cmd.value}>
+                            {cmd.icon} {cmd.label}
+                          </SelectItem>
+                        ))
+                      }
+                    </div>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
