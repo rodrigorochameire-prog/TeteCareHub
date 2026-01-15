@@ -76,7 +76,7 @@ export default function DaycarePage() {
   const { data: lowStockPets } = trpc.petManagement.getLowStockPets.useQuery();
 
   // Mutations
-  const checkinMutation = trpc.checkin.checkin.useMutation({
+  const checkinMutation = trpc.checkin.checkIn.useMutation({
     onSuccess: () => {
       toast.success(`${selectedPet?.name} fez check-in!`);
       setIsCheckinDialogOpen(false);
@@ -87,7 +87,7 @@ export default function DaycarePage() {
     onError: (error) => toast.error(error.message),
   });
 
-  const checkoutMutation = trpc.checkin.checkout.useMutation({
+  const checkoutMutation = trpc.checkin.checkOut.useMutation({
     onSuccess: (data) => {
       toast.success(`${selectedPet?.name} fez check-out!`);
       setIsCheckoutDialogOpen(false);
@@ -97,8 +97,8 @@ export default function DaycarePage() {
       utils.pets.list.invalidate();
       
       // Verificar se precisa avisar sobre créditos
-      if (data?.creditsRemaining !== undefined && data.creditsRemaining <= 3) {
-        toast.warning(`Atenção: ${selectedPet?.name} tem apenas ${data.creditsRemaining} créditos restantes!`);
+      if (data?.credits !== undefined && data.credits <= 3) {
+        toast.warning(`Atenção: ${selectedPet?.name} tem apenas ${data.credits} créditos restantes!`);
       }
     },
     onError: (error) => toast.error(error.message),
@@ -197,7 +197,6 @@ export default function DaycarePage() {
 
     checkinMutation.mutate({
       petId: selectedPet.id,
-      notes: bypass ? `BYPASS: ${bypassReason}` : undefined,
     });
 
     setShowBypassDialog(false);
@@ -216,7 +215,6 @@ export default function DaycarePage() {
 
     checkoutMutation.mutate({
       petId: selectedPet.id,
-      notes: checkoutNotes || undefined,
     });
   };
 
