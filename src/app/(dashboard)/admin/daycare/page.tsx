@@ -237,12 +237,12 @@ export default function DaycarePage() {
       try {
         await createInspectionMutation.mutateAsync({
           petId: selectedPet.id,
-          skinCoat: inspectionSkinCoat || "intact",
-          ears: inspectionEars || "clean",
-          eyes: inspectionEyes || "clean",
-          paws: inspectionPaws || "normal",
-          notes: inspectionNotes || undefined,
-          observations: checkinObservations.length > 0 ? checkinObservations : undefined,
+          skinCoatStatus: inspectionSkinCoat || "intact",
+          earStatus: inspectionEars || "clean",
+          eyeStatus: inspectionEyes || "clean",
+          pawStatus: inspectionPaws || "normal",
+          generalNotes: inspectionNotes || undefined,
+          checkinObservations: checkinObservations.length > 0 ? checkinObservations : undefined,
         });
       } catch {
         // Ignora erro de inspeção - o check-in já foi feito
