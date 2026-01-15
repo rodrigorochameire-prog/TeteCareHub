@@ -54,8 +54,28 @@ export const pets = pgTable("pets", {
   status: varchar("status", { length: 50 }).default("active").notNull(), // 'active' | 'checked-in' | 'inactive'
   approvalStatus: varchar("approval_status", { length: 50 }).default("pending").notNull(), // 'pending' | 'approved' | 'rejected'
   notes: text("notes"),
+  
+  // Alimentação
   foodBrand: varchar("food_brand", { length: 200 }),
+  foodType: varchar("food_type", { length: 50 }), // 'dry' | 'wet' | 'mixed' | 'natural' | 'barf'
   foodAmount: integer("food_amount"), // quantidade diária em gramas
+  foodStockGrams: integer("food_stock_grams"), // estoque atual na creche em gramas
+  foodStockLastUpdate: timestamp("food_stock_last_update"), // última atualização do estoque
+  feedingInstructions: text("feeding_instructions"), // instruções especiais de preparo
+  
+  // Comportamento e Energia
+  energyLevel: varchar("energy_level", { length: 20 }), // 'low' | 'medium' | 'high' | 'very_high'
+  sociabilityLevel: varchar("sociability_level", { length: 20 }), // 'shy' | 'selective' | 'friendly' | 'very_social'
+  anxietySeparation: varchar("anxiety_separation", { length: 20 }), // 'none' | 'mild' | 'moderate' | 'severe'
+  roomPreference: varchar("room_preference", { length: 50 }), // 'small_dogs' | 'large_dogs' | 'calm' | 'active'
+  
+  // Protocolo de Emergência
+  emergencyVetName: varchar("emergency_vet_name", { length: 200 }),
+  emergencyVetPhone: varchar("emergency_vet_phone", { length: 50 }),
+  emergencyVetAddress: text("emergency_vet_address"),
+  severeAllergies: text("severe_allergies"), // alergias graves
+  medicalConditions: text("medical_conditions"), // condições médicas crônicas
+  
   credits: integer("credits").default(0).notNull(), // créditos de creche
   // Soft delete
   deletedAt: timestamp("deleted_at"),
@@ -67,6 +87,8 @@ export const pets = pgTable("pets", {
   index("pets_approval_status_idx").on(table.approvalStatus),
   index("pets_species_idx").on(table.species),
   index("pets_deleted_at_idx").on(table.deletedAt),
+  index("pets_energy_level_idx").on(table.energyLevel),
+  index("pets_room_preference_idx").on(table.roomPreference),
 ]);
 
 export type Pet = typeof pets.$inferSelect;
@@ -942,4 +964,177 @@ export const whatsappMessagesRelations = relations(whatsappMessages, ({ one }) =
   config: one(whatsappConfig, { fields: [whatsappMessages.configId], references: [whatsappConfig.id] }),
   pet: one(pets, { fields: [whatsappMessages.petId], references: [pets.id] }),
   sentBy: one(users, { fields: [whatsappMessages.sentById], references: [users.id] }),
+}));
+
+// ==========================================
+// CÍRCULO SOCIAL (Afinidades e Restrições)
+// ==========================================
+
+export const petSocialCircle = pgTable("pet_social_circle", {
+  id: serial("id").primaryKey(),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  relatedPetId: integer("related_pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  relationshipType: varchar("relationship_type", { length: 20 }).notNull(), // 'friend' | 'neutral' | 'avoid' | 'incompatible'
+  notes: text("notes"), // observações sobre a relação
+  severity: varchar("severity", { length: 20 }), // para 'avoid'/'incompatible': 'low' | 'medium' | 'high' | 'critical'
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("pet_social_circle_pet_id_idx").on(table.petId),
+  index("pet_social_circle_related_pet_id_idx").on(table.relatedPetId),
+  index("pet_social_circle_relationship_type_idx").on(table.relationshipType),
+]);
+
+export type PetSocialCircle = typeof petSocialCircle.$inferSelect;
+export type InsertPetSocialCircle = typeof petSocialCircle.$inferInsert;
+
+// Relações do círculo social
+export const petSocialCircleRelations = relations(petSocialCircle, ({ one }) => ({
+  pet: one(pets, { fields: [petSocialCircle.petId], references: [pets.id] }),
+  relatedPet: one(pets, { fields: [petSocialCircle.relatedPetId], references: [pets.id] }),
+  createdBy: one(users, { fields: [petSocialCircle.createdById], references: [users.id] }),
+}));
+
+// ==========================================
+// HISTÓRICO DE PESO
+// ==========================================
+
+export const petWeightHistory = pgTable("pet_weight_history", {
+  id: serial("id").primaryKey(),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  weight: integer("weight").notNull(), // em gramas
+  measuredAt: timestamp("measured_at").notNull(),
+  notes: text("notes"),
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("pet_weight_history_pet_id_idx").on(table.petId),
+  index("pet_weight_history_measured_at_idx").on(table.measuredAt),
+]);
+
+export type PetWeightHistory = typeof petWeightHistory.$inferSelect;
+export type InsertPetWeightHistory = typeof petWeightHistory.$inferInsert;
+
+// Relações do histórico de peso
+export const petWeightHistoryRelations = relations(petWeightHistory, ({ one }) => ({
+  pet: one(pets, { fields: [petWeightHistory.petId], references: [pets.id] }),
+  createdBy: one(users, { fields: [petWeightHistory.createdById], references: [users.id] }),
+}));
+
+// ==========================================
+// LOG DE ALIMENTAÇÃO (Estoque)
+// ==========================================
+
+export const petFeedingLogs = pgTable("pet_feeding_logs", {
+  id: serial("id").primaryKey(),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  feedingDate: timestamp("feeding_date").notNull(),
+  mealType: varchar("meal_type", { length: 20 }).notNull(), // 'breakfast' | 'lunch' | 'dinner' | 'snack'
+  amountGrams: integer("amount_grams").notNull(), // quantidade oferecida
+  consumption: varchar("consumption", { length: 20 }).notNull(), // 'all' | 'most' | 'half' | 'little' | 'none'
+  notes: text("notes"),
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("pet_feeding_logs_pet_id_idx").on(table.petId),
+  index("pet_feeding_logs_feeding_date_idx").on(table.feedingDate),
+  index("pet_feeding_logs_consumption_idx").on(table.consumption),
+]);
+
+export type PetFeedingLog = typeof petFeedingLogs.$inferSelect;
+export type InsertPetFeedingLog = typeof petFeedingLogs.$inferInsert;
+
+// Relações do log de alimentação
+export const petFeedingLogsRelations = relations(petFeedingLogs, ({ one }) => ({
+  pet: one(pets, { fields: [petFeedingLogs.petId], references: [pets.id] }),
+  createdBy: one(users, { fields: [petFeedingLogs.createdById], references: [users.id] }),
+}));
+
+// ==========================================
+// HABILIDADES DE ADESTRAMENTO
+// ==========================================
+
+export const petTrainingSkills = pgTable("pet_training_skills", {
+  id: serial("id").primaryKey(),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  skillName: varchar("skill_name", { length: 100 }).notNull(), // 'sit' | 'stay' | 'recall' | 'heel' | etc
+  status: varchar("status", { length: 20 }).notNull(), // 'not_started' | 'learning' | 'inconsistent' | 'mastered'
+  lastPracticed: timestamp("last_practiced"),
+  notes: text("notes"),
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("pet_training_skills_pet_id_idx").on(table.petId),
+  index("pet_training_skills_status_idx").on(table.status),
+]);
+
+export type PetTrainingSkill = typeof petTrainingSkills.$inferSelect;
+export type InsertPetTrainingSkill = typeof petTrainingSkills.$inferInsert;
+
+// Relações das habilidades de adestramento
+export const petTrainingSkillsRelations = relations(petTrainingSkills, ({ one }) => ({
+  pet: one(pets, { fields: [petTrainingSkills.petId], references: [pets.id] }),
+  createdBy: one(users, { fields: [petTrainingSkills.createdById], references: [users.id] }),
+}));
+
+// ==========================================
+// ALERTAS E FLAGS DO PET
+// ==========================================
+
+export const petAlerts = pgTable("pet_alerts", {
+  id: serial("id").primaryKey(),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  alertType: varchar("alert_type", { length: 50 }).notNull(), // 'behavior' | 'health' | 'feeding' | 'social' | 'financial'
+  severity: varchar("severity", { length: 20 }).notNull(), // 'info' | 'warning' | 'critical'
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true).notNull(),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedById: integer("resolved_by_id")
+    .references(() => users.id),
+  resolutionNotes: text("resolution_notes"),
+  // Referências opcionais para contexto
+  relatedLogId: integer("related_log_id"),
+  relatedEventId: integer("related_event_id"),
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("pet_alerts_pet_id_idx").on(table.petId),
+  index("pet_alerts_alert_type_idx").on(table.alertType),
+  index("pet_alerts_severity_idx").on(table.severity),
+  index("pet_alerts_is_active_idx").on(table.isActive),
+]);
+
+export type PetAlert = typeof petAlerts.$inferSelect;
+export type InsertPetAlert = typeof petAlerts.$inferInsert;
+
+// Relações dos alertas
+export const petAlertsRelations = relations(petAlerts, ({ one }) => ({
+  pet: one(pets, { fields: [petAlerts.petId], references: [pets.id] }),
+  createdBy: one(users, { fields: [petAlerts.createdById], references: [users.id] }),
+  resolvedBy: one(users, { fields: [petAlerts.resolvedById], references: [users.id] }),
 }));
