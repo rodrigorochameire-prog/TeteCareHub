@@ -56,9 +56,13 @@ function getDatabaseUrl(): string {
   if (match) {
     const [, prefix, password, suffix] = match;
     // Se a senha tem caracteres que precisam de encoding
-    if (password.includes('[') || password.includes(']') || password.includes('*')) {
-      const encodedPassword = encodeURIComponent(password);
+    if (password.includes('[') || password.includes(']') || password.includes('*') || password.includes('%')) {
+      // encodeURIComponent não codifica * e outros, fazemos manualmente
+      let encodedPassword = encodeURIComponent(password);
+      // Encode adicional para asterisco (*)
+      encodedPassword = encodedPassword.replace(/\*/g, '%2A');
       url = prefix + encodedPassword + suffix;
+      console.log('[DB] Password encoding applied');
     }
   }
   
