@@ -30,6 +30,10 @@ import { analyticsRouter } from "./analytics";
 import { petManagementRouter } from "./petManagement";
 import { businessRulesRouter } from "./businessRules";
 import { aiRouter } from "./ai";
+import { inspectionsRouter } from "./inspections";
+import { alertsRouter } from "./alerts";
+import { trainingMatrixRouter } from "./trainingMatrix";
+import { compatibilityRouter } from "./compatibility";
 
 export const appRouter = router({
   // Autenticação
@@ -90,6 +94,12 @@ export const appRouter = router({
   
   // Inteligência Artificial
   ai: aiRouter,
+  
+  // Gestão Profissional (Enhanced)
+  inspections: inspectionsRouter,
+  alerts: alertsRouter,
+  trainingMatrix: trainingMatrixRouter,
+  compatibility: compatibilityRouter,
 });
 
 export type AppRouter = typeof appRouter;
