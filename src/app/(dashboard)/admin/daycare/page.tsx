@@ -89,13 +89,26 @@ export default function DaycarePage() {
 
   const utils = trpc.useUtils();
 
-  // Queries
-  const { data: approvedPets, isLoading: petsLoading } = trpc.pets.list.useQuery();
-  const { data: checkedInPets } = trpc.dashboard.checkedInPets.useQuery();
-  const { data: settings } = trpc.businessRules.listSettings.useQuery();
-  const { data: allFlags } = trpc.businessRules.listFlags.useQuery({ activeOnly: true });
-  const { data: vaccineStats } = trpc.vaccines.stats.useQuery();
-  const { data: lowStockPets } = trpc.petManagement.getLowStockPets.useQuery();
+  // Query unificada principal - carrega tudo em 1 chamada
+  const { data: daycareData, isLoading: petsLoading } = trpc.dashboard.daycareData.useQuery(undefined, {
+    staleTime: 60 * 1000, // 1 minuto - evita refetch desnecessário
+  });
+
+  // Extrair dados da query unificada
+  const approvedPets = daycareData?.approvedPets;
+  const checkedInPets = daycareData?.checkedInPets;
+  const lowStockPets = daycareData?.lowStockPets;
+  const vaccineStats = daycareData?.vaccineStats;
+
+  // Queries secundárias - lazy loading (só carrega após daycareData)
+  const { data: settings } = trpc.businessRules.listSettings.useQuery(undefined, {
+    enabled: !!daycareData, // Espera dados principais
+    staleTime: 5 * 60 * 1000, // 5 minutos - muda raramente
+  });
+  const { data: allFlags } = trpc.businessRules.listFlags.useQuery({ activeOnly: true }, {
+    enabled: !!daycareData,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+  });
 
   // Mutations
   const checkinMutation = trpc.checkin.checkIn.useMutation({
@@ -103,8 +116,7 @@ export default function DaycarePage() {
       toast.success(`${selectedPet?.name} fez check-in!`);
       setIsCheckinDialogOpen(false);
       setSelectedPet(null);
-      utils.dashboard.checkedInPets.invalidate();
-      utils.pets.list.invalidate();
+      utils.dashboard.daycareData.invalidate(); // Query unificada
     },
     onError: (error) => toast.error(error.message),
   });
@@ -115,8 +127,7 @@ export default function DaycarePage() {
       setIsCheckoutDialogOpen(false);
       setSelectedPet(null);
       setCheckoutNotes("");
-      utils.dashboard.checkedInPets.invalidate();
-      utils.pets.list.invalidate();
+      utils.dashboard.daycareData.invalidate(); // Query unificada
       
       // Verificar se precisa avisar sobre créditos
       if (data?.credits !== undefined && data.credits <= 3) {

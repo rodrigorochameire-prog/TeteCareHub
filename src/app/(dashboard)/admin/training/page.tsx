@@ -145,16 +145,20 @@ export default function AdminTraining() {
   const [videoUrl, setVideoUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Query principal com cache
   const { data: logs, isLoading, refetch } = trpc.training.list.useQuery({
     category: selectedCategory as any,
     limit: 100,
+  }, {
+    staleTime: 60 * 1000, // 1 min cache
   });
 
-  const { data: allLogs } = trpc.training.list.useQuery({
-    limit: 500,
-  });
+  // Reusar mesma query (evita duplicação)
+  const allLogs = logs;
 
-  const { data: pets } = trpc.pets.list.useQuery();
+  const { data: pets } = trpc.pets.list.useQuery(undefined, {
+    staleTime: 5 * 60 * 1000, // 5 min cache
+  });
 
   // Filtrar logs
   const filteredLogs = useMemo(() => {

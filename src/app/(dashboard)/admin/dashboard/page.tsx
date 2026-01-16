@@ -65,13 +65,37 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [period, setPeriod] = useState("month");
   
-  const { data: stats, isLoading: statsLoading } = trpc.dashboard.stats.useQuery();
-  const { data: checkedInPets, isLoading: petsLoading } = trpc.dashboard.checkedInPets.useQuery();
-  const { data: vaccineStats } = trpc.vaccines.stats.useQuery();
-  const { data: allPets } = trpc.pets.list.useQuery();
-  const { data: petsAttention } = trpc.analytics.petsRequiringAttention.useQuery();
-  const { data: dailyStatus } = trpc.petManagement.getDailyStatusCards.useQuery();
-  const { data: lowStockPets } = trpc.petManagement.getLowStockPets.useQuery();
+  // Queries essenciais - carregam primeiro com cache
+  const { data: stats, isLoading: statsLoading } = trpc.dashboard.stats.useQuery(undefined, {
+    staleTime: 60 * 1000, // 1 min cache
+  });
+  const { data: checkedInPets, isLoading: petsLoading } = trpc.dashboard.checkedInPets.useQuery(undefined, {
+    staleTime: 30 * 1000, // 30s - dados críticos
+  });
+
+  // Queries secundárias - lazy loading (só carregam após stats)
+  const { data: vaccineStats } = trpc.vaccines.stats.useQuery(undefined, {
+    enabled: !!stats, // Espera stats carregar
+    staleTime: 5 * 60 * 1000, // 5 min
+  });
+  const { data: allPets } = trpc.pets.list.useQuery(undefined, {
+    enabled: !!stats,
+    staleTime: 2 * 60 * 1000, // 2 min
+  });
+  
+  // Queries pesadas - lazy loading com cache longo
+  const { data: petsAttention } = trpc.analytics.petsRequiringAttention.useQuery(undefined, {
+    enabled: !!stats,
+    staleTime: 5 * 60 * 1000, // 5 min - não precisa ser em tempo real
+  });
+  const { data: dailyStatus } = trpc.petManagement.getDailyStatusCards.useQuery(undefined, {
+    enabled: !!stats,
+    staleTime: 2 * 60 * 1000, // 2 min
+  });
+  const { data: lowStockPets } = trpc.petManagement.getLowStockPets.useQuery(undefined, {
+    enabled: !!stats,
+    staleTime: 5 * 60 * 1000, // 5 min
+  });
 
   // Dados calculados para gráficos
   const chartData = useMemo(() => {

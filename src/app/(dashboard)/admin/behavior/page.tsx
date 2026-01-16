@@ -149,16 +149,20 @@ export default function AdminBehavior() {
     return undefined; // For week/month, we get more data
   }, [periodFilter, customDate]);
 
+  // Query principal com cache
   const { data: logs, isLoading, refetch } = trpc.behavior.list.useQuery({
     date: dateFilter,
     limit: 100,
+  }, {
+    staleTime: 60 * 1000, // 1 min cache
   });
 
-  const { data: allLogs } = trpc.behavior.list.useQuery({
-    limit: 500,
-  });
+  // Reusar mesma query (evita duplicação de 500 registros)
+  const allLogs = logs;
 
-  const { data: pets } = trpc.pets.list.useQuery();
+  const { data: pets } = trpc.pets.list.useQuery(undefined, {
+    staleTime: 5 * 60 * 1000, // 5 min cache
+  });
 
   // Filtrar logs por pet
   const filteredLogs = useMemo(() => {
