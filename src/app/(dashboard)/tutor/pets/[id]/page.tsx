@@ -1495,237 +1495,398 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                 
                 {/* Gráfico de Radar Premium - Coluna Principal */}
                 <div className="lg:col-span-3 p-4 sm:p-6">
-                  <div className="h-[280px] sm:h-[340px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart 
-                        data={radarData} 
-                        cx="50%" 
-                        cy="50%" 
-                        outerRadius="68%"
-                        margin={{ top: 20, right: 30, bottom: 20, left: 30 }}
-                      >
-                        <defs>
-                          {/* Gradiente Premium para valor atual */}
-                          <linearGradient id="radarGradientPremium" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.9} />
-                            <stop offset="50%" stopColor="#a78bfa" stopOpacity={0.6} />
-                            <stop offset="100%" stopColor="#c4b5fd" stopOpacity={0.3} />
-                          </linearGradient>
-                          {/* Gradiente do benchmark */}
-                          <linearGradient id="benchmarkGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#94a3b8" stopOpacity={0.3} />
-                            <stop offset="100%" stopColor="#cbd5e1" stopOpacity={0.1} />
-                          </linearGradient>
-                          {/* Glow effect */}
-                          <filter id="glow">
-                            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                            <feMerge>
-                              <feMergeNode in="coloredBlur"/>
-                              <feMergeNode in="SourceGraphic"/>
-                            </feMerge>
-                          </filter>
-                        </defs>
-                        
-                        <PolarGrid 
-                          stroke="#e2e8f0" 
-                          strokeWidth={1}
-                          gridType="polygon"
-                          className="dark:stroke-slate-700"
-                        />
-                        
-                        <PolarAngleAxis 
-                          dataKey="shortName" 
-                          tick={(props: any) => {
-                            const { x, y, payload, index } = props;
-                            const item = radarData[index];
-                            const isAbove = item && item.value > item.benchmark;
-                            const yPos = typeof y === "number" ? y : 0;
-                            return (
-                              <g>
-                                <text 
-                                  x={x} 
-                                  y={y} 
-                                  textAnchor="middle" 
-                                  fill={isAbove ? "#7c3aed" : "#64748b"}
-                                  fontSize={9}
-                                  fontWeight={600}
-                                  className="dark:fill-slate-300"
-                                >
-                                  {payload.value}
-                                </text>
-                                {item && (
-                                  <text 
-                                    x={x} 
-                                    y={yPos + 11} 
-                                    textAnchor="middle" 
-                                    fill={isAbove ? "#22c55e" : "#94a3b8"}
-                                    fontSize={8}
-                                    fontWeight={500}
-                                  >
-                                    {item.value}%
-                                  </text>
-                                )}
-                              </g>
-                            );
-                          }}
-                          tickLine={false}
-                        />
-                        
-                        <PolarRadiusAxis 
-                          angle={90} 
-                          domain={[0, 100]} 
-                          tick={false}
-                          axisLine={false}
-                        />
-                        
-                        {/* Camada de Benchmark (média esperada) */}
-                        <Radar
-                          name="Média"
-                          dataKey="benchmark"
-                          stroke="#94a3b8"
-                          strokeWidth={1.5}
-                          strokeDasharray="4 4"
-                          fill="url(#benchmarkGradient)"
-                          fillOpacity={0.4}
-                        />
-                        
-                        {/* Camada do Valor Atual */}
-                        <Radar
-                          name="Atual"
-                          dataKey="value"
-                          stroke="#8b5cf6"
-                          strokeWidth={2.5}
-                          fill="url(#radarGradientPremium)"
-                          fillOpacity={0.7}
-                          filter="url(#glow)"
-                          dot={{
-                            r: 4,
-                            fill: '#8b5cf6',
-                            stroke: '#fff',
-                            strokeWidth: 2,
-                          }}
-                        />
-                        
-                        <Legend 
-                          wrapperStyle={{ paddingTop: 5 }}
-                          formatter={(value) => (
-                            <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                              {value === "Atual" ? "Seu Pet" : "Média Esperada"}
-                            </span>
-                          )}
-                        />
-                        
-                        <Tooltip 
-                          content={({ active, payload }) => {
-                            if (active && payload && payload.length) {
-                              const data = payload[0]?.payload;
-                              if (!data) return null;
-                              const diff = data.value - data.benchmark;
+                  {/* Container com background decorativo */}
+                  <div className="relative">
+                    {/* Efeito de brilho de fundo */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-48 h-48 rounded-full bg-gradient-to-br from-purple-500/10 via-violet-500/5 to-transparent blur-3xl" />
+                    </div>
+                    
+                    <div className="h-[320px] sm:h-[380px] relative z-10">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart 
+                          data={radarData} 
+                          cx="50%" 
+                          cy="50%" 
+                          outerRadius="58%"
+                          margin={{ top: 40, right: 50, bottom: 30, left: 50 }}
+                        >
+                          <defs>
+                            {/* Gradiente Premium Ultra para valor atual */}
+                            <linearGradient id="radarGradientPremiumUltra" x1="0" y1="0" x2="1" y2="1">
+                              <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.95} />
+                              <stop offset="30%" stopColor="#a855f7" stopOpacity={0.8} />
+                              <stop offset="60%" stopColor="#c084fc" stopOpacity={0.6} />
+                              <stop offset="100%" stopColor="#e879f9" stopOpacity={0.4} />
+                            </linearGradient>
+                            
+                            {/* Gradiente do benchmark mais sutil */}
+                            <linearGradient id="benchmarkGradientPremium" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#cbd5e1" stopOpacity={0.25} />
+                              <stop offset="100%" stopColor="#e2e8f0" stopOpacity={0.1} />
+                            </linearGradient>
+                            
+                            {/* Glow effect aprimorado */}
+                            <filter id="glowPremium" x="-50%" y="-50%" width="200%" height="200%">
+                              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                              <feMerge>
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                              </feMerge>
+                            </filter>
+                            
+                            {/* Drop shadow para pontos */}
+                            <filter id="dotShadow" x="-50%" y="-50%" width="200%" height="200%">
+                              <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#8b5cf6" floodOpacity="0.5"/>
+                            </filter>
+                            
+                            {/* Radial gradient para efeito de profundidade */}
+                            <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                              <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.08} />
+                              <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0} />
+                            </radialGradient>
+                          </defs>
+                          
+                          {/* Círculo decorativo central */}
+                          <circle cx="50%" cy="50%" r="5%" fill="url(#centerGlow)" />
+                          
+                          <PolarGrid 
+                            stroke="#e2e8f0" 
+                            strokeWidth={1}
+                            gridType="polygon"
+                            className="dark:stroke-slate-700/60"
+                            strokeOpacity={0.6}
+                          />
+                          
+                          <PolarAngleAxis 
+                            dataKey="metric" 
+                            tick={(props: any) => {
+                              const { x, y, payload, index } = props;
+                              const item = radarData[index];
+                              const isAbove = item && item.value > item.benchmark;
+                              const isStrong = item && item.value >= 80;
+                              const xPos = typeof x === "number" ? x : 0;
+                              const yPos = typeof y === "number" ? y : 0;
+                              
+                              // Calcular posição ajustada para os labels não cortarem
+                              const centerX = 50;
+                              const centerY = 50;
+                              const angleRad = Math.atan2(yPos - centerY, xPos - centerX);
+                              const labelOffset = 12;
+                              const adjustedX = xPos + Math.cos(angleRad) * labelOffset;
+                              const adjustedY = yPos + Math.sin(angleRad) * labelOffset;
+                              
                               return (
-                                <div className="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 min-w-[160px]">
-                                  <div className="font-semibold text-sm text-slate-800 dark:text-slate-200 mb-1">
-                                    {data.metric}
-                                  </div>
-                                  <div className="text-[10px] text-slate-500 dark:text-slate-400 mb-2">
-                                    {data.description}
-                                  </div>
-                                  <div className="flex items-center justify-between">
-                                    <div>
-                                      <div className="text-lg font-bold text-purple-600">{data.value}%</div>
-                                      <div className="text-[9px] text-slate-400">Seu pet</div>
-                                    </div>
-                                    <div className="text-right">
+                                <g>
+                                  {/* Badge de fundo para labels premium */}
+                                  <rect
+                                    x={adjustedX - 38}
+                                    y={adjustedY - 10}
+                                    width={76}
+                                    height={28}
+                                    rx={6}
+                                    fill={isStrong ? "rgba(139, 92, 246, 0.1)" : "rgba(148, 163, 184, 0.08)"}
+                                    stroke={isStrong ? "rgba(139, 92, 246, 0.2)" : "rgba(148, 163, 184, 0.15)"}
+                                    strokeWidth={1}
+                                  />
+                                  {/* Nome da métrica */}
+                                  <text 
+                                    x={adjustedX} 
+                                    y={adjustedY} 
+                                    textAnchor="middle" 
+                                    dominantBaseline="middle"
+                                    fill={isAbove ? "#7c3aed" : "#64748b"}
+                                    fontSize={10}
+                                    fontWeight={600}
+                                    letterSpacing="0.02em"
+                                  >
+                                    {payload.value}
+                                  </text>
+                                  {/* Valor percentual */}
+                                  {item && (
+                                    <text 
+                                      x={adjustedX} 
+                                      y={adjustedY + 12} 
+                                      textAnchor="middle" 
+                                      dominantBaseline="middle"
+                                      fill={isAbove ? "#22c55e" : "#94a3b8"}
+                                      fontSize={9}
+                                      fontWeight={700}
+                                    >
+                                      {item.value}%
+                                    </text>
+                                  )}
+                                </g>
+                              );
+                            }}
+                            tickLine={false}
+                          />
+                          
+                          <PolarRadiusAxis 
+                            angle={90} 
+                            domain={[0, 100]} 
+                            tick={false}
+                            axisLine={false}
+                          />
+                          
+                          {/* Camada de Benchmark (média esperada) - mais sutil */}
+                          <Radar
+                            name="Média Esperada"
+                            dataKey="benchmark"
+                            stroke="#94a3b8"
+                            strokeWidth={1.5}
+                            strokeDasharray="6 4"
+                            fill="url(#benchmarkGradientPremium)"
+                            fillOpacity={0.5}
+                          />
+                          
+                          {/* Camada do Valor Atual - Premium com animação */}
+                          <Radar
+                            name="Seu Pet"
+                            dataKey="value"
+                            stroke="url(#radarGradientPremiumUltra)"
+                            strokeWidth={3}
+                            fill="url(#radarGradientPremiumUltra)"
+                            fillOpacity={0.65}
+                            filter="url(#glowPremium)"
+                            dot={(props: any) => {
+                              const { cx, cy, index } = props;
+                              const item = radarData[index];
+                              const isStrong = item && item.value >= 80;
+                              return (
+                                <g filter="url(#dotShadow)">
+                                  {/* Anel externo animado para pontos fortes */}
+                                  {isStrong && (
+                                    <circle
+                                      cx={cx}
+                                      cy={cy}
+                                      r={8}
+                                      fill="none"
+                                      stroke="#8b5cf6"
+                                      strokeWidth={1.5}
+                                      strokeOpacity={0.4}
+                                      className="animate-ping"
+                                      style={{ animationDuration: '2s' }}
+                                    />
+                                  )}
+                                  {/* Círculo externo */}
+                                  <circle
+                                    cx={cx}
+                                    cy={cy}
+                                    r={isStrong ? 7 : 5}
+                                    fill="white"
+                                    stroke={isStrong ? "#8b5cf6" : "#a78bfa"}
+                                    strokeWidth={2.5}
+                                  />
+                                  {/* Ponto interno */}
+                                  <circle
+                                    cx={cx}
+                                    cy={cy}
+                                    r={isStrong ? 3 : 2}
+                                    fill={isStrong ? "#8b5cf6" : "#a78bfa"}
+                                  />
+                                </g>
+                              );
+                            }}
+                            animationBegin={0}
+                            animationDuration={1200}
+                            animationEasing="ease-out"
+                          />
+                          
+                          <Legend 
+                            wrapperStyle={{ paddingTop: 15 }}
+                            iconType="circle"
+                            iconSize={10}
+                            formatter={(value) => (
+                              <span className="text-xs font-medium text-slate-600 dark:text-slate-400 ml-1">
+                                {value}
+                              </span>
+                            )}
+                          />
+                          
+                          <Tooltip 
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                const data = payload[0]?.payload;
+                                if (!data) return null;
+                                const diff = data.value - data.benchmark;
+                                const isGood = diff >= 0;
+                                return (
+                                  <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg p-4 rounded-2xl shadow-2xl border border-purple-100 dark:border-purple-900/50 min-w-[180px]">
+                                    {/* Header com ícone */}
+                                    <div className="flex items-center gap-2 mb-2">
                                       <div className={cn(
-                                        "text-sm font-semibold flex items-center gap-1",
-                                        diff > 0 ? "text-emerald-500" : diff < 0 ? "text-amber-500" : "text-slate-400"
+                                        "w-8 h-8 rounded-lg flex items-center justify-center",
+                                        isGood ? "bg-purple-100 dark:bg-purple-900/40" : "bg-amber-100 dark:bg-amber-900/40"
                                       )}>
-                                        {diff > 0 ? <TrendingUp className="h-3 w-3" /> : diff < 0 ? <TrendingDown className="h-3 w-3" /> : null}
+                                        <Brain className={cn(
+                                          "h-4 w-4",
+                                          isGood ? "text-purple-600" : "text-amber-600"
+                                        )} />
+                                      </div>
+                                      <div>
+                                        <div className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                                          {data.metric}
+                                        </div>
+                                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                                          {data.description}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent my-3" />
+                                    
+                                    {/* Scores */}
+                                    <div className="flex items-center justify-between">
+                                      <div className="text-center">
+                                        <div className={cn(
+                                          "text-2xl font-bold",
+                                          isGood ? "text-purple-600" : "text-amber-600"
+                                        )}>
+                                          {data.value}%
+                                        </div>
+                                        <div className="text-[9px] uppercase tracking-wider text-slate-400 font-medium">Seu pet</div>
+                                      </div>
+                                      
+                                      <div className={cn(
+                                        "px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1",
+                                        isGood 
+                                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400" 
+                                          : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
+                                      )}>
+                                        {isGood ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                                         {diff > 0 ? "+" : ""}{diff}%
                                       </div>
-                                      <div className="text-[9px] text-slate-400">vs média</div>
+                                      
+                                      <div className="text-center">
+                                        <div className="text-lg font-semibold text-slate-400">
+                                          {data.benchmark}%
+                                        </div>
+                                        <div className="text-[9px] uppercase tracking-wider text-slate-400 font-medium">Média</div>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                      </RadarChart>
-                    </ResponsiveContainer>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                        </RadarChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
                 </div>
                 
-                {/* Barra Lateral de Métricas Detalhadas */}
-                <div className="lg:col-span-2 bg-slate-50/50 dark:bg-slate-800/30 p-4 sm:p-5 border-t lg:border-t-0 lg:border-l border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Detalhamento</h4>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 font-medium">
+                {/* Barra Lateral de Métricas Detalhadas - Premium */}
+                <div className="lg:col-span-2 bg-gradient-to-br from-slate-50/80 via-white to-purple-50/30 dark:from-slate-800/50 dark:via-slate-900 dark:to-purple-950/20 p-4 sm:p-5 border-t lg:border-t-0 lg:border-l border-slate-100/80 dark:border-slate-700/50">
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1 h-4 rounded-full bg-gradient-to-b from-purple-500 to-violet-600" />
+                      <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">Detalhamento</h4>
+                    </div>
+                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-500 to-violet-500 text-white font-semibold shadow-lg shadow-purple-500/20">
                       7 métricas
                     </span>
                   </div>
                   
-                  <div className="space-y-2.5">
+                  <div className="space-y-3">
                     {radarData.map((item, idx) => {
                       const diff = item.value - item.benchmark;
                       const isGood = diff >= 0;
                       const percentage = Math.min(100, item.value);
+                      const isStrong = item.value >= 80;
                       
                       return (
-                        <div key={idx} className="group">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400 group-hover:text-purple-600 transition-colors">
-                              {item.metric}
-                            </span>
+                        <div 
+                          key={idx} 
+                          className={cn(
+                            "group p-2.5 rounded-xl transition-all duration-300 cursor-default",
+                            "hover:bg-white/80 dark:hover:bg-slate-800/60",
+                            "hover:shadow-lg hover:shadow-purple-500/5",
+                            isStrong && "ring-1 ring-purple-200/50 dark:ring-purple-800/30 bg-purple-50/30 dark:bg-purple-950/20"
+                          )}
+                        >
+                          <div className="flex items-center justify-between mb-1.5">
                             <div className="flex items-center gap-2">
+                              {isStrong && (
+                                <Sparkles className="h-3 w-3 text-purple-500" />
+                              )}
                               <span className={cn(
-                                "text-[10px] font-medium flex items-center gap-0.5",
-                                isGood ? "text-emerald-600" : "text-amber-600"
+                                "text-[11px] font-semibold transition-colors",
+                                isStrong ? "text-purple-700 dark:text-purple-400" : "text-slate-600 dark:text-slate-400",
+                                "group-hover:text-purple-600 dark:group-hover:text-purple-300"
+                              )}>
+                                {item.metric}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2.5">
+                              <span className={cn(
+                                "text-[10px] font-bold flex items-center gap-0.5 px-1.5 py-0.5 rounded-md",
+                                isGood 
+                                  ? "text-emerald-700 bg-emerald-100/80 dark:bg-emerald-900/40 dark:text-emerald-400" 
+                                  : "text-amber-700 bg-amber-100/80 dark:bg-amber-900/40 dark:text-amber-400"
                               )}>
                                 {isGood ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
                                 {diff > 0 ? "+" : ""}{diff}
                               </span>
-                              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 min-w-[28px] text-right">
+                              <span className={cn(
+                                "text-sm font-bold min-w-[32px] text-right",
+                                isStrong ? "text-purple-600 dark:text-purple-400" : "text-slate-800 dark:text-slate-200"
+                              )}>
                                 {item.value}%
                               </span>
                             </div>
                           </div>
                           
-                          {/* Barra de Progresso Premium */}
-                          <div className="relative h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                            {/* Benchmark indicator */}
+                          {/* Barra de Progresso Ultra Premium */}
+                          <div className="relative h-2 bg-gradient-to-r from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800 rounded-full overflow-hidden shadow-inner">
+                            {/* Benchmark indicator com tooltip visual */}
                             <div 
-                              className="absolute top-0 bottom-0 w-0.5 bg-slate-400 dark:bg-slate-500 z-10"
+                              className="absolute top-1/2 -translate-y-1/2 z-10"
                               style={{ left: `${item.benchmark}%` }}
-                            />
-                            {/* Valor atual */}
+                            >
+                              <div className="w-0.5 h-3 bg-slate-400 dark:bg-slate-500 rounded-full" />
+                              <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] font-medium text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                {item.benchmark}
+                              </div>
+                            </div>
+                            {/* Valor atual com gradiente animado */}
                             <div 
                               className={cn(
-                                "h-full rounded-full transition-all duration-500 ease-out",
+                                "h-full rounded-full transition-all duration-700 ease-out relative overflow-hidden",
                                 isGood 
-                                  ? "bg-gradient-to-r from-purple-500 to-violet-500" 
-                                  : "bg-gradient-to-r from-amber-400 to-orange-500"
+                                  ? "bg-gradient-to-r from-purple-500 via-violet-500 to-purple-600" 
+                                  : "bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500"
                               )}
                               style={{ width: `${percentage}%` }}
-                            />
+                            >
+                              {/* Efeito de brilho */}
+                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity animate-shimmer" 
+                                style={{ backgroundSize: '200% 100%' }}
+                              />
+                            </div>
                           </div>
                         </div>
                       );
                     })}
                   </div>
                   
-                  {/* Insights Dinâmicos */}
+                  {/* Insights Dinâmicos - Premium */}
                   {behaviorAnalysis && behaviorAnalysis.insights.length > 0 && (
-                    <div className="mt-4 p-3 rounded-xl bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/40 dark:to-violet-950/40 border border-purple-100 dark:border-purple-900/50">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className="h-3.5 w-3.5 text-purple-500" />
-                        <span className="text-[11px] font-semibold text-purple-700 dark:text-purple-300">Insights</span>
+                    <div className="mt-5 p-4 rounded-2xl bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-purple-950/50 dark:via-violet-950/40 dark:to-indigo-950/30 border border-purple-200/50 dark:border-purple-800/30 shadow-lg shadow-purple-500/5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-500 to-violet-600 shadow-lg shadow-purple-500/30">
+                          <Sparkles className="h-3.5 w-3.5 text-white" />
+                        </div>
+                        <span className="text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider">Insights IA</span>
                       </div>
-                      <ul className="space-y-1">
+                      <ul className="space-y-2">
                         {behaviorAnalysis.insights.slice(0, 3).map((insight, idx) => (
-                          <li key={idx} className="text-[11px] text-purple-600/80 dark:text-purple-400/80 flex items-start gap-1.5">
-                            <span className="text-purple-400 mt-0.5">•</span>
-                            {insight}
+                          <li key={idx} className="text-[11px] text-purple-700/90 dark:text-purple-300/90 flex items-start gap-2 p-2 rounded-lg bg-white/50 dark:bg-slate-800/30 border border-purple-100/50 dark:border-purple-800/20">
+                            <span className="w-5 h-5 rounded-full bg-purple-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <span className="text-purple-500 text-[10px] font-bold">{idx + 1}</span>
+                            </span>
+                            <span className="leading-relaxed">{insight}</span>
                           </li>
                         ))}
                       </ul>

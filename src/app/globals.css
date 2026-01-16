@@ -147,6 +147,42 @@ img[src*="tetecare-logo"] {
   animation: fade-in 0.2s ease-out;
 }
 
+/* Animação de brilho premium para barras de progresso */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.animate-shimmer {
+  animation: shimmer 2.5s ease-in-out infinite;
+}
+
+/* Animação de pulso suave para pontos do radar */
+@keyframes radar-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.5; }
+}
+
+.animate-radar-pulse {
+  animation: radar-pulse 2s ease-in-out infinite;
+}
+
+/* Animação de entrada suave para gráficos */
+@keyframes chart-fade-in {
+  from { 
+    opacity: 0; 
+    transform: scale(0.95);
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+}
+
+.animate-chart-in {
+  animation: chart-fade-in 0.6s ease-out;
+}
+
 /* ========================================
    LAYOUT DE PÁGINA
    ======================================== */
