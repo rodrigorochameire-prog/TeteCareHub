@@ -757,67 +757,102 @@ export const petManagementRouter = router({
   // ============================================
 
   /**
-   * Timeline unificada do pet
+   * Timeline unificada do pet - OTIMIZADO
+   * Executa queries em sequência para não esgotar pool de conexões
    */
   getUnifiedTimeline: protectedProcedure
     .input(z.object({
       petId: z.number(),
-      limit: z.number().default(30),
+      limit: z.number().default(20), // Reduzido de 30
     }))
     .query(async ({ ctx, input }) => {
       return safeAsync(async () => {
         // Verificar acesso
         if (ctx.user.role !== "admin") {
           const ownership = await db
-            .select()
+            .select({ petId: petTutors.petId })
             .from(petTutors)
             .where(
               and(
                 eq(petTutors.petId, input.petId),
                 eq(petTutors.tutorId, ctx.user.id)
               )
-            );
+            )
+            .limit(1);
           if (ownership.length === 0) {
             throw new Error("Acesso negado");
           }
         }
 
-        // Buscar diferentes tipos de eventos
-        const [logs, events, weights, feedings, alerts] = await Promise.all([
-          // Daily Logs
-          db.select()
+        // Executar em 2 batches para reduzir uso do pool
+        // Batch 1: Principais (logs e eventos)
+        const [logs, events] = await Promise.all([
+          db.select({
+            id: dailyLogs.id,
+            logDate: dailyLogs.logDate,
+            mood: dailyLogs.mood,
+            energy: dailyLogs.energy,
+            appetite: dailyLogs.appetite,
+            notes: dailyLogs.notes,
+          })
             .from(dailyLogs)
             .where(eq(dailyLogs.petId, input.petId))
             .orderBy(desc(dailyLogs.logDate))
-            .limit(input.limit),
+            .limit(15),
           
-          // Eventos do calendário
-          db.select()
+          db.select({
+            id: calendarEvents.id,
+            eventDate: calendarEvents.eventDate,
+            title: calendarEvents.title,
+            eventType: calendarEvents.eventType,
+            status: calendarEvents.status,
+            notes: calendarEvents.notes,
+          })
             .from(calendarEvents)
             .where(eq(calendarEvents.petId, input.petId))
             .orderBy(desc(calendarEvents.eventDate))
-            .limit(input.limit),
-          
-          // Histórico de peso
-          db.select()
+            .limit(15),
+        ]);
+
+        // Batch 2: Secundários (peso, alimentação, alertas)
+        const [weights, feedings, alerts] = await Promise.all([
+          db.select({
+            id: petWeightHistory.id,
+            weight: petWeightHistory.weight,
+            measuredAt: petWeightHistory.measuredAt,
+            notes: petWeightHistory.notes,
+          })
             .from(petWeightHistory)
             .where(eq(petWeightHistory.petId, input.petId))
             .orderBy(desc(petWeightHistory.measuredAt))
-            .limit(10),
+            .limit(5),
           
-          // Logs de alimentação
-          db.select()
+          db.select({
+            id: petFeedingLogs.id,
+            feedingDate: petFeedingLogs.feedingDate,
+            consumption: petFeedingLogs.consumption,
+            mealType: petFeedingLogs.mealType,
+            amountGrams: petFeedingLogs.amountGrams,
+          })
             .from(petFeedingLogs)
             .where(eq(petFeedingLogs.petId, input.petId))
             .orderBy(desc(petFeedingLogs.feedingDate))
-            .limit(20),
+            .limit(10),
           
-          // Alertas
-          db.select()
+          db.select({
+            id: petAlerts.id,
+            alertType: petAlerts.alertType,
+            title: petAlerts.title,
+            description: petAlerts.description,
+            severity: petAlerts.severity,
+            isActive: petAlerts.isActive,
+            resolvedAt: petAlerts.resolvedAt,
+            createdAt: petAlerts.createdAt,
+          })
             .from(petAlerts)
             .where(eq(petAlerts.petId, input.petId))
             .orderBy(desc(petAlerts.createdAt))
-            .limit(10),
+            .limit(5),
         ]);
 
         // Unificar e ordenar

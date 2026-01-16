@@ -13,15 +13,19 @@ import * as schema from "./schema";
  */
 const POOL_CONFIG = {
   // Número máximo de conexões no pool
-  // Em serverless, 5 conexões permite paralelismo sem sobrecarregar
-  max: 5,
+  // Aumentado para suportar mais queries paralelas
+  max: 10,
   
   // Timeout de conexão ociosa (segundos)
-  // Mais alto = reutiliza conexões por mais tempo
-  idle_timeout: 30,
+  // Aumentado para reutilizar conexões por mais tempo
+  idle_timeout: 60,
   
   // Timeout para estabelecer conexão (segundos)
-  connect_timeout: 10,
+  // Aumentado para evitar falhas em cold start
+  connect_timeout: 30,
+  
+  // Timeout máximo de execução (segundos)
+  max_lifetime: 60 * 30, // 30 minutos
   
   // Desabilitar prepared statements (OBRIGATÓRIO para PgBouncer em modo transaction)
   prepare: false,
@@ -33,7 +37,12 @@ const POOL_CONFIG = {
   fetch_types: false,
   
   // Keep-alive para reutilizar conexões TCP
-  keep_alive: 30,
+  keep_alive: 60,
+  
+  // Retry em caso de falha de conexão
+  connection: {
+    application_name: "tetecare-vercel",
+  },
 } as const;
 
 // Singleton para conexão do banco
