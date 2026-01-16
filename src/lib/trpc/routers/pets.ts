@@ -571,6 +571,151 @@ export const petsRouter = router({
     }),
 
   /**
+   * Lista pets com status computado (Health Score)
+   * Retorna statusColor (green/yellow/red) e lista de alertas
+   */
+  listWithStatus: adminProcedure
+    .input(
+      z.object({
+        status: z.string().optional(),
+        approvalStatus: z.string().optional(),
+        limit: z.number().min(1).max(200).optional(),
+      }).optional()
+    )
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        // 1. Buscar pets
+        const conditions = [];
+        
+        if (input?.approvalStatus) {
+          conditions.push(eq(pets.approvalStatus, input.approvalStatus));
+        }
+        
+        if (input?.status) {
+          conditions.push(eq(pets.status, input.status));
+        }
+
+        const query = db
+          .select()
+          .from(pets)
+          .orderBy(desc(pets.createdAt))
+          .limit(input?.limit || 100);
+
+        const petsData = conditions.length > 0 
+          ? await query.where(and(...conditions))
+          : await query;
+
+        // 2. Buscar dados relacionados para calcular status
+        const now = new Date();
+        
+        // Buscar vacinas vencidas e preventivos vencidos em paralelo
+        const [expiredVaccines, expiredPreventives] = await Promise.all([
+          // Vacinas com próxima dose vencida
+          db
+            .select({ petId: petVaccinations.petId })
+            .from(petVaccinations)
+            .where(sql`${petVaccinations.nextDueDate} < ${now}`)
+            .groupBy(petVaccinations.petId),
+          // Preventivos vencidos
+          db
+            .select({ petId: preventiveTreatments.petId })
+            .from(preventiveTreatments)
+            .where(sql`${preventiveTreatments.nextDueDate} < ${now}`)
+            .groupBy(preventiveTreatments.petId),
+        ]);
+
+        const petsWithExpiredVaccine = new Set(expiredVaccines.map(v => v.petId));
+        const petsWithExpiredPreventive = new Set(expiredPreventives.map(p => p.petId));
+
+        // 3. Calcular status computado para cada pet
+        const enrichedPets = petsData.map(pet => {
+          const alerts: Array<{ type: string; severity: string; message: string }> = [];
+          let statusColor: "green" | "yellow" | "red" = "green";
+
+          // Verificar vacinas vencidas
+          if (petsWithExpiredVaccine.has(pet.id)) {
+            statusColor = "red";
+            alerts.push({
+              type: "vaccine",
+              severity: "critical",
+              message: "Vacina vencida",
+            });
+          }
+
+          // Verificar preventivos vencidos
+          if (petsWithExpiredPreventive.has(pet.id)) {
+            if (statusColor !== "red") statusColor = "yellow";
+            alerts.push({
+              type: "preventive",
+              severity: "warning",
+              message: "Preventivo vencido",
+            });
+          }
+
+          // Verificar créditos baixos
+          const credits = pet.credits || 0;
+          if (credits <= 0) {
+            statusColor = "red";
+            alerts.push({
+              type: "credits",
+              severity: "critical",
+              message: "Sem créditos",
+            });
+          } else if (credits <= 1) {
+            if (statusColor !== "red") statusColor = "yellow";
+            alerts.push({
+              type: "credits",
+              severity: "warning",
+              message: "Crédito muito baixo",
+            });
+          } else if (credits <= 3) {
+            if (statusColor === "green") statusColor = "yellow";
+            alerts.push({
+              type: "credits",
+              severity: "info",
+              message: `Poucos créditos: ${credits}`,
+            });
+          }
+
+          // Verificar estoque de ração
+          if (pet.foodAmount && pet.foodStockGrams !== null) {
+            const daysRemaining = pet.foodAmount > 0 
+              ? Math.floor((pet.foodStockGrams || 0) / pet.foodAmount) 
+              : 0;
+            
+            if (daysRemaining <= 0) {
+              if (statusColor !== "red") statusColor = "yellow";
+              alerts.push({
+                type: "food_stock",
+                severity: "critical",
+                message: "Ração acabou",
+              });
+            } else if (daysRemaining <= 3) {
+              if (statusColor === "green") statusColor = "yellow";
+              alerts.push({
+                type: "food_stock",
+                severity: "warning",
+                message: `Ração: ${daysRemaining} dias`,
+              });
+            }
+          }
+
+          return {
+            ...pet,
+            computed: {
+              statusColor,
+              alerts,
+              alertCount: alerts.length,
+              hasIssues: statusColor !== "green",
+            },
+          };
+        });
+
+        return enrichedPets;
+      }, "Erro ao listar pets com status");
+    }),
+
+  /**
    * Estatísticas de pets (admin)
    */
   stats: adminProcedure.query(async () => {
