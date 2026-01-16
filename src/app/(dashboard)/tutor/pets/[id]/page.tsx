@@ -40,6 +40,7 @@ import {
   Sparkles,
   Shield,
   Info,
+  Droplets,
 } from "lucide-react";
 import Link from "next/link";
 import { formatDate, cn } from "@/lib/utils";
@@ -746,29 +747,225 @@ function calculateActivityLevel(dailyLogs: any[], behaviorLogs: any[]): Concrete
   };
 }
 
-// Índice de Saúde Preventiva (vacinas, preventivos)
-function calculatePreventiveHealth(pet: any): {
-  score: number;
-  vaccinesOk: boolean;
-  preventivesOk: boolean;
-  daysUntilNextVaccine: number | null;
-  daysUntilNextPreventive: number | null;
-} {
-  // Esta função precisa de dados de vacinas e preventivos
-  // Por agora, retorna baseado nos créditos e status
-  const hasCredits = (pet.credits || 0) > 0;
-  const isApproved = pet.approvalStatus === "approved";
-  
-  let score = 50;
-  if (hasCredits) score += 25;
-  if (isApproved) score += 25;
+// Hidratação (baseado em waterIntake dos daily logs)
+function calculateHydration(dailyLogs: any[]): ConcreteMetric {
+  if (!dailyLogs || dailyLogs.length === 0) {
+    return {
+      value: 0,
+      unit: "%",
+      label: "Sem dados",
+      trend: "stable",
+      trendLabel: "",
+      status: "warning",
+      description: "Registre logs para analisar",
+    };
+  }
+
+  const hydrationScores: Record<string, number> = {
+    normal: 100, increased: 80, decreased: 40, none: 10,
+  };
+
+  const validLogs = dailyLogs.filter((l: any) => l.waterIntake && hydrationScores[l.waterIntake] !== undefined).slice(0, 14);
+
+  if (validLogs.length === 0) {
+    return {
+      value: 0,
+      unit: "%",
+      label: "Sem dados",
+      trend: "stable",
+      trendLabel: "",
+      status: "warning",
+      description: "Sem registros de hidratação",
+    };
+  }
+
+  const avg = Math.round(
+    validLogs.reduce((a: number, l: any) => a + hydrationScores[l.waterIntake], 0) / validLogs.length
+  );
+
+  // Contar dias com problema
+  const problemDays = validLogs.filter((l: any) => 
+    l.waterIntake === "decreased" || l.waterIntake === "none"
+  ).length;
+
+  let status: ConcreteMetric["status"] = "good";
+  let label = "Normal";
+  if (avg >= 90) { status = "excellent"; label = "Excelente"; }
+  else if (avg >= 70) { status = "good"; label = "Normal"; }
+  else if (avg >= 50) { status = "warning"; label = "Atenção"; }
+  else { status = "alert"; label = "Crítico"; }
 
   return {
-    score,
-    vaccinesOk: true, // Placeholder - precisa de dados reais
-    preventivesOk: true,
-    daysUntilNextVaccine: null,
-    daysUntilNextPreventive: null,
+    value: avg,
+    unit: "%",
+    label,
+    trend: problemDays > 2 ? "down" : "stable",
+    trendLabel: problemDays > 0 ? `${problemDays} dia(s) baixo` : "",
+    status,
+    description: `${validLogs.length} registros`,
+  };
+}
+
+// Integridade Física (baseado em physicalIntegrity dos logs)
+function calculatePhysicalIntegrity(dailyLogs: any[]): ConcreteMetric {
+  if (!dailyLogs || dailyLogs.length === 0) {
+    return {
+      value: 100,
+      unit: "%",
+      label: "Sem registros",
+      trend: "stable",
+      trendLabel: "",
+      status: "good",
+      description: "Nenhum problema registrado",
+    };
+  }
+
+  const integrityScores: Record<string, number> = {
+    perfect: 100, minor_scratch: 80, bite_mark: 50, limping: 40,
+    skin_issue: 60, ear_issue: 60, injury: 20, none: 100,
+  };
+
+  const validLogs = dailyLogs.filter((l: any) => 
+    l.physicalIntegrity && integrityScores[l.physicalIntegrity] !== undefined
+  ).slice(0, 14);
+
+  if (validLogs.length === 0) {
+    return {
+      value: 100,
+      unit: "%",
+      label: "OK",
+      trend: "stable",
+      trendLabel: "",
+      status: "excellent",
+      description: "Sem problemas reportados",
+    };
+  }
+
+  const avg = Math.round(
+    validLogs.reduce((a: number, l: any) => a + integrityScores[l.physicalIntegrity], 0) / validLogs.length
+  );
+
+  // Identificar problemas
+  const issues = validLogs.filter((l: any) => 
+    l.physicalIntegrity && l.physicalIntegrity !== "perfect" && l.physicalIntegrity !== "none"
+  );
+
+  let status: ConcreteMetric["status"] = "excellent";
+  let label = "Perfeito";
+  if (avg >= 90) { status = "excellent"; label = "Perfeito"; }
+  else if (avg >= 70) { status = "good"; label = "Bom"; }
+  else if (avg >= 50) { status = "warning"; label = "Atenção"; }
+  else { status = "alert"; label = "Crítico"; }
+
+  return {
+    value: avg,
+    unit: "%",
+    label,
+    trend: issues.length > 2 ? "down" : "stable",
+    trendLabel: issues.length > 0 ? `${issues.length} ocorrência(s)` : "",
+    status,
+    description: issues.length > 0 ? `Último: ${issues[0]?.physicalIntegrity}` : "Sem problemas",
+  };
+}
+
+// Tempo Médio na Creche (baseado em eventos de check-in/out)
+function calculateAverageStayTime(events: any[]): {
+  avgHours: number;
+  lastStayHours: number | null;
+  longestStayHours: number;
+  totalDays: number;
+} {
+  if (!events || events.length === 0) {
+    return { avgHours: 0, lastStayHours: null, longestStayHours: 0, totalDays: 0 };
+  }
+
+  // Encontrar pares de check-in/check-out
+  const checkins = events.filter((e: any) => e.eventType === "checkin")
+    .sort((a: any, b: any) => new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime());
+  const checkouts = events.filter((e: any) => e.eventType === "checkout")
+    .sort((a: any, b: any) => new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime());
+
+  const stayDurations: number[] = [];
+
+  // Calcular durações (simplificado - assume checkout após checkin no mesmo dia)
+  for (const checkout of checkouts) {
+    const checkoutDate = new Date(checkout.eventDate);
+    // Procurar checkin mais recente antes deste checkout
+    const matchingCheckin = checkins.find((ci: any) => {
+      const ciDate = new Date(ci.eventDate);
+      return ciDate < checkoutDate && 
+             ciDate.toDateString() === checkoutDate.toDateString();
+    });
+
+    if (matchingCheckin) {
+      const duration = (checkoutDate.getTime() - new Date(matchingCheckin.eventDate).getTime()) / (1000 * 60 * 60);
+      if (duration > 0 && duration < 24) { // Validação de sanidade
+        stayDurations.push(duration);
+      }
+    }
+  }
+
+  if (stayDurations.length === 0) {
+    return { avgHours: 0, lastStayHours: null, longestStayHours: 0, totalDays: checkins.length };
+  }
+
+  const avgHours = Math.round((stayDurations.reduce((a, b) => a + b, 0) / stayDurations.length) * 10) / 10;
+  const longestStayHours = Math.round(Math.max(...stayDurations) * 10) / 10;
+  const lastStayHours = Math.round(stayDurations[0] * 10) / 10;
+
+  return {
+    avgHours,
+    lastStayHours,
+    longestStayHours,
+    totalDays: checkins.length,
+  };
+}
+
+// Métricas Financeiras (créditos)
+function calculateCreditMetrics(pet: any, events: any[]): {
+  currentCredits: number;
+  usedThisMonth: number;
+  avgPerWeek: number;
+  status: ConcreteMetric["status"];
+  daysRemaining: number | null;
+} {
+  const currentCredits = pet.credits || 0;
+  
+  // Calcular uso no mês atual
+  const now = new Date();
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  
+  const thisMonthCheckins = (events || []).filter((e: any) => 
+    e.eventType === "checkin" && new Date(e.eventDate) >= thisMonthStart
+  ).length;
+
+  // Assumir 1 crédito por check-in para cálculo
+  const usedThisMonth = thisMonthCheckins;
+
+  // Média por semana nos últimos 30 dias
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const last30DaysCheckins = (events || []).filter((e: any) => 
+    e.eventType === "checkin" && new Date(e.eventDate) >= thirtyDaysAgo
+  ).length;
+  const avgPerWeek = Math.round((last30DaysCheckins / 4.3) * 10) / 10;
+
+  // Status baseado em créditos
+  let status: ConcreteMetric["status"] = "excellent";
+  if (currentCredits <= 0) status = "alert";
+  else if (currentCredits <= 2) status = "warning";
+  else if (currentCredits <= 5) status = "good";
+
+  // Dias restantes estimados
+  const daysRemaining = avgPerWeek > 0 
+    ? Math.round((currentCredits / avgPerWeek) * 7)
+    : null;
+
+  return {
+    currentCredits,
+    usedThisMonth,
+    avgPerWeek,
+    status,
+    daysRemaining,
   };
 }
 
@@ -898,6 +1095,26 @@ export default function TutorPetDetailPage(props: PetPageProps) {
   const activityLevel = useMemo(() => {
     return calculateActivityLevel(dailyLogs || [], behaviorLogs || []);
   }, [dailyLogs, behaviorLogs]);
+
+  // Hidratação
+  const hydration = useMemo(() => {
+    return calculateHydration(dailyLogs || []);
+  }, [dailyLogs]);
+
+  // Integridade Física
+  const physicalIntegrity = useMemo(() => {
+    return calculatePhysicalIntegrity(dailyLogs || []);
+  }, [dailyLogs]);
+
+  // Tempo Médio na Creche
+  const stayTimeMetrics = useMemo(() => {
+    return calculateAverageStayTime(calendarEvents || []);
+  }, [calendarEvents]);
+
+  // Métricas de Créditos
+  const creditMetrics = useMemo(() => {
+    return calculateCreditMetrics(pet, calendarEvents || []);
+  }, [pet, calendarEvents]);
 
   // Calcular métricas HÍBRIDAS inteligentes
   // Combina: Perfil do Pet + Behavior Logs + Daily Logs
@@ -1492,6 +1709,167 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                         activityLevel.status === "alert" && "text-red-600",
                       )}>{activityLevel.label}</span>
                       <span className="text-[10px] text-muted-foreground">{activityLevel.description}</span>
+                    </div>
+                  </div>
+
+                  {/* Hidratação */}
+                  <div className={cn(
+                    "p-4 rounded-xl border transition-all",
+                    hydration.status === "excellent" && "bg-cyan-50 border-cyan-200 dark:bg-cyan-950/30 dark:border-cyan-800",
+                    hydration.status === "good" && "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800",
+                    hydration.status === "warning" && "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
+                    hydration.status === "alert" && "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800",
+                  )}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Droplets className={cn(
+                        "h-4 w-4",
+                        hydration.status === "excellent" && "text-cyan-600",
+                        hydration.status === "good" && "text-blue-600",
+                        hydration.status === "warning" && "text-amber-600",
+                        hydration.status === "alert" && "text-red-600",
+                      )} />
+                      <span className="text-xs font-medium text-muted-foreground">Hidratação</span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-bold">{hydration.value > 0 ? hydration.value : "—"}</span>
+                      <span className="text-sm text-muted-foreground">{hydration.unit}</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className={cn(
+                        "text-xs font-medium",
+                        hydration.status === "excellent" && "text-cyan-600",
+                        hydration.status === "good" && "text-blue-600",
+                        hydration.status === "warning" && "text-amber-600",
+                        hydration.status === "alert" && "text-red-600",
+                      )}>{hydration.label}</span>
+                      {hydration.trendLabel && (
+                        <span className="text-[10px] text-amber-600">{hydration.trendLabel}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Integridade Física */}
+                  <div className={cn(
+                    "p-4 rounded-xl border transition-all",
+                    physicalIntegrity.status === "excellent" && "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800",
+                    physicalIntegrity.status === "good" && "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800",
+                    physicalIntegrity.status === "warning" && "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
+                    physicalIntegrity.status === "alert" && "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800",
+                  )}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Shield className={cn(
+                        "h-4 w-4",
+                        physicalIntegrity.status === "excellent" && "text-green-600",
+                        physicalIntegrity.status === "good" && "text-blue-600",
+                        physicalIntegrity.status === "warning" && "text-amber-600",
+                        physicalIntegrity.status === "alert" && "text-red-600",
+                      )} />
+                      <span className="text-xs font-medium text-muted-foreground">Físico</span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-bold">{physicalIntegrity.value > 0 ? physicalIntegrity.value : "—"}</span>
+                      <span className="text-sm text-muted-foreground">{physicalIntegrity.unit}</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className={cn(
+                        "text-xs font-medium",
+                        physicalIntegrity.status === "excellent" && "text-green-600",
+                        physicalIntegrity.status === "good" && "text-blue-600",
+                        physicalIntegrity.status === "warning" && "text-amber-600",
+                        physicalIntegrity.status === "alert" && "text-red-600",
+                      )}>{physicalIntegrity.label}</span>
+                      {physicalIntegrity.trendLabel && (
+                        <span className="text-[10px] text-amber-600">{physicalIntegrity.trendLabel}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tempo Médio na Creche + Créditos */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Tempo de Permanência */}
+                  <div className="p-4 rounded-xl border bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30 border-violet-100 dark:border-violet-900/50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Clock className="h-5 w-5 text-violet-600" />
+                      <span className="font-semibold text-violet-900 dark:text-violet-100">Tempo na Creche</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="text-center p-2 bg-white/60 dark:bg-white/5 rounded-lg">
+                        <div className="text-xl font-bold text-violet-600">
+                          {stayTimeMetrics.avgHours > 0 ? `${stayTimeMetrics.avgHours}h` : "—"}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground">Média</div>
+                      </div>
+                      <div className="text-center p-2 bg-white/60 dark:bg-white/5 rounded-lg">
+                        <div className="text-xl font-bold text-purple-600">
+                          {stayTimeMetrics.lastStayHours ? `${stayTimeMetrics.lastStayHours}h` : "—"}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground">Última</div>
+                      </div>
+                      <div className="text-center p-2 bg-white/60 dark:bg-white/5 rounded-lg">
+                        <div className="text-xl font-bold text-indigo-600">
+                          {stayTimeMetrics.longestStayHours > 0 ? `${stayTimeMetrics.longestStayHours}h` : "—"}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground">Máxima</div>
+                      </div>
+                      <div className="text-center p-2 bg-white/60 dark:bg-white/5 rounded-lg">
+                        <div className="text-xl font-bold text-slate-600">{stayTimeMetrics.totalDays}</div>
+                        <div className="text-[10px] text-muted-foreground">Dias</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Créditos */}
+                  <div className={cn(
+                    "p-4 rounded-xl border transition-all",
+                    creditMetrics.status === "excellent" && "bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/30 border-emerald-100 dark:border-emerald-900/50",
+                    creditMetrics.status === "good" && "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-100 dark:border-blue-900/50",
+                    creditMetrics.status === "warning" && "bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border-amber-100 dark:border-amber-900/50",
+                    creditMetrics.status === "alert" && "bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/30 dark:to-rose-950/30 border-red-100 dark:border-red-900/50",
+                  )}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Coins className={cn(
+                        "h-5 w-5",
+                        creditMetrics.status === "excellent" && "text-emerald-600",
+                        creditMetrics.status === "good" && "text-blue-600",
+                        creditMetrics.status === "warning" && "text-amber-600",
+                        creditMetrics.status === "alert" && "text-red-600",
+                      )} />
+                      <span className={cn(
+                        "font-semibold",
+                        creditMetrics.status === "excellent" && "text-emerald-900 dark:text-emerald-100",
+                        creditMetrics.status === "good" && "text-blue-900 dark:text-blue-100",
+                        creditMetrics.status === "warning" && "text-amber-900 dark:text-amber-100",
+                        creditMetrics.status === "alert" && "text-red-900 dark:text-red-100",
+                      )}>Créditos</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="text-center p-2 bg-white/60 dark:bg-white/5 rounded-lg">
+                        <div className={cn(
+                          "text-xl font-bold",
+                          creditMetrics.status === "excellent" && "text-emerald-600",
+                          creditMetrics.status === "good" && "text-blue-600",
+                          creditMetrics.status === "warning" && "text-amber-600",
+                          creditMetrics.status === "alert" && "text-red-600",
+                        )}>
+                          {creditMetrics.currentCredits}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground">Saldo Atual</div>
+                      </div>
+                      <div className="text-center p-2 bg-white/60 dark:bg-white/5 rounded-lg">
+                        <div className="text-xl font-bold text-slate-600">{creditMetrics.usedThisMonth}</div>
+                        <div className="text-[10px] text-muted-foreground">Este mês</div>
+                      </div>
+                      <div className="text-center p-2 bg-white/60 dark:bg-white/5 rounded-lg">
+                        <div className="text-xl font-bold text-slate-600">{creditMetrics.avgPerWeek}</div>
+                        <div className="text-[10px] text-muted-foreground">Por semana</div>
+                      </div>
+                      <div className="text-center p-2 bg-white/60 dark:bg-white/5 rounded-lg">
+                        <div className="text-xl font-bold text-slate-600">
+                          {creditMetrics.daysRemaining ? `${creditMetrics.daysRemaining}d` : "—"}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground">Estimativa</div>
+                      </div>
                     </div>
                   </div>
                 </div>
