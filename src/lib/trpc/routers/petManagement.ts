@@ -757,36 +757,48 @@ export const petManagementRouter = router({
   // ============================================
 
   /**
-   * Timeline unificada do pet - OTIMIZADO
-   * Executa queries em sequência para não esgotar pool de conexões
+   * Timeline unificada do pet - VERSÃO RESILIENTE
+   * Executa queries com tratamento de erro individual
    */
   getUnifiedTimeline: protectedProcedure
     .input(z.object({
       petId: z.number(),
-      limit: z.number().default(20), // Reduzido de 30
+      limit: z.number().default(20),
     }))
     .query(async ({ ctx, input }) => {
-      return safeAsync(async () => {
-        // Verificar acesso
-        if (ctx.user.role !== "admin") {
-          const ownership = await db
-            .select({ petId: petTutors.petId })
-            .from(petTutors)
-            .where(
-              and(
-                eq(petTutors.petId, input.petId),
-                eq(petTutors.tutorId, ctx.user.id)
-              )
+      // Verificar acesso
+      if (ctx.user.role !== "admin") {
+        const ownership = await db
+          .select({ petId: petTutors.petId })
+          .from(petTutors)
+          .where(
+            and(
+              eq(petTutors.petId, input.petId),
+              eq(petTutors.tutorId, ctx.user.id)
             )
-            .limit(1);
-          if (ownership.length === 0) {
-            throw new Error("Acesso negado");
-          }
+          )
+          .limit(1);
+        if (ownership.length === 0) {
+          throw new Error("Acesso negado");
         }
+      }
 
-        // Executar em 2 batches para reduzir uso do pool
-        // Batch 1: Principais (logs e eventos)
-        const [logs, events] = await Promise.all([
+      // Helper para query segura - retorna array vazio em caso de erro
+      const safeQuery = async <T>(
+        name: string,
+        queryFn: () => Promise<T[]>
+      ): Promise<T[]> => {
+        try {
+          return await queryFn();
+        } catch (error) {
+          console.error(`[Timeline] Query "${name}" failed:`, error);
+          return [];
+        }
+      };
+
+      // Executar queries com tratamento individual
+      const [logs, events, weights, feedings, alerts] = await Promise.all([
+        safeQuery("dailyLogs", () =>
           db.select({
             id: dailyLogs.id,
             logDate: dailyLogs.logDate,
@@ -798,8 +810,10 @@ export const petManagementRouter = router({
             .from(dailyLogs)
             .where(eq(dailyLogs.petId, input.petId))
             .orderBy(desc(dailyLogs.logDate))
-            .limit(15),
-          
+            .limit(15)
+        ),
+        
+        safeQuery("calendarEvents", () =>
           db.select({
             id: calendarEvents.id,
             eventDate: calendarEvents.eventDate,
@@ -811,11 +825,10 @@ export const petManagementRouter = router({
             .from(calendarEvents)
             .where(eq(calendarEvents.petId, input.petId))
             .orderBy(desc(calendarEvents.eventDate))
-            .limit(15),
-        ]);
-
-        // Batch 2: Secundários (peso, alimentação, alertas)
-        const [weights, feedings, alerts] = await Promise.all([
+            .limit(15)
+        ),
+        
+        safeQuery("petWeightHistory", () =>
           db.select({
             id: petWeightHistory.id,
             weight: petWeightHistory.weight,
@@ -825,8 +838,10 @@ export const petManagementRouter = router({
             .from(petWeightHistory)
             .where(eq(petWeightHistory.petId, input.petId))
             .orderBy(desc(petWeightHistory.measuredAt))
-            .limit(5),
-          
+            .limit(5)
+        ),
+        
+        safeQuery("petFeedingLogs", () =>
           db.select({
             id: petFeedingLogs.id,
             feedingDate: petFeedingLogs.feedingDate,
@@ -837,8 +852,10 @@ export const petManagementRouter = router({
             .from(petFeedingLogs)
             .where(eq(petFeedingLogs.petId, input.petId))
             .orderBy(desc(petFeedingLogs.feedingDate))
-            .limit(10),
-          
+            .limit(10)
+        ),
+        
+        safeQuery("petAlerts", () =>
           db.select({
             id: petAlerts.id,
             alertType: petAlerts.alertType,
@@ -852,40 +869,40 @@ export const petManagementRouter = router({
             .from(petAlerts)
             .where(eq(petAlerts.petId, input.petId))
             .orderBy(desc(petAlerts.createdAt))
-            .limit(5),
-        ]);
+            .limit(5)
+        ),
+      ]);
 
-        // Unificar e ordenar
-        const timeline = [
-          ...logs.map(l => ({
-            type: "log" as const,
-            date: l.logDate,
-            data: l,
-          })),
-          ...events.map(e => ({
-            type: "event" as const,
-            date: e.eventDate,
-            data: e,
-          })),
-          ...weights.map(w => ({
-            type: "weight" as const,
-            date: w.measuredAt,
-            data: { ...w, weightKg: w.weight / 1000 },
-          })),
-          ...feedings.map(f => ({
-            type: "feeding" as const,
-            date: f.feedingDate,
-            data: f,
-          })),
-          ...alerts.map(a => ({
-            type: "alert" as const,
-            date: a.createdAt,
-            data: a,
-          })),
-        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-         .slice(0, input.limit);
+      // Unificar e ordenar
+      const timeline = [
+        ...logs.map(l => ({
+          type: "log" as const,
+          date: l.logDate,
+          data: l,
+        })),
+        ...events.map(e => ({
+          type: "event" as const,
+          date: e.eventDate,
+          data: e,
+        })),
+        ...weights.map(w => ({
+          type: "weight" as const,
+          date: w.measuredAt,
+          data: { ...w, weightKg: w.weight / 1000 },
+        })),
+        ...feedings.map(f => ({
+          type: "feeding" as const,
+          date: f.feedingDate,
+          data: f,
+        })),
+        ...alerts.map(a => ({
+          type: "alert" as const,
+          date: a.createdAt,
+          data: a,
+        })),
+      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+       .slice(0, input.limit);
 
-        return timeline;
-      }, "Erro ao buscar timeline");
+      return timeline;
     }),
 });

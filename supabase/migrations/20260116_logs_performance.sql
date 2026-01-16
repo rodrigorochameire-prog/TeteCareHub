@@ -14,10 +14,9 @@ CREATE INDEX IF NOT EXISTS idx_daily_logs_created_by
 CREATE INDEX IF NOT EXISTS idx_daily_logs_pet_source_date 
   ON daily_logs(pet_id, source, log_date DESC);
 
--- Índice para logs recentes (últimos 7 dias)
-CREATE INDEX IF NOT EXISTS idx_daily_logs_recent 
-  ON daily_logs(log_date DESC) 
-  WHERE log_date > CURRENT_DATE - INTERVAL '7 days';
+-- Índice para ordenação por data (substitui o índice parcial)
+CREATE INDEX IF NOT EXISTS idx_daily_logs_date_desc 
+  ON daily_logs(log_date DESC);
 
 -- Atualizar estatísticas
 ANALYZE daily_logs;
