@@ -19,7 +19,7 @@ CREATE INDEX IF NOT EXISTS idx_pet_tutors_composite ON pet_tutors(tutor_id, pet_
 
 -- Índices para users
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
-CREATE INDEX IF NOT EXISTS idx_users_clerk_id ON users(clerk_id);
+CREATE INDEX IF NOT EXISTS idx_users_auth_id ON users(auth_id);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
 -- Índices para daily_logs
