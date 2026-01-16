@@ -25,6 +25,8 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend
 } from "recharts";
+import { Brain, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function AdminPetDetailPage() {
   const params = useParams();
@@ -120,13 +122,26 @@ export default function AdminPetDetailPage() {
     return `${years} ${years === 1 ? "ano" : "anos"} e ${months} ${months === 1 ? "mês" : "meses"}`;
   };
 
-  // Radar chart data for behavior profile
+  // Radar chart data for behavior profile - 7 dimensões premium
+  const sociabilityScore = pet.sociabilityLevel === "very_social" ? 95 : pet.sociabilityLevel === "friendly" ? 75 : pet.sociabilityLevel === "selective" ? 50 : 30;
+  const energyScore = pet.energyLevel === "very_high" ? 95 : pet.energyLevel === "high" ? 80 : pet.energyLevel === "medium" ? 60 : 35;
+  const obedienceScore = skillsMatrix ? Math.round((skillsMatrix.filter(s => s.status === "mastered").length / Math.max(skillsMatrix.length, 1)) * 100) : 55;
+  const calmnessScore = pet.anxietySeparation === "none" ? 95 : pet.anxietySeparation === "mild" ? 70 : pet.anxietySeparation === "moderate" ? 45 : 20;
+  const docilityScore = pet.aggressionHistory === "none" ? 95 : pet.aggressionHistory === "minor" ? 65 : 35;
+  const adaptabilityScore = Math.round((sociabilityScore + calmnessScore) / 2);
+  const focusScore = obedienceScore;
+  
   const behaviorProfile = [
-    { trait: "Sociabilidade", value: pet.sociabilityLevel === "very_social" ? 100 : pet.sociabilityLevel === "friendly" ? 75 : pet.sociabilityLevel === "selective" ? 50 : 25 },
-    { trait: "Energia", value: pet.energyLevel === "very_high" ? 100 : pet.energyLevel === "high" ? 75 : pet.energyLevel === "medium" ? 50 : 25 },
-    { trait: "Obediência", value: skillsMatrix ? (skillsMatrix.filter(s => s.status === "mastered").length / Math.max(skillsMatrix.length, 1)) * 100 : 50 },
-    { trait: "Calma", value: pet.anxietySeparation === "none" ? 100 : pet.anxietySeparation === "mild" ? 66 : pet.anxietySeparation === "moderate" ? 33 : 0 },
+    { metric: "Sociabilidade", value: sociabilityScore, benchmark: 70, description: "Interação social" },
+    { metric: "Obediência", value: obedienceScore, benchmark: 65, description: "Resposta a comandos" },
+    { metric: "Energia", value: energyScore, benchmark: 72, description: "Nível de atividade" },
+    { metric: "Tranquilidade", value: calmnessScore, benchmark: 62, description: "Calma e baixa ansiedade" },
+    { metric: "Docilidade", value: docilityScore, benchmark: 72, description: "Gentileza" },
+    { metric: "Adaptabilidade", value: adaptabilityScore, benchmark: 65, description: "Flexibilidade" },
+    { metric: "Foco", value: focusScore, benchmark: 60, description: "Atenção" },
   ];
+  
+  const avgBehaviorScore = Math.round(behaviorProfile.reduce((sum, m) => sum + m.value, 0) / behaviorProfile.length);
 
   // Weight chart data
   const weightChartData = weightHistory?.history?.slice().reverse().map(w => ({
@@ -513,29 +528,290 @@ export default function AdminPetDetailPage() {
             </Card>
           </div>
 
-          {/* Perfil Comportamental - Radar */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Perfil Comportamental</CardTitle>
-              <CardDescription>Avaliação gráfica do comportamento</CardDescription>
+          {/* Perfil Comportamental - Premium */}
+          <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-slate-50 via-white to-purple-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-purple-950/20">
+            <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 shadow-lg shadow-purple-500/25">
+                    <Brain className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-semibold">Análise Comportamental</CardTitle>
+                    <CardDescription className="text-xs">7 dimensões avaliadas</CardDescription>
+                  </div>
+                </div>
+                
+                {/* Score Geral */}
+                <div className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-xl shadow-purple-500/30">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold tracking-tight">{avgBehaviorScore}</div>
+                    <div className="text-[10px] uppercase tracking-wider opacity-80">Score</div>
+                  </div>
+                  <div className="h-10 w-px bg-white/20" />
+                  <div className="text-xs space-y-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <TrendingUp className="h-3 w-3" />
+                      <span>{behaviorProfile.filter(m => m.value > m.benchmark).length} acima da média</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart data={behaviorProfile}>
-                    <PolarGrid />
-                    <PolarAngleAxis dataKey="trait" />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                    <Radar
-                      name="Perfil"
-                      dataKey="value"
-                      stroke="#8884d8"
-                      fill="#8884d8"
-                      fillOpacity={0.6}
-                    />
-                    <Legend />
-                  </RadarChart>
-                </ResponsiveContainer>
+            
+            <CardContent className="p-0">
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
+                {/* Gráfico de Radar Premium */}
+                <div className="lg:col-span-3 p-4 sm:p-6">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-48 h-48 rounded-full bg-gradient-to-br from-purple-500/10 via-violet-500/5 to-transparent blur-3xl" />
+                    </div>
+                    
+                    <div className="h-[320px] relative z-10">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart 
+                          data={behaviorProfile} 
+                          cx="50%" 
+                          cy="50%" 
+                          outerRadius="58%"
+                          margin={{ top: 40, right: 50, bottom: 30, left: 50 }}
+                        >
+                          <defs>
+                            <linearGradient id="petRadarGradient" x1="0" y1="0" x2="1" y2="1">
+                              <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.95} />
+                              <stop offset="50%" stopColor="#a855f7" stopOpacity={0.7} />
+                              <stop offset="100%" stopColor="#c084fc" stopOpacity={0.5} />
+                            </linearGradient>
+                            <linearGradient id="petBenchmarkGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#cbd5e1" stopOpacity={0.25} />
+                              <stop offset="100%" stopColor="#e2e8f0" stopOpacity={0.1} />
+                            </linearGradient>
+                            <filter id="petGlow" x="-50%" y="-50%" width="200%" height="200%">
+                              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                              <feMerge>
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                              </feMerge>
+                            </filter>
+                          </defs>
+                          
+                          <PolarGrid 
+                            stroke="#e2e8f0" 
+                            strokeWidth={1}
+                            gridType="polygon"
+                            strokeOpacity={0.6}
+                          />
+                          
+                          <PolarAngleAxis 
+                            dataKey="metric" 
+                            tick={(props: any) => {
+                              const { x, y, payload, index } = props;
+                              const item = behaviorProfile[index];
+                              const isAbove = item && item.value > item.benchmark;
+                              const xPos = typeof x === "number" ? x : 0;
+                              const yPos = typeof y === "number" ? y : 0;
+                              
+                              const centerX = 50;
+                              const centerY = 50;
+                              const angleRad = Math.atan2(yPos - centerY, xPos - centerX);
+                              const labelOffset = 12;
+                              const adjustedX = xPos + Math.cos(angleRad) * labelOffset;
+                              const adjustedY = yPos + Math.sin(angleRad) * labelOffset;
+                              
+                              return (
+                                <g>
+                                  <rect
+                                    x={adjustedX - 38}
+                                    y={adjustedY - 10}
+                                    width={76}
+                                    height={28}
+                                    rx={6}
+                                    fill={isAbove ? "rgba(139, 92, 246, 0.1)" : "rgba(148, 163, 184, 0.08)"}
+                                    stroke={isAbove ? "rgba(139, 92, 246, 0.2)" : "rgba(148, 163, 184, 0.15)"}
+                                    strokeWidth={1}
+                                  />
+                                  <text 
+                                    x={adjustedX} 
+                                    y={adjustedY} 
+                                    textAnchor="middle" 
+                                    dominantBaseline="middle"
+                                    fill={isAbove ? "#7c3aed" : "#64748b"}
+                                    fontSize={10}
+                                    fontWeight={600}
+                                  >
+                                    {payload.value}
+                                  </text>
+                                  {item && (
+                                    <text 
+                                      x={adjustedX} 
+                                      y={adjustedY + 12} 
+                                      textAnchor="middle" 
+                                      dominantBaseline="middle"
+                                      fill={isAbove ? "#22c55e" : "#94a3b8"}
+                                      fontSize={9}
+                                      fontWeight={700}
+                                    >
+                                      {item.value}%
+                                    </text>
+                                  )}
+                                </g>
+                              );
+                            }}
+                            tickLine={false}
+                          />
+                          
+                          <PolarRadiusAxis 
+                            angle={90} 
+                            domain={[0, 100]} 
+                            tick={false}
+                            axisLine={false}
+                          />
+                          
+                          <Radar
+                            name="Benchmark"
+                            dataKey="benchmark"
+                            stroke="#94a3b8"
+                            strokeWidth={1.5}
+                            strokeDasharray="6 4"
+                            fill="url(#petBenchmarkGradient)"
+                            fillOpacity={0.5}
+                          />
+                          
+                          <Radar
+                            name="Perfil"
+                            dataKey="value"
+                            stroke="#8b5cf6"
+                            strokeWidth={3}
+                            fill="url(#petRadarGradient)"
+                            fillOpacity={0.65}
+                            filter="url(#petGlow)"
+                            dot={{
+                              r: 5,
+                              fill: '#8b5cf6',
+                              stroke: '#fff',
+                              strokeWidth: 2,
+                            }}
+                          />
+                          
+                          <Legend 
+                            wrapperStyle={{ paddingTop: 15 }}
+                            iconType="circle"
+                            iconSize={10}
+                          />
+                          
+                          <Tooltip 
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                const data = payload[0]?.payload;
+                                if (!data) return null;
+                                const diff = data.value - data.benchmark;
+                                const isGood = diff >= 0;
+                                return (
+                                  <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg p-4 rounded-2xl shadow-2xl border border-purple-100 dark:border-purple-900/50 min-w-[160px]">
+                                    <div className="font-bold text-sm text-slate-800 dark:text-slate-200 mb-1">
+                                      {data.metric}
+                                    </div>
+                                    <div className="text-[10px] text-slate-500 mb-2">{data.description}</div>
+                                    <div className="flex items-center justify-between">
+                                      <div className={`text-xl font-bold ${isGood ? "text-purple-600" : "text-amber-600"}`}>
+                                        {data.value}%
+                                      </div>
+                                      <div className={`px-2 py-1 rounded-full text-xs font-bold ${
+                                        isGood 
+                                          ? "bg-emerald-100 text-emerald-700" 
+                                          : "bg-amber-100 text-amber-700"
+                                      }`}>
+                                        {diff > 0 ? "+" : ""}{diff}%
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                        </RadarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Barra Lateral de Métricas */}
+                <div className="lg:col-span-2 bg-gradient-to-br from-slate-50/80 via-white to-purple-50/30 dark:from-slate-800/50 dark:via-slate-900 dark:to-purple-950/20 p-4 sm:p-5 border-t lg:border-t-0 lg:border-l border-slate-100/80 dark:border-slate-700/50">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1 h-4 rounded-full bg-gradient-to-b from-purple-500 to-violet-600" />
+                      <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">Métricas</h4>
+                    </div>
+                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-500 to-violet-500 text-white font-semibold shadow-lg shadow-purple-500/20">
+                      7 dimensões
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-2.5">
+                    {behaviorProfile.map((item, idx) => {
+                      const diff = item.value - item.benchmark;
+                      const isGood = diff >= 0;
+                      const percentage = Math.min(100, item.value);
+                      const isStrong = item.value >= 80;
+                      
+                      return (
+                        <div 
+                          key={idx} 
+                          className={cn(
+                            "group p-2 rounded-lg transition-all duration-300",
+                            "hover:bg-white/80 dark:hover:bg-slate-800/60",
+                            isStrong && "ring-1 ring-purple-200/50 dark:ring-purple-800/30 bg-purple-50/30 dark:bg-purple-950/20"
+                          )}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-1.5">
+                              {isStrong && <Sparkles className="h-3 w-3 text-purple-500" />}
+                              <span className={cn(
+                                "text-[11px] font-medium",
+                                isStrong ? "text-purple-700 dark:text-purple-400" : "text-slate-600 dark:text-slate-400"
+                              )}>
+                                {item.metric}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={cn(
+                                "text-[10px] font-bold px-1.5 py-0.5 rounded",
+                                isGood 
+                                  ? "text-emerald-700 bg-emerald-100/80" 
+                                  : "text-amber-700 bg-amber-100/80"
+                              )}>
+                                {diff > 0 ? "+" : ""}{diff}
+                              </span>
+                              <span className={cn(
+                                "text-xs font-bold",
+                                isStrong ? "text-purple-600" : "text-slate-800 dark:text-slate-200"
+                              )}>
+                                {item.value}%
+                              </span>
+                            </div>
+                          </div>
+                          <div className="relative h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div 
+                              className="absolute top-0 bottom-0 w-0.5 bg-slate-400 dark:bg-slate-500 z-10"
+                              style={{ left: `${item.benchmark}%` }}
+                            />
+                            <div 
+                              className={cn(
+                                "h-full rounded-full transition-all duration-500",
+                                isGood 
+                                  ? "bg-gradient-to-r from-purple-500 to-violet-500" 
+                                  : "bg-gradient-to-r from-amber-400 to-orange-500"
+                              )}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
