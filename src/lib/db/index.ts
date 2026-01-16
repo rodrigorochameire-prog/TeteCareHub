@@ -13,11 +13,12 @@ import * as schema from "./schema";
  */
 const POOL_CONFIG = {
   // Número máximo de conexões no pool
-  // Em serverless, 3-5 é um bom equilíbrio
-  max: 3,
+  // Em serverless, 5 conexões permite paralelismo sem sobrecarregar
+  max: 5,
   
   // Timeout de conexão ociosa (segundos)
-  idle_timeout: 20,
+  // Mais alto = reutiliza conexões por mais tempo
+  idle_timeout: 30,
   
   // Timeout para estabelecer conexão (segundos)
   connect_timeout: 10,
@@ -28,8 +29,11 @@ const POOL_CONFIG = {
   // Configurações SSL para Supabase
   ssl: "require",
   
-  // Não fazer fetch de tipos - mais rápido para cold start
+  // Não fazer fetch de tipos - evita roundtrip extra no cold start
   fetch_types: false,
+  
+  // Keep-alive para reutilizar conexões TCP
+  keep_alive: 30,
 } as const;
 
 // Singleton para conexão do banco
