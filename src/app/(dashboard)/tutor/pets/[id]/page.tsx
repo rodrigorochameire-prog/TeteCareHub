@@ -59,11 +59,49 @@ interface PetPageProps {
 }
 
 // ==========================================
-// SISTEMA DE PONTUAÇÃO INTELIGENTE
+// SISTEMA DE PONTUAÇÃO INTELIGENTE AVANÇADO
+// Combina: Perfil do Pet + Behavior Logs + Daily Logs
 // ==========================================
 
-// Mapeamento de valores qualitativos para numéricos
-const scoreMapping = {
+// Mapeamento do perfil do pet (cadastro) para scores base
+const profileScoreMapping = {
+  // Sociabilidade com cães (do cadastro)
+  dogSociability: {
+    social: { score: 90, label: "Muito Sociável" },
+    selective: { score: 65, label: "Seletivo" },
+    reactive: { score: 35, label: "Reativo" },
+    antisocial: { score: 15, label: "Reservado" },
+  },
+  // Sociabilidade com humanos
+  humanSociability: {
+    friendly: { score: 90, label: "Amigável" },
+    cautious: { score: 60, label: "Cauteloso" },
+    fearful: { score: 35, label: "Medroso" },
+    reactive: { score: 20, label: "Reativo" },
+  },
+  // Nível de energia do cadastro
+  energyLevel: {
+    very_low: { score: 20, label: "Muito Baixa" },
+    low: { score: 40, label: "Baixa" },
+    medium: { score: 60, label: "Média" },
+    high: { score: 80, label: "Alta" },
+    very_high: { score: 95, label: "Muito Alta" },
+  },
+  // Ansiedade de separação
+  anxietySeparation: {
+    none: { score: 95, label: "Tranquilo" },
+    mild: { score: 70, label: "Leve" },
+    moderate: { score: 45, label: "Moderada" },
+    severe: { score: 20, label: "Severa" },
+  },
+  // Níveis de confiança/impulsividade (1-5 no cadastro)
+  confidenceLevel: { 1: 20, 2: 40, 3: 60, 4: 80, 5: 95 },
+  impulsivityLevel: { 1: 95, 2: 75, 3: 55, 4: 35, 5: 15 }, // Invertido (menos impulsivo = melhor para "calma")
+  resilienceLevel: { 1: 20, 2: 40, 3: 60, 4: 80, 5: 95 },
+};
+
+// Mapeamento dos behavior logs (observações diárias)
+const behaviorScoreMapping = {
   socialization: {
     excellent: { score: 95, label: "Excelente", color: "text-emerald-600" },
     good: { score: 75, label: "Bom", color: "text-green-600" },
@@ -74,6 +112,7 @@ const scoreMapping = {
     high: { score: 85, label: "Alta", color: "text-orange-600" },
     normal: { score: 65, label: "Normal", color: "text-green-600" },
     low: { score: 35, label: "Baixa", color: "text-blue-600" },
+    very_low: { score: 15, label: "Muito Baixa", color: "text-slate-600" },
   },
   obedience: {
     excellent: { score: 95, label: "Excelente", color: "text-emerald-600" },
@@ -94,96 +133,301 @@ const scoreMapping = {
   },
 };
 
-// Função para calcular score com tendência
-function calculateMetricWithTrend(
-  logs: any[],
-  field: string,
-  mapping: Record<string, { score: number; label: string; color: string }>
-): {
-  current: number;
-  average: number;
-  trend: "up" | "down" | "stable";
-  trendValue: number;
+// Mapeamento dos daily logs (humor, apetite, etc.)
+const dailyLogScoreMapping = {
+  mood: {
+    happy: 95, playful: 90, calm: 85, 
+    tired: 50, anxious: 35, agitated: 30,
+    fearful: 25, aggressive: 15, apathetic: 20, sick: 10,
+  },
+  appetite: {
+    excellent: 95, good: 80, moderate: 60, poor: 35, none: 10, stimulated: 70,
+  },
+  energy: {
+    high: 85, normal: 65, low: 40, very_low: 20,
+  },
+};
+
+// Tipo para resultado de métrica
+interface MetricResult {
+  value: number;
   label: string;
   color: string;
-} {
-  if (!logs || logs.length === 0) {
-    return { 
-      current: 50, 
-      average: 50, 
-      trend: "stable", 
-      trendValue: 0,
-      label: "Sem dados",
-      color: "text-muted-foreground"
-    };
-  }
+  trend: "up" | "down" | "stable";
+  trendValue: number;
+  source: "profile" | "observations" | "hybrid" | "none";
+  confidence: "high" | "medium" | "low";
+  dataPoints: number;
+}
 
-  const validLogs = logs.filter((log: any) => log[field] && mapping[log[field]]);
+// Função principal: Calcula métrica híbrida (perfil + observações)
+function calculateHybridMetric(
+  pet: any,
+  behaviorLogs: any[],
+  dailyLogs: any[],
+  metricType: "socialization" | "obedience" | "energy" | "calmness" | "docility"
+): MetricResult {
+  const emptyResult: MetricResult = {
+    value: 0,
+    label: "Sem dados",
+    color: "text-muted-foreground",
+    trend: "stable",
+    trendValue: 0,
+    source: "none",
+    confidence: "low",
+    dataPoints: 0,
+  };
+
+  // Coletar scores de diferentes fontes
+  const scores: { value: number; weight: number; source: string }[] = [];
   
-  if (validLogs.length === 0) {
-    return { 
-      current: 50, 
-      average: 50, 
-      trend: "stable", 
-      trendValue: 0,
-      label: "Sem dados",
-      color: "text-muted-foreground"
-    };
+  // 1. DADOS DO PERFIL (cadastro) - peso base
+  switch (metricType) {
+    case "socialization":
+      if (pet.dogSociability && profileScoreMapping.dogSociability[pet.dogSociability as keyof typeof profileScoreMapping.dogSociability]) {
+        scores.push({ 
+          value: profileScoreMapping.dogSociability[pet.dogSociability as keyof typeof profileScoreMapping.dogSociability].score, 
+          weight: 0.3, 
+          source: "profile" 
+        });
+      }
+      if (pet.humanSociability && profileScoreMapping.humanSociability[pet.humanSociability as keyof typeof profileScoreMapping.humanSociability]) {
+        scores.push({ 
+          value: profileScoreMapping.humanSociability[pet.humanSociability as keyof typeof profileScoreMapping.humanSociability].score, 
+          weight: 0.2, 
+          source: "profile" 
+        });
+      }
+      break;
+      
+    case "energy":
+      if (pet.energyLevel && profileScoreMapping.energyLevel[pet.energyLevel as keyof typeof profileScoreMapping.energyLevel]) {
+        scores.push({ 
+          value: profileScoreMapping.energyLevel[pet.energyLevel as keyof typeof profileScoreMapping.energyLevel].score, 
+          weight: 0.3, 
+          source: "profile" 
+        });
+      }
+      break;
+      
+    case "calmness":
+      if (pet.anxietySeparation && profileScoreMapping.anxietySeparation[pet.anxietySeparation as keyof typeof profileScoreMapping.anxietySeparation]) {
+        scores.push({ 
+          value: profileScoreMapping.anxietySeparation[pet.anxietySeparation as keyof typeof profileScoreMapping.anxietySeparation].score, 
+          weight: 0.3, 
+          source: "profile" 
+        });
+      }
+      if (pet.impulsivityLevel && profileScoreMapping.impulsivityLevel[pet.impulsivityLevel as keyof typeof profileScoreMapping.impulsivityLevel]) {
+        scores.push({ 
+          value: profileScoreMapping.impulsivityLevel[pet.impulsivityLevel as keyof typeof profileScoreMapping.impulsivityLevel], 
+          weight: 0.2, 
+          source: "profile" 
+        });
+      }
+      break;
+      
+    case "docility":
+      if (pet.confidenceLevel && profileScoreMapping.confidenceLevel[pet.confidenceLevel as keyof typeof profileScoreMapping.confidenceLevel]) {
+        scores.push({ 
+          value: profileScoreMapping.confidenceLevel[pet.confidenceLevel as keyof typeof profileScoreMapping.confidenceLevel], 
+          weight: 0.2, 
+          source: "profile" 
+        });
+      }
+      if (pet.correctionSensitivity) {
+        const sensitivityScore = pet.correctionSensitivity === "high" ? 85 : pet.correctionSensitivity === "medium" ? 65 : 45;
+        scores.push({ value: sensitivityScore, weight: 0.2, source: "profile" });
+      }
+      break;
+      
+    case "obedience":
+      // Obediência vem principalmente das observações, não do perfil
+      break;
   }
 
-  const scores = validLogs.map((log: any) => mapping[log[field]].score);
-  const average = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-  const current = scores[0]; // Mais recente
+  // 2. BEHAVIOR LOGS (observações de comportamento) - peso alto
+  if (behaviorLogs && behaviorLogs.length > 0) {
+    const fieldMap: Record<string, string> = {
+      socialization: "socialization",
+      obedience: "obedience",
+      energy: "energy",
+      calmness: "anxiety",
+      docility: "aggression",
+    };
+    
+    const field = fieldMap[metricType];
+    const mapping = behaviorScoreMapping[field as keyof typeof behaviorScoreMapping];
+    
+    if (mapping) {
+      const recentLogs = behaviorLogs.slice(0, 10); // Últimos 10
+      const validScores = recentLogs
+        .filter((log: any) => log[field] && mapping[log[field] as keyof typeof mapping])
+        .map((log: any) => mapping[log[field] as keyof typeof mapping].score);
+      
+      if (validScores.length > 0) {
+        const avg = validScores.reduce((a: number, b: number) => a + b, 0) / validScores.length;
+        // Peso maior para observações recentes
+        const weight = Math.min(0.5, 0.1 * validScores.length);
+        scores.push({ value: avg, weight, source: "behavior" });
+      }
+    }
+  }
 
-  // Calcular tendência (últimos 5 vs anteriores)
-  let trend: "up" | "down" | "stable" = "stable";
+  // 3. DAILY LOGS (logs diários) - peso médio
+  if (dailyLogs && dailyLogs.length > 0) {
+    const recentDailyLogs = dailyLogs.slice(0, 7); // Última semana
+    
+    if (metricType === "energy") {
+      const energyScores = recentDailyLogs
+        .filter((log: any) => log.energy && dailyLogScoreMapping.energy[log.energy as keyof typeof dailyLogScoreMapping.energy])
+        .map((log: any) => dailyLogScoreMapping.energy[log.energy as keyof typeof dailyLogScoreMapping.energy]);
+      
+      if (energyScores.length > 0) {
+        const avg = energyScores.reduce((a: number, b: number) => a + b, 0) / energyScores.length;
+        scores.push({ value: avg, weight: 0.3, source: "daily" });
+      }
+    }
+    
+    if (metricType === "calmness" || metricType === "socialization") {
+      const moodScores = recentDailyLogs
+        .filter((log: any) => log.mood && dailyLogScoreMapping.mood[log.mood as keyof typeof dailyLogScoreMapping.mood])
+        .map((log: any) => dailyLogScoreMapping.mood[log.mood as keyof typeof dailyLogScoreMapping.mood]);
+      
+      if (moodScores.length > 0) {
+        const avg = moodScores.reduce((a: number, b: number) => a + b, 0) / moodScores.length;
+        scores.push({ value: avg, weight: 0.2, source: "daily" });
+      }
+    }
+  }
+
+  // Se não há dados, retorna vazio
+  if (scores.length === 0) {
+    return emptyResult;
+  }
+
+  // Calcular média ponderada
+  const totalWeight = scores.reduce((a, s) => a + s.weight, 0);
+  const weightedAvg = Math.round(scores.reduce((a, s) => a + (s.value * s.weight), 0) / totalWeight);
+  
+  // Determinar fonte principal
+  const hasBehaviorData = scores.some(s => s.source === "behavior");
+  const hasProfileData = scores.some(s => s.source === "profile");
+  const hasDailyData = scores.some(s => s.source === "daily");
+  
+  let source: MetricResult["source"] = "none";
+  if (hasBehaviorData && hasProfileData) source = "hybrid";
+  else if (hasBehaviorData || hasDailyData) source = "observations";
+  else if (hasProfileData) source = "profile";
+
+  // Determinar confiança baseada na quantidade de dados
+  const dataPoints = (behaviorLogs?.length || 0) + (dailyLogs?.length || 0);
+  let confidence: MetricResult["confidence"] = "low";
+  if (dataPoints >= 10) confidence = "high";
+  else if (dataPoints >= 3) confidence = "medium";
+
+  // Calcular tendência (apenas se houver behavior logs suficientes)
+  let trend: MetricResult["trend"] = "stable";
   let trendValue = 0;
   
-  if (scores.length >= 3) {
-    const recent = scores.slice(0, Math.min(3, Math.floor(scores.length / 2)));
-    const older = scores.slice(Math.min(3, Math.floor(scores.length / 2)));
+  if (behaviorLogs && behaviorLogs.length >= 4) {
+    const fieldMap: Record<string, string> = {
+      socialization: "socialization",
+      obedience: "obedience",
+      energy: "energy",
+      calmness: "anxiety",
+      docility: "aggression",
+    };
+    const field = fieldMap[metricType];
+    const mapping = behaviorScoreMapping[field as keyof typeof behaviorScoreMapping];
     
-    const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
-    const olderAvg = older.reduce((a, b) => a + b, 0) / older.length;
-    
-    trendValue = Math.round(recentAvg - olderAvg);
-    
-    if (trendValue > 5) trend = "up";
-    else if (trendValue < -5) trend = "down";
+    if (mapping) {
+      const allScores = behaviorLogs
+        .filter((log: any) => log[field] && mapping[log[field] as keyof typeof mapping])
+        .map((log: any) => mapping[log[field] as keyof typeof mapping].score);
+      
+      if (allScores.length >= 4) {
+        const half = Math.floor(allScores.length / 2);
+        const recentAvg = allScores.slice(0, half).reduce((a: number, b: number) => a + b, 0) / half;
+        const olderAvg = allScores.slice(half).reduce((a: number, b: number) => a + b, 0) / (allScores.length - half);
+        
+        trendValue = Math.round(recentAvg - olderAvg);
+        if (trendValue > 5) trend = "up";
+        else if (trendValue < -5) trend = "down";
+      }
+    }
   }
 
-  const lastLog = validLogs[0];
-  const lastValue = mapping[lastLog[field]];
+  // Determinar label e cor baseado no valor
+  let label = "Bom";
+  let color = "text-green-600";
+  
+  if (weightedAvg >= 85) { label = "Excelente"; color = "text-emerald-600"; }
+  else if (weightedAvg >= 70) { label = "Muito Bom"; color = "text-green-600"; }
+  else if (weightedAvg >= 55) { label = "Bom"; color = "text-lime-600"; }
+  else if (weightedAvg >= 40) { label = "Moderado"; color = "text-amber-600"; }
+  else if (weightedAvg >= 25) { label = "Atenção"; color = "text-orange-600"; }
+  else { label = "Crítico"; color = "text-red-600"; }
 
   return {
-    current,
-    average,
+    value: weightedAvg,
+    label,
+    color,
     trend,
     trendValue: Math.abs(trendValue),
-    label: lastValue.label,
-    color: lastValue.color,
+    source,
+    confidence,
+    dataPoints,
   };
 }
 
-// Função para calcular "Perfil Geral" (score composto)
-function calculateOverallScore(metrics: { average: number }[]): {
+// Função para calcular "Perfil Geral" (score composto) com insights
+function calculateOverallScore(
+  metrics: { value: number; confidence: string }[],
+  pet: any
+): {
   score: number;
   level: string;
   emoji: string;
   description: string;
+  insights: string[];
 } {
-  const validMetrics = metrics.filter(m => m.average > 0);
+  const validMetrics = metrics.filter(m => m.value > 0);
   if (validMetrics.length === 0) {
-    return { score: 0, level: "Sem dados", emoji: "📊", description: "Registre observações para ver o perfil" };
+    return { 
+      score: 0, 
+      level: "Sem dados", 
+      emoji: "📊", 
+      description: "Registre observações para ver o perfil",
+      insights: ["Adicione registros de comportamento para análise completa"],
+    };
   }
 
-  const score = Math.round(validMetrics.reduce((a, m) => a + m.average, 0) / validMetrics.length);
+  const score = Math.round(validMetrics.reduce((a, m) => a + m.value, 0) / validMetrics.length);
+  const insights: string[] = [];
+  
+  // Gerar insights baseados nos dados
+  if (pet.fearTriggers && pet.fearTriggers.length > 0) {
+    insights.push(`Tem ${pet.fearTriggers.length} gatilho(s) de medo identificados`);
+  }
+  if (pet.convivenceRestrictions && pet.convivenceRestrictions.length > 0) {
+    insights.push(`Possui restrições de convivência`);
+  }
+  if (pet.playStyle) {
+    const playStyles: Record<string, string> = {
+      wrestling: "Gosta de brincadeiras físicas",
+      chase: "Adora correr e perseguir",
+      independent: "Prefere brincar sozinho",
+      observer: "Gosta de observar",
+    };
+    if (playStyles[pet.playStyle]) insights.push(playStyles[pet.playStyle]);
+  }
 
-  if (score >= 85) return { score, level: "Excepcional", emoji: "🌟", description: "Comportamento exemplar!" };
-  if (score >= 70) return { score, level: "Muito Bom", emoji: "😊", description: "Ótima adaptação na creche" };
-  if (score >= 55) return { score, level: "Bom", emoji: "👍", description: "Desenvolvimento positivo" };
-  if (score >= 40) return { score, level: "Em Progresso", emoji: "📈", description: "Evoluindo gradualmente" };
-  return { score, level: "Atenção", emoji: "💪", description: "Trabalhando para melhorar" };
+  if (score >= 85) return { score, level: "Excepcional", emoji: "🌟", description: "Comportamento exemplar!", insights };
+  if (score >= 70) return { score, level: "Muito Bom", emoji: "😊", description: "Ótima adaptação na creche", insights };
+  if (score >= 55) return { score, level: "Bom", emoji: "👍", description: "Desenvolvimento positivo", insights };
+  if (score >= 40) return { score, level: "Em Progresso", emoji: "📈", description: "Evoluindo gradualmente", insights };
+  return { score, level: "Atenção", emoji: "💪", description: "Trabalhando para melhorar", insights };
 }
 
 // ==========================================
@@ -272,55 +516,68 @@ export default function TutorPetDetailPage(props: PetPageProps) {
     { enabled: !!pet, staleTime: 5 * 60 * 1000 }
   );
 
-  // Calcular métricas inteligentes com tendências
+  // Buscar daily logs para enriquecer as métricas
+  const { data: dailyLogs } = trpc.logs.byPet.useQuery(
+    { petId, limit: 14 },
+    { enabled: !!pet, staleTime: 5 * 60 * 1000 }
+  );
+
+  // Calcular métricas HÍBRIDAS inteligentes
+  // Combina: Perfil do Pet + Behavior Logs + Daily Logs
   const behaviorMetrics = useMemo(() => {
-    const logs = behaviorLogs || [];
+    if (!pet) return null;
     
     return {
-      socialization: calculateMetricWithTrend(logs, "socialization", scoreMapping.socialization),
-      obedience: calculateMetricWithTrend(logs, "obedience", scoreMapping.obedience),
-      energy: calculateMetricWithTrend(logs, "energy", scoreMapping.energy),
-      calmness: calculateMetricWithTrend(logs, "anxiety", scoreMapping.anxiety),
-      docility: calculateMetricWithTrend(logs, "aggression", scoreMapping.aggression),
+      socialization: calculateHybridMetric(pet, behaviorLogs || [], dailyLogs || [], "socialization"),
+      obedience: calculateHybridMetric(pet, behaviorLogs || [], dailyLogs || [], "obedience"),
+      energy: calculateHybridMetric(pet, behaviorLogs || [], dailyLogs || [], "energy"),
+      calmness: calculateHybridMetric(pet, behaviorLogs || [], dailyLogs || [], "calmness"),
+      docility: calculateHybridMetric(pet, behaviorLogs || [], dailyLogs || [], "docility"),
     };
-  }, [behaviorLogs]);
+  }, [pet, behaviorLogs, dailyLogs]);
 
-  // Score geral do pet
+  // Score geral do pet com insights
   const overallScore = useMemo(() => {
+    if (!behaviorMetrics || !pet) {
+      return { score: 0, level: "Carregando...", emoji: "⏳", description: "", insights: [] };
+    }
+    
     return calculateOverallScore([
       behaviorMetrics.socialization,
       behaviorMetrics.obedience,
       behaviorMetrics.calmness,
       behaviorMetrics.docility,
-    ]);
-  }, [behaviorMetrics]);
+    ], pet);
+  }, [behaviorMetrics, pet]);
 
   // Dados do gráfico de radar otimizado
   const radarData = useMemo(() => {
+    if (!behaviorMetrics) return [];
+    
     return [
       { 
         metric: "Social", 
-        value: behaviorMetrics.socialization.average,
+        value: behaviorMetrics.socialization.value,
         fullMark: 100,
       },
       { 
         metric: "Obediência", 
-        value: behaviorMetrics.obedience.average,
+        value: behaviorMetrics.obedience.value,
         fullMark: 100,
       },
       { 
         metric: "Energia", 
-        value: behaviorMetrics.energy.average,
+        value: behaviorMetrics.energy.value,
         fullMark: 100,
       },
       { 
         metric: "Calma", 
-        value: behaviorMetrics.calmness.average,
+        value: behaviorMetrics.calmness.value,
         fullMark: 100,
       },
       { 
         metric: "Docilidade", 
-        value: behaviorMetrics.docility.average,
+        value: behaviorMetrics.docility.value,
         fullMark: 100,
       },
     ];
@@ -576,11 +833,11 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                   iconColor="text-blue-500"
                   bgColor="bg-blue-50 dark:bg-blue-950/30"
                   label="Social"
-                  value={behaviorMetrics.socialization.average}
-                  trend={behaviorMetrics.socialization.trend}
-                  trendValue={behaviorMetrics.socialization.trendValue}
-                  statusLabel={behaviorMetrics.socialization.label}
-                  statusColor={behaviorMetrics.socialization.color}
+                  value={behaviorMetrics?.socialization.value || 0}
+                  trend={behaviorMetrics?.socialization.trend || "stable"}
+                  trendValue={behaviorMetrics?.socialization.trendValue || 0}
+                  statusLabel={behaviorMetrics?.socialization.label || "—"}
+                  statusColor={behaviorMetrics?.socialization.color || "text-muted-foreground"}
                 />
                 
                 {/* Obediência */}
@@ -589,11 +846,11 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                   iconColor="text-green-500"
                   bgColor="bg-green-50 dark:bg-green-950/30"
                   label="Obediência"
-                  value={behaviorMetrics.obedience.average}
-                  trend={behaviorMetrics.obedience.trend}
-                  trendValue={behaviorMetrics.obedience.trendValue}
-                  statusLabel={behaviorMetrics.obedience.label}
-                  statusColor={behaviorMetrics.obedience.color}
+                  value={behaviorMetrics?.obedience.value || 0}
+                  trend={behaviorMetrics?.obedience.trend || "stable"}
+                  trendValue={behaviorMetrics?.obedience.trendValue || 0}
+                  statusLabel={behaviorMetrics?.obedience.label || "—"}
+                  statusColor={behaviorMetrics?.obedience.color || "text-muted-foreground"}
                 />
                 
                 {/* Energia */}
@@ -602,11 +859,11 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                   iconColor="text-orange-500"
                   bgColor="bg-orange-50 dark:bg-orange-950/30"
                   label="Energia"
-                  value={behaviorMetrics.energy.average}
-                  trend={behaviorMetrics.energy.trend}
-                  trendValue={behaviorMetrics.energy.trendValue}
-                  statusLabel={behaviorMetrics.energy.label}
-                  statusColor={behaviorMetrics.energy.color}
+                  value={behaviorMetrics?.energy.value || 0}
+                  trend={behaviorMetrics?.energy.trend || "stable"}
+                  trendValue={behaviorMetrics?.energy.trendValue || 0}
+                  statusLabel={behaviorMetrics?.energy.label || "—"}
+                  statusColor={behaviorMetrics?.energy.color || "text-muted-foreground"}
                 />
                 
                 {/* Calma */}
@@ -615,11 +872,11 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                   iconColor="text-cyan-500"
                   bgColor="bg-cyan-50 dark:bg-cyan-950/30"
                   label="Calma"
-                  value={behaviorMetrics.calmness.average}
-                  trend={behaviorMetrics.calmness.trend}
-                  trendValue={behaviorMetrics.calmness.trendValue}
-                  statusLabel={behaviorMetrics.calmness.label}
-                  statusColor={behaviorMetrics.calmness.color}
+                  value={behaviorMetrics?.calmness.value || 0}
+                  trend={behaviorMetrics?.calmness.trend || "stable"}
+                  trendValue={behaviorMetrics?.calmness.trendValue || 0}
+                  statusLabel={behaviorMetrics?.calmness.label || "—"}
+                  statusColor={behaviorMetrics?.calmness.color || "text-muted-foreground"}
                 />
                 
                 {/* Docilidade */}
@@ -628,11 +885,11 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                   iconColor="text-pink-500"
                   bgColor="bg-pink-50 dark:bg-pink-950/30"
                   label="Docilidade"
-                  value={behaviorMetrics.docility.average}
-                  trend={behaviorMetrics.docility.trend}
-                  trendValue={behaviorMetrics.docility.trendValue}
-                  statusLabel={behaviorMetrics.docility.label}
-                  statusColor={behaviorMetrics.docility.color}
+                  value={behaviorMetrics?.docility.value || 0}
+                  trend={behaviorMetrics?.docility.trend || "stable"}
+                  trendValue={behaviorMetrics?.docility.trendValue || 0}
+                  statusLabel={behaviorMetrics?.docility.label || "—"}
+                  statusColor={behaviorMetrics?.docility.color || "text-muted-foreground"}
                 />
               </div>
 
@@ -644,8 +901,8 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                     <div className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">
                       <span className="font-medium">Insight: </span>
                       {overallScore.description}
-                      {behaviorMetrics.socialization.trend === "up" && " Socialização melhorando!"}
-                      {behaviorMetrics.calmness.trend === "up" && " Mais tranquilo."}
+                      {behaviorMetrics?.socialization.trend === "up" && " Socialização melhorando!"}
+                      {behaviorMetrics?.calmness.trend === "up" && " Mais tranquilo."}
                     </div>
                   </div>
                 </div>
