@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { formatDate, cn } from "@/lib/utils";
+import { generateRadarData } from "@/lib/behavior-metrics";
 import { LoadingPage } from "@/components/shared/loading";
 import { PageHeader } from "@/components/shared/page-header";
 import { notFound } from "next/navigation";
@@ -1160,145 +1161,75 @@ export default function TutorPetDetailPage(props: PetPageProps) {
     ], pet);
   }, [behaviorMetrics, pet]);
 
-  // Dados do gráfico de radar AVANÇADO - 7 dimensões com benchmark
-  const radarData = useMemo(() => {
-    if (!behaviorMetrics || !pet) return [];
+  // Dados do gráfico de radar AVANÇADO - usando módulo inteligente
+  const radarChartData = useMemo(() => {
+    if (!pet) return null;
     
-    // Calcular benchmarks baseados na raça/porte (simulado por enquanto)
-    const getBreedBenchmark = (metric: string): number => {
-      // Valores médios esperados por tipo de métrica
-      const benchmarks: Record<string, number> = {
-        socialization: 70,
-        obedience: 65,
-        energy: 75,
-        calmness: 60,
-        docility: 70,
-        adaptability: 65,
-        focus: 60,
-      };
-      return benchmarks[metric] || 65;
+    // Converter logs para o formato esperado pelo módulo
+    const formattedBehaviorLogs = (behaviorLogs || []).map((log: any) => ({
+      id: log.id,
+      petId: log.petId,
+      logDate: log.logDate,
+      socialization: log.socialization,
+      energy: log.energy,
+      obedience: log.obedience,
+      anxiety: log.anxiety,
+      aggression: log.aggression,
+      notes: log.notes,
+      activities: log.activities,
+    }));
+    
+    const formattedDailyLogs = (dailyLogs || []).map((log: any) => ({
+      id: log.id,
+      petId: log.petId,
+      date: log.date,
+      mood: log.mood,
+      appetite: log.appetite,
+      energy: log.energy,
+      socialization: log.socialization,
+      notes: log.notes,
+    }));
+    
+    const formattedPet = {
+      id: pet.id,
+      name: pet.name,
+      breed: pet.breed,
+      size: pet.size,
+      temperament: pet.temperament,
+      specialNeeds: pet.specialNeeds,
     };
-
-    // Calcular adaptabilidade (baseado em variação de humor + novos ambientes)
-    const adaptabilityScore = (() => {
-      if (!dailyLogs || dailyLogs.length < 3) return 65;
-      const moodVariety = new Set(dailyLogs.slice(0, 10).map((l: any) => l.mood)).size;
-      // Mais variedade de humor positivo = mais adaptável
-      const positiveCount = dailyLogs.slice(0, 10).filter((l: any) => 
-        ["happy", "playful", "calm"].includes(l.mood)
-      ).length;
-      return Math.min(95, 50 + (positiveCount * 4) + (moodVariety * 2));
-    })();
-
-    // Calcular foco/atenção (baseado em obediência + resposta a comandos)
-    const focusScore = (() => {
-      if (!behaviorLogs || behaviorLogs.length === 0) return 60;
-      const obedienceScores = behaviorLogs.slice(0, 10).filter((l: any) => l.obedience);
-      if (obedienceScores.length === 0) return 60;
-      const excellentCount = obedienceScores.filter((l: any) => l.obedience === "excellent").length;
-      const goodCount = obedienceScores.filter((l: any) => l.obedience === "good").length;
-      return Math.min(95, 40 + (excellentCount * 8) + (goodCount * 4));
-    })();
-
-    return [
-      { 
-        metric: "Sociabilidade", 
-        shortName: "Social",
-        value: behaviorMetrics.socialization.value,
-        benchmark: getBreedBenchmark("socialization"),
-        description: "Interação com outros pets e pessoas",
-        icon: "users",
-      },
-      { 
-        metric: "Obediência", 
-        shortName: "Obed.",
-        value: behaviorMetrics.obedience.value,
-        benchmark: getBreedBenchmark("obedience"),
-        description: "Resposta a comandos e regras",
-        icon: "graduation",
-      },
-      { 
-        metric: "Energia", 
-        shortName: "Energia",
-        value: behaviorMetrics.energy.value,
-        benchmark: getBreedBenchmark("energy"),
-        description: "Nível de atividade física",
-        icon: "zap",
-      },
-      { 
-        metric: "Tranquilidade", 
-        shortName: "Calma",
-        value: behaviorMetrics.calmness.value,
-        benchmark: getBreedBenchmark("calmness"),
-        description: "Capacidade de se manter calmo",
-        icon: "shield",
-      },
-      { 
-        metric: "Docilidade", 
-        shortName: "Dócil",
-        value: behaviorMetrics.docility.value,
-        benchmark: getBreedBenchmark("docility"),
-        description: "Gentileza e não-agressividade",
-        icon: "heart",
-      },
-      { 
-        metric: "Adaptabilidade", 
-        shortName: "Adapt.",
-        value: adaptabilityScore,
-        benchmark: getBreedBenchmark("adaptability"),
-        description: "Flexibilidade a mudanças",
-        icon: "refresh",
-      },
-      { 
-        metric: "Foco", 
-        shortName: "Foco",
-        value: focusScore,
-        benchmark: getBreedBenchmark("focus"),
-        description: "Capacidade de atenção",
-        icon: "target",
-      },
-    ];
-  }, [behaviorMetrics, pet, dailyLogs, behaviorLogs]);
+    
+    return generateRadarData(formattedPet, formattedBehaviorLogs, formattedDailyLogs);
+  }, [pet, behaviorLogs, dailyLogs]);
+  
+  // Extrair métricas e análise do radarChartData
+  const radarData = radarChartData?.metrics || [];
   
   // Análise comportamental dinâmica
   const behaviorAnalysis = useMemo(() => {
-    if (!radarData || radarData.length === 0) return null;
+    if (!radarChartData || radarChartData.metrics.length === 0) return null;
     
-    const aboveBenchmark = radarData.filter(d => d.value > d.benchmark);
-    const belowBenchmark = radarData.filter(d => d.value < d.benchmark - 10);
-    const avgScore = Math.round(radarData.reduce((a, d) => a + d.value, 0) / radarData.length);
+    const metrics = radarChartData.metrics;
+    const aboveBenchmark = metrics.filter(d => d.value > d.benchmark);
+    const belowBenchmark = metrics.filter(d => d.value < d.benchmark - 10);
     
     // Identificar pontos fortes e fracos
-    const sorted = [...radarData].sort((a, b) => b.value - a.value);
+    const sorted = [...metrics].sort((a, b) => b.value - a.value);
     const strongest = sorted[0];
     const weakest = sorted[sorted.length - 1];
     
-    // Gerar insights dinâmicos
-    const insights: string[] = [];
-    
-    if (strongest && strongest.value >= 80) {
-      insights.push(`Destaque em ${strongest.metric.toLowerCase()} (${strongest.value}%)`);
-    }
-    if (weakest && weakest.value < 50) {
-      insights.push(`Oportunidade de melhoria: ${weakest.metric.toLowerCase()}`);
-    }
-    if (aboveBenchmark.length >= 5) {
-      insights.push("Desempenho acima da média em múltiplas áreas");
-    }
-    if (belowBenchmark.length >= 3) {
-      insights.push("Algumas áreas precisam de atenção especial");
-    }
-    
     return {
-      avgScore,
+      avgScore: radarChartData.overallScore,
       aboveBenchmarkCount: aboveBenchmark.length,
       belowBenchmarkCount: belowBenchmark.length,
       strongest,
       weakest,
-      insights,
-      totalMetrics: radarData.length,
+      insights: radarChartData.insights,
+      alerts: radarChartData.alerts,
+      dataQuality: radarChartData.dataQuality,
+      totalMetrics: metrics.length,
     };
-  }, [radarData]);
+  }, [radarChartData]);
 
   // Últimos registros de comportamento formatados
   const recentBehavior = useMemo(() => {

@@ -72,6 +72,7 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
 } from "recharts";
+import { generateAggregatedRadarDataPremium, type RadarMetric } from "@/lib/behavior-metrics";
 
 const NEUTRAL_COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"];
 
@@ -248,27 +249,21 @@ export default function AdminBehavior() {
       .sort((a, b) => b.value - a.value)
       .slice(0, 8);
 
-    // Radar data (média de comportamento)
-    const calcAvg = (options: any[], counts: Record<string, number>) => {
-      let total = 0;
-      let sum = 0;
-      Object.entries(counts).forEach(([key, count]) => {
-        const opt = options.find(o => o.value === key);
-        if (opt) {
-          sum += opt.score * count;
-          total += count;
-        }
-      });
-      return total > 0 ? (sum / total / 4) * 100 : 50;
-    };
-
-    const radarData = [
-      { subject: "Socialização", value: calcAvg(socializationOptions, socializationCount) },
-      { subject: "Obediência", value: 70 }, // Placeholder
-      { subject: "Energia", value: calcAvg(energyOptions.map(e => ({ ...e, score: e.score + 1 })), energyCount) },
-      { subject: "Calma", value: calcAvg(anxietyOptions, anxietyCount) },
-      { subject: "Docilidade", value: 80 }, // Placeholder
-    ];
+    // Radar data premium (média de comportamento) - usando módulo inteligente
+    const formattedLogs = allLogs.map(log => ({
+      id: log.id,
+      petId: log.petId,
+      logDate: log.logDate,
+      socialization: log.socialization,
+      energy: log.energy,
+      obedience: log.obedience,
+      anxiety: log.anxiety,
+      aggression: log.aggression,
+      notes: log.notes,
+      activities: log.activities || [],
+    }));
+    
+    const radarData = generateAggregatedRadarDataPremium(formattedLogs);
 
     // Timeline dos últimos 14 dias
     const timeline = Array.from({ length: 14 }, (_, i) => {
@@ -584,32 +579,335 @@ export default function AdminBehavior() {
 
         {/* Tab: Análises */}
         <TabsContent value="analytics" className="space-y-6">
-          {/* Radar de Comportamento */}
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Brain className="h-5 w-5" />
-                Perfil Comportamental Geral
-              </CardTitle>
-              <CardDescription>Média de todos os pets avaliados</CardDescription>
+          {/* Radar de Comportamento - Premium */}
+          <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-slate-50 via-white to-purple-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-purple-950/20">
+            <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 shadow-lg shadow-purple-500/25">
+                    <Brain className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-semibold">Perfil Comportamental Geral</CardTitle>
+                    <CardDescription className="text-xs flex items-center gap-2 mt-0.5">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        {allLogs?.length || 0} registros
+                      </span>
+                      <span className="text-slate-400">|</span>
+                      <span>Média de todos os pets</span>
+                    </CardDescription>
+                  </div>
+                </div>
+                
+                {/* Score Geral */}
+                {chartData.radarData.length > 0 && (
+                  <div className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-xl shadow-purple-500/30">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold tracking-tight">
+                        {Math.round(chartData.radarData.reduce((sum: number, m: RadarMetric) => sum + m.value, 0) / chartData.radarData.length)}
+                      </div>
+                      <div className="text-[10px] uppercase tracking-wider opacity-80">Score Médio</div>
+                    </div>
+                    <div className="h-10 w-px bg-white/20" />
+                    <div className="text-xs space-y-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <TrendingUp className="h-3 w-3" />
+                        <span>{chartData.radarData.filter((m: RadarMetric) => m.value > m.benchmark).length} acima da média</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 opacity-75">
+                        <BarChart3 className="h-3 w-3" />
+                        <span>7 métricas</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart data={chartData.radarData}>
-                    <PolarGrid stroke="#e2e8f0" />
-                    <PolarAngleAxis dataKey="subject" fontSize={11} stroke="#94a3b8" />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#94a3b8" fontSize={10} />
-                    <Radar
-                      name="Comportamento"
-                      dataKey="value"
-                      stroke="#475569"
-                      fill="#64748b"
-                      fillOpacity={0.5}
-                    />
-                    <Tooltip />
-                  </RadarChart>
-                </ResponsiveContainer>
+            
+            <CardContent className="p-0">
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
+                {/* Gráfico de Radar Premium */}
+                <div className="lg:col-span-3 p-4 sm:p-6">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-48 h-48 rounded-full bg-gradient-to-br from-purple-500/10 via-violet-500/5 to-transparent blur-3xl" />
+                    </div>
+                    
+                    <div className="h-[320px] sm:h-[360px] relative z-10">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart 
+                          data={chartData.radarData} 
+                          cx="50%" 
+                          cy="50%" 
+                          outerRadius="58%"
+                          margin={{ top: 40, right: 50, bottom: 30, left: 50 }}
+                        >
+                          <defs>
+                            <linearGradient id="adminRadarGradient" x1="0" y1="0" x2="1" y2="1">
+                              <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.95} />
+                              <stop offset="30%" stopColor="#a855f7" stopOpacity={0.8} />
+                              <stop offset="60%" stopColor="#c084fc" stopOpacity={0.6} />
+                              <stop offset="100%" stopColor="#e879f9" stopOpacity={0.4} />
+                            </linearGradient>
+                            <linearGradient id="adminBenchmarkGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#cbd5e1" stopOpacity={0.25} />
+                              <stop offset="100%" stopColor="#e2e8f0" stopOpacity={0.1} />
+                            </linearGradient>
+                            <filter id="adminGlow" x="-50%" y="-50%" width="200%" height="200%">
+                              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                              <feMerge>
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                              </feMerge>
+                            </filter>
+                          </defs>
+                          
+                          <PolarGrid 
+                            stroke="#e2e8f0" 
+                            strokeWidth={1}
+                            gridType="polygon"
+                            strokeOpacity={0.6}
+                          />
+                          
+                          <PolarAngleAxis 
+                            dataKey="metric" 
+                            tick={(props: any) => {
+                              const { x, y, payload, index } = props;
+                              const item = chartData.radarData[index] as RadarMetric;
+                              const isAbove = item && item.value > item.benchmark;
+                              const xPos = typeof x === "number" ? x : 0;
+                              const yPos = typeof y === "number" ? y : 0;
+                              
+                              const centerX = 50;
+                              const centerY = 50;
+                              const angleRad = Math.atan2(yPos - centerY, xPos - centerX);
+                              const labelOffset = 12;
+                              const adjustedX = xPos + Math.cos(angleRad) * labelOffset;
+                              const adjustedY = yPos + Math.sin(angleRad) * labelOffset;
+                              
+                              return (
+                                <g>
+                                  <rect
+                                    x={adjustedX - 38}
+                                    y={adjustedY - 10}
+                                    width={76}
+                                    height={28}
+                                    rx={6}
+                                    fill={isAbove ? "rgba(139, 92, 246, 0.1)" : "rgba(148, 163, 184, 0.08)"}
+                                    stroke={isAbove ? "rgba(139, 92, 246, 0.2)" : "rgba(148, 163, 184, 0.15)"}
+                                    strokeWidth={1}
+                                  />
+                                  <text 
+                                    x={adjustedX} 
+                                    y={adjustedY} 
+                                    textAnchor="middle" 
+                                    dominantBaseline="middle"
+                                    fill={isAbove ? "#7c3aed" : "#64748b"}
+                                    fontSize={10}
+                                    fontWeight={600}
+                                  >
+                                    {payload.value}
+                                  </text>
+                                  {item && (
+                                    <text 
+                                      x={adjustedX} 
+                                      y={adjustedY + 12} 
+                                      textAnchor="middle" 
+                                      dominantBaseline="middle"
+                                      fill={isAbove ? "#22c55e" : "#94a3b8"}
+                                      fontSize={9}
+                                      fontWeight={700}
+                                    >
+                                      {item.value}%
+                                    </text>
+                                  )}
+                                </g>
+                              );
+                            }}
+                            tickLine={false}
+                          />
+                          
+                          <PolarRadiusAxis 
+                            angle={90} 
+                            domain={[0, 100]} 
+                            tick={false}
+                            axisLine={false}
+                          />
+                          
+                          <Radar
+                            name="Benchmark"
+                            dataKey="benchmark"
+                            stroke="#94a3b8"
+                            strokeWidth={1.5}
+                            strokeDasharray="6 4"
+                            fill="url(#adminBenchmarkGradient)"
+                            fillOpacity={0.5}
+                          />
+                          
+                          <Radar
+                            name="Média Geral"
+                            dataKey="value"
+                            stroke="url(#adminRadarGradient)"
+                            strokeWidth={3}
+                            fill="url(#adminRadarGradient)"
+                            fillOpacity={0.65}
+                            filter="url(#adminGlow)"
+                            dot={{
+                              r: 5,
+                              fill: '#8b5cf6',
+                              stroke: '#fff',
+                              strokeWidth: 2,
+                            }}
+                          />
+                          
+                          <Legend 
+                            wrapperStyle={{ paddingTop: 15 }}
+                            iconType="circle"
+                            iconSize={10}
+                            formatter={(value) => (
+                              <span className="text-xs font-medium text-slate-600 dark:text-slate-400 ml-1">
+                                {value}
+                              </span>
+                            )}
+                          />
+                          
+                          <Tooltip 
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                const data = payload[0]?.payload as RadarMetric;
+                                if (!data) return null;
+                                const diff = data.value - data.benchmark;
+                                const isGood = diff >= 0;
+                                return (
+                                  <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg p-4 rounded-2xl shadow-2xl border border-purple-100 dark:border-purple-900/50 min-w-[180px]">
+                                    <div className="font-bold text-sm text-slate-800 dark:text-slate-200 mb-1">
+                                      {data.metric}
+                                    </div>
+                                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mb-3">
+                                      {data.description}
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                      <div className="text-center">
+                                        <div className={`text-xl font-bold ${isGood ? "text-purple-600" : "text-amber-600"}`}>
+                                          {data.value}%
+                                        </div>
+                                        <div className="text-[9px] text-slate-400">Média</div>
+                                      </div>
+                                      <div className={`px-2 py-1 rounded-full text-xs font-bold ${
+                                        isGood 
+                                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400" 
+                                          : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
+                                      }`}>
+                                        {diff > 0 ? "+" : ""}{diff}%
+                                      </div>
+                                      <div className="text-center">
+                                        <div className="text-lg font-semibold text-slate-400">
+                                          {data.benchmark}%
+                                        </div>
+                                        <div className="text-[9px] text-slate-400">Esperado</div>
+                                      </div>
+                                    </div>
+                                    {data.confidence !== undefined && (
+                                      <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+                                        <div className="text-[10px] text-slate-400 flex items-center gap-1">
+                                          Confiança: 
+                                          <span className="font-medium text-slate-600 dark:text-slate-300">{data.confidence}%</span>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                        </RadarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Barra Lateral de Métricas */}
+                <div className="lg:col-span-2 bg-gradient-to-br from-slate-50/80 via-white to-purple-50/30 dark:from-slate-800/50 dark:via-slate-900 dark:to-purple-950/20 p-4 sm:p-5 border-t lg:border-t-0 lg:border-l border-slate-100/80 dark:border-slate-700/50">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1 h-4 rounded-full bg-gradient-to-b from-purple-500 to-violet-600" />
+                      <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">Métricas</h4>
+                    </div>
+                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-500 to-violet-500 text-white font-semibold shadow-lg shadow-purple-500/20">
+                      7 dimensões
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-2.5">
+                    {chartData.radarData.map((item: RadarMetric, idx: number) => {
+                      const diff = item.value - item.benchmark;
+                      const isGood = diff >= 0;
+                      const percentage = Math.min(100, item.value);
+                      
+                      return (
+                        <div 
+                          key={idx} 
+                          className="group p-2 rounded-lg transition-all duration-300 hover:bg-white/80 dark:hover:bg-slate-800/60"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                              {item.metric}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                isGood 
+                                  ? "text-emerald-700 bg-emerald-100/80 dark:bg-emerald-900/40 dark:text-emerald-400" 
+                                  : "text-amber-700 bg-amber-100/80 dark:bg-amber-900/40 dark:text-amber-400"
+                              }`}>
+                                {diff > 0 ? "+" : ""}{diff}
+                              </span>
+                              <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                {item.value}%
+                              </span>
+                            </div>
+                          </div>
+                          <div className="relative h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div 
+                              className="absolute top-0 bottom-0 w-0.5 bg-slate-400 dark:bg-slate-500 z-10"
+                              style={{ left: `${item.benchmark}%` }}
+                            />
+                            <div 
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                isGood 
+                                  ? "bg-gradient-to-r from-purple-500 to-violet-500" 
+                                  : "bg-gradient-to-r from-amber-400 to-orange-500"
+                              }`}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Qualidade dos Dados */}
+                  {allLogs && allLogs.length > 0 && (
+                    <div className="mt-4 p-3 rounded-xl bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/40 dark:to-violet-950/40 border border-purple-100 dark:border-purple-900/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Shield className="h-3.5 w-3.5 text-purple-500" />
+                        <span className="text-[11px] font-semibold text-purple-700 dark:text-purple-300">
+                          Qualidade dos Dados
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-purple-600/80 dark:text-purple-400/80">
+                        {allLogs.length >= 50 ? (
+                          <span>Excelente - {allLogs.length} registros analisados</span>
+                        ) : allLogs.length >= 20 ? (
+                          <span>Boa - {allLogs.length} registros analisados</span>
+                        ) : (
+                          <span>Limitada - apenas {allLogs.length} registros. Continue registrando!</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
