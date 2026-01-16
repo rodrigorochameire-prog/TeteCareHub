@@ -100,9 +100,19 @@ export function PetCard({
 
   const cardContent = (
     <div className={cn(
-      "p-4 rounded-xl bg-card border transition-all duration-200",
-      "hover:shadow-md hover:-translate-y-0.5",
-      hasLowCredits && "border-red-200 dark:border-red-900",
+      // Base: Card Premium com borda suave
+      "p-4 rounded-xl bg-card border border-slate-200/60 dark:border-slate-700/40",
+      // Sombra sutil no estado normal
+      "shadow-[0_2px_8px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.03)]",
+      // Transição suave
+      "transition-all duration-300 ease-out",
+      // Hover: Card "levanta" e sombra aumenta
+      "hover:shadow-[0_12px_24px_rgba(0,0,0,0.08),0_4px_12px_rgba(0,0,0,0.05)]",
+      "hover:-translate-y-1 hover:border-primary/20",
+      // Active: Feedback de clique
+      "active:scale-[0.99] active:shadow-[0_4px_8px_rgba(0,0,0,0.06)]",
+      // Estado especial para baixo crédito
+      hasLowCredits && "border-red-200 dark:border-red-800/50 ring-1 ring-red-100 dark:ring-red-900/30",
       className
     )}>
       {/* Header: Avatar + Info */}
