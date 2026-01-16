@@ -136,11 +136,19 @@ export default function AdminDocuments() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Query principal com cache
   const { data: documents, isLoading, refetch } = trpc.documents.list.useQuery({
     category: categoryFilter === "all" ? undefined : categoryFilter,
+  }, {
+    staleTime: 60 * 1000, // 1 min
   });
-  const { data: allDocuments } = trpc.documents.list.useQuery({});
-  const { data: pets } = trpc.pets.list.useQuery();
+  
+  // Reusar mesma query (evita duplicação)
+  const allDocuments = documents;
+  
+  const { data: pets } = trpc.pets.list.useQuery(undefined, {
+    staleTime: 5 * 60 * 1000, // 5 min
+  });
 
   // Dados para infográficos expandidos
   const chartData = useMemo(() => {

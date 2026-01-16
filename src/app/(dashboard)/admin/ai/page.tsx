@@ -31,12 +31,22 @@ export default function AdminAIPage() {
   const [generatedReport, setGeneratedReport] = useState<string | null>(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
-  // Queries
-  const { data: pets } = trpc.pets.list.useQuery();
+  // Query principal com cache
+  const { data: pets } = trpc.pets.list.useQuery(undefined, {
+    staleTime: 2 * 60 * 1000, // 2 min
+  });
+  
+  // Queries de AI - lazy loading (espera pets carregar) e cache longo
   const { data: dashboardInsights, isLoading: insightsLoading, refetch: refetchInsights } = 
-    trpc.ai.getDashboardInsights.useQuery();
+    trpc.ai.getDashboardInsights.useQuery(undefined, {
+      enabled: !!pets, // Só carrega após pets
+      staleTime: 10 * 60 * 1000, // 10 min - AI é pesado
+    });
   const { data: roomSuggestions, isLoading: roomsLoading, refetch: refetchRooms } = 
-    trpc.ai.getRoomSuggestions.useQuery({});
+    trpc.ai.getRoomSuggestions.useQuery({}, {
+      enabled: !!pets,
+      staleTime: 10 * 60 * 1000, // 10 min
+    });
 
   // Mutations
   const generateReportMutation = trpc.ai.generateWeeklyReport.useMutation({

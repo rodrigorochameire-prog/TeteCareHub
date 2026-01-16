@@ -401,17 +401,21 @@ export default function AdminPetsPage() {
     staleTime: 60 * 1000, // 1 min cache
   });
   
-  // Queries secundárias - lazy loading
+  // Queries secundárias - lazy loading (esperam pets carregar)
   const { data: pendingPets } = trpc.pets.pending.useQuery(undefined, {
+    enabled: !!pets,
     staleTime: 60 * 1000,
   });
   const { data: tutors } = trpc.users.tutors.useQuery(undefined, {
+    enabled: !!pets,
     staleTime: 5 * 60 * 1000, // 5 min - muda raramente
   });
   const { data: checkedInPets } = trpc.dashboard.checkedInPets.useQuery(undefined, {
+    enabled: !!pets,
     staleTime: 30 * 1000, // 30s - importante manter atualizado
   });
   const { data: lowStockPets } = trpc.petManagement.getLowStockPets.useQuery(undefined, {
+    enabled: !!pets,
     staleTime: 2 * 60 * 1000, // 2 min
   });
 

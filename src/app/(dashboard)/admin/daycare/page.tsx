@@ -100,11 +100,13 @@ export default function DaycarePage() {
   const lowStockPets = daycareData?.lowStockPets;
   const vaccineStats = daycareData?.vaccineStats;
 
-  // Queries secundárias - carregam depois (lazy loading)
+  // Queries secundárias - lazy loading (só carrega após daycareData)
   const { data: settings } = trpc.businessRules.listSettings.useQuery(undefined, {
+    enabled: !!daycareData, // Espera dados principais
     staleTime: 5 * 60 * 1000, // 5 minutos - muda raramente
   });
   const { data: allFlags } = trpc.businessRules.listFlags.useQuery({ activeOnly: true }, {
+    enabled: !!daycareData,
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 
