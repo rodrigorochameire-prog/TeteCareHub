@@ -803,6 +803,7 @@ export const petManagementRouter = router({
             id: dailyLogs.id,
             logDate: dailyLogs.logDate,
             mood: dailyLogs.mood,
+            energy: dailyLogs.energy,
             appetite: dailyLogs.appetite,
             notes: dailyLogs.notes,
           })
