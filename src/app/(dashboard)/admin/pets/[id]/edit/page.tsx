@@ -179,21 +179,25 @@ export default function EditPetAdvancedPage() {
 
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="basic" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="basic" className="flex items-center gap-2">
-              <Dog className="h-4 w-4" /> Básico
+          <TabsList className="flex w-full overflow-x-auto scrollbar-hide">
+            <TabsTrigger value="basic" className="flex items-center gap-1 px-3 text-xs sm:text-sm sm:gap-2 sm:px-4 whitespace-nowrap">
+              <Dog className="h-3 w-3 sm:h-4 sm:w-4" /> Básico
             </TabsTrigger>
-            <TabsTrigger value="behavior" className="flex items-center gap-2">
-              <Brain className="h-4 w-4" /> Comportamento
+            <TabsTrigger value="behavior" className="flex items-center gap-1 px-3 text-xs sm:text-sm sm:gap-2 sm:px-4 whitespace-nowrap">
+              <Brain className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Comportamento</span>
+              <span className="sm:hidden">Comport.</span>
             </TabsTrigger>
-            <TabsTrigger value="feeding" className="flex items-center gap-2">
-              <Utensils className="h-4 w-4" /> Alimentação
+            <TabsTrigger value="feeding" className="flex items-center gap-1 px-3 text-xs sm:text-sm sm:gap-2 sm:px-4 whitespace-nowrap">
+              <Utensils className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Alimentação</span>
+              <span className="sm:hidden">Comida</span>
             </TabsTrigger>
-            <TabsTrigger value="health" className="flex items-center gap-2">
-              <Heart className="h-4 w-4" /> Saúde
+            <TabsTrigger value="health" className="flex items-center gap-1 px-3 text-xs sm:text-sm sm:gap-2 sm:px-4 whitespace-nowrap">
+              <Heart className="h-3 w-3 sm:h-4 sm:w-4" /> Saúde
             </TabsTrigger>
-            <TabsTrigger value="social" className="flex items-center gap-2">
-              <Users className="h-4 w-4" /> Social
+            <TabsTrigger value="social" className="flex items-center gap-1 px-3 text-xs sm:text-sm sm:gap-2 sm:px-4 whitespace-nowrap">
+              <Users className="h-3 w-3 sm:h-4 sm:w-4" /> Social
             </TabsTrigger>
           </TabsList>
 

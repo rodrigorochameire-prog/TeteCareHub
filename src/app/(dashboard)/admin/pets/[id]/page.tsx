@@ -314,30 +314,34 @@ export default function AdminPetDetailPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="timeline" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="timeline" className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Timeline
+        <TabsList className="flex w-full overflow-x-auto scrollbar-hide">
+          <TabsTrigger value="timeline" className="flex items-center gap-1 px-3 text-xs sm:text-sm sm:gap-2 sm:px-4 whitespace-nowrap">
+            <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Timeline</span>
+            <span className="sm:hidden">Time</span>
           </TabsTrigger>
-          <TabsTrigger value="social" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
+          <TabsTrigger value="social" className="flex items-center gap-1 px-3 text-xs sm:text-sm sm:gap-2 sm:px-4 whitespace-nowrap">
+            <Users className="h-3 w-3 sm:h-4 sm:w-4" />
             Social
           </TabsTrigger>
-          <TabsTrigger value="health" className="flex items-center gap-2">
-            <Syringe className="h-4 w-4" />
+          <TabsTrigger value="health" className="flex items-center gap-1 px-3 text-xs sm:text-sm sm:gap-2 sm:px-4 whitespace-nowrap">
+            <Syringe className="h-3 w-3 sm:h-4 sm:w-4" />
             Saúde
           </TabsTrigger>
-          <TabsTrigger value="training" className="flex items-center gap-2">
-            <Star className="h-4 w-4" />
-            Adestramento
+          <TabsTrigger value="training" className="flex items-center gap-1 px-3 text-xs sm:text-sm sm:gap-2 sm:px-4 whitespace-nowrap">
+            <Star className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Adestramento</span>
+            <span className="sm:hidden">Treino</span>
           </TabsTrigger>
-          <TabsTrigger value="emergency" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Emergência
+          <TabsTrigger value="emergency" className="flex items-center gap-1 px-3 text-xs sm:text-sm sm:gap-2 sm:px-4 whitespace-nowrap">
+            <Shield className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Emergência</span>
+            <span className="sm:hidden">Emerg.</span>
           </TabsTrigger>
-          <TabsTrigger value="feeding" className="flex items-center gap-2">
-            <Utensils className="h-4 w-4" />
-            Alimentação
+          <TabsTrigger value="feeding" className="flex items-center gap-1 px-3 text-xs sm:text-sm sm:gap-2 sm:px-4 whitespace-nowrap">
+            <Utensils className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Alimentação</span>
+            <span className="sm:hidden">Comida</span>
           </TabsTrigger>
         </TabsList>
 
