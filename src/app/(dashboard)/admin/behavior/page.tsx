@@ -580,11 +580,11 @@ export default function AdminBehavior() {
         {/* Tab: Análises */}
         <TabsContent value="analytics" className="space-y-6">
           {/* Radar de Comportamento - Premium */}
-          <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-slate-50 via-white to-purple-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-purple-950/20">
+          <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/20">
             <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 shadow-lg shadow-purple-500/25">
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 shadow-lg shadow-blue-500/25">
                     <Brain className="h-5 w-5 text-white" />
                   </div>
                   <div>
@@ -602,7 +602,7 @@ export default function AdminBehavior() {
                 
                 {/* Score Geral */}
                 {chartData.radarData.length > 0 && (
-                  <div className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-xl shadow-purple-500/30">
+                  <div className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-xl shadow-blue-500/30">
                     <div className="text-center">
                       <div className="text-3xl font-bold tracking-tight">
                         {Math.round(chartData.radarData.reduce((sum: number, m: RadarMetric) => sum + m.value, 0) / chartData.radarData.length)}
@@ -631,7 +631,7 @@ export default function AdminBehavior() {
                 <div className="lg:col-span-3 p-4 sm:p-6">
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="w-48 h-48 rounded-full bg-gradient-to-br from-purple-500/10 via-violet-500/5 to-transparent blur-3xl" />
+                      <div className="w-48 h-48 rounded-full bg-gradient-to-br from-blue-500/10 via-blue-400/5 to-transparent blur-3xl" />
                     </div>
                     
                     <div className="h-[280px] sm:h-[340px] relative z-10">
@@ -645,10 +645,10 @@ export default function AdminBehavior() {
                         >
                           <defs>
                             <linearGradient id="adminRadarGradient" x1="0" y1="0" x2="1" y2="1">
-                              <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.95} />
-                              <stop offset="30%" stopColor="#a855f7" stopOpacity={0.8} />
-                              <stop offset="60%" stopColor="#c084fc" stopOpacity={0.6} />
-                              <stop offset="100%" stopColor="#e879f9" stopOpacity={0.4} />
+                              <stop offset="0%" stopColor="#1e3a5f" stopOpacity={0.95} />
+                              <stop offset="30%" stopColor="#2563eb" stopOpacity={0.8} />
+                              <stop offset="60%" stopColor="#3b82f6" stopOpacity={0.6} />
+                              <stop offset="100%" stopColor="#60a5fa" stopOpacity={0.4} />
                             </linearGradient>
                             <linearGradient id="adminBenchmarkGradient" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="0%" stopColor="#cbd5e1" stopOpacity={0.25} />
@@ -686,7 +686,7 @@ export default function AdminBehavior() {
                                     y={yPos} 
                                     textAnchor="middle" 
                                     dominantBaseline="middle"
-                                    fill={isAbove ? "#7c3aed" : "#64748b"}
+                                    fill={isAbove ? "#1e40af" : "#64748b"}
                                     fontSize={11}
                                     fontWeight={600}
                                   >
@@ -738,7 +738,7 @@ export default function AdminBehavior() {
                             filter="url(#adminGlow)"
                             dot={{
                               r: 5,
-                              fill: '#8b5cf6',
+                              fill: '#1e3a5f',
                               stroke: '#fff',
                               strokeWidth: 2,
                             }}
@@ -763,7 +763,7 @@ export default function AdminBehavior() {
                                 const diff = data.value - data.benchmark;
                                 const isGood = diff >= 0;
                                 return (
-                                  <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg p-4 rounded-2xl shadow-2xl border border-purple-100 dark:border-purple-900/50 min-w-[180px]">
+                                  <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg p-4 rounded-2xl shadow-2xl border border-blue-100 dark:border-blue-900/50 min-w-[180px]">
                                     <div className="font-bold text-sm text-slate-800 dark:text-slate-200 mb-1">
                                       {data.metric}
                                     </div>
@@ -772,7 +772,7 @@ export default function AdminBehavior() {
                                     </div>
                                     <div className="flex items-center justify-between">
                                       <div className="text-center">
-                                        <div className={`text-xl font-bold ${isGood ? "text-purple-600" : "text-amber-600"}`}>
+                                        <div className={`text-xl font-bold ${isGood ? "text-blue-700" : "text-amber-600"}`}>
                                           {data.value}%
                                         </div>
                                         <div className="text-[9px] text-slate-400">Média</div>
@@ -812,13 +812,13 @@ export default function AdminBehavior() {
                 </div>
                 
                 {/* Barra Lateral de Métricas */}
-                <div className="lg:col-span-2 bg-gradient-to-br from-slate-50/80 via-white to-purple-50/30 dark:from-slate-800/50 dark:via-slate-900 dark:to-purple-950/20 p-4 sm:p-5 border-t lg:border-t-0 lg:border-l border-slate-100/80 dark:border-slate-700/50">
+                <div className="lg:col-span-2 bg-gradient-to-br from-slate-50/80 via-white to-blue-50/30 dark:from-slate-800/50 dark:via-slate-900 dark:to-blue-950/20 p-4 sm:p-5 border-t lg:border-t-0 lg:border-l border-slate-100/80 dark:border-slate-700/50">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-1 h-4 rounded-full bg-gradient-to-b from-purple-500 to-violet-600" />
+                      <div className="w-1 h-4 rounded-full bg-gradient-to-b from-blue-500 to-blue-700" />
                       <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">Métricas</h4>
                     </div>
-                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-500 to-violet-500 text-white font-semibold shadow-lg shadow-purple-500/20">
+                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold shadow-lg shadow-blue-500/20">
                       7 dimensões
                     </span>
                   </div>
@@ -859,7 +859,7 @@ export default function AdminBehavior() {
                             <div 
                               className={`h-full rounded-full transition-all duration-500 ${
                                 isGood 
-                                  ? "bg-gradient-to-r from-purple-500 to-violet-500" 
+                                  ? "bg-gradient-to-r from-blue-500 to-blue-700" 
                                   : "bg-gradient-to-r from-amber-400 to-orange-500"
                               }`}
                               style={{ width: `${percentage}%` }}
@@ -872,14 +872,14 @@ export default function AdminBehavior() {
                   
                   {/* Qualidade dos Dados */}
                   {allLogs && allLogs.length > 0 && (
-                    <div className="mt-4 p-3 rounded-xl bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/40 dark:to-violet-950/40 border border-purple-100 dark:border-purple-900/50">
+                    <div className="mt-4 p-3 rounded-xl bg-gradient-to-br from-blue-50 to-sky-50 dark:from-blue-950/40 dark:to-sky-950/40 border border-blue-100 dark:border-blue-900/50">
                       <div className="flex items-center gap-2 mb-2">
-                        <Shield className="h-3.5 w-3.5 text-purple-500" />
-                        <span className="text-[11px] font-semibold text-purple-700 dark:text-purple-300">
+                        <Shield className="h-3.5 w-3.5 text-blue-500" />
+                        <span className="text-[11px] font-semibold text-blue-700 dark:text-blue-300">
                           Qualidade dos Dados
                         </span>
                       </div>
-                      <div className="text-[11px] text-purple-600/80 dark:text-purple-400/80">
+                      <div className="text-[11px] text-blue-600/80 dark:text-blue-400/80">
                         {allLogs.length >= 50 ? (
                           <span>Excelente - {allLogs.length} registros analisados</span>
                         ) : allLogs.length >= 20 ? (

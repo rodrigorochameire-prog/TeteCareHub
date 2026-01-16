@@ -530,11 +530,11 @@ export default function AdminPetDetailPage() {
           </div>
 
           {/* Perfil Comportamental - Premium */}
-          <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-slate-50 via-white to-purple-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-purple-950/20">
+          <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/20">
             <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 shadow-lg shadow-purple-500/25">
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 shadow-lg shadow-blue-500/25">
                     <Brain className="h-5 w-5 text-white" />
                   </div>
                   <div>
@@ -544,7 +544,7 @@ export default function AdminPetDetailPage() {
                 </div>
                 
                 {/* Score Geral */}
-                <div className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-xl shadow-purple-500/30">
+                <div className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-xl shadow-blue-500/30">
                   <div className="text-center">
                     <div className="text-3xl font-bold tracking-tight">{avgBehaviorScore}</div>
                     <div className="text-[10px] uppercase tracking-wider opacity-80">Score</div>
@@ -580,9 +580,9 @@ export default function AdminPetDetailPage() {
                         >
                           <defs>
                             <linearGradient id="petRadarGradient" x1="0" y1="0" x2="1" y2="1">
-                              <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.95} />
-                              <stop offset="50%" stopColor="#a855f7" stopOpacity={0.7} />
-                              <stop offset="100%" stopColor="#c084fc" stopOpacity={0.5} />
+                              <stop offset="0%" stopColor="#1e3a5f" stopOpacity={0.95} />
+                              <stop offset="50%" stopColor="#2563eb" stopOpacity={0.7} />
+                              <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.5} />
                             </linearGradient>
                             <linearGradient id="petBenchmarkGradient" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="0%" stopColor="#cbd5e1" stopOpacity={0.25} />
@@ -620,7 +620,7 @@ export default function AdminPetDetailPage() {
                                     y={yPos} 
                                     textAnchor="middle" 
                                     dominantBaseline="middle"
-                                    fill={isAbove ? "#7c3aed" : "#64748b"}
+                                    fill={isAbove ? "#1e40af" : "#64748b"}
                                     fontSize={11}
                                     fontWeight={600}
                                   >
@@ -665,14 +665,14 @@ export default function AdminPetDetailPage() {
                           <Radar
                             name="Perfil"
                             dataKey="value"
-                            stroke="#8b5cf6"
+                            stroke="#1e3a5f"
                             strokeWidth={3}
                             fill="url(#petRadarGradient)"
                             fillOpacity={0.65}
                             filter="url(#petGlow)"
                             dot={{
                               r: 5,
-                              fill: '#8b5cf6',
+                              fill: '#1e3a5f',
                               stroke: '#fff',
                               strokeWidth: 2,
                             }}
@@ -692,13 +692,13 @@ export default function AdminPetDetailPage() {
                                 const diff = data.value - data.benchmark;
                                 const isGood = diff >= 0;
                                 return (
-                                  <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg p-4 rounded-2xl shadow-2xl border border-purple-100 dark:border-purple-900/50 min-w-[160px]">
+                                  <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg p-4 rounded-2xl shadow-2xl border border-blue-100 dark:border-blue-900/50 min-w-[160px]">
                                     <div className="font-bold text-sm text-slate-800 dark:text-slate-200 mb-1">
                                       {data.metric}
                                     </div>
                                     <div className="text-[10px] text-slate-500 mb-2">{data.description}</div>
                                     <div className="flex items-center justify-between">
-                                      <div className={`text-xl font-bold ${isGood ? "text-purple-600" : "text-amber-600"}`}>
+                                      <div className={`text-xl font-bold ${isGood ? "text-blue-700" : "text-amber-600"}`}>
                                         {data.value}%
                                       </div>
                                       <div className={`px-2 py-1 rounded-full text-xs font-bold ${
@@ -722,13 +722,13 @@ export default function AdminPetDetailPage() {
                 </div>
                 
                 {/* Barra Lateral de Métricas */}
-                <div className="lg:col-span-2 bg-gradient-to-br from-slate-50/80 via-white to-purple-50/30 dark:from-slate-800/50 dark:via-slate-900 dark:to-purple-950/20 p-4 sm:p-5 border-t lg:border-t-0 lg:border-l border-slate-100/80 dark:border-slate-700/50">
+                <div className="lg:col-span-2 bg-gradient-to-br from-slate-50/80 via-white to-blue-50/30 dark:from-slate-800/50 dark:via-slate-900 dark:to-blue-950/20 p-4 sm:p-5 border-t lg:border-t-0 lg:border-l border-slate-100/80 dark:border-slate-700/50">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-1 h-4 rounded-full bg-gradient-to-b from-purple-500 to-violet-600" />
+                      <div className="w-1 h-4 rounded-full bg-gradient-to-b from-blue-500 to-blue-700" />
                       <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">Métricas</h4>
                     </div>
-                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-500 to-violet-500 text-white font-semibold shadow-lg shadow-purple-500/20">
+                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold shadow-lg shadow-blue-500/20">
                       7 dimensões
                     </span>
                   </div>
@@ -746,15 +746,15 @@ export default function AdminPetDetailPage() {
                           className={cn(
                             "group p-2 rounded-lg transition-all duration-300",
                             "hover:bg-white/80 dark:hover:bg-slate-800/60",
-                            isStrong && "ring-1 ring-purple-200/50 dark:ring-purple-800/30 bg-purple-50/30 dark:bg-purple-950/20"
+                            isStrong && "ring-1 ring-blue-200/50 dark:ring-blue-800/30 bg-blue-50/30 dark:bg-blue-950/20"
                           )}
                         >
                           <div className="flex items-center justify-between mb-1">
                             <div className="flex items-center gap-1.5">
-                              {isStrong && <Sparkles className="h-3 w-3 text-purple-500" />}
+                              {isStrong && <Sparkles className="h-3 w-3 text-blue-500" />}
                               <span className={cn(
                                 "text-[11px] font-medium",
-                                isStrong ? "text-purple-700 dark:text-purple-400" : "text-slate-600 dark:text-slate-400"
+                                isStrong ? "text-blue-700 dark:text-blue-400" : "text-slate-600 dark:text-slate-400"
                               )}>
                                 {item.metric}
                               </span>
@@ -770,7 +770,7 @@ export default function AdminPetDetailPage() {
                               </span>
                               <span className={cn(
                                 "text-xs font-bold",
-                                isStrong ? "text-purple-600" : "text-slate-800 dark:text-slate-200"
+                                isStrong ? "text-blue-600" : "text-slate-800 dark:text-slate-200"
                               )}>
                                 {item.value}%
                               </span>
@@ -785,7 +785,7 @@ export default function AdminPetDetailPage() {
                               className={cn(
                                 "h-full rounded-full transition-all duration-500",
                                 isGood 
-                                  ? "bg-gradient-to-r from-purple-500 to-violet-500" 
+                                  ? "bg-gradient-to-r from-blue-500 to-blue-700" 
                                   : "bg-gradient-to-r from-amber-400 to-orange-500"
                               )}
                               style={{ width: `${percentage}%` }}
