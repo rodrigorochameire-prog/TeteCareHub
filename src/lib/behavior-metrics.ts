@@ -11,20 +11,20 @@
 export interface BehaviorLog {
   id: number;
   petId: number;
-  logDate: string;
+  logDate: string | Date;
   socialization?: string | null;
   energy?: string | null;
   obedience?: string | null;
   anxiety?: string | null;
   aggression?: string | null;
   notes?: string | null;
-  activities?: string[];
+  activities?: string[] | null;
 }
 
 export interface DailyLog {
   id: number;
   petId: number;
-  date: string;
+  date: string | Date;
   mood?: string | null;
   appetite?: string | null;
   energy?: string | null;
