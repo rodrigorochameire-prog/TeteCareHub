@@ -55,36 +55,50 @@ export const petsRouter = router({
           status: z.string().optional(),
           approvalStatus: z.string().optional(),
           search: z.string().optional(),
+          limit: z.number().min(1).max(200).optional(),
+          offset: z.number().min(0).optional(),
         })
         .optional()
     )
     .query(async ({ input }) => {
       return safeAsync(async () => {
-        // Query base
-        let result = await db
-          .select()
-          .from(pets)
-          .orderBy(desc(pets.createdAt));
-
-        // Aplicar filtros se existirem
+        // Construir condições de filtro
+        const conditions = [];
+        
         if (input?.approvalStatus) {
-          result = result.filter((p) => p.approvalStatus === input.approvalStatus);
+          conditions.push(eq(pets.approvalStatus, input.approvalStatus));
         }
-
+        
         if (input?.status) {
-          result = result.filter((p) => p.status === input.status);
+          conditions.push(eq(pets.status, input.status));
         }
-
+        
         if (input?.search) {
-          const search = input.search.toLowerCase();
-          result = result.filter(
-            (p) =>
-              p.name.toLowerCase().includes(search) ||
-              p.breed?.toLowerCase().includes(search)
+          const searchPattern = `%${input.search.toLowerCase()}%`;
+          conditions.push(
+            or(
+              sql`LOWER(${pets.name}) LIKE ${searchPattern}`,
+              sql`LOWER(${pets.breed}) LIKE ${searchPattern}`
+            )
           );
         }
 
-        return result;
+        // Query otimizada com filtros no banco
+        const query = db
+          .select()
+          .from(pets)
+          .orderBy(desc(pets.createdAt))
+          .limit(input?.limit || 100);
+
+        if (input?.offset) {
+          query.offset(input.offset);
+        }
+
+        if (conditions.length > 0) {
+          return await query.where(and(...conditions));
+        }
+
+        return await query;
       }, "Erro ao listar pets");
     }),
 

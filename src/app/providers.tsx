@@ -33,14 +33,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30 * 1000, // 30 segundos - melhor cache
-            gcTime: 5 * 60 * 1000, // 5 minutos
-            refetchOnWindowFocus: false,
-            refetchOnMount: false,
-            retry: 1,
+            // Cache agressivo para melhor performance
+            staleTime: 60 * 1000, // 1 minuto - dados frescos por mais tempo
+            gcTime: 10 * 60 * 1000, // 10 minutos - manter em cache
+            refetchOnWindowFocus: false, // Não refetch ao focar janela
+            refetchOnMount: false, // Não refetch ao montar componente
+            refetchOnReconnect: false, // Não refetch ao reconectar
+            retry: 2, // 2 tentativas em caso de erro
+            retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+            networkMode: "offlineFirst", // Usar cache primeiro
           },
           mutations: {
             retry: 1,
+            networkMode: "offlineFirst",
           },
         },
       })

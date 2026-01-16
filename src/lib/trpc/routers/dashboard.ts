@@ -10,49 +10,36 @@ export const dashboardRouter = router({
    */
   stats: adminProcedure.query(async () => {
     return safeAsync(async () => {
-      // Total de pets
-      const [totalPets] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(pets);
-
-      // Pets na creche (checked-in)
-      const [checkedIn] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(pets)
-        .where(eq(pets.status, "checked-in"));
-
-      // Total de tutores
-      const [totalTutors] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(users)
-        .where(eq(users.role, "user"));
-
-      // Pets pendentes de aprovação
-      const [pendingApproval] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(pets)
-        .where(eq(pets.approvalStatus, "pending"));
-
-      // Logs de hoje
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const [logsToday] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(dailyLogs)
-        .where(gte(dailyLogs.logDate, today));
 
-      // Receita mensal (aproximada pelos créditos)
-      const [monthlyCredits] = await db
-        .select({ total: sql<number>`COALESCE(sum(credits), 0)::int` })
-        .from(pets);
+      // Query única otimizada com múltiplos counts
+      const [stats] = await db.execute(sql`
+        SELECT 
+          (SELECT COUNT(*) FROM pets)::int as total_pets,
+          (SELECT COUNT(*) FROM pets WHERE status = 'checked-in')::int as checked_in,
+          (SELECT COUNT(*) FROM users WHERE role = 'user')::int as total_tutors,
+          (SELECT COUNT(*) FROM pets WHERE approval_status = 'pending')::int as pending_approval,
+          (SELECT COUNT(*) FROM daily_logs WHERE log_date >= ${today})::int as logs_today,
+          (SELECT COALESCE(SUM(credits), 0) FROM pets)::int as total_credits
+      `);
+
+      const result = stats as {
+        total_pets: number;
+        checked_in: number;
+        total_tutors: number;
+        pending_approval: number;
+        logs_today: number;
+        total_credits: number;
+      };
 
       return {
-        totalPets: totalPets.count,
-        checkedIn: checkedIn.count,
-        totalTutors: totalTutors.count,
-        pendingApproval: pendingApproval.count,
-        logsToday: logsToday.count,
-        monthlyRevenue: (monthlyCredits.total || 0) * 5000, // Estimativa: R$50 por crédito
+        totalPets: result.total_pets || 0,
+        checkedIn: result.checked_in || 0,
+        totalTutors: result.total_tutors || 0,
+        pendingApproval: result.pending_approval || 0,
+        logsToday: result.logs_today || 0,
+        monthlyRevenue: (result.total_credits || 0) * 5000,
       };
     }, "Erro ao buscar estatísticas");
   }),
