@@ -265,9 +265,17 @@ function calculateHybridMetric(
     
     if (mapping) {
       const recentLogs = behaviorLogs.slice(0, 10); // Últimos 10
-      const validScores = recentLogs
-        .filter((log: any) => log[field] && mapping[log[field] as keyof typeof mapping])
-        .map((log: any) => mapping[log[field] as keyof typeof mapping].score);
+      const validScores: number[] = [];
+      
+      for (const log of recentLogs) {
+        const fieldValue = (log as any)[field];
+        if (fieldValue && mapping[fieldValue as keyof typeof mapping]) {
+          const scoreObj = mapping[fieldValue as keyof typeof mapping] as { score: number };
+          if (scoreObj && typeof scoreObj.score === "number") {
+            validScores.push(scoreObj.score);
+          }
+        }
+      }
       
       if (validScores.length > 0) {
         const avg = validScores.reduce((a: number, b: number) => a + b, 0) / validScores.length;
@@ -346,9 +354,17 @@ function calculateHybridMetric(
     const mapping = behaviorScoreMapping[field as keyof typeof behaviorScoreMapping];
     
     if (mapping) {
-      const allScores = behaviorLogs
-        .filter((log: any) => log[field] && mapping[log[field] as keyof typeof mapping])
-        .map((log: any) => mapping[log[field] as keyof typeof mapping].score);
+      const allScores: number[] = [];
+      
+      for (const log of behaviorLogs) {
+        const fieldValue = (log as any)[field];
+        if (fieldValue && mapping[fieldValue as keyof typeof mapping]) {
+          const scoreObj = mapping[fieldValue as keyof typeof mapping] as { score: number };
+          if (scoreObj && typeof scoreObj.score === "number") {
+            allScores.push(scoreObj.score);
+          }
+        }
+      }
       
       if (allScores.length >= 4) {
         const half = Math.floor(allScores.length / 2);
