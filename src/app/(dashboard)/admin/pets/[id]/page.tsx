@@ -127,7 +127,8 @@ export default function AdminPetDetailPage() {
   const energyScore = pet.energyLevel === "very_high" ? 95 : pet.energyLevel === "high" ? 80 : pet.energyLevel === "medium" ? 60 : 35;
   const obedienceScore = skillsMatrix ? Math.round((skillsMatrix.filter(s => s.status === "mastered").length / Math.max(skillsMatrix.length, 1)) * 100) : 55;
   const calmnessScore = pet.anxietySeparation === "none" ? 95 : pet.anxietySeparation === "mild" ? 70 : pet.anxietySeparation === "moderate" ? 45 : 20;
-  const docilityScore = pet.aggressionHistory === "none" ? 95 : pet.aggressionHistory === "minor" ? 65 : 35;
+  const aggressionHistory = (pet as any).aggressionHistory;
+  const docilityScore = aggressionHistory === "none" ? 95 : aggressionHistory === "minor" ? 65 : 75;
   const adaptabilityScore = Math.round((sociabilityScore + calmnessScore) / 2);
   const focusScore = obedienceScore;
   
