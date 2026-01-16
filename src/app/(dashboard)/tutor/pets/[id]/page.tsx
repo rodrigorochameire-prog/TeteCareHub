@@ -308,7 +308,7 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                         borderRadius: '8px',
                         fontSize: '12px'
                       }}
-                      formatter={(value: number) => [`${value}%`, 'Pontuação']}
+                      formatter={(value: number | undefined) => [`${value ?? 0}%`, 'Pontuação']}
                     />
                   </RadarChart>
                 </ResponsiveContainer>
