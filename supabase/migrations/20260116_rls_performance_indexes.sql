@@ -17,9 +17,9 @@ CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 CREATE INDEX IF NOT EXISTS idx_users_auth_role ON users(auth_id, role);
 
 -- Índices para pet_tutors (usada pelo is_tutor_of_pet())
-CREATE INDEX IF NOT EXISTS idx_pet_tutors_tutor_id ON pet_tutors("tutorId");
-CREATE INDEX IF NOT EXISTS idx_pet_tutors_pet_id ON pet_tutors("petId");
-CREATE INDEX IF NOT EXISTS idx_pet_tutors_composite ON pet_tutors("tutorId", "petId");
+CREATE INDEX IF NOT EXISTS idx_pet_tutors_tutor_id ON pet_tutors(tutor_id);
+CREATE INDEX IF NOT EXISTS idx_pet_tutors_pet_id ON pet_tutors(pet_id);
+CREATE INDEX IF NOT EXISTS idx_pet_tutors_composite ON pet_tutors(tutor_id, pet_id);
 
 -- Índices para pets
 CREATE INDEX IF NOT EXISTS idx_pets_status ON pets(status);
@@ -60,8 +60,8 @@ AS $$
   SELECT EXISTS (
     SELECT 1
     FROM public.users u
-    JOIN public.pet_tutors pt ON pt."tutorId" = u.id
-    WHERE u.auth_id = user_auth_id AND pt."petId" = pet_id_param
+    JOIN public.pet_tutors pt ON pt.tutor_id = u.id
+    WHERE u.auth_id = user_auth_id AND pt.pet_id = pet_id_param
   );
 $$;
 
