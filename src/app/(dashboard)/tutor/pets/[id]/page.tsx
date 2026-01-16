@@ -1560,29 +1560,29 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                   </div>
                 </div>
 
-                {/* Grid de Indicadores de Saúde */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {/* Grid de Indicadores de Saúde - 8 métricas */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2 sm:gap-3">
                   {/* Saúde Alimentar */}
                   <div className={cn(
-                    "p-4 rounded-xl border transition-all",
+                    "p-2.5 sm:p-4 rounded-lg sm:rounded-xl border transition-all",
                     feedingHealth.status === "excellent" && "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800",
                     feedingHealth.status === "good" && "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800",
                     feedingHealth.status === "warning" && "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
                     feedingHealth.status === "alert" && "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800",
                   )}>
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
                       <UtensilsCrossed className={cn(
-                        "h-4 w-4",
+                        "h-3.5 w-3.5 sm:h-4 sm:w-4",
                         feedingHealth.status === "excellent" && "text-emerald-600",
                         feedingHealth.status === "good" && "text-blue-600",
                         feedingHealth.status === "warning" && "text-amber-600",
                         feedingHealth.status === "alert" && "text-red-600",
                       )} />
-                      <span className="text-xs font-medium text-muted-foreground">Apetite</span>
+                      <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">Apetite</span>
                     </div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold">{feedingHealth.value > 0 ? feedingHealth.value : "—"}</span>
-                      <span className="text-sm text-muted-foreground">{feedingHealth.unit}</span>
+                    <div className="flex items-baseline gap-0.5 sm:gap-1">
+                      <span className="text-lg sm:text-2xl font-bold">{feedingHealth.value > 0 ? feedingHealth.value : "—"}</span>
+                      <span className="text-xs sm:text-sm text-muted-foreground">{feedingHealth.unit}</span>
                     </div>
                     <div className="flex items-center justify-between mt-1">
                       <span className={cn(
@@ -1608,7 +1608,7 @@ export default function TutorPetDetailPage(props: PetPageProps) {
 
                   {/* Saúde Digestiva */}
                   <div className={cn(
-                    "p-4 rounded-xl border transition-all",
+                    "p-2.5 sm:p-4 rounded-lg sm:rounded-xl border transition-all",
                     digestiveHealth.status === "excellent" && "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800",
                     digestiveHealth.status === "good" && "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800",
                     digestiveHealth.status === "warning" && "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
@@ -1644,7 +1644,7 @@ export default function TutorPetDetailPage(props: PetPageProps) {
 
                   {/* Estabilidade Emocional */}
                   <div className={cn(
-                    "p-4 rounded-xl border transition-all",
+                    "p-2.5 sm:p-4 rounded-lg sm:rounded-xl border transition-all",
                     emotionalStability.status === "excellent" && "bg-purple-50 border-purple-200 dark:bg-purple-950/30 dark:border-purple-800",
                     emotionalStability.status === "good" && "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800",
                     emotionalStability.status === "warning" && "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
@@ -1680,7 +1680,7 @@ export default function TutorPetDetailPage(props: PetPageProps) {
 
                   {/* Nível de Atividade */}
                   <div className={cn(
-                    "p-4 rounded-xl border transition-all",
+                    "p-2.5 sm:p-4 rounded-lg sm:rounded-xl border transition-all",
                     activityLevel.status === "excellent" && "bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-800",
                     activityLevel.status === "good" && "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800",
                     activityLevel.status === "warning" && "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
@@ -1714,7 +1714,7 @@ export default function TutorPetDetailPage(props: PetPageProps) {
 
                   {/* Hidratação */}
                   <div className={cn(
-                    "p-4 rounded-xl border transition-all",
+                    "p-2.5 sm:p-4 rounded-lg sm:rounded-xl border transition-all",
                     hydration.status === "excellent" && "bg-cyan-50 border-cyan-200 dark:bg-cyan-950/30 dark:border-cyan-800",
                     hydration.status === "good" && "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800",
                     hydration.status === "warning" && "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
@@ -1750,7 +1750,7 @@ export default function TutorPetDetailPage(props: PetPageProps) {
 
                   {/* Integridade Física */}
                   <div className={cn(
-                    "p-4 rounded-xl border transition-all",
+                    "p-2.5 sm:p-4 rounded-lg sm:rounded-xl border transition-all",
                     physicalIntegrity.status === "excellent" && "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800",
                     physicalIntegrity.status === "good" && "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800",
                     physicalIntegrity.status === "warning" && "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
