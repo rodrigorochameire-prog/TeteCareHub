@@ -1195,8 +1195,8 @@ export default function TutorPetDetailPage(props: PetPageProps) {
       name: pet.name,
       breed: pet.breed,
       size: pet.size,
-      temperament: pet.temperament,
-      specialNeeds: pet.specialNeeds,
+      temperament: (pet as any).temperament || null,
+      specialNeeds: (pet as any).specialNeeds || null,
     };
     
     return generateRadarData(formattedPet, formattedBehaviorLogs, formattedDailyLogs);
