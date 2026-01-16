@@ -1,4 +1,5 @@
 import { drizzle } from "drizzle-orm/postgres-js";
+import { sql } from "drizzle-orm";
 import postgres from "postgres";
 import * as schema from "./schema";
 
@@ -136,6 +137,21 @@ export const db = new Proxy({} as ReturnType<typeof drizzle<typeof schema>>, {
 // ==========================================
 // FUNÇÕES UTILITÁRIAS
 // ==========================================
+
+/**
+ * Pré-aquece a conexão com o banco
+ * Chame isso no início das funções serverless para evitar cold start
+ */
+export async function warmupConnection(): Promise<void> {
+  try {
+    // Força inicialização da conexão
+    const database = getDb();
+    // Query leve para estabelecer conexão
+    await database.execute(sql`SELECT 1`);
+  } catch {
+    // Ignora erros - é só warmup
+  }
+}
 
 /**
  * Verifica se a conexão com o banco está funcionando
