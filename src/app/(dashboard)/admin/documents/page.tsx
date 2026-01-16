@@ -788,28 +788,32 @@ export default function AdminDocuments() {
         {/* Tab: Analytics */}
         <TabsContent value="analytics" className="space-y-6">
           {/* Gráficos */}
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2 px-0.5">
             {/* Por Módulo */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <PieChart className="h-5 w-5" />
-                  Por Funcionalidade
-                </CardTitle>
-                <CardDescription>Distribuição de documentos por módulo</CardDescription>
+            <Card className="shadow-sm overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800/50 dark:to-blue-950/20 border-b border-slate-100/80 dark:border-slate-700/50">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
+                    <PieChart className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base font-bold">Por Funcionalidade</CardTitle>
+                    <CardDescription className="text-xs">Distribuição de documentos por módulo</CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-5">
                 {chartData.byModule.length > 0 ? (
-                  <div className="h-[280px]">
+                  <div className="h-[280px] mx-1">
                     <ResponsiveContainer width="100%" height="100%">
                       <RechartsPie>
                         <Pie
                           data={chartData.byModule}
                           cx="50%"
                           cy="50%"
-                          innerRadius={50}
-                          outerRadius={90}
-                          paddingAngle={2}
+                          innerRadius={55}
+                          outerRadius={95}
+                          paddingAngle={3}
                           dataKey="value"
                           label={({ name, value }) => `${name}: ${value}`}
                           labelLine={false}
@@ -818,8 +822,15 @@ export default function AdminDocuments() {
                             <Cell key={`mod-${index}`} fill={NEUTRAL_COLORS[index % NEUTRAL_COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip />
-                        <Legend />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                            border: 'none',
+                            borderRadius: '12px',
+                            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
+                          }} 
+                        />
+                        <Legend iconType="circle" iconSize={8} />
                       </RechartsPie>
                     </ResponsiveContainer>
                   </div>
@@ -832,30 +843,41 @@ export default function AdminDocuments() {
             </Card>
 
             {/* Por Pet */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Por Pet
-                </CardTitle>
-                <CardDescription>Pets com mais documentos</CardDescription>
+            <Card className="shadow-sm overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800/50 dark:to-blue-950/20 border-b border-slate-100/80 dark:border-slate-700/50">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
+                    <BarChart3 className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base font-bold">Por Pet</CardTitle>
+                    <CardDescription className="text-xs">Pets com mais documentos</CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-5">
                 {chartData.byPet.length > 0 ? (
-                  <div className="h-[280px]">
+                  <div className="h-[280px] mx-1">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData.byPet} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                        <XAxis type="number" stroke="#94a3b8" fontSize={11} />
-                        <YAxis type="category" dataKey="name" width={80} stroke="#94a3b8" fontSize={11} />
+                      <BarChart data={chartData.byPet} layout="vertical" margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                        <defs>
+                          <linearGradient id="docsBarGradient" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="#1e3a5f" stopOpacity={0.9}/>
+                            <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.7}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.5} horizontal={false} />
+                        <XAxis type="number" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+                        <YAxis type="category" dataKey="name" width={80} stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
                         <Tooltip 
                           contentStyle={{ 
-                            backgroundColor: 'white', 
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '8px'
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                            border: 'none',
+                            borderRadius: '12px',
+                            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
                           }} 
                         />
-                        <Bar dataKey="value" name="Documentos" fill="#64748b" radius={[0, 4, 4, 0]} />
+                        <Bar dataKey="value" name="Documentos" fill="url(#docsBarGradient)" radius={[0, 6, 6, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
