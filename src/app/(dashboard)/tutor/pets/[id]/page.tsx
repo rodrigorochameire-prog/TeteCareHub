@@ -215,44 +215,46 @@ function MetricCard({
 }: MetricCardProps) {
   return (
     <div className={cn(
-      "relative p-3 rounded-xl border transition-all duration-300",
+      "relative p-2 sm:p-3 rounded-lg sm:rounded-xl border transition-all duration-300",
       "hover:shadow-md hover:-translate-y-0.5",
       bgColor,
       "border-slate-200/50 dark:border-slate-700/50"
     )}>
-      {/* Ícone */}
-      <div className="flex items-center gap-2 mb-2">
-        <Icon className={cn("h-4 w-4", iconColor)} />
-        <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+      {/* Header compacto */}
+      <div className="flex items-center justify-center sm:justify-start gap-1.5 mb-1 sm:mb-2">
+        <Icon className={cn("h-3.5 w-3.5 sm:h-4 sm:w-4", iconColor)} />
+        <span className="text-[10px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 truncate">
           {label}
         </span>
       </div>
       
-      {/* Valor e Tendência */}
-      <div className="flex items-end justify-between">
-        <div>
-          <div className="text-xl font-bold text-slate-800 dark:text-slate-200">
-            {value > 0 ? `${value}%` : "—"}
-          </div>
-          <div className={cn("text-[10px] font-medium", statusColor)}>
-            {statusLabel}
-          </div>
+      {/* Valor centralizado no mobile */}
+      <div className="text-center sm:text-left">
+        <div className="text-lg sm:text-xl font-bold text-slate-800 dark:text-slate-200">
+          {value > 0 ? `${value}%` : "—"}
         </div>
         
-        {/* Indicador de Tendência */}
-        {value > 0 && trendValue > 0 && (
-          <div className={cn(
-            "flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full",
-            trend === "up" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-            trend === "down" && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-            trend === "stable" && "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-          )}>
-            {trend === "up" && <TrendingUp className="h-3 w-3" />}
-            {trend === "down" && <TrendingDown className="h-3 w-3" />}
-            {trend === "stable" && <Minus className="h-3 w-3" />}
-            <span>{trendValue}%</span>
-          </div>
-        )}
+        {/* Status e Tendência */}
+        <div className="flex items-center justify-center sm:justify-between gap-1 mt-0.5">
+          <span className={cn("text-[9px] sm:text-[10px] font-medium truncate", statusColor)}>
+            {statusLabel}
+          </span>
+          
+          {/* Indicador de Tendência - Só no desktop */}
+          {value > 0 && trendValue > 0 && (
+            <div className={cn(
+              "hidden sm:flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full",
+              trend === "up" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+              trend === "down" && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+              trend === "stable" && "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+            )}>
+              {trend === "up" && <TrendingUp className="h-3 w-3" />}
+              {trend === "down" && <TrendingDown className="h-3 w-3" />}
+              {trend === "stable" && <Minus className="h-3 w-3" />}
+              <span>{trendValue}%</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -467,22 +469,23 @@ export default function TutorPetDetailPage(props: PetPageProps) {
             </Card>
           )}
 
-          {/* Perfil Comportamental - Versão Premium */}
+          {/* Perfil Comportamental - Versão Premium Mobile-First */}
           <Card className="overflow-hidden">
             <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
+              {/* Header responsivo */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                  <CardTitle className="flex items-center gap-2 text-lg">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                     <Brain className="h-5 w-5 text-purple-500" />
                     Perfil Comportamental
                   </CardTitle>
-                  <CardDescription>
-                    Análise inteligente baseada em {behaviorLogs?.length || 0} registros
+                  <CardDescription className="text-xs sm:text-sm">
+                    {behaviorLogs?.length || 0} registros analisados
                   </CardDescription>
                 </div>
-                {/* Score Geral */}
-                <div className="text-center px-4 py-2 rounded-xl bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30 border border-purple-100 dark:border-purple-900/50">
-                  <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                {/* Score Geral - Compacto no mobile */}
+                <div className="flex items-center gap-3 sm:flex-col sm:items-center px-3 py-2 rounded-xl bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30 border border-purple-100 dark:border-purple-900/50">
+                  <div className="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400">
                     {overallScore.score > 0 ? `${overallScore.score}%` : "—"}
                   </div>
                   <div className="text-xs text-purple-600/70 dark:text-purple-400/70 flex items-center gap-1">
@@ -492,29 +495,22 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="pt-0">
-              {/* Gráfico de Radar Melhorado */}
-              <div className="h-[320px] mt-2">
+            <CardContent className="pt-0 px-2 sm:px-6">
+              {/* Gráfico de Radar - Otimizado para Mobile */}
+              <div className="h-[260px] sm:h-[300px] mt-2 -mx-2 sm:mx-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart 
                     data={radarData} 
                     cx="50%" 
                     cy="50%" 
-                    outerRadius="70%"
-                    margin={{ top: 20, right: 30, bottom: 20, left: 30 }}
+                    outerRadius="65%"
+                    margin={{ top: 25, right: 25, bottom: 25, left: 25 }}
                   >
                     <defs>
                       <linearGradient id="behaviorGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.8} />
                         <stop offset="100%" stopColor="#6366f1" stopOpacity={0.3} />
                       </linearGradient>
-                      <filter id="glow">
-                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                        <feMerge>
-                          <feMergeNode in="coloredBlur"/>
-                          <feMergeNode in="SourceGraphic"/>
-                        </feMerge>
-                      </filter>
                     </defs>
                     <PolarGrid 
                       stroke="#e2e8f0" 
@@ -523,21 +519,26 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                     />
                     <PolarAngleAxis 
                       dataKey="metric" 
-                      tick={{ 
-                        fill: '#64748b', 
-                        fontSize: 12,
-                        fontWeight: 500,
-                      }}
+                      tick={({ x, y, payload }) => (
+                        <text 
+                          x={x} 
+                          y={y} 
+                          textAnchor="middle" 
+                          fill="#64748b"
+                          fontSize={11}
+                          fontWeight={500}
+                          className="dark:fill-slate-400"
+                        >
+                          {payload.value}
+                        </text>
+                      )}
                       tickLine={false}
-                      className="dark:fill-slate-400"
                     />
                     <PolarRadiusAxis 
                       angle={90} 
                       domain={[0, 100]} 
-                      tick={{ fill: '#94a3b8', fontSize: 10 }}
-                      tickCount={5}
+                      tick={false}
                       axisLine={false}
-                      className="dark:fill-slate-500"
                     />
                     <Radar
                       name="Perfil"
@@ -546,16 +547,9 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                       strokeWidth={2}
                       fill="url(#behaviorGradient)"
                       fillOpacity={0.6}
-                      filter="url(#glow)"
                       dot={{
                         r: 4,
                         fill: '#8b5cf6',
-                        stroke: '#fff',
-                        strokeWidth: 2,
-                      }}
-                      activeDot={{
-                        r: 6,
-                        fill: '#7c3aed',
                         stroke: '#fff',
                         strokeWidth: 2,
                       }}
@@ -563,26 +557,19 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: 'rgba(255,255,255,0.95)', 
-                        backdropFilter: 'blur(8px)',
                         border: '1px solid #e2e8f0',
-                        borderRadius: '12px',
-                        padding: '8px 12px',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        borderRadius: '8px',
+                        padding: '6px 10px',
+                        fontSize: '12px',
                       }}
-                      formatter={(value: number | undefined) => [
-                        <span key="value" className="font-semibold text-purple-600">
-                          {value ?? 0}%
-                        </span>,
-                        'Pontuação'
-                      ]}
-                      labelStyle={{ fontWeight: 600, color: '#1e293b' }}
+                      formatter={(value: number | undefined) => [`${value ?? 0}%`, 'Pontuação']}
                     />
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
 
-              {/* Métricas Detalhadas com Tendências */}
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-5 gap-3">
+              {/* Métricas Detalhadas - Grid Responsivo */}
+              <div className="mt-3 grid grid-cols-3 sm:grid-cols-5 gap-2">
                 {/* Socialização */}
                 <MetricCard
                   icon={Users}
@@ -649,16 +636,16 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                 />
               </div>
 
-              {/* Dica de Inteligência */}
+              {/* Dica de Inteligência - Compacta no mobile */}
               {hasEnoughData && (
-                <div className="mt-4 p-3 rounded-xl bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/20 dark:to-violet-950/20 border border-purple-100 dark:border-purple-900/30">
+                <div className="mt-3 sm:mt-4 p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/20 dark:to-violet-950/20 border border-purple-100 dark:border-purple-900/30">
                   <div className="flex items-start gap-2">
-                    <Sparkles className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-purple-700 dark:text-purple-300">
+                    <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                    <div className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">
                       <span className="font-medium">Insight: </span>
                       {overallScore.description}
-                      {behaviorMetrics.socialization.trend === "up" && " A socialização está melhorando!"}
-                      {behaviorMetrics.calmness.trend === "up" && " O pet está ficando mais tranquilo."}
+                      {behaviorMetrics.socialization.trend === "up" && " Socialização melhorando!"}
+                      {behaviorMetrics.calmness.trend === "up" && " Mais tranquilo."}
                     </div>
                   </div>
                 </div>
