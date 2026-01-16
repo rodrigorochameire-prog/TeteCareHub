@@ -792,33 +792,48 @@ export default function AdminLogs() {
         </TabsContent>
 
         {/* Tab: Analytics */}
-        <TabsContent value="analytics" className="space-y-6">
+        <TabsContent value="analytics" className="space-y-6 px-0.5">
           {/* Timeline de Logs */}
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Atividade nos Últimos 14 Dias
-              </CardTitle>
-              <CardDescription>Logs registrados por dia e fonte</CardDescription>
+          <Card className="shadow-sm overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800/50 dark:to-blue-950/20 border-b border-slate-100/80 dark:border-slate-700/50">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
+                  <TrendingUp className="h-4 w-4 text-blue-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-base font-bold">Atividade nos Últimos 14 Dias</CardTitle>
+                  <CardDescription className="text-xs">Logs registrados por dia e fonte</CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
+            <CardContent className="p-4 sm:p-5">
+              <div className="h-[300px] mx-1">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData.timeline}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="date" stroke="#94a3b8" fontSize={10} />
-                    <YAxis stroke="#94a3b8" fontSize={11} />
+                  <AreaChart data={chartData.timeline} margin={{ top: 10, right: 10, bottom: 10, left: 0 }}>
+                    <defs>
+                      <linearGradient id="colorCreche" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#1e3a5f" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#1e3a5f" stopOpacity={0.1}/>
+                      </linearGradient>
+                      <linearGradient id="colorCasa" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#64748b" stopOpacity={0.6}/>
+                        <stop offset="95%" stopColor="#64748b" stopOpacity={0.1}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.5} />
+                    <XAxis dataKey="date" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
                     <Tooltip 
                       contentStyle={{ 
-                        backgroundColor: 'white', 
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '8px'
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                        border: 'none',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
                       }} 
                     />
-                    <Legend />
-                    <Area type="monotone" dataKey="creche" name="Creche" stackId="1" stroke="#475569" fill="#475569" fillOpacity={0.8} />
-                    <Area type="monotone" dataKey="casa" name="Casa" stackId="1" stroke="#94a3b8" fill="#94a3b8" fillOpacity={0.8} />
+                    <Legend iconType="circle" iconSize={8} />
+                    <Area type="monotone" dataKey="creche" name="Creche" stackId="1" stroke="#1e3a5f" fill="url(#colorCreche)" strokeWidth={2} />
+                    <Area type="monotone" dataKey="casa" name="Casa" stackId="1" stroke="#64748b" fill="url(#colorCasa)" strokeWidth={2} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -826,28 +841,32 @@ export default function AdminLogs() {
           </Card>
 
           {/* Gráficos de Distribuição */}
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-4 lg:grid-cols-3 px-0.5">
             {/* Humor */}
-            <Card className="shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Smile className="h-4 w-4" />
-                  Humor
-                </CardTitle>
-                <CardDescription className="text-xs">Distribuição de humores</CardDescription>
+            <Card className="shadow-sm overflow-hidden">
+              <CardHeader className="pb-2 bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800/50 dark:to-blue-950/20 border-b border-slate-100/80 dark:border-slate-700/50">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
+                    <Smile className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-sm font-bold">Humor</CardTitle>
+                    <CardDescription className="text-[10px]">Distribuição de humores</CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4">
                 {chartData.mood.length > 0 ? (
-                  <div className="h-[200px]">
+                  <div className="h-[200px] mx-1">
                     <ResponsiveContainer width="100%" height="100%">
                       <RechartsPie>
                         <Pie
                           data={chartData.mood}
                           cx="50%"
                           cy="50%"
-                          innerRadius={30}
-                          outerRadius={60}
-                          paddingAngle={2}
+                          innerRadius={35}
+                          outerRadius={65}
+                          paddingAngle={3}
                           dataKey="value"
                           label={({ name }) => name}
                           labelLine={false}
@@ -856,7 +875,14 @@ export default function AdminLogs() {
                             <Cell key={`mood-${index}`} fill={NEUTRAL_COLORS[index % NEUTRAL_COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                            border: 'none',
+                            borderRadius: '12px',
+                            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
+                          }} 
+                        />
                       </RechartsPie>
                     </ResponsiveContainer>
                   </div>
@@ -869,26 +895,30 @@ export default function AdminLogs() {
             </Card>
 
             {/* Fezes */}
-            <Card className="shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Activity className="h-4 w-4" />
-                  Fezes
-                </CardTitle>
-                <CardDescription className="text-xs">Consistência das fezes</CardDescription>
+            <Card className="shadow-sm overflow-hidden">
+              <CardHeader className="pb-2 bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800/50 dark:to-blue-950/20 border-b border-slate-100/80 dark:border-slate-700/50">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
+                    <Activity className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-sm font-bold">Fezes</CardTitle>
+                    <CardDescription className="text-[10px]">Consistência das fezes</CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4">
                 {chartData.stool.length > 0 ? (
-                  <div className="h-[200px]">
+                  <div className="h-[200px] mx-1">
                     <ResponsiveContainer width="100%" height="100%">
                       <RechartsPie>
                         <Pie
                           data={chartData.stool}
                           cx="50%"
                           cy="50%"
-                          innerRadius={30}
-                          outerRadius={60}
-                          paddingAngle={2}
+                          innerRadius={35}
+                          outerRadius={65}
+                          paddingAngle={3}
                           dataKey="value"
                           label={({ name }) => name}
                           labelLine={false}
@@ -897,7 +927,14 @@ export default function AdminLogs() {
                             <Cell key={`stool-${index}`} fill={NEUTRAL_COLORS[index % NEUTRAL_COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                            border: 'none',
+                            borderRadius: '12px',
+                            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
+                          }} 
+                        />
                       </RechartsPie>
                     </ResponsiveContainer>
                   </div>
@@ -910,26 +947,30 @@ export default function AdminLogs() {
             </Card>
 
             {/* Apetite */}
-            <Card className="shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Utensils className="h-4 w-4" />
-                  Apetite
-                </CardTitle>
-                <CardDescription className="text-xs">Nível de apetite</CardDescription>
+            <Card className="shadow-sm overflow-hidden">
+              <CardHeader className="pb-2 bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800/50 dark:to-blue-950/20 border-b border-slate-100/80 dark:border-slate-700/50">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
+                    <Utensils className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-sm font-bold">Apetite</CardTitle>
+                    <CardDescription className="text-[10px]">Nível de apetite</CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4">
                 {chartData.appetite.length > 0 ? (
-                  <div className="h-[200px]">
+                  <div className="h-[200px] mx-1">
                     <ResponsiveContainer width="100%" height="100%">
                       <RechartsPie>
                         <Pie
                           data={chartData.appetite}
                           cx="50%"
                           cy="50%"
-                          innerRadius={30}
-                          outerRadius={60}
-                          paddingAngle={2}
+                          innerRadius={35}
+                          outerRadius={65}
+                          paddingAngle={3}
                           dataKey="value"
                           label={({ name }) => name}
                           labelLine={false}
@@ -938,7 +979,14 @@ export default function AdminLogs() {
                             <Cell key={`appetite-${index}`} fill={NEUTRAL_COLORS[index % NEUTRAL_COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                            border: 'none',
+                            borderRadius: '12px',
+                            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
+                          }} 
+                        />
                       </RechartsPie>
                     </ResponsiveContainer>
                   </div>
@@ -952,32 +1000,43 @@ export default function AdminLogs() {
           </div>
 
           {/* Logs por Pet e Tendência Semanal */}
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2 px-0.5">
             {/* Logs por Pet */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Logs por Pet
-                </CardTitle>
-                <CardDescription>Pets com mais registros</CardDescription>
+            <Card className="shadow-sm overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800/50 dark:to-blue-950/20 border-b border-slate-100/80 dark:border-slate-700/50">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
+                    <BarChart3 className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base font-bold">Logs por Pet</CardTitle>
+                    <CardDescription className="text-xs">Pets com mais registros</CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-5">
                 {chartData.byPet.length > 0 ? (
-                  <div className="h-[280px]">
+                  <div className="h-[280px] mx-1">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData.byPet} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                        <XAxis type="number" stroke="#94a3b8" fontSize={11} />
-                        <YAxis type="category" dataKey="name" width={80} stroke="#94a3b8" fontSize={11} />
+                      <BarChart data={chartData.byPet} layout="vertical" margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                        <defs>
+                          <linearGradient id="barGradient" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="#1e3a5f" stopOpacity={0.9}/>
+                            <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.7}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.5} horizontal={false} />
+                        <XAxis type="number" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+                        <YAxis type="category" dataKey="name" width={80} stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
                         <Tooltip 
                           contentStyle={{ 
-                            backgroundColor: 'white', 
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '8px'
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                            border: 'none',
+                            borderRadius: '12px',
+                            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
                           }} 
                         />
-                        <Bar dataKey="value" name="Logs" fill="#64748b" radius={[0, 4, 4, 0]} />
+                        <Bar dataKey="value" name="Logs" fill="url(#barGradient)" radius={[0, 6, 6, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -990,32 +1049,47 @@ export default function AdminLogs() {
             </Card>
 
             {/* Tendência Semanal */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <CalendarRange className="h-5 w-5" />
-                  Tendência Semanal
-                </CardTitle>
-                <CardDescription>Comparativo das últimas 4 semanas</CardDescription>
+            <Card className="shadow-sm overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800/50 dark:to-blue-950/20 border-b border-slate-100/80 dark:border-slate-700/50">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
+                    <CalendarRange className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base font-bold">Tendência Semanal</CardTitle>
+                    <CardDescription className="text-xs">Comparativo das últimas 4 semanas</CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-5">
                 {chartData.weeklyTrend.length > 0 ? (
-                  <div className="h-[280px]">
+                  <div className="h-[280px] mx-1">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData.weeklyTrend}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                        <XAxis dataKey="week" stroke="#94a3b8" fontSize={11} />
-                        <YAxis stroke="#94a3b8" fontSize={11} />
+                      <BarChart data={chartData.weeklyTrend} margin={{ top: 10, right: 10, bottom: 10, left: 0 }}>
+                        <defs>
+                          <linearGradient id="crecheBarGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#1e3a5f" stopOpacity={0.9}/>
+                            <stop offset="100%" stopColor="#1e3a5f" stopOpacity={0.6}/>
+                          </linearGradient>
+                          <linearGradient id="casaBarGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#64748b" stopOpacity={0.8}/>
+                            <stop offset="100%" stopColor="#64748b" stopOpacity={0.5}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.5} vertical={false} />
+                        <XAxis dataKey="week" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+                        <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
                         <Tooltip 
                           contentStyle={{ 
-                            backgroundColor: 'white', 
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '8px'
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                            border: 'none',
+                            borderRadius: '12px',
+                            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
                           }} 
                         />
-                        <Legend />
-                        <Bar dataKey="creche" name="Creche" fill="#475569" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="casa" name="Casa" fill="#94a3b8" radius={[4, 4, 0, 0]} />
+                        <Legend iconType="circle" iconSize={8} />
+                        <Bar dataKey="creche" name="Creche" fill="url(#crecheBarGradient)" radius={[6, 6, 0, 0]} />
+                        <Bar dataKey="casa" name="Casa" fill="url(#casaBarGradient)" radius={[6, 6, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -1029,28 +1103,34 @@ export default function AdminLogs() {
           </div>
 
           {/* Por Tipo de Log */}
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <ListFilter className="h-5 w-5" />
-                Logs por Tipo
-              </CardTitle>
-              <CardDescription>Distribuição por categoria de log</CardDescription>
+          <Card className="shadow-sm overflow-hidden mx-0.5">
+            <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800/50 dark:to-blue-950/20 border-b border-slate-100/80 dark:border-slate-700/50">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
+                  <ListFilter className="h-4 w-4 text-blue-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-base font-bold">Logs por Tipo</CardTitle>
+                  <CardDescription className="text-xs">Distribuição por categoria de log</CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <CardContent className="p-4 sm:p-5">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 {logTypeOptions.map(opt => {
                   const count = chartData.byLogType.find(t => t.name === opt.label)?.value || 0;
                   const total = chartData.byLogType.reduce((sum, t) => sum + t.value, 0);
                   const percent = total > 0 ? ((count / total) * 100).toFixed(0) : 0;
                   return (
-                    <div key={opt.value} className="p-4 rounded-lg bg-muted/50 text-center">
-                      <opt.icon className="h-6 w-6 mx-auto mb-2 text-slate-500" />
-                      <p className="text-2xl font-bold">{count}</p>
-                      <p className="text-xs text-muted-foreground">{opt.label}</p>
-                      <div className="mt-2 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div key={opt.value} className="p-4 rounded-xl bg-gradient-to-br from-slate-50 to-blue-50/20 dark:from-slate-800/50 dark:to-blue-950/10 text-center border border-slate-100/50 dark:border-slate-700/30 hover:shadow-md hover:border-blue-200/50 dark:hover:border-blue-800/30 transition-all duration-300">
+                      <div className="h-10 w-10 mx-auto mb-3 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/10 to-blue-600/5">
+                        <opt.icon className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{count}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{opt.label}</p>
+                      <div className="mt-3 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-slate-500 rounded-full transition-all" 
+                          className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500" 
                           style={{ width: `${percent}%` }}
                         />
                       </div>
