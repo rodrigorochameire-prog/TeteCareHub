@@ -4,7 +4,7 @@ import { createTRPCContext } from "@/lib/trpc/init";
 
 // Configuração para Vercel Edge/Serverless
 export const dynamic = "force-dynamic";
-export const maxDuration = 30; // Aumentar timeout para 30 segundos
+export const maxDuration = 60; // Máximo para plano Pro - evitar timeouts em cold start
 
 const handler = (req: Request) =>
   fetchRequestHandler({

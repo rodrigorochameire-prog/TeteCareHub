@@ -12,14 +12,14 @@ import * as schema from "./schema";
  */
 const POOL_CONFIG = {
   // Número máximo de conexões no pool
-  // Em serverless, manter MUITO baixo para evitar "too many connections"
+  // Em serverless, manter baixo para evitar "too many connections"
   max: 1,
   
-  // Timeout de conexão ociosa (segundos) - mais curto para serverless
-  idle_timeout: 10,
+  // Timeout de conexão ociosa (segundos)
+  idle_timeout: 20,
   
-  // Timeout para estabelecer conexão (segundos)
-  connect_timeout: 15,
+  // Timeout para estabelecer conexão (segundos) - aumentado para cold start
+  connect_timeout: 30,
   
   // Desabilitar prepared statements (OBRIGATÓRIO para PgBouncer em modo transaction)
   prepare: false,
@@ -29,6 +29,9 @@ const POOL_CONFIG = {
   
   // Não fazer fetch de tipos - mais rápido
   fetch_types: false,
+  
+  // Habilitar keep-alive para reutilizar conexões
+  keep_alive: 5,
 } as const;
 
 // Singleton para conexão do banco
