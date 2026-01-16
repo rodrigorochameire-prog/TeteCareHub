@@ -7,13 +7,31 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const results: Record<string, { time: number; count?: number; error?: string }> = {};
   
-  // Teste 1: Query simples (sem joins)
+  // Teste 1: COUNT via Drizzle
   const t1 = Date.now();
   try {
     const [result] = await db.select({ count: count() }).from(pets);
-    results["1_count_pets"] = { time: Date.now() - t1, count: result.count };
+    results["1_drizzle_count_pets"] = { time: Date.now() - t1, count: result.count };
   } catch (e: any) {
-    results["1_count_pets"] = { time: Date.now() - t1, error: e.message };
+    results["1_drizzle_count_pets"] = { time: Date.now() - t1, error: e.message };
+  }
+  
+  // Teste 1b: SQL RAW count (para comparar)
+  const t1b = Date.now();
+  try {
+    const result = await db.execute(sql`SELECT COUNT(*)::int as count FROM pets`);
+    results["1b_raw_count_pets"] = { time: Date.now() - t1b, count: Number(result[0]?.count) };
+  } catch (e: any) {
+    results["1b_raw_count_pets"] = { time: Date.now() - t1b, error: e.message };
+  }
+  
+  // Teste 1c: Segunda chamada Drizzle (para ver se é cold start)
+  const t1c = Date.now();
+  try {
+    const [result] = await db.select({ count: count() }).from(pets);
+    results["1c_drizzle_count_second"] = { time: Date.now() - t1c, count: result.count };
+  } catch (e: any) {
+    results["1c_drizzle_count_second"] = { time: Date.now() - t1c, error: e.message };
   }
 
   // Teste 2: Query simples users
