@@ -1433,14 +1433,14 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                       <div className="w-32 h-32 sm:w-48 sm:h-48 rounded-full bg-gradient-to-br from-blue-500/10 via-blue-400/5 to-transparent blur-3xl" />
                     </div>
                     
-                    <div className="h-[280px] sm:h-[340px] relative z-10">
+                    <div className="h-[320px] sm:h-[400px] relative z-10">
                       <ResponsiveContainer width="100%" height="100%">
                         <RadarChart 
                           data={radarData} 
                           cx="50%" 
                           cy="50%" 
-                          outerRadius="65%"
-                          margin={{ top: 25, right: 25, bottom: 25, left: 25 }}
+                          outerRadius="75%"
+                          margin={{ top: 30, right: 30, bottom: 30, left: 30 }}
                         >
                           <defs>
                             {/* Gradiente Premium Ultra para valor atual - Azul Profundo */}
