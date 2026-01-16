@@ -7,7 +7,16 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const results: Record<string, { time: number; count?: number; error?: string }> = {};
   
-  // Teste 1: COUNT via Drizzle
+  // Teste 0: SQL RAW PRIMEIRO (para ver se o problema é conexão ou Drizzle)
+  const t0 = Date.now();
+  try {
+    const result = await db.execute(sql`SELECT COUNT(*)::int as count FROM pets`);
+    results["0_raw_first"] = { time: Date.now() - t0, count: Number(result[0]?.count) };
+  } catch (e: any) {
+    results["0_raw_first"] = { time: Date.now() - t0, error: e.message };
+  }
+  
+  // Teste 1: COUNT via Drizzle (agora será a segunda query)
   const t1 = Date.now();
   try {
     const [result] = await db.select({ count: count() }).from(pets);
