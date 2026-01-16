@@ -4,6 +4,18 @@ import { db, users } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { TutorSidebar } from "@/components/layouts/tutor-sidebar";
 import { Clock, AlertCircle, Mail } from "lucide-react";
+import { unstable_cache } from "next/cache";
+
+// Cache da query de usuário por 5 minutos - evita query a cada navegação
+const getCachedUser = unstable_cache(
+  async (email: string) => {
+    return db.query.users.findFirst({
+      where: eq(users.email, email),
+    });
+  },
+  ["tutor-user"],
+  { revalidate: 300, tags: ["user"] } // 5 minutos de cache
+);
 
 export default async function TutorLayout({
   children,
@@ -16,10 +28,10 @@ export default async function TutorLayout({
     redirect("/sign-in");
   }
 
-  // Buscar usuário no banco de dados pelo email do Clerk
-  const dbUser = await db.query.users.findFirst({
-    where: eq(users.email, clerkUser.emailAddresses[0]?.emailAddress || ""),
-  });
+  const email = clerkUser.emailAddresses[0]?.emailAddress || "";
+  
+  // Buscar usuário com cache - não faz query a cada navegação
+  const dbUser = await getCachedUser(email);
 
   if (!dbUser) {
     // Usuário existe no Clerk mas não no banco - redirecionar para sincronizar

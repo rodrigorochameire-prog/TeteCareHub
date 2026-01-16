@@ -3,6 +3,18 @@ import { currentUser } from "@clerk/nextjs/server";
 import { db, users } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { AdminSidebar } from "@/components/layouts/admin-sidebar";
+import { unstable_cache } from "next/cache";
+
+// Cache da query de usuário por 5 minutos - evita query a cada navegação
+const getCachedUser = unstable_cache(
+  async (email: string) => {
+    return db.query.users.findFirst({
+      where: eq(users.email, email),
+    });
+  },
+  ["admin-user"],
+  { revalidate: 300, tags: ["user"] } // 5 minutos de cache
+);
 
 export default async function AdminLayout({
   children,
@@ -15,10 +27,10 @@ export default async function AdminLayout({
     redirect("/sign-in");
   }
 
-  // Buscar usuário no banco de dados pelo email do Clerk
-  const dbUser = await db.query.users.findFirst({
-    where: eq(users.email, clerkUser.emailAddresses[0]?.emailAddress || ""),
-  });
+  const email = clerkUser.emailAddresses[0]?.emailAddress || "";
+  
+  // Buscar usuário com cache - não faz query a cada navegação
+  const dbUser = await getCachedUser(email);
 
   if (!dbUser) {
     // Usuário existe no Clerk mas não no banco - redirecionar para sincronizar
