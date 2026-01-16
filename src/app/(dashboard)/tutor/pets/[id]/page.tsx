@@ -11,8 +11,10 @@ import { PetAvatar } from "@/components/pet-avatar";
 import {
   Dog,
   Calendar,
+  CalendarDays,
   Weight,
   Utensils,
+  UtensilsCrossed,
   FileText,
   Pencil,
   Coins,
@@ -37,6 +39,7 @@ import {
   Minus,
   Sparkles,
   Shield,
+  Info,
 } from "lucide-react";
 import Link from "next/link";
 import { formatDate, cn } from "@/lib/utils";
@@ -431,6 +434,345 @@ function calculateOverallScore(
 }
 
 // ==========================================
+// MÉTRICAS CONCRETAS E MENSURÁVEIS
+// ==========================================
+
+interface ConcreteMetric {
+  value: number;
+  unit: string;
+  label: string;
+  trend: "up" | "down" | "stable";
+  trendLabel: string;
+  status: "excellent" | "good" | "warning" | "alert";
+  description: string;
+}
+
+// Frequência na Creche (baseado em check-ins do calendário)
+function calculateAttendanceMetrics(events: any[]): {
+  thisMonth: number;
+  lastMonth: number;
+  trend: "up" | "down" | "stable";
+  avgPerWeek: number;
+  totalVisits: number;
+} {
+  if (!events || events.length === 0) {
+    return { thisMonth: 0, lastMonth: 0, trend: "stable", avgPerWeek: 0, totalVisits: 0 };
+  }
+
+  const now = new Date();
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+  const checkins = events.filter((e: any) => e.eventType === "checkin");
+  
+  const thisMonthCount = checkins.filter((e: any) => 
+    new Date(e.eventDate) >= thisMonthStart
+  ).length;
+  
+  const lastMonthCount = checkins.filter((e: any) => {
+    const date = new Date(e.eventDate);
+    return date >= lastMonthStart && date <= lastMonthEnd;
+  }).length;
+
+  // Média por semana (últimos 30 dias)
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const last30Days = checkins.filter((e: any) => new Date(e.eventDate) >= thirtyDaysAgo).length;
+  const avgPerWeek = Math.round((last30Days / 4.3) * 10) / 10;
+
+  let trend: "up" | "down" | "stable" = "stable";
+  if (thisMonthCount > lastMonthCount) trend = "up";
+  else if (thisMonthCount < lastMonthCount) trend = "down";
+
+  return {
+    thisMonth: thisMonthCount,
+    lastMonth: lastMonthCount,
+    trend,
+    avgPerWeek,
+    totalVisits: checkins.length,
+  };
+}
+
+// Saúde Alimentar (baseado em appetite dos daily logs)
+function calculateFeedingHealth(dailyLogs: any[]): ConcreteMetric {
+  if (!dailyLogs || dailyLogs.length === 0) {
+    return {
+      value: 0,
+      unit: "%",
+      label: "Sem dados",
+      trend: "stable",
+      trendLabel: "",
+      status: "warning",
+      description: "Registre logs para analisar",
+    };
+  }
+
+  const appetiteScores: Record<string, number> = {
+    excellent: 100, good: 85, moderate: 60, stimulated: 70, poor: 30, none: 0,
+  };
+
+  const recentLogs = dailyLogs.slice(0, 14); // Últimas 2 semanas
+  const olderLogs = dailyLogs.slice(14, 28);
+
+  const validRecent = recentLogs.filter((l: any) => l.appetite && appetiteScores[l.appetite] !== undefined);
+  const validOlder = olderLogs.filter((l: any) => l.appetite && appetiteScores[l.appetite] !== undefined);
+
+  if (validRecent.length === 0) {
+    return {
+      value: 0,
+      unit: "%",
+      label: "Sem dados",
+      trend: "stable",
+      trendLabel: "",
+      status: "warning",
+      description: "Sem registros de apetite",
+    };
+  }
+
+  const recentAvg = Math.round(
+    validRecent.reduce((a: number, l: any) => a + appetiteScores[l.appetite], 0) / validRecent.length
+  );
+
+  let trend: "up" | "down" | "stable" = "stable";
+  let trendLabel = "";
+  
+  if (validOlder.length > 0) {
+    const olderAvg = validOlder.reduce((a: number, l: any) => a + appetiteScores[l.appetite], 0) / validOlder.length;
+    const diff = recentAvg - olderAvg;
+    if (diff > 5) { trend = "up"; trendLabel = `+${Math.round(diff)}%`; }
+    else if (diff < -5) { trend = "down"; trendLabel = `${Math.round(diff)}%`; }
+  }
+
+  let status: ConcreteMetric["status"] = "good";
+  let label = "Bom";
+  if (recentAvg >= 85) { status = "excellent"; label = "Excelente"; }
+  else if (recentAvg >= 60) { status = "good"; label = "Bom"; }
+  else if (recentAvg >= 40) { status = "warning"; label = "Atenção"; }
+  else { status = "alert"; label = "Crítico"; }
+
+  return {
+    value: recentAvg,
+    unit: "%",
+    label,
+    trend,
+    trendLabel,
+    status,
+    description: `Baseado em ${validRecent.length} registros`,
+  };
+}
+
+// Saúde Intestinal (baseado em stool/stoolQuality dos daily logs)
+function calculateDigestiveHealth(dailyLogs: any[]): ConcreteMetric {
+  if (!dailyLogs || dailyLogs.length === 0) {
+    return {
+      value: 0,
+      unit: "%",
+      label: "Sem dados",
+      trend: "stable",
+      trendLabel: "",
+      status: "warning",
+      description: "Registre logs para analisar",
+    };
+  }
+
+  // Scores para qualidade das fezes
+  const stoolScores: Record<string, number> = {
+    normal: 100, type_3: 90, type_5: 80,
+    soft: 60, type_6: 50, hard: 50, type_1: 40,
+    diarrhea: 20, type_7: 15, mucus: 10, bloody: 0, blood: 0, none: 70,
+  };
+
+  const recentLogs = dailyLogs.slice(0, 14);
+  const validLogs = recentLogs.filter((l: any) => 
+    (l.stool && stoolScores[l.stool] !== undefined) ||
+    (l.stoolQuality && stoolScores[l.stoolQuality] !== undefined)
+  );
+
+  if (validLogs.length === 0) {
+    return {
+      value: 0,
+      unit: "%",
+      label: "Sem dados",
+      trend: "stable",
+      trendLabel: "",
+      status: "warning",
+      description: "Sem registros intestinais",
+    };
+  }
+
+  const avg = Math.round(
+    validLogs.reduce((a: number, l: any) => {
+      const score = stoolScores[l.stoolQuality] ?? stoolScores[l.stool] ?? 70;
+      return a + score;
+    }, 0) / validLogs.length
+  );
+
+  // Contar problemas
+  const problems = validLogs.filter((l: any) => {
+    const val = l.stoolQuality || l.stool;
+    return ["diarrhea", "type_7", "bloody", "blood", "mucus"].includes(val);
+  }).length;
+
+  let status: ConcreteMetric["status"] = "good";
+  let label = "Normal";
+  if (avg >= 85 && problems === 0) { status = "excellent"; label = "Excelente"; }
+  else if (avg >= 60) { status = "good"; label = "Normal"; }
+  else if (avg >= 40) { status = "warning"; label = "Atenção"; }
+  else { status = "alert"; label = "Consultar Vet"; }
+
+  return {
+    value: avg,
+    unit: "%",
+    label,
+    trend: problems > 0 ? "down" : "stable",
+    trendLabel: problems > 0 ? `${problems} ocorrência(s)` : "",
+    status,
+    description: `${validLogs.length} registros analisados`,
+  };
+}
+
+// Estabilidade Emocional (variação do humor)
+function calculateEmotionalStability(dailyLogs: any[]): ConcreteMetric {
+  if (!dailyLogs || dailyLogs.length < 3) {
+    return {
+      value: 0,
+      unit: "%",
+      label: "Dados insuficientes",
+      trend: "stable",
+      trendLabel: "",
+      status: "warning",
+      description: "Mínimo 3 registros",
+    };
+  }
+
+  const moodScores: Record<string, number> = {
+    happy: 100, playful: 95, calm: 90,
+    tired: 50, anxious: 35, agitated: 30,
+    fearful: 25, aggressive: 15, apathetic: 20, sick: 10,
+  };
+
+  const validLogs = dailyLogs.filter((l: any) => l.mood && moodScores[l.mood] !== undefined).slice(0, 14);
+  
+  if (validLogs.length < 3) {
+    return {
+      value: 0,
+      unit: "%",
+      label: "Dados insuficientes",
+      trend: "stable",
+      trendLabel: "",
+      status: "warning",
+      description: "Mínimo 3 registros de humor",
+    };
+  }
+
+  const scores = validLogs.map((l: any) => moodScores[l.mood]);
+  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+  
+  // Calcular variância (estabilidade)
+  const variance = scores.reduce((a, s) => a + Math.pow(s - avg, 2), 0) / scores.length;
+  const stdDev = Math.sqrt(variance);
+  
+  // Converter desvio padrão em score de estabilidade (menos variação = mais estável)
+  // Desvio de 0 = 100%, desvio de 40+ = 0%
+  const stabilityScore = Math.max(0, Math.round(100 - (stdDev * 2.5)));
+
+  // Contar dias "positivos" vs "negativos"
+  const positiveDays = scores.filter(s => s >= 70).length;
+  const negativeDays = scores.filter(s => s < 50).length;
+
+  let status: ConcreteMetric["status"] = "good";
+  let label = "Estável";
+  if (stabilityScore >= 80 && avg >= 70) { status = "excellent"; label = "Muito Estável"; }
+  else if (stabilityScore >= 60) { status = "good"; label = "Estável"; }
+  else if (stabilityScore >= 40) { status = "warning"; label = "Variável"; }
+  else { status = "alert"; label = "Instável"; }
+
+  return {
+    value: stabilityScore,
+    unit: "%",
+    label,
+    trend: negativeDays > positiveDays ? "down" : negativeDays < positiveDays ? "up" : "stable",
+    trendLabel: `${positiveDays} dias positivos`,
+    status,
+    description: `Média de humor: ${Math.round(avg)}%`,
+  };
+}
+
+// Nível de Atividade (baseado em energy dos logs)
+function calculateActivityLevel(dailyLogs: any[], behaviorLogs: any[]): ConcreteMetric {
+  const energyScores: Record<string, number> = {
+    high: 95, very_high: 100, normal: 70, medium: 65, low: 40, very_low: 20,
+  };
+
+  const allLogs = [
+    ...(dailyLogs || []).map((l: any) => ({ energy: l.energy, date: l.logDate })),
+    ...(behaviorLogs || []).map((l: any) => ({ energy: l.energy, date: l.logDate })),
+  ].filter(l => l.energy && energyScores[l.energy] !== undefined);
+
+  if (allLogs.length === 0) {
+    return {
+      value: 0,
+      unit: "%",
+      label: "Sem dados",
+      trend: "stable",
+      trendLabel: "",
+      status: "warning",
+      description: "Registre logs de energia",
+    };
+  }
+
+  const recentLogs = allLogs.slice(0, 10);
+  const avg = Math.round(
+    recentLogs.reduce((a, l) => a + energyScores[l.energy], 0) / recentLogs.length
+  );
+
+  let status: ConcreteMetric["status"] = "good";
+  let label = "Normal";
+  if (avg >= 85) { status = "excellent"; label = "Alta Energia"; }
+  else if (avg >= 60) { status = "good"; label = "Normal"; }
+  else if (avg >= 40) { status = "warning"; label = "Baixa"; }
+  else { status = "alert"; label = "Muito Baixa"; }
+
+  return {
+    value: avg,
+    unit: "%",
+    label,
+    trend: "stable",
+    trendLabel: `${recentLogs.length} registros`,
+    status,
+    description: label === "Alta Energia" ? "Pet muito ativo!" : 
+                 label === "Normal" ? "Nível saudável" :
+                 "Monitorar energia",
+  };
+}
+
+// Índice de Saúde Preventiva (vacinas, preventivos)
+function calculatePreventiveHealth(pet: any): {
+  score: number;
+  vaccinesOk: boolean;
+  preventivesOk: boolean;
+  daysUntilNextVaccine: number | null;
+  daysUntilNextPreventive: number | null;
+} {
+  // Esta função precisa de dados de vacinas e preventivos
+  // Por agora, retorna baseado nos créditos e status
+  const hasCredits = (pet.credits || 0) > 0;
+  const isApproved = pet.approvalStatus === "approved";
+  
+  let score = 50;
+  if (hasCredits) score += 25;
+  if (isApproved) score += 25;
+
+  return {
+    score,
+    vaccinesOk: true, // Placeholder - precisa de dados reais
+    preventivesOk: true,
+    daysUntilNextVaccine: null,
+    daysUntilNextPreventive: null,
+  };
+}
+
+// ==========================================
 // COMPONENTE DE MÉTRICA
 // ==========================================
 
@@ -518,9 +860,44 @@ export default function TutorPetDetailPage(props: PetPageProps) {
 
   // Buscar daily logs para enriquecer as métricas
   const { data: dailyLogs } = trpc.logs.byPet.useQuery(
-    { petId, limit: 14 },
+    { petId, limit: 30 },
     { enabled: !!pet, staleTime: 5 * 60 * 1000 }
   );
+
+  // Buscar eventos do calendário para métricas de frequência
+  const { data: calendarEvents } = trpc.calendar.byPet.useQuery(
+    { petId },
+    { enabled: !!pet, staleTime: 5 * 60 * 1000 }
+  );
+
+  // ========================================
+  // MÉTRICAS CONCRETAS E MENSURÁVEIS
+  // ========================================
+
+  // Frequência na Creche
+  const attendanceMetrics = useMemo(() => {
+    return calculateAttendanceMetrics(calendarEvents || []);
+  }, [calendarEvents]);
+
+  // Saúde Alimentar
+  const feedingHealth = useMemo(() => {
+    return calculateFeedingHealth(dailyLogs || []);
+  }, [dailyLogs]);
+
+  // Saúde Digestiva
+  const digestiveHealth = useMemo(() => {
+    return calculateDigestiveHealth(dailyLogs || []);
+  }, [dailyLogs]);
+
+  // Estabilidade Emocional
+  const emotionalStability = useMemo(() => {
+    return calculateEmotionalStability(dailyLogs || []);
+  }, [dailyLogs]);
+
+  // Nível de Atividade
+  const activityLevel = useMemo(() => {
+    return calculateActivityLevel(dailyLogs || [], behaviorLogs || []);
+  }, [dailyLogs, behaviorLogs]);
 
   // Calcular métricas HÍBRIDAS inteligentes
   // Combina: Perfil do Pet + Behavior Logs + Daily Logs
@@ -907,6 +1284,227 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Indicadores de Bem-estar - Métricas Concretas */}
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                    <Activity className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Indicadores de Bem-estar</CardTitle>
+                    <CardDescription>Métricas reais e mensuráveis</CardDescription>
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="grid gap-4">
+                {/* Frequência na Creche */}
+                <div className="p-4 rounded-xl border bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-100 dark:border-blue-900/50">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="h-5 w-5 text-blue-600" />
+                      <span className="font-semibold text-blue-900 dark:text-blue-100">Frequência na Creche</span>
+                    </div>
+                    <div className={cn(
+                      "flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full",
+                      attendanceMetrics.trend === "up" && "bg-emerald-100 text-emerald-700",
+                      attendanceMetrics.trend === "down" && "bg-red-100 text-red-700",
+                      attendanceMetrics.trend === "stable" && "bg-slate-100 text-slate-600"
+                    )}>
+                      {attendanceMetrics.trend === "up" && <TrendingUp className="h-3 w-3" />}
+                      {attendanceMetrics.trend === "down" && <TrendingDown className="h-3 w-3" />}
+                      {attendanceMetrics.trend === "stable" && <Minus className="h-3 w-3" />}
+                      <span>vs mês anterior</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="text-center p-3 bg-white/60 dark:bg-white/5 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">{attendanceMetrics.thisMonth}</div>
+                      <div className="text-xs text-muted-foreground">Este mês</div>
+                    </div>
+                    <div className="text-center p-3 bg-white/60 dark:bg-white/5 rounded-lg">
+                      <div className="text-2xl font-bold text-slate-600">{attendanceMetrics.lastMonth}</div>
+                      <div className="text-xs text-muted-foreground">Mês passado</div>
+                    </div>
+                    <div className="text-center p-3 bg-white/60 dark:bg-white/5 rounded-lg">
+                      <div className="text-2xl font-bold text-indigo-600">{attendanceMetrics.avgPerWeek}</div>
+                      <div className="text-xs text-muted-foreground">Média/semana</div>
+                    </div>
+                    <div className="text-center p-3 bg-white/60 dark:bg-white/5 rounded-lg">
+                      <div className="text-2xl font-bold text-slate-700">{attendanceMetrics.totalVisits}</div>
+                      <div className="text-xs text-muted-foreground">Total visitas</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grid de Indicadores de Saúde */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {/* Saúde Alimentar */}
+                  <div className={cn(
+                    "p-4 rounded-xl border transition-all",
+                    feedingHealth.status === "excellent" && "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800",
+                    feedingHealth.status === "good" && "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800",
+                    feedingHealth.status === "warning" && "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
+                    feedingHealth.status === "alert" && "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800",
+                  )}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <UtensilsCrossed className={cn(
+                        "h-4 w-4",
+                        feedingHealth.status === "excellent" && "text-emerald-600",
+                        feedingHealth.status === "good" && "text-blue-600",
+                        feedingHealth.status === "warning" && "text-amber-600",
+                        feedingHealth.status === "alert" && "text-red-600",
+                      )} />
+                      <span className="text-xs font-medium text-muted-foreground">Apetite</span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-bold">{feedingHealth.value > 0 ? feedingHealth.value : "—"}</span>
+                      <span className="text-sm text-muted-foreground">{feedingHealth.unit}</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className={cn(
+                        "text-xs font-medium",
+                        feedingHealth.status === "excellent" && "text-emerald-600",
+                        feedingHealth.status === "good" && "text-blue-600",
+                        feedingHealth.status === "warning" && "text-amber-600",
+                        feedingHealth.status === "alert" && "text-red-600",
+                      )}>{feedingHealth.label}</span>
+                      {feedingHealth.trendLabel && (
+                        <span className={cn(
+                          "text-[10px] flex items-center gap-0.5",
+                          feedingHealth.trend === "up" && "text-emerald-600",
+                          feedingHealth.trend === "down" && "text-red-600",
+                        )}>
+                          {feedingHealth.trend === "up" && <TrendingUp className="h-3 w-3" />}
+                          {feedingHealth.trend === "down" && <TrendingDown className="h-3 w-3" />}
+                          {feedingHealth.trendLabel}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Saúde Digestiva */}
+                  <div className={cn(
+                    "p-4 rounded-xl border transition-all",
+                    digestiveHealth.status === "excellent" && "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800",
+                    digestiveHealth.status === "good" && "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800",
+                    digestiveHealth.status === "warning" && "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
+                    digestiveHealth.status === "alert" && "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800",
+                  )}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Heart className={cn(
+                        "h-4 w-4",
+                        digestiveHealth.status === "excellent" && "text-emerald-600",
+                        digestiveHealth.status === "good" && "text-blue-600",
+                        digestiveHealth.status === "warning" && "text-amber-600",
+                        digestiveHealth.status === "alert" && "text-red-600",
+                      )} />
+                      <span className="text-xs font-medium text-muted-foreground">Digestivo</span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-bold">{digestiveHealth.value > 0 ? digestiveHealth.value : "—"}</span>
+                      <span className="text-sm text-muted-foreground">{digestiveHealth.unit}</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className={cn(
+                        "text-xs font-medium",
+                        digestiveHealth.status === "excellent" && "text-emerald-600",
+                        digestiveHealth.status === "good" && "text-blue-600",
+                        digestiveHealth.status === "warning" && "text-amber-600",
+                        digestiveHealth.status === "alert" && "text-red-600",
+                      )}>{digestiveHealth.label}</span>
+                      {digestiveHealth.trendLabel && (
+                        <span className="text-[10px] text-amber-600">{digestiveHealth.trendLabel}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Estabilidade Emocional */}
+                  <div className={cn(
+                    "p-4 rounded-xl border transition-all",
+                    emotionalStability.status === "excellent" && "bg-purple-50 border-purple-200 dark:bg-purple-950/30 dark:border-purple-800",
+                    emotionalStability.status === "good" && "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800",
+                    emotionalStability.status === "warning" && "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
+                    emotionalStability.status === "alert" && "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800",
+                  )}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Brain className={cn(
+                        "h-4 w-4",
+                        emotionalStability.status === "excellent" && "text-purple-600",
+                        emotionalStability.status === "good" && "text-blue-600",
+                        emotionalStability.status === "warning" && "text-amber-600",
+                        emotionalStability.status === "alert" && "text-red-600",
+                      )} />
+                      <span className="text-xs font-medium text-muted-foreground">Emocional</span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-bold">{emotionalStability.value > 0 ? emotionalStability.value : "—"}</span>
+                      <span className="text-sm text-muted-foreground">{emotionalStability.unit}</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className={cn(
+                        "text-xs font-medium",
+                        emotionalStability.status === "excellent" && "text-purple-600",
+                        emotionalStability.status === "good" && "text-blue-600",
+                        emotionalStability.status === "warning" && "text-amber-600",
+                        emotionalStability.status === "alert" && "text-red-600",
+                      )}>{emotionalStability.label}</span>
+                      {emotionalStability.trendLabel && (
+                        <span className="text-[10px] text-emerald-600">{emotionalStability.trendLabel}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Nível de Atividade */}
+                  <div className={cn(
+                    "p-4 rounded-xl border transition-all",
+                    activityLevel.status === "excellent" && "bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-800",
+                    activityLevel.status === "good" && "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800",
+                    activityLevel.status === "warning" && "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
+                    activityLevel.status === "alert" && "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800",
+                  )}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Zap className={cn(
+                        "h-4 w-4",
+                        activityLevel.status === "excellent" && "text-orange-600",
+                        activityLevel.status === "good" && "text-blue-600",
+                        activityLevel.status === "warning" && "text-amber-600",
+                        activityLevel.status === "alert" && "text-red-600",
+                      )} />
+                      <span className="text-xs font-medium text-muted-foreground">Atividade</span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-bold">{activityLevel.value > 0 ? activityLevel.value : "—"}</span>
+                      <span className="text-sm text-muted-foreground">{activityLevel.unit}</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className={cn(
+                        "text-xs font-medium",
+                        activityLevel.status === "excellent" && "text-orange-600",
+                        activityLevel.status === "good" && "text-blue-600",
+                        activityLevel.status === "warning" && "text-amber-600",
+                        activityLevel.status === "alert" && "text-red-600",
+                      )}>{activityLevel.label}</span>
+                      <span className="text-[10px] text-muted-foreground">{activityLevel.description}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Nota explicativa */}
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+                  <Info className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-muted-foreground">
+                    Indicadores calculados automaticamente com base nos registros diários. 
+                    Quanto mais registros, mais precisas ficam as métricas.
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 

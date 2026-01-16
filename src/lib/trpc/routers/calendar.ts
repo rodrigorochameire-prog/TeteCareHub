@@ -413,6 +413,40 @@ export const calendarRouter = router({
     }),
 
   /**
+   * Lista eventos por pet (histórico completo)
+   */
+  byPet: protectedProcedure
+    .input(z.object({ petId: idSchema }))
+    .query(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        // Verificar permissão
+        if (ctx.user.role !== "admin") {
+          const relation = await db.query.petTutors.findFirst({
+            where: and(
+              eq(petTutors.petId, input.petId),
+              eq(petTutors.tutorId, ctx.user.id)
+            ),
+          });
+
+          if (!relation) {
+            throw Errors.forbidden();
+          }
+        }
+
+        const events = await db
+          .select()
+          .from(calendarEvents)
+          .where(eq(calendarEvents.petId, input.petId))
+          .orderBy(desc(calendarEvents.eventDate));
+
+        return events.map((e) => ({
+          ...e,
+          typeInfo: EVENT_TYPES[e.eventType as keyof typeof EVENT_TYPES] || EVENT_TYPES.custom,
+        }));
+      }, "Erro ao listar eventos do pet");
+    }),
+
+  /**
    * Eventos de hoje
    */
   today: protectedProcedure.query(async ({ ctx }) => {
