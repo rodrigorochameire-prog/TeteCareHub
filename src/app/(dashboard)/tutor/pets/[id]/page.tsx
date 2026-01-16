@@ -1430,17 +1430,17 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                   <div className="relative">
                     {/* Efeito de brilho de fundo */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="w-48 h-48 rounded-full bg-gradient-to-br from-purple-500/10 via-violet-500/5 to-transparent blur-3xl" />
+                      <div className="w-32 h-32 sm:w-48 sm:h-48 rounded-full bg-gradient-to-br from-purple-500/10 via-violet-500/5 to-transparent blur-3xl" />
                     </div>
                     
-                    <div className="h-[320px] sm:h-[380px] relative z-10">
+                    <div className="h-[280px] sm:h-[340px] relative z-10">
                       <ResponsiveContainer width="100%" height="100%">
                         <RadarChart 
                           data={radarData} 
                           cx="50%" 
                           cy="50%" 
-                          outerRadius="58%"
-                          margin={{ top: 40, right: 50, bottom: 30, left: 50 }}
+                          outerRadius="65%"
+                          margin={{ top: 25, right: 25, bottom: 25, left: 25 }}
                         >
                           <defs>
                             {/* Gradiente Premium Ultra para valor atual */}
@@ -1490,58 +1490,37 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                           />
                           
                           <PolarAngleAxis 
-                            dataKey="metric" 
+                            dataKey="shortName" 
                             tick={(props: any) => {
                               const { x, y, payload, index } = props;
                               const item = radarData[index];
                               const isAbove = item && item.value > item.benchmark;
-                              const isStrong = item && item.value >= 80;
                               const xPos = typeof x === "number" ? x : 0;
                               const yPos = typeof y === "number" ? y : 0;
                               
-                              // Calcular posição ajustada para os labels não cortarem
-                              const centerX = 50;
-                              const centerY = 50;
-                              const angleRad = Math.atan2(yPos - centerY, xPos - centerX);
-                              const labelOffset = 12;
-                              const adjustedX = xPos + Math.cos(angleRad) * labelOffset;
-                              const adjustedY = yPos + Math.sin(angleRad) * labelOffset;
-                              
                               return (
                                 <g>
-                                  {/* Badge de fundo para labels premium */}
-                                  <rect
-                                    x={adjustedX - 38}
-                                    y={adjustedY - 10}
-                                    width={76}
-                                    height={28}
-                                    rx={6}
-                                    fill={isStrong ? "rgba(139, 92, 246, 0.1)" : "rgba(148, 163, 184, 0.08)"}
-                                    stroke={isStrong ? "rgba(139, 92, 246, 0.2)" : "rgba(148, 163, 184, 0.15)"}
-                                    strokeWidth={1}
-                                  />
-                                  {/* Nome da métrica */}
+                                  {/* Label simples e limpo */}
                                   <text 
-                                    x={adjustedX} 
-                                    y={adjustedY} 
+                                    x={xPos} 
+                                    y={yPos} 
                                     textAnchor="middle" 
                                     dominantBaseline="middle"
                                     fill={isAbove ? "#7c3aed" : "#64748b"}
-                                    fontSize={10}
+                                    fontSize={11}
                                     fontWeight={600}
-                                    letterSpacing="0.02em"
                                   >
                                     {payload.value}
                                   </text>
-                                  {/* Valor percentual */}
+                                  {/* Valor percentual abaixo */}
                                   {item && (
                                     <text 
-                                      x={adjustedX} 
-                                      y={adjustedY + 12} 
+                                      x={xPos} 
+                                      y={yPos + 12} 
                                       textAnchor="middle" 
                                       dominantBaseline="middle"
                                       fill={isAbove ? "#22c55e" : "#94a3b8"}
-                                      fontSize={9}
+                                      fontSize={10}
                                       fontWeight={700}
                                     >
                                       {item.value}%
