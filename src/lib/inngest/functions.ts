@@ -8,9 +8,23 @@
  */
 
 import { inngest } from "./client";
-import { sendWhatsAppMessage } from "./whatsapp-helper";
+import { WhatsAppService } from "@/lib/services/whatsapp";
 import { generateWeeklyReport, analyzeBehaviorPatterns, optimizeRoomAssignments } from "./ai-functions";
 import { metrics } from "@/lib/monitoring/axiom";
+
+// Helper function para enviar mensagem WhatsApp
+async function sendWhatsAppMessage(to: string, message: string): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const service = WhatsAppService.fromEnv();
+  if (!service) {
+    return { success: false, error: "WhatsApp not configured" };
+  }
+  try {
+    const result = await service.sendText(to, message);
+    return { success: true, messageId: result.messages[0]?.id };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+  }
+}
 
 // ============================================
 // WHATSAPP FUNCTIONS
