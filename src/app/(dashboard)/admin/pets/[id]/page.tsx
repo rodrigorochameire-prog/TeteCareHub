@@ -36,14 +36,34 @@ export default function AdminPetDetailPage() {
   const [newStock, setNewStock] = useState("");
   const [socialModalOpen, setSocialModalOpen] = useState(false);
 
-  // Queries
+  // Query principal - carrega primeiro
   const { data: pet, isLoading, refetch } = trpc.pets.byId.useQuery({ id: petId });
-  const { data: timeline } = trpc.petManagement.getUnifiedTimeline.useQuery({ petId, limit: 30 });
-  const { data: stockForecast } = trpc.petManagement.getFoodStockForecast.useQuery({ petId });
-  const { data: socialCircle } = trpc.petManagement.getSocialCircle.useQuery({ petId });
-  const { data: weightHistory } = trpc.petManagement.getWeightHistory.useQuery({ petId, limit: 10 });
-  const { data: skillsMatrix } = trpc.petManagement.getSkillsMatrix.useQuery({ petId });
-  const { data: activeAlerts } = trpc.petManagement.getActiveAlerts.useQuery({ petId });
+
+  // Queries secundárias - lazy loading (só carregam quando pet existe)
+  const { data: timeline } = trpc.petManagement.getUnifiedTimeline.useQuery(
+    { petId, limit: 30 },
+    { enabled: !!pet, staleTime: 2 * 60 * 1000 } // 2 min cache
+  );
+  const { data: stockForecast } = trpc.petManagement.getFoodStockForecast.useQuery(
+    { petId },
+    { enabled: !!pet, staleTime: 5 * 60 * 1000 } // 5 min cache
+  );
+  const { data: socialCircle } = trpc.petManagement.getSocialCircle.useQuery(
+    { petId },
+    { enabled: !!pet, staleTime: 5 * 60 * 1000 }
+  );
+  const { data: weightHistory } = trpc.petManagement.getWeightHistory.useQuery(
+    { petId, limit: 10 },
+    { enabled: !!pet, staleTime: 10 * 60 * 1000 } // 10 min cache - muda raramente
+  );
+  const { data: skillsMatrix } = trpc.petManagement.getSkillsMatrix.useQuery(
+    { petId },
+    { enabled: !!pet, staleTime: 5 * 60 * 1000 }
+  );
+  const { data: activeAlerts } = trpc.petManagement.getActiveAlerts.useQuery(
+    { petId },
+    { enabled: !!pet, staleTime: 60 * 1000 } // 1 min - alertas são mais críticos
+  );
 
   // Mutations
   const updateStock = trpc.petManagement.updateFoodStock.useMutation({

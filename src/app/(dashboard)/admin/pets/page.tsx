@@ -395,11 +395,25 @@ export default function AdminPetsPage() {
   }, [viewMode]);
 
   const utils = trpc.useUtils();
-  const { data: pets, isLoading } = trpc.pets.list.useQuery();
-  const { data: pendingPets } = trpc.pets.pending.useQuery();
-  const { data: tutors } = trpc.users.tutors.useQuery();
-  const { data: checkedInPets } = trpc.dashboard.checkedInPets.useQuery();
-  const { data: lowStockPets } = trpc.petManagement.getLowStockPets.useQuery();
+  
+  // Query principal com cache otimizado
+  const { data: pets, isLoading } = trpc.pets.list.useQuery(undefined, {
+    staleTime: 60 * 1000, // 1 min cache
+  });
+  
+  // Queries secundárias - lazy loading
+  const { data: pendingPets } = trpc.pets.pending.useQuery(undefined, {
+    staleTime: 60 * 1000,
+  });
+  const { data: tutors } = trpc.users.tutors.useQuery(undefined, {
+    staleTime: 5 * 60 * 1000, // 5 min - muda raramente
+  });
+  const { data: checkedInPets } = trpc.dashboard.checkedInPets.useQuery(undefined, {
+    staleTime: 30 * 1000, // 30s - importante manter atualizado
+  });
+  const { data: lowStockPets } = trpc.petManagement.getLowStockPets.useQuery(undefined, {
+    staleTime: 2 * 60 * 1000, // 2 min
+  });
 
   // Mutations
   const approveMutation = trpc.pets.approve.useMutation({

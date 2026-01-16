@@ -183,4 +183,87 @@ export const dashboardRouter = router({
         return recentLogs;
       }, "Erro ao buscar atividade recente");
     }),
+
+  /**
+   * Query unificada para página de Daycare
+   * Consolida 6 queries em 1 para melhor performance
+   */
+  daycareData: adminProcedure.query(async () => {
+    return safeAsync(async () => {
+      // Executa todas as queries em paralelo
+      const [
+        approvedPetsResult,
+        checkedInPetsResult,
+        vaccineStatsResult,
+      ] = await Promise.all([
+        // Pets aprovados
+        db
+          .select()
+          .from(pets)
+          .where(eq(pets.approvalStatus, "approved"))
+          .orderBy(pets.name),
+        // Pets na creche
+        db
+          .select()
+          .from(pets)
+          .where(eq(pets.status, "checked-in"))
+          .orderBy(pets.name),
+        // Stats de vacinas
+        db.execute(sql`
+          SELECT 
+            COUNT(DISTINCT pv.pet_id)::int as pets_with_vaccines,
+            COUNT(*)::int as total_vaccines,
+            COUNT(CASE WHEN pv.next_due_date < CURRENT_DATE THEN 1 END)::int as overdue,
+            COUNT(CASE WHEN pv.next_due_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days' THEN 1 END)::int as due_soon
+          FROM pet_vaccinations pv
+        `),
+      ]);
+
+      // Buscar pets com estoque baixo de ração - mesmo formato do getLowStockPets
+      const allPetsForStock = await db
+        .select()
+        .from(pets)
+        .where(eq(pets.approvalStatus, "approved"));
+
+      const lowStockPetsResult = allPetsForStock
+        .filter(pet => {
+          if (!pet.foodAmount || pet.foodAmount === 0) return false;
+          const stock = pet.foodStockGrams || 0;
+          const daysRemaining = Math.floor(stock / pet.foodAmount);
+          return daysRemaining <= 5;
+        })
+        .map(pet => {
+          const daysRemaining = pet.foodAmount 
+            ? Math.floor((pet.foodStockGrams || 0) / pet.foodAmount)
+            : 0;
+          return {
+            ...pet,
+            daysRemaining,
+            alertLevel: daysRemaining <= 0 ? "empty" as const : 
+                       daysRemaining <= 2 ? "critical" as const : "warning" as const,
+          };
+        })
+        .sort((a, b) => a.daysRemaining - b.daysRemaining);
+
+      const vaccineStats = vaccineStatsResult[0] as {
+        pets_with_vaccines: number;
+        total_vaccines: number;
+        overdue: number;
+        due_soon: number;
+      } || { pets_with_vaccines: 0, total_vaccines: 0, overdue: 0, due_soon: 0 };
+
+      return {
+        approvedPets: approvedPetsResult,
+        checkedInPets: checkedInPetsResult,
+        lowStockPets: lowStockPetsResult,
+        vaccineStats: {
+          petsWithVaccines: vaccineStats.pets_with_vaccines,
+          totalVaccines: vaccineStats.total_vaccines,
+          overdue: vaccineStats.overdue,
+          dueSoon: vaccineStats.due_soon,
+        },
+        // Settings e flags são carregados separadamente (menos críticos)
+      };
+    }, "Erro ao buscar dados do daycare");
+  }),
 });

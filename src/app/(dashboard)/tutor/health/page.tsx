@@ -70,10 +70,16 @@ export default function TutorHealthPage() {
   const [isAddPreventiveOpen, setIsAddPreventiveOpen] = useState(false);
   const [isAddMedicationOpen, setIsAddMedicationOpen] = useState(false);
 
-  // Queries
-  const { data: myPets } = trpc.pets.myPets.useQuery();
-  const { data: vaccineLibrary } = trpc.vaccines.library.useQuery();
-  const { data: medicationLibrary } = trpc.medications.library.useQuery();
+  // Queries com cache otimizado
+  const { data: myPets } = trpc.pets.myPets.useQuery(undefined, {
+    staleTime: 2 * 60 * 1000, // 2 min
+  });
+  const { data: vaccineLibrary } = trpc.vaccines.library.useQuery(undefined, {
+    staleTime: 30 * 60 * 1000, // 30 min - biblioteca muda raramente
+  });
+  const { data: medicationLibrary } = trpc.medications.library.useQuery(undefined, {
+    staleTime: 30 * 60 * 1000, // 30 min
+  });
 
   // Pet specific queries
   const { data: petVaccinations, refetch: refetchVaccinations } = trpc.vaccines.getPetVaccinations.useQuery(
