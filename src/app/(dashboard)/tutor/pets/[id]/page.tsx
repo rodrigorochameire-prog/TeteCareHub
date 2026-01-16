@@ -1,11 +1,12 @@
 "use client";
 
-import { use } from "react";
+import { use, useMemo } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PetAvatar } from "@/components/pet-avatar";
 import {
   Dog,
@@ -26,22 +27,115 @@ import {
   FolderOpen,
   MessageSquare,
   Heart,
+  Brain,
+  Users,
+  Zap,
+  Frown,
+  Activity,
 } from "lucide-react";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { LoadingPage } from "@/components/shared/loading";
 import { PageHeader } from "@/components/shared/page-header";
 import { notFound } from "next/navigation";
+import {
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
 
 interface PetPageProps {
   params: Promise<{ id: string }>;
 }
+
+// Opções para cálculo do gráfico de radar
+const socializationScores: Record<string, number> = {
+  excellent: 100,
+  good: 75,
+  moderate: 50,
+  poor: 25,
+};
+
+const energyScores: Record<string, number> = {
+  high: 100,
+  normal: 66,
+  low: 33,
+};
+
+const obedienceScores: Record<string, number> = {
+  excellent: 100,
+  good: 66,
+  needs_work: 33,
+};
+
+const anxietyScores: Record<string, number> = {
+  none: 100,
+  mild: 66,
+  moderate: 33,
+  severe: 0,
+};
+
+const aggressionScores: Record<string, number> = {
+  none: 100,
+  mild: 66,
+  moderate: 33,
+  severe: 0,
+};
 
 export default function TutorPetDetailPage(props: PetPageProps) {
   const params = use(props.params);
   const petId = parseInt(params.id);
 
   const { data: pet, isLoading, error } = trpc.pets.byId.useQuery({ id: petId });
+  
+  // Buscar registros de comportamento dos últimos 30 dias
+  const { data: behaviorLogs } = trpc.behavior.byPet.useQuery(
+    { petId, limit: 30 },
+    { enabled: !!pet, staleTime: 5 * 60 * 1000 }
+  );
+
+  // Calcular dados do gráfico de radar baseado nos registros de comportamento
+  const radarData = useMemo(() => {
+    if (!behaviorLogs || behaviorLogs.length === 0) {
+      // Retorna valores padrão baseados no perfil do pet
+      return [
+        { subject: "Socialização", value: 50, fullMark: 100 },
+        { subject: "Obediência", value: 50, fullMark: 100 },
+        { subject: "Energia", value: 50, fullMark: 100 },
+        { subject: "Calma", value: 50, fullMark: 100 },
+        { subject: "Docilidade", value: 50, fullMark: 100 },
+      ];
+    }
+
+    // Calcular médias dos registros de comportamento
+    const calcAvg = (field: string, scores: Record<string, number>) => {
+      const values = behaviorLogs
+        .map((log: any) => log[field])
+        .filter(Boolean)
+        .map((v: string) => scores[v] || 50);
+      
+      if (values.length === 0) return 50;
+      return Math.round(values.reduce((a: number, b: number) => a + b, 0) / values.length);
+    };
+
+    return [
+      { subject: "Socialização", value: calcAvg("socialization", socializationScores), fullMark: 100 },
+      { subject: "Obediência", value: calcAvg("obedience", obedienceScores), fullMark: 100 },
+      { subject: "Energia", value: calcAvg("energy", energyScores), fullMark: 100 },
+      { subject: "Calma", value: calcAvg("anxiety", anxietyScores), fullMark: 100 },
+      { subject: "Docilidade", value: calcAvg("aggression", aggressionScores), fullMark: 100 },
+    ];
+  }, [behaviorLogs]);
+
+  // Últimos registros de comportamento formatados
+  const recentBehavior = useMemo(() => {
+    if (!behaviorLogs) return [];
+    return behaviorLogs.slice(0, 5);
+  }, [behaviorLogs]);
 
   if (isLoading) {
     return <LoadingPage />;
@@ -172,6 +266,135 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                       <p className="font-medium">{pet.foodAmount}g</p>
                     </div>
                   )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Perfil Comportamental */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Brain className="h-5 w-5 text-purple-500" />
+                Perfil Comportamental
+              </CardTitle>
+              <CardDescription>
+                Avaliação baseada nos registros da creche
+                {behaviorLogs && behaviorLogs.length > 0 && (
+                  <span className="ml-1">
+                    ({behaviorLogs.length} registros)
+                  </span>
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={radarData}>
+                    <PolarGrid stroke="#e2e8f0" />
+                    <PolarAngleAxis dataKey="subject" fontSize={11} stroke="#94a3b8" />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#94a3b8" fontSize={10} />
+                    <Radar
+                      name="Comportamento"
+                      dataKey="value"
+                      stroke="#8b5cf6"
+                      fill="#8b5cf6"
+                      fillOpacity={0.5}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'white', 
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        fontSize: '12px'
+                      }}
+                      formatter={(value: number) => [`${value}%`, 'Pontuação']}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Legenda dos atributos */}
+              <div className="mt-4 grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                <div className="flex items-center gap-1.5 p-2 rounded-lg bg-muted/50">
+                  <Users className="h-3.5 w-3.5 text-blue-500" />
+                  <span className="text-muted-foreground">Socialização</span>
+                </div>
+                <div className="flex items-center gap-1.5 p-2 rounded-lg bg-muted/50">
+                  <GraduationCap className="h-3.5 w-3.5 text-green-500" />
+                  <span className="text-muted-foreground">Obediência</span>
+                </div>
+                <div className="flex items-center gap-1.5 p-2 rounded-lg bg-muted/50">
+                  <Zap className="h-3.5 w-3.5 text-orange-500" />
+                  <span className="text-muted-foreground">Energia</span>
+                </div>
+                <div className="flex items-center gap-1.5 p-2 rounded-lg bg-muted/50">
+                  <Activity className="h-3.5 w-3.5 text-cyan-500" />
+                  <span className="text-muted-foreground">Calma</span>
+                </div>
+                <div className="flex items-center gap-1.5 p-2 rounded-lg bg-muted/50">
+                  <Heart className="h-3.5 w-3.5 text-pink-500" />
+                  <span className="text-muted-foreground">Docilidade</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Últimos Registros de Comportamento */}
+          {recentBehavior.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <ClipboardList className="h-5 w-5 text-green-500" />
+                  Últimos Registros
+                </CardTitle>
+                <CardDescription>
+                  Registros de comportamento recentes
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {recentBehavior.map((log: any, idx: number) => (
+                    <div key={log.id || idx} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(log.logDate).toLocaleDateString("pt-BR", {
+                            day: "2-digit",
+                            month: "short"
+                          })}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {log.socialization && (
+                            <Badge variant="outline" className="text-xs">
+                              <Users className="h-3 w-3 mr-1" />
+                              {log.socialization === "excellent" ? "Excelente" :
+                               log.socialization === "good" ? "Bom" :
+                               log.socialization === "moderate" ? "Moderado" : "Ruim"}
+                            </Badge>
+                          )}
+                          {log.energy && (
+                            <Badge variant="outline" className="text-xs">
+                              <Zap className="h-3 w-3 mr-1" />
+                              {log.energy === "high" ? "Alta" :
+                               log.energy === "normal" ? "Normal" : "Baixa"}
+                            </Badge>
+                          )}
+                          {log.anxiety && log.anxiety !== "none" && (
+                            <Badge variant="outline" className="text-xs text-amber-600">
+                              <Frown className="h-3 w-3 mr-1" />
+                              {log.anxiety === "mild" ? "Leve" :
+                               log.anxiety === "moderate" ? "Moderada" : "Severa"}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      {log.notes && (
+                        <p className="text-xs text-muted-foreground max-w-[200px] truncate">
+                          {log.notes}
+                        </p>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>

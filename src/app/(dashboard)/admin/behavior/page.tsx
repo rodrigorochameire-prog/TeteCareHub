@@ -142,16 +142,42 @@ export default function AdminBehavior() {
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Calculate date based on period filter
-  const dateFilter = useMemo(() => {
-    if (periodFilter === "custom") return customDate;
-    if (periodFilter === "today") return new Date().toISOString().split("T")[0];
-    return undefined; // For week/month, we get more data
+  // Calculate date filters based on period
+  const dateFilters = useMemo(() => {
+    const today = new Date();
+    
+    if (periodFilter === "custom") {
+      return { date: customDate };
+    }
+    
+    if (periodFilter === "today") {
+      return { date: today.toISOString().split("T")[0] };
+    }
+    
+    if (periodFilter === "week") {
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - 7);
+      return {
+        startDate: startOfWeek.toISOString().split("T")[0],
+        endDate: today.toISOString().split("T")[0],
+      };
+    }
+    
+    if (periodFilter === "month") {
+      const startOfMonth = new Date(today);
+      startOfMonth.setDate(today.getDate() - 30);
+      return {
+        startDate: startOfMonth.toISOString().split("T")[0],
+        endDate: today.toISOString().split("T")[0],
+      };
+    }
+    
+    return {};
   }, [periodFilter, customDate]);
 
   // Query principal com cache
   const { data: logs, isLoading, refetch } = trpc.behavior.list.useQuery({
-    date: dateFilter,
+    ...dateFilters,
     limit: 100,
   }, {
     staleTime: 60 * 1000, // 1 min cache

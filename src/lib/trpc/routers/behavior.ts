@@ -173,6 +173,9 @@ export const behaviorRouter = router({
     .input(
       z.object({
         date: z.string().or(z.date()).optional(),
+        startDate: z.string().or(z.date()).optional(),
+        endDate: z.string().or(z.date()).optional(),
+        petId: z.number().optional(),
         limit: z.number().default(50),
       }).optional()
     )
@@ -180,6 +183,7 @@ export const behaviorRouter = router({
       return safeAsync(async () => {
         let conditions: ReturnType<typeof eq>[] = [];
 
+        // Filtro por data específica (um dia)
         if (input?.date) {
           const date = new Date(input.date);
           const startOfDay = new Date(date);
@@ -189,6 +193,24 @@ export const behaviorRouter = router({
 
           conditions.push(gte(behaviorLogs.logDate, startOfDay));
           conditions.push(lte(behaviorLogs.logDate, endOfDay));
+        } else {
+          // Filtro por período (startDate/endDate)
+          if (input?.startDate) {
+            const start = new Date(input.startDate);
+            start.setHours(0, 0, 0, 0);
+            conditions.push(gte(behaviorLogs.logDate, start));
+          }
+          
+          if (input?.endDate) {
+            const end = new Date(input.endDate);
+            end.setHours(23, 59, 59, 999);
+            conditions.push(lte(behaviorLogs.logDate, end));
+          }
+        }
+
+        // Filtro por pet específico
+        if (input?.petId) {
+          conditions.push(eq(behaviorLogs.petId, input.petId));
         }
 
         const result = await db
