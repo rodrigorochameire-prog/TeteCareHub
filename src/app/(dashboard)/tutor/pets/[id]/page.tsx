@@ -1160,38 +1160,145 @@ export default function TutorPetDetailPage(props: PetPageProps) {
     ], pet);
   }, [behaviorMetrics, pet]);
 
-  // Dados do gráfico de radar otimizado
+  // Dados do gráfico de radar AVANÇADO - 7 dimensões com benchmark
   const radarData = useMemo(() => {
-    if (!behaviorMetrics) return [];
+    if (!behaviorMetrics || !pet) return [];
     
+    // Calcular benchmarks baseados na raça/porte (simulado por enquanto)
+    const getBreedBenchmark = (metric: string): number => {
+      // Valores médios esperados por tipo de métrica
+      const benchmarks: Record<string, number> = {
+        socialization: 70,
+        obedience: 65,
+        energy: 75,
+        calmness: 60,
+        docility: 70,
+        adaptability: 65,
+        focus: 60,
+      };
+      return benchmarks[metric] || 65;
+    };
+
+    // Calcular adaptabilidade (baseado em variação de humor + novos ambientes)
+    const adaptabilityScore = (() => {
+      if (!dailyLogs || dailyLogs.length < 3) return 65;
+      const moodVariety = new Set(dailyLogs.slice(0, 10).map((l: any) => l.mood)).size;
+      // Mais variedade de humor positivo = mais adaptável
+      const positiveCount = dailyLogs.slice(0, 10).filter((l: any) => 
+        ["happy", "playful", "calm"].includes(l.mood)
+      ).length;
+      return Math.min(95, 50 + (positiveCount * 4) + (moodVariety * 2));
+    })();
+
+    // Calcular foco/atenção (baseado em obediência + resposta a comandos)
+    const focusScore = (() => {
+      if (!behaviorLogs || behaviorLogs.length === 0) return 60;
+      const obedienceScores = behaviorLogs.slice(0, 10).filter((l: any) => l.obedience);
+      if (obedienceScores.length === 0) return 60;
+      const excellentCount = obedienceScores.filter((l: any) => l.obedience === "excellent").length;
+      const goodCount = obedienceScores.filter((l: any) => l.obedience === "good").length;
+      return Math.min(95, 40 + (excellentCount * 8) + (goodCount * 4));
+    })();
+
     return [
       { 
-        metric: "Social", 
+        metric: "Sociabilidade", 
+        shortName: "Social",
         value: behaviorMetrics.socialization.value,
-        fullMark: 100,
+        benchmark: getBreedBenchmark("socialization"),
+        description: "Interação com outros pets e pessoas",
+        icon: "users",
       },
       { 
         metric: "Obediência", 
+        shortName: "Obed.",
         value: behaviorMetrics.obedience.value,
-        fullMark: 100,
+        benchmark: getBreedBenchmark("obedience"),
+        description: "Resposta a comandos e regras",
+        icon: "graduation",
       },
       { 
         metric: "Energia", 
+        shortName: "Energia",
         value: behaviorMetrics.energy.value,
-        fullMark: 100,
+        benchmark: getBreedBenchmark("energy"),
+        description: "Nível de atividade física",
+        icon: "zap",
       },
       { 
-        metric: "Calma", 
+        metric: "Tranquilidade", 
+        shortName: "Calma",
         value: behaviorMetrics.calmness.value,
-        fullMark: 100,
+        benchmark: getBreedBenchmark("calmness"),
+        description: "Capacidade de se manter calmo",
+        icon: "shield",
       },
       { 
         metric: "Docilidade", 
+        shortName: "Dócil",
         value: behaviorMetrics.docility.value,
-        fullMark: 100,
+        benchmark: getBreedBenchmark("docility"),
+        description: "Gentileza e não-agressividade",
+        icon: "heart",
+      },
+      { 
+        metric: "Adaptabilidade", 
+        shortName: "Adapt.",
+        value: adaptabilityScore,
+        benchmark: getBreedBenchmark("adaptability"),
+        description: "Flexibilidade a mudanças",
+        icon: "refresh",
+      },
+      { 
+        metric: "Foco", 
+        shortName: "Foco",
+        value: focusScore,
+        benchmark: getBreedBenchmark("focus"),
+        description: "Capacidade de atenção",
+        icon: "target",
       },
     ];
-  }, [behaviorMetrics]);
+  }, [behaviorMetrics, pet, dailyLogs, behaviorLogs]);
+  
+  // Análise comportamental dinâmica
+  const behaviorAnalysis = useMemo(() => {
+    if (!radarData || radarData.length === 0) return null;
+    
+    const aboveBenchmark = radarData.filter(d => d.value > d.benchmark);
+    const belowBenchmark = radarData.filter(d => d.value < d.benchmark - 10);
+    const avgScore = Math.round(radarData.reduce((a, d) => a + d.value, 0) / radarData.length);
+    
+    // Identificar pontos fortes e fracos
+    const sorted = [...radarData].sort((a, b) => b.value - a.value);
+    const strongest = sorted[0];
+    const weakest = sorted[sorted.length - 1];
+    
+    // Gerar insights dinâmicos
+    const insights: string[] = [];
+    
+    if (strongest && strongest.value >= 80) {
+      insights.push(`Destaque em ${strongest.metric.toLowerCase()} (${strongest.value}%)`);
+    }
+    if (weakest && weakest.value < 50) {
+      insights.push(`Oportunidade de melhoria: ${weakest.metric.toLowerCase()}`);
+    }
+    if (aboveBenchmark.length >= 5) {
+      insights.push("Desempenho acima da média em múltiplas áreas");
+    }
+    if (belowBenchmark.length >= 3) {
+      insights.push("Algumas áreas precisam de atenção especial");
+    }
+    
+    return {
+      avgScore,
+      aboveBenchmarkCount: aboveBenchmark.length,
+      belowBenchmarkCount: belowBenchmark.length,
+      strongest,
+      weakest,
+      insights,
+      totalMetrics: radarData.length,
+    };
+  }, [radarData]);
 
   // Últimos registros de comportamento formatados
   const recentBehavior = useMemo(() => {
@@ -1336,187 +1443,296 @@ export default function TutorPetDetailPage(props: PetPageProps) {
             </Card>
           )}
 
-          {/* Perfil Comportamental - Versão Premium Mobile-First */}
-          <Card className="overflow-hidden">
-            <CardHeader className="pb-2">
-              {/* Header responsivo */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                    <Brain className="h-5 w-5 text-purple-500" />
-                    Perfil Comportamental
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">
-                    {behaviorLogs?.length || 0} registros analisados
-                  </CardDescription>
-                </div>
-                {/* Score Geral - Compacto no mobile */}
-                <div className="flex items-center gap-3 sm:flex-col sm:items-center px-3 py-2 rounded-xl bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30 border border-purple-100 dark:border-purple-900/50">
-                  <div className="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400">
-                    {overallScore.score > 0 ? `${overallScore.score}%` : "—"}
+          {/* Perfil Comportamental - VERSÃO PREMIUM AVANÇADA */}
+          <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-slate-50 via-white to-purple-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-purple-950/20">
+            <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 shadow-lg shadow-purple-500/25">
+                    <Brain className="h-5 w-5 text-white" />
                   </div>
-                  <div className="text-xs text-purple-600/70 dark:text-purple-400/70 flex items-center gap-1">
-                    <span>{overallScore.emoji}</span>
-                    <span>{overallScore.level}</span>
+                  <div>
+                    <CardTitle className="text-lg font-semibold">Análise Comportamental</CardTitle>
+                    <CardDescription className="text-xs flex items-center gap-2 mt-0.5">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        {behaviorLogs?.length || 0} registros
+                      </span>
+                      <span className="text-slate-400">|</span>
+                      <span>7 dimensões avaliadas</span>
+                    </CardDescription>
                   </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0 px-2 sm:px-6">
-              {/* Gráfico de Radar - Otimizado para Mobile */}
-              <div className="h-[260px] sm:h-[300px] mt-2 -mx-2 sm:mx-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart 
-                    data={radarData} 
-                    cx="50%" 
-                    cy="50%" 
-                    outerRadius="65%"
-                    margin={{ top: 25, right: 25, bottom: 25, left: 25 }}
-                  >
-                    <defs>
-                      <linearGradient id="behaviorGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.8} />
-                        <stop offset="100%" stopColor="#6366f1" stopOpacity={0.3} />
-                      </linearGradient>
-                    </defs>
-                    <PolarGrid 
-                      stroke="#e2e8f0" 
-                      strokeDasharray="3 3"
-                      className="dark:stroke-slate-700"
-                    />
-                    <PolarAngleAxis 
-                      dataKey="metric" 
-                      tick={({ x, y, payload }) => (
-                        <text 
-                          x={x} 
-                          y={y} 
-                          textAnchor="middle" 
-                          fill="#64748b"
-                          fontSize={11}
-                          fontWeight={500}
-                          className="dark:fill-slate-400"
-                        >
-                          {payload.value}
-                        </text>
-                      )}
-                      tickLine={false}
-                    />
-                    <PolarRadiusAxis 
-                      angle={90} 
-                      domain={[0, 100]} 
-                      tick={false}
-                      axisLine={false}
-                    />
-                    <Radar
-                      name="Perfil"
-                      dataKey="value"
-                      stroke="#8b5cf6"
-                      strokeWidth={2}
-                      fill="url(#behaviorGradient)"
-                      fillOpacity={0.6}
-                      dot={{
-                        r: 4,
-                        fill: '#8b5cf6',
-                        stroke: '#fff',
-                        strokeWidth: 2,
-                      }}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'rgba(255,255,255,0.95)', 
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '8px',
-                        padding: '6px 10px',
-                        fontSize: '12px',
-                      }}
-                      formatter={(value: number | undefined) => [`${value ?? 0}%`, 'Pontuação']}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Métricas Detalhadas - Grid Responsivo */}
-              <div className="mt-3 grid grid-cols-3 sm:grid-cols-5 gap-2">
-                {/* Socialização */}
-                <MetricCard
-                  icon={Users}
-                  iconColor="text-blue-500"
-                  bgColor="bg-blue-50 dark:bg-blue-950/30"
-                  label="Social"
-                  value={behaviorMetrics?.socialization.value || 0}
-                  trend={behaviorMetrics?.socialization.trend || "stable"}
-                  trendValue={behaviorMetrics?.socialization.trendValue || 0}
-                  statusLabel={behaviorMetrics?.socialization.label || "—"}
-                  statusColor={behaviorMetrics?.socialization.color || "text-muted-foreground"}
-                />
                 
-                {/* Obediência */}
-                <MetricCard
-                  icon={GraduationCap}
-                  iconColor="text-green-500"
-                  bgColor="bg-green-50 dark:bg-green-950/30"
-                  label="Obediência"
-                  value={behaviorMetrics?.obedience.value || 0}
-                  trend={behaviorMetrics?.obedience.trend || "stable"}
-                  trendValue={behaviorMetrics?.obedience.trendValue || 0}
-                  statusLabel={behaviorMetrics?.obedience.label || "—"}
-                  statusColor={behaviorMetrics?.obedience.color || "text-muted-foreground"}
-                />
-                
-                {/* Energia */}
-                <MetricCard
-                  icon={Zap}
-                  iconColor="text-orange-500"
-                  bgColor="bg-orange-50 dark:bg-orange-950/30"
-                  label="Energia"
-                  value={behaviorMetrics?.energy.value || 0}
-                  trend={behaviorMetrics?.energy.trend || "stable"}
-                  trendValue={behaviorMetrics?.energy.trendValue || 0}
-                  statusLabel={behaviorMetrics?.energy.label || "—"}
-                  statusColor={behaviorMetrics?.energy.color || "text-muted-foreground"}
-                />
-                
-                {/* Calma */}
-                <MetricCard
-                  icon={Shield}
-                  iconColor="text-cyan-500"
-                  bgColor="bg-cyan-50 dark:bg-cyan-950/30"
-                  label="Calma"
-                  value={behaviorMetrics?.calmness.value || 0}
-                  trend={behaviorMetrics?.calmness.trend || "stable"}
-                  trendValue={behaviorMetrics?.calmness.trendValue || 0}
-                  statusLabel={behaviorMetrics?.calmness.label || "—"}
-                  statusColor={behaviorMetrics?.calmness.color || "text-muted-foreground"}
-                />
-                
-                {/* Docilidade */}
-                <MetricCard
-                  icon={Heart}
-                  iconColor="text-pink-500"
-                  bgColor="bg-pink-50 dark:bg-pink-950/30"
-                  label="Docilidade"
-                  value={behaviorMetrics?.docility.value || 0}
-                  trend={behaviorMetrics?.docility.trend || "stable"}
-                  trendValue={behaviorMetrics?.docility.trendValue || 0}
-                  statusLabel={behaviorMetrics?.docility.label || "—"}
-                  statusColor={behaviorMetrics?.docility.color || "text-muted-foreground"}
-                />
-              </div>
-
-              {/* Dica de Inteligência - Compacta no mobile */}
-              {hasEnoughData && (
-                <div className="mt-3 sm:mt-4 p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/20 dark:to-violet-950/20 border border-purple-100 dark:border-purple-900/30">
-                  <div className="flex items-start gap-2">
-                    <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                    <div className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">
-                      <span className="font-medium">Insight: </span>
-                      {overallScore.description}
-                      {behaviorMetrics?.socialization.trend === "up" && " Socialização melhorando!"}
-                      {behaviorMetrics?.calmness.trend === "up" && " Mais tranquilo."}
+                {/* Score Geral Premium */}
+                {behaviorAnalysis && (
+                  <div className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-xl shadow-purple-500/30">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold tracking-tight">
+                        {behaviorAnalysis.avgScore}
+                      </div>
+                      <div className="text-[10px] uppercase tracking-wider opacity-80">Score</div>
+                    </div>
+                    <div className="h-10 w-px bg-white/20" />
+                    <div className="text-xs space-y-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <TrendingUp className="h-3 w-3" />
+                        <span>{behaviorAnalysis.aboveBenchmarkCount} acima da média</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 opacity-75">
+                        <Activity className="h-3 w-3" />
+                        <span>{behaviorAnalysis.totalMetrics} métricas</span>
+                      </div>
                     </div>
                   </div>
+                )}
+              </div>
+            </CardHeader>
+            
+            <CardContent className="p-0">
+              {/* Layout em 2 colunas no desktop */}
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
+                
+                {/* Gráfico de Radar Premium - Coluna Principal */}
+                <div className="lg:col-span-3 p-4 sm:p-6">
+                  <div className="h-[280px] sm:h-[340px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadarChart 
+                        data={radarData} 
+                        cx="50%" 
+                        cy="50%" 
+                        outerRadius="68%"
+                        margin={{ top: 20, right: 30, bottom: 20, left: 30 }}
+                      >
+                        <defs>
+                          {/* Gradiente Premium para valor atual */}
+                          <linearGradient id="radarGradientPremium" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.9} />
+                            <stop offset="50%" stopColor="#a78bfa" stopOpacity={0.6} />
+                            <stop offset="100%" stopColor="#c4b5fd" stopOpacity={0.3} />
+                          </linearGradient>
+                          {/* Gradiente do benchmark */}
+                          <linearGradient id="benchmarkGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#94a3b8" stopOpacity={0.3} />
+                            <stop offset="100%" stopColor="#cbd5e1" stopOpacity={0.1} />
+                          </linearGradient>
+                          {/* Glow effect */}
+                          <filter id="glow">
+                            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                            <feMerge>
+                              <feMergeNode in="coloredBlur"/>
+                              <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                          </filter>
+                        </defs>
+                        
+                        <PolarGrid 
+                          stroke="#e2e8f0" 
+                          strokeWidth={1}
+                          gridType="polygon"
+                          className="dark:stroke-slate-700"
+                        />
+                        
+                        <PolarAngleAxis 
+                          dataKey="shortName" 
+                          tick={(props: any) => {
+                            const { x, y, payload, index } = props;
+                            const item = radarData[index];
+                            const isAbove = item && item.value > item.benchmark;
+                            const yPos = typeof y === "number" ? y : 0;
+                            return (
+                              <g>
+                                <text 
+                                  x={x} 
+                                  y={y} 
+                                  textAnchor="middle" 
+                                  fill={isAbove ? "#7c3aed" : "#64748b"}
+                                  fontSize={9}
+                                  fontWeight={600}
+                                  className="dark:fill-slate-300"
+                                >
+                                  {payload.value}
+                                </text>
+                                {item && (
+                                  <text 
+                                    x={x} 
+                                    y={yPos + 11} 
+                                    textAnchor="middle" 
+                                    fill={isAbove ? "#22c55e" : "#94a3b8"}
+                                    fontSize={8}
+                                    fontWeight={500}
+                                  >
+                                    {item.value}%
+                                  </text>
+                                )}
+                              </g>
+                            );
+                          }}
+                          tickLine={false}
+                        />
+                        
+                        <PolarRadiusAxis 
+                          angle={90} 
+                          domain={[0, 100]} 
+                          tick={false}
+                          axisLine={false}
+                        />
+                        
+                        {/* Camada de Benchmark (média esperada) */}
+                        <Radar
+                          name="Média"
+                          dataKey="benchmark"
+                          stroke="#94a3b8"
+                          strokeWidth={1.5}
+                          strokeDasharray="4 4"
+                          fill="url(#benchmarkGradient)"
+                          fillOpacity={0.4}
+                        />
+                        
+                        {/* Camada do Valor Atual */}
+                        <Radar
+                          name="Atual"
+                          dataKey="value"
+                          stroke="#8b5cf6"
+                          strokeWidth={2.5}
+                          fill="url(#radarGradientPremium)"
+                          fillOpacity={0.7}
+                          filter="url(#glow)"
+                          dot={{
+                            r: 4,
+                            fill: '#8b5cf6',
+                            stroke: '#fff',
+                            strokeWidth: 2,
+                          }}
+                        />
+                        
+                        <Legend 
+                          wrapperStyle={{ paddingTop: 5 }}
+                          formatter={(value) => (
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                              {value === "Atual" ? "Seu Pet" : "Média Esperada"}
+                            </span>
+                          )}
+                        />
+                        
+                        <Tooltip 
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0]?.payload;
+                              if (!data) return null;
+                              const diff = data.value - data.benchmark;
+                              return (
+                                <div className="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 min-w-[160px]">
+                                  <div className="font-semibold text-sm text-slate-800 dark:text-slate-200 mb-1">
+                                    {data.metric}
+                                  </div>
+                                  <div className="text-[10px] text-slate-500 dark:text-slate-400 mb-2">
+                                    {data.description}
+                                  </div>
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <div className="text-lg font-bold text-purple-600">{data.value}%</div>
+                                      <div className="text-[9px] text-slate-400">Seu pet</div>
+                                    </div>
+                                    <div className="text-right">
+                                      <div className={cn(
+                                        "text-sm font-semibold flex items-center gap-1",
+                                        diff > 0 ? "text-emerald-500" : diff < 0 ? "text-amber-500" : "text-slate-400"
+                                      )}>
+                                        {diff > 0 ? <TrendingUp className="h-3 w-3" /> : diff < 0 ? <TrendingDown className="h-3 w-3" /> : null}
+                                        {diff > 0 ? "+" : ""}{diff}%
+                                      </div>
+                                      <div className="text-[9px] text-slate-400">vs média</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-              )}
+                
+                {/* Barra Lateral de Métricas Detalhadas */}
+                <div className="lg:col-span-2 bg-slate-50/50 dark:bg-slate-800/30 p-4 sm:p-5 border-t lg:border-t-0 lg:border-l border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Detalhamento</h4>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 font-medium">
+                      7 métricas
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-2.5">
+                    {radarData.map((item, idx) => {
+                      const diff = item.value - item.benchmark;
+                      const isGood = diff >= 0;
+                      const percentage = Math.min(100, item.value);
+                      
+                      return (
+                        <div key={idx} className="group">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400 group-hover:text-purple-600 transition-colors">
+                              {item.metric}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className={cn(
+                                "text-[10px] font-medium flex items-center gap-0.5",
+                                isGood ? "text-emerald-600" : "text-amber-600"
+                              )}>
+                                {isGood ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
+                                {diff > 0 ? "+" : ""}{diff}
+                              </span>
+                              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 min-w-[28px] text-right">
+                                {item.value}%
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Barra de Progresso Premium */}
+                          <div className="relative h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                            {/* Benchmark indicator */}
+                            <div 
+                              className="absolute top-0 bottom-0 w-0.5 bg-slate-400 dark:bg-slate-500 z-10"
+                              style={{ left: `${item.benchmark}%` }}
+                            />
+                            {/* Valor atual */}
+                            <div 
+                              className={cn(
+                                "h-full rounded-full transition-all duration-500 ease-out",
+                                isGood 
+                                  ? "bg-gradient-to-r from-purple-500 to-violet-500" 
+                                  : "bg-gradient-to-r from-amber-400 to-orange-500"
+                              )}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Insights Dinâmicos */}
+                  {behaviorAnalysis && behaviorAnalysis.insights.length > 0 && (
+                    <div className="mt-4 p-3 rounded-xl bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/40 dark:to-violet-950/40 border border-purple-100 dark:border-purple-900/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                        <span className="text-[11px] font-semibold text-purple-700 dark:text-purple-300">Insights</span>
+                      </div>
+                      <ul className="space-y-1">
+                        {behaviorAnalysis.insights.slice(0, 3).map((insight, idx) => (
+                          <li key={idx} className="text-[11px] text-purple-600/80 dark:text-purple-400/80 flex items-start gap-1.5">
+                            <span className="text-purple-400 mt-0.5">•</span>
+                            {insight}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
             </CardContent>
           </Card>
 
