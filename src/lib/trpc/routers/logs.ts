@@ -264,7 +264,7 @@ export const logsRouter = router({
     }),
 
   /**
-   * Lista todos os logs (admin)
+   * Lista todos os logs (admin) - OTIMIZADO
    */
   list: adminProcedure
     .input(
@@ -272,11 +272,12 @@ export const logsRouter = router({
         source: z.enum(["home", "daycare"]).optional(),
         date: z.string().or(z.date()).optional(),
         limit: z.number().default(50),
+        offset: z.number().default(0),
       })
     )
     .query(async ({ input }) => {
       return safeAsync(async () => {
-        let conditions: ReturnType<typeof eq>[] = [];
+        const conditions: ReturnType<typeof eq>[] = [];
 
         if (input.source) {
           conditions.push(eq(dailyLogs.source, input.source));
@@ -293,9 +294,26 @@ export const logsRouter = router({
           conditions.push(lte(dailyLogs.logDate, endOfDay));
         }
 
+        // Query otimizada - seleciona apenas campos necessários
         const result = await db
           .select({
-            log: dailyLogs,
+            log: {
+              id: dailyLogs.id,
+              petId: dailyLogs.petId,
+              logDate: dailyLogs.logDate,
+              source: dailyLogs.source,
+              mood: dailyLogs.mood,
+              stool: dailyLogs.stool,
+              stoolQuality: dailyLogs.stoolQuality,
+              appetite: dailyLogs.appetite,
+              energy: dailyLogs.energy,
+              waterIntake: dailyLogs.waterIntake,
+              physicalIntegrity: dailyLogs.physicalIntegrity,
+              napQuality: dailyLogs.napQuality,
+              groupRole: dailyLogs.groupRole,
+              notes: dailyLogs.notes,
+              createdAt: dailyLogs.createdAt,
+            },
             pet: {
               id: pets.id,
               name: pets.name,
@@ -312,7 +330,8 @@ export const logsRouter = router({
           .innerJoin(users, eq(dailyLogs.createdById, users.id))
           .where(conditions.length > 0 ? and(...conditions) : undefined)
           .orderBy(desc(dailyLogs.logDate))
-          .limit(input.limit);
+          .limit(input.limit)
+          .offset(input.offset);
 
         return result;
       }, "Erro ao listar logs");

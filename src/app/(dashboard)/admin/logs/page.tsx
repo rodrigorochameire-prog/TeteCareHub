@@ -270,24 +270,27 @@ export default function AdminLogs() {
     }
   }, [periodFilter, customStartDate, customEndDate]);
 
-  // Query principal com filtros
+  // Query principal com filtros - OTIMIZADA
   const { data: logs, isLoading, refetch } = trpc.logs.list.useQuery({
     source: sourceFilter === "all" ? undefined : sourceFilter,
     date: dateRange.start,
-    limit: 100, // Reduzido de 200 para performance
+    limit: 50, // Reduzido para performance inicial
   }, {
-    staleTime: 30 * 1000, // 30s cache
+    staleTime: 2 * 60 * 1000, // 2 min cache
+    refetchOnWindowFocus: false,
   });
 
   // Usando mesma query para allLogs (evita duplicata)
   const allLogs = logs;
 
-  // Queries secundárias com cache longo
+  // Queries secundárias com cache longo - LAZY LOADING
   const { data: pets } = trpc.pets.list.useQuery(undefined, {
-    staleTime: 5 * 60 * 1000, // 5 min
+    staleTime: 10 * 60 * 1000, // 10 min cache
+    refetchOnWindowFocus: false,
   });
   const { data: stats } = trpc.logs.stats.useQuery(undefined, {
-    staleTime: 60 * 1000, // 1 min
+    staleTime: 5 * 60 * 1000, // 5 min cache
+    refetchOnWindowFocus: false,
   });
 
   // Filtrar logs por pet e tipo
