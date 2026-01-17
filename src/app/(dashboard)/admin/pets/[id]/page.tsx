@@ -27,6 +27,7 @@ import {
 } from "recharts";
 import { Brain, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BreedIcon } from "@/components/breed-icons";
 
 export default function AdminPetDetailPage() {
   const params = useParams();
@@ -213,48 +214,50 @@ export default function AdminPetDetailPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link href="/admin/pets">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <div className="flex items-center gap-4">
-            {pet.photoUrl ? (
-              <img
-                src={pet.photoUrl}
-                alt={pet.name}
-                className="w-16 h-16 rounded-full object-cover border-2 border-primary"
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <Dog className="w-8 h-8 text-primary/50" />
+      {/* Header - Clean com ícone de raça */}
+      <Card className="shadow-sm">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link href="/admin/pets">
+                <Button variant="ghost" size="icon" className="shrink-0">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </Link>
+              
+              {/* Foto ou Ícone de Raça */}
+              {pet.photoUrl ? (
+                <img
+                  src={pet.photoUrl}
+                  alt={pet.name}
+                  className="w-16 h-16 rounded-xl object-cover border-2 border-primary/20 shadow-sm"
+                />
+              ) : (
+                <BreedIcon breed={pet.breed} size={64} />
+              )}
+              
+              <div className="min-w-0">
+                <h1 className="text-2xl font-bold truncate">{pet.name}</h1>
+                <p className="text-muted-foreground text-sm">{pet.breed || "Raça não informada"} • {calculateAge()}</p>
               </div>
-            )}
-            <div>
-              <h1 className="text-3xl font-bold">{pet.name}</h1>
-              <p className="text-muted-foreground">{pet.breed || "Raça não informada"} • {calculateAge()}</p>
+            </div>
+            
+            <div className="flex items-center gap-2 shrink-0">
+              <Badge 
+                variant={pet.status === "checked-in" ? "default" : "secondary"} 
+                className="text-xs whitespace-nowrap"
+              >
+                {pet.status === "checked-in" ? "Na Creche" : "Fora da Creche"}
+              </Badge>
+              <Link href={`/admin/pets/${petId}/edit`} className="hidden sm:block">
+                <Button variant="outline" size="sm">
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Badge variant={pet.status === "checked-in" ? "default" : "secondary"} className="text-sm">
-            {pet.status === "checked-in" ? "Na Creche" : "Fora da Creche"}
-          </Badge>
-          <Link href={`/admin/pets/${petId}/edit`}>
-            <Button variant="outline">
-              <Edit className="h-4 w-4 mr-2" />
-              Perfil Avançado
-            </Button>
-          </Link>
-          <Button onClick={() => setIsEditDialogOpen(true)}>
-            <Edit className="h-4 w-4 mr-2" />
-            Edição Rápida
-          </Button>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Cards Rápidos */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
