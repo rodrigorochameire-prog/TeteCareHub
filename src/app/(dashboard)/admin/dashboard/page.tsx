@@ -144,15 +144,18 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header com filtros */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
-            Visão geral da creche e gestão de pets
-          </p>
+      {/* Header Premium */}
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="icon-primary">
+            <BarChart3 />
+          </div>
+          <div className="page-header-info">
+            <h1>Dashboard</h1>
+            <p>Visão geral da creche e gestão de pets</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="page-header-actions">
           <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-32">
               <SelectValue />
