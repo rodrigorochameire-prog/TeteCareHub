@@ -47,7 +47,9 @@ import {
   Line,
   Legend,
   AreaChart,
-  Area
+  Area,
+  ComposedChart,
+  ReferenceLine
 } from "recharts";
 
 const NEUTRAL_COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"];
@@ -74,6 +76,13 @@ export default function AdminFinances() {
         creditos: Math.floor(Math.random() * 200) + 50,
       });
     }
+    
+    // Calcular média para linha de tendência
+    const avgVendas = months.reduce((acc, m) => acc + m.vendas, 0) / months.length;
+    const monthsWithAvg = months.map(m => ({
+      ...m,
+      media: Math.round(avgVendas),
+    }));
 
     // Distribuição por pacote
     const packageData = summary?.packages?.map(pkg => ({
@@ -82,7 +91,7 @@ export default function AdminFinances() {
       price: pkg.priceInCents / 100,
     })) || [];
 
-    return { months, packageData };
+    return { months: monthsWithAvg, packageData, avgVendas };
   }, [summary]);
 
   if (isLoading) {
@@ -333,63 +342,78 @@ export default function AdminFinances() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2 px-0.5">
-            {/* Evolução Mensal */}
-            <Card className="shadow-sm overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800/50 dark:to-blue-950/20 border-b border-slate-100/80 dark:border-slate-700/50">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
-                    <TrendingUp className="h-4 w-4 text-blue-600" />
+            {/* Fluxo Financeiro Premium - Barras + Linha de Média */}
+            <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-white/10">
+                      <DollarSign className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base font-bold text-white">Fluxo Financeiro</CardTitle>
+                      <CardDescription className="text-xs text-slate-400">Receita vs Média Mensal</CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-base font-bold">Evolução Mensal</CardTitle>
-                    <CardDescription className="text-xs">Vendas e reembolsos dos últimos 6 meses</CardDescription>
+                  <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-orange-500/20 text-orange-400 text-xs font-medium">
+                    <TrendingUp className="h-3 w-3" />
+                    Média: R$ {(chartData.avgVendas || 0).toFixed(0)}
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="p-4 sm:p-5">
                 <div className="h-[300px] mx-1">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData.months} margin={{ top: 10, right: 10, bottom: 10, left: 0 }}>
+                    <ComposedChart data={chartData.months} margin={{ top: 20, right: 10, bottom: 10, left: 0 }}>
                       <defs>
-                        <linearGradient id="colorVendas" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#1e3a5f" stopOpacity={0.6}/>
-                          <stop offset="95%" stopColor="#1e3a5f" stopOpacity={0.05}/>
-                        </linearGradient>
-                        <linearGradient id="colorReembolsos" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#64748b" stopOpacity={0.5}/>
-                          <stop offset="95%" stopColor="#64748b" stopOpacity={0.05}/>
+                        <linearGradient id="barGradientPremium" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9}/>
+                          <stop offset="100%" stopColor="#1e40af" stopOpacity={0.7}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.5} />
-                      <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                      <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" strokeOpacity={0.4} vertical={false} />
+                      <XAxis dataKey="month" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
                       <Tooltip 
                         contentStyle={{ 
-                          backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                          border: 'none',
+                          backgroundColor: 'rgba(15, 23, 42, 0.95)', 
+                          border: '1px solid rgba(255,255,255,0.1)',
                           borderRadius: '12px',
-                          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
+                          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
+                          color: 'white'
                         }}
-                        formatter={(value) => [`R$ ${Number(value || 0).toFixed(2)}`, '']}
+                        formatter={(value, name) => [
+                          `R$ ${Number(value || 0).toFixed(2)}`, 
+                          name === 'vendas' ? 'Receita' : name === 'media' ? 'Média' : name
+                        ]}
+                        labelStyle={{ color: '#94a3b8' }}
                       />
-                      <Legend iconType="circle" iconSize={8} />
-                      <Area 
-                        type="monotone" 
+                      <Legend 
+                        iconType="circle" 
+                        iconSize={8} 
+                        wrapperStyle={{ color: '#94a3b8' }}
+                        formatter={(value) => <span style={{ color: '#94a3b8' }}>{value === 'vendas' ? 'Receita Mensal' : value === 'media' ? 'Média (6 meses)' : value}</span>}
+                      />
+                      {/* Barras de Receita - Azul */}
+                      <Bar 
                         dataKey="vendas" 
-                        name="Vendas"
-                        stroke="#1e3a5f" 
-                        fill="url(#colorVendas)" 
-                        strokeWidth={2}
+                        name="vendas"
+                        fill="url(#barGradientPremium)" 
+                        radius={[6, 6, 0, 0]}
+                        maxBarSize={40}
                       />
-                      <Area 
+                      {/* Linha de Média - Laranja */}
+                      <Line 
                         type="monotone" 
-                        dataKey="reembolsos" 
-                        name="Reembolsos"
-                        stroke="#64748b" 
-                        fill="url(#colorReembolsos)" 
-                        strokeWidth={2}
+                        dataKey="media" 
+                        name="media"
+                        stroke="#f97316" 
+                        strokeWidth={3}
+                        strokeDasharray="8 4"
+                        dot={false}
+                        activeDot={{ r: 6, fill: '#f97316', stroke: '#fff', strokeWidth: 2 }}
                       />
-                    </AreaChart>
+                    </ComposedChart>
                   </ResponsiveContainer>
                 </div>
               </CardContent>
