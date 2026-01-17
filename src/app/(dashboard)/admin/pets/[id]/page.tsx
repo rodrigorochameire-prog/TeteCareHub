@@ -259,88 +259,128 @@ export default function AdminPetDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Cards Rápidos */}
+      {/* Cards Rápidos - Visual clean e elegante */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Estoque de Ração */}
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setStockModalOpen(true)}>
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                <Package className="h-4 w-4" />
-                Estoque Ração
-              </span>
-              <Badge variant="outline" className={getAlertColor(stockForecast?.alertLevel || "unknown")}>
+        <Card 
+          className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 bg-white/90 dark:bg-slate-900/80 border-slate-200/60 dark:border-slate-700/40" 
+          onClick={() => setStockModalOpen(true)}
+        >
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                  <Package className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <span className="text-sm font-medium text-foreground">Estoque Ração</span>
+              </div>
+              <Badge variant="secondary" className={cn(
+                "text-xs font-semibold px-2.5",
+                stockForecast?.alertLevel === "ok" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400" :
+                stockForecast?.alertLevel === "warning" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400" :
+                "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+              )}>
                 {stockForecast?.daysRemaining != null ? `${stockForecast.daysRemaining} dias` : "N/A"}
               </Badge>
             </div>
-            <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
               <div 
-                className={`h-full transition-all ${
-                  stockForecast?.alertLevel === "ok" ? "bg-green-500" :
-                  stockForecast?.alertLevel === "warning" ? "bg-yellow-500" : "bg-red-500"
-                }`}
+                className={cn(
+                  "h-full transition-all duration-500 rounded-full",
+                  stockForecast?.alertLevel === "ok" ? "bg-gradient-to-r from-emerald-500 to-emerald-400" :
+                  stockForecast?.alertLevel === "warning" ? "bg-gradient-to-r from-amber-500 to-amber-400" : 
+                  "bg-gradient-to-r from-slate-400 to-slate-300"
+                )}
                 style={{ width: `${getStockProgress()}%` }}
               />
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-2">
               {stockForecast?.currentStock ? `${(stockForecast.currentStock / 1000).toFixed(1)} kg restante` : "Não configurado"}
             </p>
           </CardContent>
         </Card>
 
         {/* Peso */}
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                <Weight className="h-4 w-4" />
-                Peso Atual
-              </span>
+        <Card className="transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 bg-white/90 dark:bg-slate-900/80 border-slate-200/60 dark:border-slate-700/40">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
+                  <Weight className="h-4.5 w-4.5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <span className="text-sm font-medium text-foreground">Peso Atual</span>
+              </div>
               {weightHistory?.trend && (
-                <span className="flex items-center gap-1">
-                  {weightHistory.trend === "gaining" && <TrendingUp className="h-4 w-4 text-yellow-500" />}
-                  {weightHistory.trend === "losing" && <TrendingDown className="h-4 w-4 text-red-500" />}
-                  {weightHistory.trend === "stable" && <Minus className="h-4 w-4 text-green-500" />}
-                </span>
+                <div className={cn(
+                  "h-7 w-7 rounded-lg flex items-center justify-center",
+                  weightHistory.trend === "stable" ? "bg-emerald-100 dark:bg-emerald-900/40" :
+                  weightHistory.trend === "gaining" ? "bg-amber-100 dark:bg-amber-900/40" :
+                  "bg-slate-100 dark:bg-slate-800"
+                )}>
+                  {weightHistory.trend === "gaining" && <TrendingUp className="h-4 w-4 text-amber-600 dark:text-amber-400" />}
+                  {weightHistory.trend === "losing" && <TrendingDown className="h-4 w-4 text-slate-500 dark:text-slate-400" />}
+                  {weightHistory.trend === "stable" && <Minus className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
+                </div>
               )}
             </div>
-            <p className="text-2xl font-bold">
+            <p className="text-2xl font-bold tracking-tight">
               {pet.weight ? `${(pet.weight / 1000).toFixed(1)} kg` : "N/A"}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground mt-1">
               {weightHistory?.trend === "gaining" && "Ganhando peso"}
               {weightHistory?.trend === "losing" && "Perdendo peso"}
               {weightHistory?.trend === "stable" && "Peso estável"}
+              {!weightHistory?.trend && "Sem preferência de sala"}
             </p>
           </CardContent>
         </Card>
 
         {/* Créditos */}
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                <Star className="h-4 w-4" />
-                Créditos
-              </span>
+        <Card className="transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 bg-white/90 dark:bg-slate-900/80 border-slate-200/60 dark:border-slate-700/40">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2.5">
+                <div className={cn(
+                  "h-9 w-9 rounded-xl flex items-center justify-center",
+                  pet.credits >= 5 ? "bg-amber-100 dark:bg-amber-900/40" : "bg-slate-100 dark:bg-slate-800"
+                )}>
+                  <Star className={cn(
+                    "h-4.5 w-4.5",
+                    pet.credits >= 5 ? "text-amber-600 dark:text-amber-400" : "text-slate-500 dark:text-slate-400"
+                  )} />
+                </div>
+                <span className="text-sm font-medium text-foreground">Créditos</span>
+              </div>
             </div>
-            <p className="text-2xl font-bold">{pet.credits}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-2xl font-bold tracking-tight">{pet.credits}</p>
+            <p className="text-xs text-muted-foreground mt-1">
               {pet.credits < 3 ? "Baixo - avisar tutor" : "Saldo adequado"}
             </p>
           </CardContent>
         </Card>
 
         {/* Nível de Energia */}
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                <Zap className="h-4 w-4" />
-                Energia
-              </span>
+        <Card className="transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 bg-white/90 dark:bg-slate-900/80 border-slate-200/60 dark:border-slate-700/40">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2.5">
+                <div className={cn(
+                  "h-9 w-9 rounded-xl flex items-center justify-center",
+                  pet.energyLevel === "hyperactive" || pet.energyLevel === "very_high" ? "bg-orange-100 dark:bg-orange-900/40" :
+                  pet.energyLevel === "high" ? "bg-amber-100 dark:bg-amber-900/40" :
+                  "bg-slate-100 dark:bg-slate-800"
+                )}>
+                  <Zap className={cn(
+                    "h-4.5 w-4.5",
+                    pet.energyLevel === "hyperactive" || pet.energyLevel === "very_high" ? "text-orange-600 dark:text-orange-400" :
+                    pet.energyLevel === "high" ? "text-amber-600 dark:text-amber-400" :
+                    "text-slate-500 dark:text-slate-400"
+                  )} />
+                </div>
+                <span className="text-sm font-medium text-foreground">Energia</span>
+              </div>
             </div>
-            <p className="text-2xl font-bold capitalize">
+            <p className="text-2xl font-bold tracking-tight capitalize">
               {/* Valores harmonizados (ENERGY_LEVELS) + legacy */}
               {pet.energyLevel === "hyperactive" ? "Hiperativo" :
                pet.energyLevel === "very_high" ? "Muito Alta" :
@@ -349,7 +389,7 @@ export default function AdminPetDetailPage() {
                pet.energyLevel === "low" ? "Baixa" :
                pet.energyLevel === "very_low" ? "Muito Baixa" : "N/A"}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground mt-1">
               {pet.roomPreference ? `Sala: ${pet.roomPreference}` : "Sem preferência de sala"}
             </p>
           </CardContent>

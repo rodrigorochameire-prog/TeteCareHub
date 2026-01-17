@@ -123,7 +123,7 @@ function StatusDot({ status }: { status: "green" | "yellow" | "red" | "gray" }) 
   );
 }
 
-// Card de Pet - Design limpo e compacto
+// Card de Pet - Design limpo e elegante
 function PetCard({ 
   pet, 
   onEdit,
@@ -148,9 +148,10 @@ function PetCard({
   
   return (
     <Card className={cn(
-      "group relative transition-all duration-200 hover:shadow-md",
-      isCheckedIn && "ring-1 ring-emerald-500/30 bg-emerald-50/30 dark:bg-emerald-950/10",
-      hasNoCredits && !isCheckedIn && "ring-1 ring-red-500/30",
+      "group relative transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5",
+      "bg-white/90 dark:bg-slate-900/80 backdrop-blur-sm",
+      "border border-slate-200/60 dark:border-slate-700/40",
+      isCheckedIn && "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200/50 dark:border-emerald-800/30",
     )}>
       <CardContent className="p-4">
         {/* Header */}
@@ -244,17 +245,17 @@ function PetCard({
             
             {/* Status badges discretos */}
             {isCheckedIn && (
-              <Badge variant="secondary" className="h-5 text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0">
+              <Badge variant="secondary" className="h-5 text-[10px] px-2 bg-emerald-100/80 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 border-0 font-medium">
                 Na creche
               </Badge>
             )}
             {hasNoCredits && !isCheckedIn && (
-              <Badge variant="secondary" className="h-5 text-[10px] bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-0">
+              <Badge variant="secondary" className="h-5 text-[10px] px-2 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-0 font-medium">
                 Sem créditos
               </Badge>
             )}
             {hasLowCredits && !hasNoCredits && (
-              <Badge variant="secondary" className="h-5 text-[10px] bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border-0">
+              <Badge variant="secondary" className="h-5 text-[10px] px-2 bg-amber-100/80 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 border-0 font-medium">
                 {pet.credits} créd.
               </Badge>
             )}
@@ -591,28 +592,32 @@ export default function AdminPetsPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+      {/* Stats Cards - Design clean e interativo */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { key: "all", label: "Total", value: stats.total, icon: Dog, color: "text-muted-foreground" },
-          { key: "checkedIn", label: "Na Creche", value: stats.checkedIn, icon: Activity, color: "text-emerald-600" },
-          { key: "lowCredits", label: "Poucos Créd.", value: stats.lowCredits, icon: AlertTriangle, color: "text-orange-600" },
-          { key: "noCredits", label: "Sem Créd.", value: stats.noCredits, icon: AlertCircle, color: "text-red-600" },
-          { key: "birthday", label: "Aniversário", value: pets?.filter(p => p.birthDate && new Date(p.birthDate).getMonth() === new Date().getMonth()).length || 0, icon: Cake, color: "text-pink-600" },
-          { key: "lowStock", label: "Est. Baixo", value: lowStockPets?.length || 0, icon: Package, color: "text-amber-600" },
-        ].map(({ key, label, value, icon: Icon, color }) => (
+          { key: "all", label: "Total", value: stats.total, icon: Dog, bgColor: "bg-slate-50 dark:bg-slate-800/50", iconBg: "bg-slate-100 dark:bg-slate-700", iconColor: "text-slate-600 dark:text-slate-400" },
+          { key: "checkedIn", label: "Na Creche", value: stats.checkedIn, icon: Activity, bgColor: "bg-emerald-50/70 dark:bg-emerald-950/30", iconBg: "bg-emerald-100 dark:bg-emerald-900/50", iconColor: "text-emerald-600 dark:text-emerald-400" },
+          { key: "lowCredits", label: "Poucos Créd.", value: stats.lowCredits, icon: AlertTriangle, bgColor: "bg-amber-50/70 dark:bg-amber-950/30", iconBg: "bg-amber-100 dark:bg-amber-900/50", iconColor: "text-amber-600 dark:text-amber-400" },
+          { key: "noCredits", label: "Sem Créd.", value: stats.noCredits, icon: AlertCircle, bgColor: "bg-slate-50 dark:bg-slate-800/50", iconBg: "bg-slate-100 dark:bg-slate-700", iconColor: "text-slate-500 dark:text-slate-400" },
+          { key: "birthday", label: "Aniversário", value: pets?.filter(p => p.birthDate && new Date(p.birthDate).getMonth() === new Date().getMonth()).length || 0, icon: Cake, bgColor: "bg-pink-50/70 dark:bg-pink-950/30", iconBg: "bg-pink-100 dark:bg-pink-900/50", iconColor: "text-pink-600 dark:text-pink-400" },
+          { key: "lowStock", label: "Est. Baixo", value: lowStockPets?.length || 0, icon: Package, bgColor: "bg-orange-50/70 dark:bg-orange-950/30", iconBg: "bg-orange-100 dark:bg-orange-900/50", iconColor: "text-orange-600 dark:text-orange-400" },
+        ].map(({ key, label, value, icon: Icon, bgColor, iconBg, iconColor }) => (
           <button
             key={key}
             onClick={() => setSmartFilter(key as SmartFilter)}
             className={cn(
-              "flex items-center gap-2 p-3 rounded-lg border bg-card text-left transition-all hover:bg-accent",
-              smartFilter === key && "ring-2 ring-primary ring-offset-1"
+              "flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all duration-200",
+              "border border-transparent hover:border-slate-200 dark:hover:border-slate-700",
+              bgColor,
+              smartFilter === key && "ring-2 ring-primary/60 ring-offset-2 ring-offset-background shadow-sm"
             )}
           >
-            <Icon className={cn("h-4 w-4", color)} />
+            <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center shrink-0", iconBg)}>
+              <Icon className={cn("h-4 w-4", iconColor)} />
+            </div>
             <div className="min-w-0">
-              <p className="text-lg font-bold leading-none">{value}</p>
-              <p className="text-[10px] text-muted-foreground truncate">{label}</p>
+              <p className="text-xl font-bold leading-none tracking-tight">{value}</p>
+              <p className="text-[11px] text-muted-foreground truncate mt-0.5">{label}</p>
             </div>
           </button>
         ))}
