@@ -73,28 +73,36 @@ import {
   PolarRadiusAxis,
 } from "recharts";
 import { generateAggregatedRadarDataPremium, type RadarMetric } from "@/lib/behavior-metrics";
+import { DOG_SOCIABILITY, ENERGY_LEVELS } from "@/lib/constants/pet-options";
 
 const NEUTRAL_COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"];
 
+// Opções harmonizadas com pet-options.ts
+// Sociabilidade - baseado em DOG_SOCIABILITY
 const socializationOptions = [
-  { value: "excellent", label: "Excelente", color: "text-green-600", score: 4 },
-  { value: "good", label: "Bom", color: "text-blue-600", score: 3 },
-  { value: "moderate", label: "Moderado", color: "text-yellow-600", score: 2 },
-  { value: "poor", label: "Ruim", color: "text-red-600", score: 1 },
+  { value: "social", label: "Sociável", color: "text-green-600", score: 4, description: "Brinca bem com todos" },
+  { value: "selective", label: "Seletivo", color: "text-blue-600", score: 3, description: "Escolhe amigos" },
+  { value: "reactive", label: "Reativo", color: "text-orange-600", score: 2, description: "Precisa de espaço" },
+  { value: "antisocial", label: "Antissocial", color: "text-red-600", score: 1, description: "Guarda de recursos" },
 ];
 
+// Energia - baseado em ENERGY_LEVELS
 const energyOptions = [
-  { value: "high", label: "Alta", color: "text-orange-600", score: 3 },
-  { value: "normal", label: "Normal", color: "text-blue-600", score: 2 },
-  { value: "low", label: "Baixa", color: "text-gray-600", score: 1 },
+  { value: "hyperactive", label: "Hiperativo", color: "text-red-500", score: 5 },
+  { value: "high", label: "Alta", color: "text-orange-600", score: 4 },
+  { value: "moderate", label: "Moderada", color: "text-blue-600", score: 3 },
+  { value: "low", label: "Baixa", color: "text-gray-600", score: 2 },
+  { value: "very_low", label: "Muito Baixa", color: "text-gray-400", score: 1 },
 ];
 
+// Obediência - baseado em avaliação de comportamento durante a sessão
 const obedienceOptions = [
   { value: "excellent", label: "Excelente", color: "text-green-600", score: 3 },
   { value: "good", label: "Boa", color: "text-blue-600", score: 2 },
   { value: "needs_work", label: "Precisa Melhorar", color: "text-yellow-600", score: 1 },
 ];
 
+// Ansiedade - níveis observados
 const anxietyOptions = [
   { value: "none", label: "Nenhuma", color: "text-green-600", score: 4 },
   { value: "mild", label: "Leve", color: "text-yellow-600", score: 3 },
@@ -102,9 +110,10 @@ const anxietyOptions = [
   { value: "severe", label: "Severa", color: "text-red-600", score: 1 },
 ];
 
+// Agressividade - níveis observados
 const aggressionOptions = [
   { value: "none", label: "Nenhuma", color: "text-green-600", score: 4 },
-  { value: "mild", label: "Leve", color: "text-yellow-600", score: 3 },
+  { value: "minor", label: "Menor", color: "text-yellow-600", score: 3 },
   { value: "moderate", label: "Moderada", color: "text-orange-600", score: 2 },
   { value: "severe", label: "Severa", color: "text-red-600", score: 1 },
 ];

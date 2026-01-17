@@ -56,34 +56,71 @@ export interface RadarMetric {
 // CONSTANTES DE SCORE
 // ========================================
 
+// ========================================
+// SCORES HARMONIZADOS COM PET-OPTIONS.TS
+// ========================================
+
+// Sociabilidade - alinhado com DOG_SOCIABILITY em pet-options.ts
+// + valores legacy para compatibilidade com logs antigos
 const SOCIALIZATION_SCORES: Record<string, number> = {
+  // Valores atuais (DOG_SOCIABILITY)
+  social: 100,          // "Sociável" - Brinca bem com todos
+  very_social: 100,     // Alias para social
+  friendly: 85,         // Alias intermediário
+  selective: 60,        // "Seletivo" - Escolhe amigos
+  reactive: 35,         // "Reativo" - Precisa de espaço
+  antisocial: 15,       // "Antissocial" - Guarda de recursos
+  shy: 40,              // Alias para seletivo/reativo
+  // Valores legacy para compatibilidade
   excellent: 100,
   good: 75,
   moderate: 50,
+  neutral: 50,
   poor: 25,
 };
 
+// Energia - alinhado com ENERGY_LEVELS em pet-options.ts
 const ENERGY_SCORES: Record<string, number> = {
-  high: 90,
-  normal: 70,
-  low: 40,
+  // Valores atuais (ENERGY_LEVELS)
+  hyperactive: 100,     // "Hiperativo"
+  very_high: 100,       // Alias para hyperactive
+  high: 85,             // "Alto"
+  moderate: 65,         // "Moderado"
+  medium: 65,           // Alias para moderate
+  normal: 65,           // Alias para moderate
+  low: 40,              // "Baixo"
+  very_low: 20,         // "Baixíssimo (Idoso/Zen)"
 };
 
+// Obediência/Proficiência - alinhado com COMMAND_PROFICIENCY em pet-options.ts
 const OBEDIENCE_SCORES: Record<string, number> = {
+  // Valores atuais (COMMAND_PROFICIENCY)
+  proofed: 100,         // "Dominado com distração"
+  reliable: 85,         // "Dominado"
+  mastered: 85,         // Alias para reliable
+  with_treat: 60,       // "Faz com petisco"
+  practicing: 60,       // Alias para with_treat
+  learning: 40,         // "Entendendo o sinal"
+  not_started: 15,      // "Não iniciado"
+  inconsistent: 50,     // Alias intermediário
+  // Valores legacy
   excellent: 100,
   good: 70,
   needs_work: 40,
 };
 
+// Ansiedade - níveis de calma (inverso)
 const ANXIETY_SCORES: Record<string, number> = {
-  none: 100,      // Calma máxima
+  none: 100,            // Calma máxima
   mild: 70,
   moderate: 40,
   severe: 15,
 };
 
+// Agressão - níveis de docilidade (inverso)
 const AGGRESSION_SCORES: Record<string, number> = {
-  none: 100,      // Docilidade máxima
+  none: 100,            // Docilidade máxima
+  minor: 75,            // Histórico menor
   mild: 60,
   moderate: 30,
   severe: 10,

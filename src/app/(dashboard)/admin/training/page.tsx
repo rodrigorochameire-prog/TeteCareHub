@@ -96,12 +96,12 @@ const categoryOptions: { value: string; label: string; icon: LucideIcon }[] = [
   { value: "advanced", label: "Avançado", icon: Trophy },
 ];
 
-// Opções de status agora com mais granularidade
+// Opções de status harmonizadas com COMMAND_PROFICIENCY em pet-options.ts
 const statusOptions: { value: string; label: string; icon: LucideIcon; color: string; percent: number }[] = [
   { value: "not_started", label: "Não Iniciado", icon: BookOpen, color: "text-gray-500", percent: 0 },
   { value: "learning", label: "Entendendo o Sinal", icon: BookOpen, color: "text-blue-600", percent: 25 },
-  { value: "practicing", label: "Faz com Petisco", icon: RefreshCw, color: "text-yellow-600", percent: 50 },
-  { value: "mastered", label: "Dominado", icon: Star, color: "text-green-600", percent: 75 },
+  { value: "with_treat", label: "Faz com Petisco", icon: RefreshCw, color: "text-yellow-600", percent: 50 },
+  { value: "reliable", label: "Dominado", icon: Star, color: "text-green-600", percent: 75 },
   { value: "proofed", label: "Dominado com Distração", icon: Trophy, color: "text-emerald-600", percent: 100 },
 ];
 
@@ -233,7 +233,7 @@ export default function AdminTraining() {
       return {
         date: date.toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" }),
         sessoes: dayLogs.length,
-        mastered: dayLogs.filter(l => l.status === "mastered").length,
+        mastered: dayLogs.filter(l => l.status === "reliable" || l.status === "mastered").length,
       };
     });
 
@@ -245,7 +245,7 @@ export default function AdminTraining() {
         petProgress[petName] = { total: 0, mastered: 0 };
       }
       petProgress[petName].total++;
-      if (log.status === "mastered") {
+      if (log.status === "reliable" || log.status === "mastered") {
         petProgress[petName].mastered++;
       }
     });
@@ -265,8 +265,8 @@ export default function AdminTraining() {
       timeline,
       successRateAvg: successRateCount > 0 ? Math.round(totalSuccessRate / successRateCount) : 0,
       totalCommands: commandsSet.size,
-      mastered: statusCount["mastered"] || 0,
-      practicing: statusCount["practicing"] || 0,
+      mastered: (statusCount["reliable"] || 0) + (statusCount["mastered"] || 0),
+      practicing: (statusCount["with_treat"] || 0) + (statusCount["practicing"] || 0),
       learning: statusCount["learning"] || 0,
       progressByPet,
     };
@@ -522,7 +522,7 @@ export default function AdminTraining() {
                           </div>
                         </div>
                         <Badge 
-                          variant={log.status === "mastered" ? "default" : log.status === "practicing" ? "secondary" : "outline"}
+                          variant={(log.status === "reliable" || log.status === "mastered") ? "default" : (log.status === "with_treat" || log.status === "practicing") ? "secondary" : "outline"}
                           className={`gap-1 ${status?.color}`}
                         >
                           <StatusIcon className="h-3 w-3" />
@@ -1177,8 +1177,8 @@ export default function AdminTraining() {
                   <Badge variant="outline">
                     {categoryOptions.find(c => c.value === selectedLog.category)?.label}
                   </Badge>
-                  <Badge variant={selectedLog.status === "mastered" ? "default" : "secondary"}>
-                    {statusOptions.find(s => s.value === selectedLog.status)?.label}
+                  <Badge variant={(selectedLog.status === "reliable" || selectedLog.status === "mastered") ? "default" : "secondary"}>
+                    {statusOptions.find(s => s.value === selectedLog.status)?.label || selectedLog.status}
                   </Badge>
                 </div>
               </div>

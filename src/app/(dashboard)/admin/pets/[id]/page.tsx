@@ -123,12 +123,34 @@ export default function AdminPetDetailPage() {
   };
 
   // Radar chart data for behavior profile - 7 dimensões premium
-  const sociabilityScore = pet.sociabilityLevel === "very_social" ? 95 : pet.sociabilityLevel === "friendly" ? 75 : pet.sociabilityLevel === "selective" ? 50 : 30;
-  const energyScore = pet.energyLevel === "very_high" ? 95 : pet.energyLevel === "high" ? 80 : pet.energyLevel === "medium" ? 60 : 35;
-  const obedienceScore = skillsMatrix ? Math.round((skillsMatrix.filter(s => s.status === "mastered").length / Math.max(skillsMatrix.length, 1)) * 100) : 55;
+  // Sociabilidade: harmonizado com DOG_SOCIABILITY (social, selective, reactive, antisocial)
+  // + suporte legacy (very_social, friendly, selective, shy)
+  const sociabilityScoreMap: Record<string, number> = {
+    // Valores atuais (DOG_SOCIABILITY)
+    social: 95, selective: 60, reactive: 35, antisocial: 15,
+    // Valores legacy
+    very_social: 95, friendly: 75, shy: 40,
+  };
+  const sociabilityScore = sociabilityScoreMap[pet.sociabilityLevel || ""] || 50;
+  
+  // Energia: harmonizado com ENERGY_LEVELS (very_low, low, moderate, high, hyperactive)
+  // + suporte legacy (very_high, high, medium, low)
+  const energyScoreMap: Record<string, number> = {
+    // Valores atuais (ENERGY_LEVELS)
+    hyperactive: 95, high: 80, moderate: 60, low: 40, very_low: 20,
+    // Valores legacy
+    very_high: 95, medium: 60,
+  };
+  const energyScore = energyScoreMap[pet.energyLevel || ""] || 50;
+  
+  // Obediência: baseado em skillsMatrix com status harmonizado (reliable = mastered)
+  const obedienceScore = skillsMatrix 
+    ? Math.round((skillsMatrix.filter(s => s.status === "reliable" || s.status === "mastered").length / Math.max(skillsMatrix.length, 1)) * 100) 
+    : 55;
+    
   const calmnessScore = pet.anxietySeparation === "none" ? 95 : pet.anxietySeparation === "mild" ? 70 : pet.anxietySeparation === "moderate" ? 45 : 20;
   const aggressionHistory = (pet as any).aggressionHistory;
-  const docilityScore = aggressionHistory === "none" ? 95 : aggressionHistory === "minor" ? 65 : 75;
+  const docilityScore = aggressionHistory === "none" ? 95 : aggressionHistory === "minor" ? 75 : aggressionHistory === "mild" ? 60 : 40;
   const adaptabilityScore = Math.round((sociabilityScore + calmnessScore) / 2);
   const focusScore = obedienceScore;
   
@@ -316,10 +338,13 @@ export default function AdminPetDetailPage() {
               </span>
             </div>
             <p className="text-2xl font-bold capitalize">
-              {pet.energyLevel === "very_high" ? "Muito Alta" :
+              {/* Valores harmonizados (ENERGY_LEVELS) + legacy */}
+              {pet.energyLevel === "hyperactive" ? "Hiperativo" :
+               pet.energyLevel === "very_high" ? "Muito Alta" :
                pet.energyLevel === "high" ? "Alta" :
-               pet.energyLevel === "medium" ? "Média" :
-               pet.energyLevel === "low" ? "Baixa" : "N/A"}
+               pet.energyLevel === "moderate" || pet.energyLevel === "medium" ? "Moderada" :
+               pet.energyLevel === "low" ? "Baixa" :
+               pet.energyLevel === "very_low" ? "Muito Baixa" : "N/A"}
             </p>
             <p className="text-xs text-muted-foreground">
               {pet.roomPreference ? `Sala: ${pet.roomPreference}` : "Sem preferência de sala"}
@@ -879,32 +904,47 @@ export default function AdminPetDetailPage() {
                 <p className="text-muted-foreground text-center py-8">Nenhuma habilidade registrada</p>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                  {skillsMatrix.map((skill, idx) => (
-                    <div 
-                      key={idx} 
-                      className={`p-3 rounded-lg border text-center ${
-                        skill.status === "mastered" ? "bg-green-50 dark:bg-green-950 border-green-200" :
-                        skill.status === "inconsistent" ? "bg-yellow-50 dark:bg-yellow-950 border-yellow-200" :
-                        skill.status === "learning" ? "bg-blue-50 dark:bg-blue-950 border-blue-200" :
-                        "bg-gray-50 dark:bg-gray-900 border-gray-200"
-                      }`}
-                    >
-                      <p className="font-medium text-sm">{skill.name}</p>
-                      <Badge 
-                        variant="outline" 
-                        className={`mt-1 text-xs ${
-                          skill.status === "mastered" ? "text-green-600" :
-                          skill.status === "inconsistent" ? "text-yellow-600" :
-                          skill.status === "learning" ? "text-blue-600" :
-                          "text-gray-400"
+                  {skillsMatrix.map((skill, idx) => {
+                    // Status harmonizado com COMMAND_PROFICIENCY + valores legacy
+                    const isProofed = skill.status === "proofed";
+                    const isReliable = skill.status === "reliable" || skill.status === "mastered";
+                    const isWithTreat = skill.status === "with_treat" || skill.status === "practicing";
+                    const isLearning = skill.status === "learning";
+                    const isInconsistent = skill.status === "inconsistent";
+                    
+                    return (
+                      <div 
+                        key={idx} 
+                        className={`p-3 rounded-lg border text-center ${
+                          isProofed ? "bg-emerald-50 dark:bg-emerald-950 border-emerald-200" :
+                          isReliable ? "bg-green-50 dark:bg-green-950 border-green-200" :
+                          isWithTreat ? "bg-yellow-50 dark:bg-yellow-950 border-yellow-200" :
+                          isInconsistent ? "bg-amber-50 dark:bg-amber-950 border-amber-200" :
+                          isLearning ? "bg-blue-50 dark:bg-blue-950 border-blue-200" :
+                          "bg-gray-50 dark:bg-gray-900 border-gray-200"
                         }`}
                       >
-                        {skill.status === "mastered" ? "Dominado" :
-                         skill.status === "inconsistent" ? "Inconsistente" :
-                         skill.status === "learning" ? "Aprendendo" : "Não iniciado"}
-                      </Badge>
-                    </div>
-                  ))}
+                        <p className="font-medium text-sm">{skill.name}</p>
+                        <Badge 
+                          variant="outline" 
+                          className={`mt-1 text-xs ${
+                            isProofed ? "text-emerald-600" :
+                            isReliable ? "text-green-600" :
+                            isWithTreat ? "text-yellow-600" :
+                            isInconsistent ? "text-amber-600" :
+                            isLearning ? "text-blue-600" :
+                            "text-gray-400"
+                          }`}
+                        >
+                          {isProofed ? "Dominado c/ Distração" :
+                           isReliable ? "Dominado" :
+                           isWithTreat ? "Faz c/ Petisco" :
+                           isInconsistent ? "Inconsistente" :
+                           isLearning ? "Aprendendo" : "Não iniciado"}
+                        </Badge>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
