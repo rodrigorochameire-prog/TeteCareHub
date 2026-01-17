@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef } from "react";
 import { trpc } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -526,39 +527,74 @@ export default function AdminLogs() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="stats-row">
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-title">Total de Logs</span>
-            <Calendar className="stat-card-icon muted" />
-          </div>
-          <div className="stat-card-value">{stats?.total || 0}</div>
-        </div>
+      {/* Stats Cards - Premium */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-0.5">
+        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-slate-500/15 to-slate-600/10">
+                <Calendar className="h-5 w-5 text-slate-600" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Total de Logs</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{stats?.total || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-title">Logs de Hoje</span>
-            <Smile className="stat-card-icon green" />
-          </div>
-          <div className="stat-card-value">{stats?.today || 0}</div>
-        </div>
+        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500/15 to-emerald-600/10">
+                <Smile className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Logs de Hoje</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{stats?.today || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-title">Creche Hoje</span>
-            <Building2 className="stat-card-icon blue" />
-          </div>
-          <div className="stat-card-value">{stats?.daycareToday || 0}</div>
-        </div>
+        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
+                <Building2 className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Creche Hoje</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{stats?.daycareToday || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className={`stat-card ${chartData.healthAlerts > 0 ? 'highlight' : ''}`}>
-          <div className="stat-card-header">
-            <span className="stat-card-title">Alertas de Saúde</span>
-            <AlertTriangle className={`stat-card-icon ${chartData.healthAlerts > 0 ? 'amber' : 'muted'}`} />
-          </div>
-          <div className="stat-card-value">{chartData.healthAlerts}</div>
-        </div>
+        <Card className={cn(
+          "overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5",
+          chartData.healthAlerts > 0 && "ring-1 ring-amber-200 dark:ring-amber-800/50"
+        )}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "h-10 w-10 rounded-xl flex items-center justify-center",
+                chartData.healthAlerts > 0 
+                  ? "bg-gradient-to-br from-amber-500/15 to-amber-600/10"
+                  : "bg-gradient-to-br from-slate-500/15 to-slate-600/10"
+              )}>
+                <AlertTriangle className={cn(
+                  "h-5 w-5",
+                  chartData.healthAlerts > 0 ? "text-amber-600" : "text-slate-500"
+                )} />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Alertas de Saúde</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{chartData.healthAlerts}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main Tabs */}
