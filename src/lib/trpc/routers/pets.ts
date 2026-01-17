@@ -536,6 +536,13 @@ export const petsRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      // Verificar se o usuário está autenticado (redundante, mas seguro)
+      if (!ctx.user || !ctx.user.id) {
+        throw Errors.unauthorized("Sessão expirada. Faça login novamente.");
+      }
+
+      const userId = ctx.user.id;
+
       return safeAsync(async () => {
         const existingPet = await db.query.pets.findFirst({
           where: eq(pets.id, input.petId),
@@ -549,7 +556,7 @@ export const petsRouter = router({
         const result = await creditEngineAddCredits(
           input.petId,
           input.credits,
-          ctx.user!.id,
+          userId,
           {
             amountInCents: input.amountInCents,
             packageName: input.packageName,
@@ -557,6 +564,12 @@ export const petsRouter = router({
         );
 
         if (!result.success) {
+          console.error("Erro ao adicionar créditos via Credit Engine:", {
+            petId: input.petId,
+            credits: input.credits,
+            userId,
+            error: result.error,
+          });
           throw Errors.badRequest(result.error || "Erro ao adicionar créditos");
         }
 

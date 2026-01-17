@@ -47,6 +47,37 @@ export interface CreditOperationResult {
 export async function performCreditOperation(
   operation: CreditOperation
 ): Promise<CreditOperationResult> {
+  // Validação de entrada
+  if (!operation.petId || operation.petId <= 0) {
+    console.error("performCreditOperation: petId inválido", operation.petId);
+    return {
+      success: false,
+      previousBalance: 0,
+      newBalance: 0,
+      error: "ID do pet inválido",
+    };
+  }
+
+  if (!operation.performedById || operation.performedById <= 0) {
+    console.error("performCreditOperation: performedById inválido", operation.performedById);
+    return {
+      success: false,
+      previousBalance: 0,
+      newBalance: 0,
+      error: "ID do usuário inválido",
+    };
+  }
+
+  if (typeof operation.credits !== "number" || isNaN(operation.credits)) {
+    console.error("performCreditOperation: credits inválido", operation.credits);
+    return {
+      success: false,
+      previousBalance: 0,
+      newBalance: 0,
+      error: "Quantidade de créditos inválida",
+    };
+  }
+
   try {
     // Buscar pet atual
     const pet = await db.query.pets.findFirst({
@@ -54,6 +85,7 @@ export async function performCreditOperation(
     });
 
     if (!pet) {
+      console.error("performCreditOperation: pet não encontrado", operation.petId);
       return {
         success: false,
         previousBalance: 0,
@@ -77,6 +109,15 @@ export async function performCreditOperation(
 
     // Determinar tipo de transação para o banco
     const transactionType = operation.credits > 0 ? "credit_purchase" : "credit_use";
+
+    console.log("performCreditOperation: iniciando transação", {
+      petId: operation.petId,
+      credits: operation.credits,
+      previousBalance,
+      newBalance,
+      transactionType,
+      performedById: operation.performedById,
+    });
 
     // Executar operação atômica usando transação do banco
     const result = await db.transaction(async (tx) => {
@@ -102,6 +143,12 @@ export async function performCreditOperation(
           stripePaymentId: operation.stripePaymentId || null,
         })
         .returning();
+
+      console.log("performCreditOperation: transação criada", {
+        transactionId: newTransaction.id,
+        petId: operation.petId,
+        newBalance,
+      });
 
       // 3. Criar notificação se créditos ficaram baixos
       if (newBalance <= 3 && newBalance > 0 && previousBalance > 3) {
@@ -158,6 +205,13 @@ export async function performCreditOperation(
       return newTransaction;
     });
 
+    console.log("performCreditOperation: operação concluída com sucesso", {
+      petId: operation.petId,
+      previousBalance,
+      newBalance,
+      transactionId: result.id,
+    });
+
     return {
       success: true,
       previousBalance,
@@ -165,12 +219,18 @@ export async function performCreditOperation(
       transactionId: result.id,
     };
   } catch (error) {
-    console.error("Erro na operação de crédito:", error);
+    console.error("performCreditOperation: erro na operação de crédito", {
+      petId: operation.petId,
+      credits: operation.credits,
+      performedById: operation.performedById,
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return {
       success: false,
       previousBalance: 0,
       newBalance: 0,
-      error: error instanceof Error ? error.message : "Erro desconhecido",
+      error: error instanceof Error ? error.message : "Erro desconhecido na operação de créditos",
     };
   }
 }
