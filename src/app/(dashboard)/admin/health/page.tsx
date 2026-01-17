@@ -258,51 +258,87 @@ export default function AdminHealthPage() {
         </div>
       )}
 
-      {/* Stats - Layout compacto e limpo */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-muted-foreground">Vacinas</span>
-            <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-              <Syringe className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+      {/* Stats Cards - Premium */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-0.5">
+        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
+                <Syringe className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Vacinas Próximas</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{vaccineStats?.upcoming || 0}</p>
+              </div>
             </div>
-          </div>
-          <div className="text-2xl font-bold text-foreground">{vaccineStats?.upcoming || 0}</div>
-          <div className="text-xs text-muted-foreground">próximos 30 dias</div>
-        </div>
-        
-        <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-muted-foreground">Preventivos</span>
-            <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-              <Shield className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Total registradas</span>
+                <span className="font-semibold">{vaccineStats?.total || 0}</span>
+              </div>
             </div>
-          </div>
-          <div className="text-2xl font-bold text-foreground">{preventiveStats?.upcoming || 0}</div>
-          <div className="text-xs text-muted-foreground">próximos 30 dias</div>
-        </div>
-        
-        <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-muted-foreground">Antipulgas</span>
-            <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-              <Bug className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500/15 to-emerald-600/10">
+                <Shield className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Preventivos</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{preventiveStats?.upcoming || 0}</p>
+              </div>
             </div>
-          </div>
-          <div className="text-2xl font-bold text-foreground">{preventiveStats?.flea || 0}</div>
-          <div className="text-xs text-muted-foreground">registros</div>
-        </div>
-        
-        <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-muted-foreground">Vermífugos</span>
-            <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-              <Droplets className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Próximos 30 dias</span>
+                <span className="font-semibold text-emerald-600">Em dia</span>
+              </div>
             </div>
-          </div>
-          <div className="text-2xl font-bold text-foreground">{preventiveStats?.deworming || 0}</div>
-          <div className="text-xs text-muted-foreground">registros</div>
-        </div>
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-purple-500/15 to-purple-600/10">
+                <Bug className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Antipulgas</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{preventiveStats?.flea || 0}</p>
+              </div>
+            </div>
+            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Registros totais</span>
+                <span className="font-semibold">{preventiveStats?.flea || 0}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-cyan-500/15 to-cyan-600/10">
+                <Droplets className="h-5 w-5 text-cyan-600" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Vermífugos</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{preventiveStats?.deworming || 0}</p>
+              </div>
+            </div>
+            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Registros totais</span>
+                <span className="font-semibold">{preventiveStats?.deworming || 0}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main Tabs */}
