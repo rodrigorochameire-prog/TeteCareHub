@@ -294,47 +294,39 @@ export default function AdminFoodPage() {
       </div>
 
       {/* Stats - Premium */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-muted-foreground">Total de Pets</span>
-            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Dog className="h-4 w-4 text-primary" />
-            </div>
+      <div className="stats-row">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Total de Pets</span>
+            <div className="stat-card-icon"><Dog /></div>
           </div>
-          <div className="text-2xl font-bold text-foreground">{totalPets}</div>
+          <div className="stat-card-value">{totalPets}</div>
         </div>
 
-        <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-muted-foreground">Com Plano Ativo</span>
-            <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-              <CheckCircle2 className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-            </div>
+        <div className="stat-card success">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Com Plano Ativo</span>
+            <div className="stat-card-icon"><CheckCircle2 /></div>
           </div>
-          <div className="text-2xl font-bold text-foreground">{petsWithPlan}</div>
+          <div className="stat-card-value">{petsWithPlan}</div>
         </div>
 
-        <div className={`bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0 ${lowStockPets > 0 ? "ring-1 ring-slate-300 dark:ring-slate-700" : ""}`}>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-muted-foreground">Estoque Baixo</span>
-            <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800">
-              <TrendingDown className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-            </div>
+        <div className={`stat-card ${lowStockPets > 0 ? "highlight" : ""}`}>
+          <div className="stat-card-header">
+            <span className="stat-card-title">Estoque Baixo</span>
+            <div className="stat-card-icon"><TrendingDown /></div>
           </div>
-          <div className={`text-2xl font-bold ${lowStockPets > 0 ? "text-slate-700 dark:text-slate-300" : "text-foreground"}`}>{lowStockPets}</div>
-          {lowStockPets > 0 && <p className="text-xs text-muted-foreground mt-1">Menos de 7 dias</p>}
+          <div className="stat-card-value">{lowStockPets}</div>
+          {lowStockPets > 0 && <div className="stat-card-description">Menos de 7 dias</div>}
         </div>
 
-        <div className={`bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0 ${criticalStockPets > 0 ? "ring-1 ring-slate-400 dark:ring-slate-600" : ""}`}>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-muted-foreground">Estoque Crítico</span>
-            <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800">
-              <AlertTriangle className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-            </div>
+        <div className={`stat-card ${criticalStockPets > 0 ? "highlight" : ""}`}>
+          <div className="stat-card-header">
+            <span className="stat-card-title">Estoque Crítico</span>
+            <div className="stat-card-icon"><AlertTriangle /></div>
           </div>
-          <div className={`text-2xl font-bold ${criticalStockPets > 0 ? "text-slate-900 dark:text-slate-100" : "text-foreground"}`}>{criticalStockPets}</div>
-          {criticalStockPets > 0 && <p className="text-xs text-muted-foreground mt-1">Menos de 3 dias</p>}
+          <div className="stat-card-value">{criticalStockPets}</div>
+          {criticalStockPets > 0 && <div className="stat-card-description">Menos de 3 dias</div>}
         </div>
       </div>
 
