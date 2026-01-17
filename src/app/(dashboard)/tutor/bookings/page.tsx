@@ -23,7 +23,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Calendar, Clock, Dog, Plus, X, Check, AlertCircle } from "lucide-react";
-import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadingPage } from "@/components/shared/loading";
 import { toast } from "sonner";
@@ -133,15 +132,23 @@ export default function TutorBookingsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Minhas Reservas"
-        description="Gerencie suas reservas na creche"
-        actions={
+    <div className="page-container">
+      {/* Header */}
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <Calendar />
+          </div>
+          <div className="page-header-info">
+            <h1>Minhas Reservas</h1>
+            <p>Gerencie suas reservas na creche</p>
+          </div>
+        </div>
+        <div className="page-header-actions">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button disabled={approvedPets.length === 0}>
-                <Plus className="h-4 w-4 mr-2" />
+              <Button disabled={approvedPets.length === 0} size="sm" className="btn-sm btn-primary">
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
                 Nova Reserva
               </Button>
             </DialogTrigger>
@@ -252,52 +259,46 @@ export default function TutorBookingsPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Próxima Reserva</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {nextBooking ? (
-              <>
-                <div className="text-lg font-semibold">
-                  {formatDate(nextBooking.booking.startDate)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {nextBooking.pet.name} - {requestTypeLabels[nextBooking.booking.requestType]}
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="text-lg font-semibold text-muted-foreground">-</div>
-                <p className="text-xs text-muted-foreground">Nenhuma agendada</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+      <div className="stats-row">
+        <div className="stat-card info">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Próxima Reserva</span>
+            <div className="stat-card-icon"><Clock /></div>
+          </div>
+          {nextBooking ? (
+            <>
+              <div className="stat-card-value text-lg">
+                {formatDate(nextBooking.booking.startDate)}
+              </div>
+              <div className="stat-card-description">
+                {nextBooking.pet.name} - {requestTypeLabels[nextBooking.booking.requestType]}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="stat-card-value text-muted-foreground">-</div>
+              <div className="stat-card-description">Nenhuma agendada</div>
+            </>
+          )}
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-            <Calendar className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pending}</div>
-            <p className="text-xs text-muted-foreground">aguardando aprovação</p>
-          </CardContent>
-        </Card>
+        <div className={`stat-card ${stats.pending > 0 ? 'highlight' : ''}`}>
+          <div className="stat-card-header">
+            <span className="stat-card-title">Pendentes</span>
+            <div className="stat-card-icon"><Calendar /></div>
+          </div>
+          <div className="stat-card-value">{stats.pending}</div>
+          <div className="stat-card-description">aguardando aprovação</div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
-            <Dog className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">reservas realizadas</p>
-          </CardContent>
-        </Card>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Total</span>
+            <div className="stat-card-icon"><Dog /></div>
+          </div>
+          <div className="stat-card-value">{stats.total}</div>
+          <div className="stat-card-description">reservas realizadas</div>
+        </div>
       </div>
 
       {/* Bookings List */}
