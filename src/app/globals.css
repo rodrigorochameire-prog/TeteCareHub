@@ -706,23 +706,147 @@ main,
   @apply text-xs text-muted-foreground mt-1;
 }
 
-/* Variante com destaque */
+/* Variante com destaque - Laranja (Primário) */
 .stat-card.highlight {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(255, 255, 255, 0.8) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.2);
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.08) 0%, rgba(255, 255, 255, 0.85) 100%);
+  border: 1px solid rgba(251, 146, 60, 0.2);
 }
 
 .dark .stat-card.highlight {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(30, 41, 59, 0.6) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.15);
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.1) 0%, rgba(30, 41, 59, 0.6) 100%);
+  border: 1px solid rgba(251, 146, 60, 0.15);
 }
 
 .stat-card.highlight .stat-card-icon {
-  background: rgba(251, 191, 36, 0.15);
+  background: rgba(251, 146, 60, 0.12);
 }
 
 .stat-card.highlight .stat-card-icon svg {
-  color: hsl(38 92% 50%);
+  color: hsl(24 85% 55%);
+}
+
+/* Variante Azul Escuro (Secundário) - Para destaques informativos */
+.stat-card.info {
+  background: linear-gradient(135deg, rgba(51, 65, 85, 0.06) 0%, rgba(255, 255, 255, 0.85) 100%);
+  border: 1px solid rgba(51, 65, 85, 0.15);
+}
+
+.dark .stat-card.info {
+  background: linear-gradient(135deg, rgba(71, 85, 105, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%);
+  border: 1px solid rgba(71, 85, 105, 0.2);
+}
+
+.stat-card.info .stat-card-icon {
+  background: rgba(51, 65, 85, 0.1);
+}
+
+.stat-card.info .stat-card-icon svg {
+  color: hsl(215 25% 27%);
+}
+
+.dark .stat-card.info .stat-card-icon svg {
+  color: hsl(215 20% 65%);
+}
+
+/* ========================================
+   PROGRESS BARS - CORES FUNCIONAIS
+   ======================================== */
+
+/* Barra de Créditos - Verde/Amarelo/Vermelho */
+.progress-credits {
+  @apply h-2 rounded-full overflow-hidden;
+  background: hsl(220 14% 93%);
+}
+
+.dark .progress-credits {
+  background: hsl(220 15% 20%);
+}
+
+.progress-credits .progress-fill {
+  @apply h-full rounded-full transition-all duration-500;
+}
+
+/* Cheio - Verde */
+.progress-credits .progress-fill.full {
+  background: linear-gradient(to right, hsl(142 72% 45%) 0%, hsl(142 72% 38%) 100%);
+}
+
+/* Médio - Amarelo */
+.progress-credits .progress-fill.medium {
+  background: linear-gradient(to right, hsl(45 93% 50%) 0%, hsl(38 92% 45%) 100%);
+}
+
+/* Baixo - Vermelho */
+.progress-credits .progress-fill.low {
+  background: linear-gradient(to right, hsl(0 72% 55%) 0%, hsl(0 72% 48%) 100%);
+}
+
+/* ========================================
+   CARDS COM DESTAQUE AZUL ESCURO
+   ======================================== */
+
+.card-navy {
+  @apply rounded-2xl overflow-hidden;
+  background: linear-gradient(135deg, hsl(215 28% 17%) 0%, hsl(215 30% 12%) 100%);
+  color: white;
+  box-shadow: 0 4px 20px -4px hsl(215 28% 15% / 0.4);
+}
+
+.card-navy-header {
+  @apply px-5 py-4 border-b;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.card-navy-content {
+  @apply p-5;
+}
+
+.card-navy .text-muted {
+  color: hsl(215 15% 65%);
+}
+
+/* ========================================
+   ÍCONES DE HEADER - LARANJA PRIMÁRIO
+   ======================================== */
+
+.icon-primary {
+  @apply h-10 w-10 rounded-xl flex items-center justify-center;
+  background: linear-gradient(135deg, hsl(24 85% 55%) 0%, hsl(24 80% 48%) 100%);
+  box-shadow: 0 4px 12px -2px hsl(24 80% 50% / 0.35);
+}
+
+.icon-primary svg {
+  @apply h-5 w-5 text-white;
+}
+
+/* Ícone Secundário - Azul Escuro */
+.icon-secondary {
+  @apply h-10 w-10 rounded-xl flex items-center justify-center;
+  background: linear-gradient(135deg, hsl(215 25% 27%) 0%, hsl(215 28% 20%) 100%);
+  box-shadow: 0 4px 12px -2px hsl(215 25% 25% / 0.35);
+}
+
+.icon-secondary svg {
+  @apply h-5 w-5 text-white;
+}
+
+/* Ícone Neutro - Slate */
+.icon-muted {
+  @apply h-10 w-10 rounded-xl flex items-center justify-center;
+  background: hsl(220 14% 96%);
+}
+
+.icon-muted svg {
+  @apply h-5 w-5;
+  color: hsl(215 16% 47%);
+}
+
+.dark .icon-muted {
+  background: hsl(220 15% 20%);
+}
+
+.dark .icon-muted svg {
+  color: hsl(215 15% 60%);
 }
 
 /* ========================================
@@ -1283,30 +1407,73 @@ main,
 }
 
 /* ========================================
-   BUTTONS
+   BUTTONS - SISTEMA TETECARE PREMIUM
    ======================================== */
 
 .btn-sm {
-  @apply h-8 px-3 text-xs font-medium rounded-md;
+  @apply h-8 px-3 text-xs font-medium rounded-lg;
 }
 
+/* Botão Primário - Laranja (Ações principais) */
 .btn-primary {
-  background: hsl(var(--primary));
+  @apply font-semibold;
+  background: linear-gradient(135deg, hsl(24 85% 55%) 0%, hsl(24 80% 48%) 100%);
   color: white;
+  box-shadow: 0 2px 8px -2px hsl(24 80% 50% / 0.4);
+  transition: all 0.2s ease;
 }
 
 .btn-primary:hover {
-  opacity: 0.9;
+  background: linear-gradient(135deg, hsl(24 85% 50%) 0%, hsl(24 80% 43%) 100%);
+  box-shadow: 0 4px 12px -2px hsl(24 80% 50% / 0.5);
+  transform: translateY(-1px);
+}
+
+/* Botão Secundário - Azul Escuro (Ações secundárias) */
+.btn-secondary {
+  @apply font-semibold;
+  background: linear-gradient(135deg, hsl(215 25% 27%) 0%, hsl(215 28% 20%) 100%);
+  color: white;
+  box-shadow: 0 2px 8px -2px hsl(215 25% 25% / 0.4);
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, hsl(215 25% 23%) 0%, hsl(215 28% 17%) 100%);
+  box-shadow: 0 4px 12px -2px hsl(215 25% 25% / 0.5);
+  transform: translateY(-1px);
+}
+
+.dark .btn-secondary {
+  background: linear-gradient(135deg, hsl(215 20% 35%) 0%, hsl(215 22% 28%) 100%);
+}
+
+.dark .btn-secondary:hover {
+  background: linear-gradient(135deg, hsl(215 20% 40%) 0%, hsl(215 22% 32%) 100%);
 }
 
 .btn-outline {
-  @apply border;
+  @apply border font-medium;
   border-color: hsl(var(--border));
   color: hsl(var(--foreground));
+  transition: all 0.2s ease;
 }
 
 .btn-outline:hover {
   background: hsl(var(--muted) / 0.5);
+  border-color: hsl(var(--border) / 0.8);
+}
+
+/* Botão Ghost - Transparente */
+.btn-ghost {
+  @apply font-medium;
+  color: hsl(var(--muted-foreground));
+  transition: all 0.2s ease;
+}
+
+.btn-ghost:hover {
+  background: hsl(var(--muted) / 0.5);
+  color: hsl(var(--foreground));
 }
 
 /* ========================================

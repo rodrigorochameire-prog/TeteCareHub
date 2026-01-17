@@ -71,7 +71,7 @@ interface AdminSidebarProps {
 const menuGroups = [
   {
     label: "Operacional",
-    color: "blue",
+    color: "primary", // Laranja - cor primária da marca
     items: [
       { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
       { icon: Dog, label: "Pets", path: "/admin/pets" },
@@ -80,7 +80,7 @@ const menuGroups = [
   },
   {
     label: "Cuidados",
-    color: "orange",
+    color: "primary", // Laranja
     items: [
       { icon: Heart, label: "Central de Saúde", path: "/admin/health" },
       { icon: UtensilsCrossed, label: "Alimentação", path: "/admin/food" },
@@ -91,7 +91,7 @@ const menuGroups = [
   },
   {
     label: "Financeiro",
-    color: "green",
+    color: "primary", // Laranja
     items: [
       { icon: TrendingUp, label: "Finanças", path: "/admin/finances" },
       { icon: Package, label: "Planos e Serviços", path: "/admin/plans" },
@@ -99,7 +99,7 @@ const menuGroups = [
   },
   {
     label: "Comunicação",
-    color: "slate",
+    color: "secondary", // Azul escuro - cor secundária
     items: [
       { icon: MessageSquare, label: "Mural", path: "/admin/wall" },
       { icon: FileText, label: "Documentos", path: "/admin/documents" },
@@ -108,7 +108,7 @@ const menuGroups = [
   },
   {
     label: "Gestão",
-    color: "slate",
+    color: "secondary", // Azul escuro
     items: [
       { icon: Users, label: "Tutores", path: "/admin/tutors" },
       { icon: Building2, label: "Creche", path: "/admin/daycare" },
@@ -118,58 +118,84 @@ const menuGroups = [
   },
   {
     label: "Inteligência",
-    color: "purple",
+    color: "accent", // Roxo para IA
     items: [
       { icon: Brain, label: "IA & Insights", path: "/admin/ai" },
     ],
   },
 ];
 
-// Sistema de cores harmonioso e organizado
-// - Operacional (azul): Dashboard, Pets, Calendário
-// - Cuidados (laranja): Saúde, Alimentação, Comportamento, Treinamento, Logs
-// - Gestão (preto/slate): Tutores
-// - Financeiro (verde): Finanças
-// - Comunicação (preto/slate): Mural, Documentos
+// Sistema de cores TeteCare Premium
+// - Primary (Laranja): Elementos principais de navegação
+// - Secondary (Azul escuro/Slate): Elementos secundários
+// - Accent (Roxo): IA e features especiais
 const colorClasses = {
-  blue: {
-    icon: "text-blue-500 dark:text-blue-400",
-    iconActive: "text-blue-500 dark:text-blue-400",
+  primary: {
+    icon: "text-orange-500 dark:text-orange-400",
+    iconActive: "text-orange-600 dark:text-orange-400",
+    bg: "bg-orange-50/40 dark:bg-orange-950/20",
+    bgHover: "hover:bg-orange-50/60 dark:hover:bg-orange-950/30",
+    bgActive: "bg-orange-100/60 dark:bg-orange-950/40",
+    border: "border-orange-200/30 dark:border-orange-800/20",
+    glow: "",
+  },
+  secondary: {
+    icon: "text-slate-500 dark:text-slate-400",
+    iconActive: "text-slate-700 dark:text-slate-300",
     bg: "bg-slate-50/60 dark:bg-slate-800/40",
     bgHover: "hover:bg-slate-100/60 dark:hover:bg-slate-800/40",
     bgActive: "bg-slate-100/80 dark:bg-slate-800/50",
     border: "border-slate-200/50 dark:border-slate-700/30",
+    glow: "",
+  },
+  accent: {
+    icon: "text-purple-500 dark:text-purple-400",
+    iconActive: "text-purple-600 dark:text-purple-400",
+    bg: "bg-purple-50/40 dark:bg-purple-950/20",
+    bgHover: "hover:bg-purple-50/60 dark:hover:bg-purple-950/30",
+    bgActive: "bg-purple-100/60 dark:bg-purple-950/40",
+    border: "border-purple-200/30 dark:border-purple-800/20",
+    glow: "",
+  },
+  // Manter compatibilidade com cores legadas
+  blue: {
+    icon: "text-orange-500 dark:text-orange-400",
+    iconActive: "text-orange-600 dark:text-orange-400",
+    bg: "bg-orange-50/40 dark:bg-orange-950/20",
+    bgHover: "hover:bg-orange-50/60 dark:hover:bg-orange-950/30",
+    bgActive: "bg-orange-100/60 dark:bg-orange-950/40",
+    border: "border-orange-200/30 dark:border-orange-800/20",
     glow: "",
   },
   orange: {
     icon: "text-orange-500 dark:text-orange-400",
-    iconActive: "text-orange-500 dark:text-orange-400",
-    bg: "bg-slate-50/60 dark:bg-slate-800/40",
-    bgHover: "hover:bg-slate-100/60 dark:hover:bg-slate-800/40",
-    bgActive: "bg-slate-100/80 dark:bg-slate-800/50",
-    border: "border-slate-200/50 dark:border-slate-700/30",
+    iconActive: "text-orange-600 dark:text-orange-400",
+    bg: "bg-orange-50/40 dark:bg-orange-950/20",
+    bgHover: "hover:bg-orange-50/60 dark:hover:bg-orange-950/30",
+    bgActive: "bg-orange-100/60 dark:bg-orange-950/40",
+    border: "border-orange-200/30 dark:border-orange-800/20",
     glow: "",
   },
   green: {
-    icon: "text-emerald-500 dark:text-emerald-400",
-    iconActive: "text-emerald-500 dark:text-emerald-400",
-    bg: "bg-slate-50/60 dark:bg-slate-800/40",
-    bgHover: "hover:bg-slate-100/60 dark:hover:bg-slate-800/40",
-    bgActive: "bg-slate-100/80 dark:bg-slate-800/50",
-    border: "border-slate-200/50 dark:border-slate-700/30",
+    icon: "text-orange-500 dark:text-orange-400",
+    iconActive: "text-orange-600 dark:text-orange-400",
+    bg: "bg-orange-50/40 dark:bg-orange-950/20",
+    bgHover: "hover:bg-orange-50/60 dark:hover:bg-orange-950/30",
+    bgActive: "bg-orange-100/60 dark:bg-orange-950/40",
+    border: "border-orange-200/30 dark:border-orange-800/20",
     glow: "",
   },
   purple: {
     icon: "text-purple-500 dark:text-purple-400",
-    iconActive: "text-purple-500 dark:text-purple-400",
-    bg: "bg-slate-50/60 dark:bg-slate-800/40",
-    bgHover: "hover:bg-slate-100/60 dark:hover:bg-slate-800/40",
-    bgActive: "bg-slate-100/80 dark:bg-slate-800/50",
-    border: "border-slate-200/50 dark:border-slate-700/30",
+    iconActive: "text-purple-600 dark:text-purple-400",
+    bg: "bg-purple-50/40 dark:bg-purple-950/20",
+    bgHover: "hover:bg-purple-50/60 dark:hover:bg-purple-950/30",
+    bgActive: "bg-purple-100/60 dark:bg-purple-950/40",
+    border: "border-purple-200/30 dark:border-purple-800/20",
     glow: "",
   },
   slate: {
-    icon: "text-slate-600 dark:text-slate-400",
+    icon: "text-slate-500 dark:text-slate-400",
     iconActive: "text-slate-700 dark:text-slate-300",
     bg: "bg-slate-50/60 dark:bg-slate-800/40",
     bgHover: "hover:bg-slate-100/60 dark:hover:bg-slate-800/40",
