@@ -25,7 +25,6 @@ import {
   Star,
   Clock,
   Scale,
-  Calendar,
   Heart,
   ThumbsUp,
   ThumbsDown,
@@ -35,11 +34,14 @@ import {
   AlertCircle,
   CheckCircle2,
   XCircle,
-  Loader2,
   BarChart3,
-  PieChart,
   TrendingUp,
-  Eye,
+  Bell,
+  Timer,
+  Utensils,
+  CalendarClock,
+  ArrowRight,
+  MoreHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingPage } from "@/components/shared/loading";
@@ -54,13 +56,11 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart as RechartsPie,
-  Pie,
-  Cell,
-  Legend,
+  AreaChart,
+  Area,
+  LineChart,
+  Line,
 } from "recharts";
-
-const NEUTRAL_COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"];
 
 // Tipos
 type FoodType = "dry" | "wet" | "natural" | "mixed";
@@ -77,11 +77,11 @@ const foodTypeLabels: Record<FoodType, string> = {
 };
 
 const acceptanceLabels: Record<Acceptance, { label: string; color: string; icon: typeof ThumbsUp }> = {
-  loved: { label: "Adorou", color: "badge-green", icon: Heart },
-  liked: { label: "Gostou", color: "badge-blue", icon: ThumbsUp },
-  neutral: { label: "Neutro", color: "badge-neutral", icon: CheckCircle2 },
-  disliked: { label: "Não gostou", color: "badge-amber", icon: ThumbsDown },
-  rejected: { label: "Rejeitou", color: "badge-rose", icon: XCircle },
+  loved: { label: "Adorou", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400", icon: Heart },
+  liked: { label: "Gostou", color: "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400", icon: ThumbsUp },
+  neutral: { label: "Neutro", color: "bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400", icon: CheckCircle2 },
+  disliked: { label: "Não gostou", color: "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400", icon: ThumbsDown },
+  rejected: { label: "Rejeitou", color: "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400", icon: XCircle },
 };
 
 const treatTypeLabels: Record<TreatType, string> = {
@@ -98,6 +98,25 @@ const mealTypeLabels: Record<MealType, string> = {
   mixed: "Mista",
   supplement: "Suplemento",
 };
+
+// Função para formatar hora atual
+function getCurrentTime() {
+  return format(new Date(), "HH:mm");
+}
+
+// Função para verificar se está próximo do horário de refeição
+function isNearMealTime(mealTimes: string[] | null, thresholdMinutes = 30): boolean {
+  if (!mealTimes || mealTimes.length === 0) return false;
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  
+  return mealTimes.some(time => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const mealMinutes = hours * 60 + minutes;
+    const diff = mealMinutes - currentMinutes;
+    return diff >= 0 && diff <= thresholdMinutes;
+  });
+}
 
 export default function AdminFoodPage() {
   const [selectedPetId, setSelectedPetId] = useState<number | null>(null);
@@ -192,7 +211,7 @@ export default function AdminFoodPage() {
       petId: Number(formData.get("petId")),
       brand: formData.get("brand") as string,
       productName: (formData.get("productName") as string) || undefined,
-      quantityReceived: Number(formData.get("quantity")) * 1000, // kg para g
+      quantityReceived: Number(formData.get("quantity")) * 1000,
       expirationDate: (formData.get("expirationDate") as string) || undefined,
       notes: (formData.get("notes") as string) || undefined,
     });
@@ -258,287 +277,426 @@ export default function AdminFoodPage() {
     setIsPetDetailOpen(true);
   };
 
-  // Stats
-  const totalPets = summaries?.length || 0;
-  const petsWithPlan = summaries?.filter((s) => s.hasPlan).length || 0;
-  const lowStockPets = summaries?.filter((s) => s.isLowStock).length || 0;
-  const criticalStockPets = summaries?.filter((s) => s.isCriticalStock).length || 0;
+  // Dados calculados
+  const dashboardData = useMemo(() => {
+    if (!summaries) return null;
+
+    const totalPets = summaries.length;
+    const petsWithPlan = summaries.filter((s) => s.hasPlan).length;
+    const lowStockPets = summaries.filter((s) => s.isLowStock).length;
+    const criticalStockPets = summaries.filter((s) => s.isCriticalStock).length;
+
+    // Pets com próxima refeição (simulado baseado nos horários do plano)
+    const petsNearMealTime = summaries.filter(s => {
+      if (!s.plan?.portionTimes) return false;
+      try {
+        const times = JSON.parse(s.plan.portionTimes);
+        return isNearMealTime(times);
+      } catch {
+        return false;
+      }
+    });
+
+    // Gráfico de projeção de estoque (próximos 7 dias)
+    const stockProjection = summaries
+      .filter(s => s.hasPlan && s.daysRemaining > 0)
+      .sort((a, b) => a.daysRemaining - b.daysRemaining)
+      .slice(0, 8)
+      .map(s => ({
+        name: s.pet.name.length > 6 ? s.pet.name.slice(0, 6) + '..' : s.pet.name,
+        dias: s.daysRemaining,
+        kg: Number((s.totalStock / 1000).toFixed(1)),
+      }));
+
+    // Consumo diário total estimado
+    const dailyConsumption = summaries
+      .filter(s => s.plan)
+      .reduce((acc, s) => acc + (s.plan?.dailyAmount || 0), 0);
+
+    // Timeline de horários de refeição do dia
+    const mealSchedule: { time: string; pets: string[] }[] = [];
+    const timeMap = new Map<string, string[]>();
+    
+    summaries.forEach(s => {
+      if (s.plan?.portionTimes) {
+        try {
+          const times = JSON.parse(s.plan.portionTimes);
+          times.forEach((time: string) => {
+            const existing = timeMap.get(time) || [];
+            existing.push(s.pet.name);
+            timeMap.set(time, existing);
+          });
+        } catch {}
+      }
+    });
+
+    Array.from(timeMap.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .forEach(([time, pets]) => {
+        mealSchedule.push({ time, pets });
+      });
+
+    return {
+      totalPets,
+      petsWithPlan,
+      lowStockPets,
+      criticalStockPets,
+      petsNearMealTime,
+      stockProjection,
+      dailyConsumption,
+      mealSchedule,
+    };
+  }, [summaries]);
 
   if (isLoading) {
     return <LoadingPage />;
   }
 
   return (
-    <div className="page-container">
-      {/* Header */}
-      <div className="page-header">
-        <div className="page-header-content">
-          <div className="page-header-icon">
-            <UtensilsCrossed />
-          </div>
-          <div className="page-header-info">
-            <h1>Gestão de Alimentação</h1>
-            <p>Controle completo por pet</p>
-          </div>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8 text-slate-800 dark:text-slate-200 space-y-6 font-sans -m-6">
+      
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-500/20 flex items-center justify-center">
+              <UtensilsCrossed className="h-5 w-5 text-orange-600 dark:text-orange-500" />
+            </div>
+            Central de Alimentação
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            Gestão completa de ração, petiscos e dietas • {getCurrentTime()}
+          </p>
         </div>
-        <div className="page-header-actions">
-          <Button variant="outline" size="sm" onClick={() => setIsAddStockOpen(true)} className="btn-sm btn-outline">
-            <Package className="h-3.5 w-3.5 mr-1.5" />
-            Estoque
+        <div className="flex gap-3">
+          <Button 
+            variant="outline" 
+            onClick={() => setIsAddStockOpen(true)}
+            className="border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            <Package className="mr-2 h-4 w-4" /> Adicionar Estoque
           </Button>
-          <Button size="sm" onClick={() => setIsAddPlanOpen(true)} className="btn-sm btn-primary">
-            <Plus className="h-3.5 w-3.5 mr-1.5" />
-            Novo Plano
+          <Button 
+            onClick={() => setIsAddPlanOpen(true)}
+            className="bg-orange-600 hover:bg-orange-700 text-white border-none shadow-lg shadow-orange-500/20 dark:shadow-orange-900/20"
+          >
+            <Plus className="mr-2 h-4 w-4" /> Novo Plano
           </Button>
         </div>
       </div>
 
-      {/* Stats - Premium */}
-      <div className="stats-row">
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-title">Total de Pets</span>
-            <div className="stat-card-icon"><Dog /></div>
+      {/* STATS CARDS */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase">Total Pets</span>
+            <Dog className="h-4 w-4 text-orange-500" />
           </div>
-          <div className="stat-card-value">{totalPets}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-white mt-2">{dashboardData?.totalPets || 0}</div>
+          <div className="text-xs text-slate-500">cadastrados</div>
         </div>
 
-        <div className="stat-card success">
-          <div className="stat-card-header">
-            <span className="stat-card-title">Com Plano Ativo</span>
-            <div className="stat-card-icon"><CheckCircle2 /></div>
+        <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase">Com Plano</span>
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
           </div>
-          <div className="stat-card-value">{petsWithPlan}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-white mt-2">{dashboardData?.petsWithPlan || 0}</div>
+          <div className="text-xs text-slate-500">configurados</div>
         </div>
 
-        <div className={`stat-card ${lowStockPets > 0 ? "highlight" : ""}`}>
-          <div className="stat-card-header">
-            <span className="stat-card-title">Estoque Baixo</span>
-            <div className="stat-card-icon"><TrendingDown /></div>
+        <div className={`bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm border rounded-xl p-4 ${(dashboardData?.lowStockPets || 0) > 0 ? 'border-amber-400 dark:border-amber-500/50' : 'border-slate-200 dark:border-slate-800'}`}>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase">Estoque Baixo</span>
+            <TrendingDown className={`h-4 w-4 ${(dashboardData?.lowStockPets || 0) > 0 ? 'text-amber-500' : 'text-slate-400'}`} />
           </div>
-          <div className="stat-card-value">{lowStockPets}</div>
-          {lowStockPets > 0 && <div className="stat-card-description">Menos de 7 dias</div>}
+          <div className={`text-2xl font-bold mt-2 ${(dashboardData?.lowStockPets || 0) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>
+            {dashboardData?.lowStockPets || 0}
+          </div>
+          <div className="text-xs text-slate-500">menos de 7 dias</div>
         </div>
 
-        <div className={`stat-card ${criticalStockPets > 0 ? "highlight" : ""}`}>
-          <div className="stat-card-header">
-            <span className="stat-card-title">Estoque Crítico</span>
-            <div className="stat-card-icon"><AlertTriangle /></div>
+        <div className={`bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm border rounded-xl p-4 ${(dashboardData?.criticalStockPets || 0) > 0 ? 'border-rose-400 dark:border-rose-500/50' : 'border-slate-200 dark:border-slate-800'}`}>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase">Crítico</span>
+            <AlertTriangle className={`h-4 w-4 ${(dashboardData?.criticalStockPets || 0) > 0 ? 'text-rose-500' : 'text-slate-400'}`} />
           </div>
-          <div className="stat-card-value">{criticalStockPets}</div>
-          {criticalStockPets > 0 && <div className="stat-card-description">Menos de 3 dias</div>}
+          <div className={`text-2xl font-bold mt-2 ${(dashboardData?.criticalStockPets || 0) > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'}`}>
+            {dashboardData?.criticalStockPets || 0}
+          </div>
+          <div className="text-xs text-slate-500">menos de 3 dias</div>
         </div>
       </div>
 
-      {/* Análises de Alimentação */}
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
-            Análises de Alimentação
-          </CardTitle>
-          <CardDescription>Visão geral do consumo e estoque</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Métricas Resumidas */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-4 rounded-lg bg-muted/50">
-              <div className="flex items-center gap-2 mb-1">
-                <UtensilsCrossed className="h-4 w-4 text-slate-500" />
-                <span className="text-xs text-muted-foreground">Com Plano</span>
-              </div>
-              <p className="text-2xl font-bold">{summaries?.filter(s => s.hasPlan).length || 0}</p>
-              <p className="text-xs text-muted-foreground">pets com plano ativo</p>
+      {/* PAINEL DE CONTROLE DO DIA */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Timeline de Refeições */}
+        <Card className="lg:col-span-2 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+          <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-slate-900 dark:text-white text-base flex items-center gap-2">
+                <CalendarClock className="h-4 w-4 text-orange-500" />
+                Cronograma de Refeições
+              </CardTitle>
+              <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0">
+                {dashboardData?.mealSchedule.length || 0} horários
+              </Badge>
             </div>
-            <div className="p-4 rounded-lg bg-muted/50">
-              <div className="flex items-center gap-2 mb-1">
-                <AlertTriangle className="h-4 w-4 text-slate-500" />
-                <span className="text-xs text-muted-foreground">Estoque Baixo</span>
-              </div>
-              <p className="text-2xl font-bold">{summaries?.filter(s => s.isLowStock).length || 0}</p>
-              <p className="text-xs text-muted-foreground">precisam de reposição</p>
-            </div>
-            <div className="p-4 rounded-lg bg-muted/50">
-              <div className="flex items-center gap-2 mb-1">
-                <Cookie className="h-4 w-4 text-slate-500" />
-                <span className="text-xs text-muted-foreground">Ração Úmida</span>
-              </div>
-              <p className="text-2xl font-bold">{summaries?.filter(s => s.plan?.foodType === "wet" || s.plan?.foodType === "mixed").length || 0}</p>
-              <p className="text-xs text-muted-foreground">incluem ração úmida</p>
-            </div>
-            <div className="p-4 rounded-lg bg-muted/50">
-              <div className="flex items-center gap-2 mb-1">
-                <Leaf className="h-4 w-4 text-slate-500" />
-                <span className="text-xs text-muted-foreground">Natural</span>
-              </div>
-              <p className="text-2xl font-bold">{summaries?.filter(s => s.plan?.foodType === "natural").length || 0}</p>
-              <p className="text-xs text-muted-foreground">alimentação natural</p>
-            </div>
-          </div>
-
-          {/* Gráficos */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Distribuição por Tipo de Ração */}
-            <div>
-              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-                <PieChart className="h-4 w-4" />
-                Tipos de Alimentação
-              </h4>
-              {summaries && summaries.length > 0 ? (
-                <div className="h-[220px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsPie>
-                      <Pie
-                        data={(() => {
-                          const typeCount: Record<string, number> = {};
-                          summaries.forEach(s => {
-                            if (s.plan) {
-                              const type = s.plan.foodType || "dry";
-                              typeCount[type] = (typeCount[type] || 0) + 1;
-                            }
-                          });
-                          return Object.entries(typeCount).map(([name, value]) => ({
-                            name: name === "dry" ? "Seca" : name === "wet" ? "Úmida" : name === "natural" ? "Natural" : "Mista",
-                            value
-                          }));
-                        })()}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={45}
-                        outerRadius={75}
-                        paddingAngle={2}
-                        dataKey="value"
-                        label={({ name, value }) => `${name}: ${value}`}
-                        labelLine={false}
-                      >
-                        {[0, 1, 2, 3].map((index) => (
-                          <Cell key={`cell-${index}`} fill={NEUTRAL_COLORS[index % NEUTRAL_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </RechartsPie>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
-                  Sem dados disponíveis
-                </div>
-              )}
-            </div>
-
-            {/* Situação de Estoque */}
-            <div>
-              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-                <TrendingDown className="h-4 w-4" />
-                Estoque por Pet
-              </h4>
-              {summaries && summaries.length > 0 ? (
-                <div className="h-[220px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={summaries
-                        .filter(s => s.hasPlan)
-                        .sort((a, b) => a.daysRemaining - b.daysRemaining)
-                        .slice(0, 6)
-                        .map(s => ({
-                          name: s.pet.name.length > 8 ? s.pet.name.slice(0, 8) + '...' : s.pet.name,
-                          dias: s.daysRemaining,
-                          critico: s.isCriticalStock ? 1 : 0
-                        }))}
-                      layout="vertical"
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis type="number" stroke="#94a3b8" fontSize={11} />
-                      <YAxis type="category" dataKey="name" width={70} stroke="#94a3b8" fontSize={11} />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'white', 
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '8px',
-                          fontSize: '12px'
-                        }}
-                        formatter={(value) => [`${value} dias`, 'Restante']}
-                      />
-                      <Bar dataKey="dias" name="Dias" fill="#64748b" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
-                  Sem dados disponíveis
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Alertas de Estoque */}
-          {summaries && summaries.filter(s => s.isCriticalStock || s.isLowStock).length > 0 && (
-            <div>
-              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" />
-                Alertas de Reposição
-              </h4>
-              <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                {summaries
-                  .filter(s => s.isCriticalStock || s.isLowStock)
-                  .sort((a, b) => a.daysRemaining - b.daysRemaining)
-                  .slice(0, 6)
-                  .map(item => (
-                    <div 
-                      key={item.pet.id} 
-                      className={`p-3 rounded-lg border ${
-                        item.isCriticalStock 
-                          ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600' 
-                          : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                          <Dog className="h-4 w-4 text-slate-500" />
+          </CardHeader>
+          <CardContent className="pt-4">
+            {dashboardData?.mealSchedule && dashboardData.mealSchedule.length > 0 ? (
+              <div className="space-y-4">
+                {dashboardData.mealSchedule.map((schedule, index) => {
+                  const now = new Date();
+                  const [hours, minutes] = schedule.time.split(':').map(Number);
+                  const scheduleTime = new Date();
+                  scheduleTime.setHours(hours, minutes, 0, 0);
+                  const isPast = now > scheduleTime;
+                  const isNow = Math.abs(now.getTime() - scheduleTime.getTime()) < 30 * 60 * 1000;
+                  
+                  return (
+                    <div key={schedule.time} className="flex gap-4 group">
+                      <div className="flex flex-col items-center">
+                        <div className={`w-3 h-3 rounded-full ring-4 ${
+                          isNow ? 'bg-orange-500 ring-orange-500/20 animate-pulse' :
+                          isPast ? 'bg-emerald-500 ring-emerald-500/20' :
+                          'bg-slate-300 dark:bg-slate-600 ring-slate-300/20 dark:ring-slate-600/20'
+                        }`}></div>
+                        {index < dashboardData.mealSchedule.length - 1 && (
+                          <div className="w-0.5 h-full bg-slate-200 dark:bg-slate-800 mt-2 min-h-[40px]"></div>
+                        )}
+                      </div>
+                      <div className="flex-1 pb-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className={`text-lg font-bold ${
+                              isNow ? 'text-orange-600 dark:text-orange-400' :
+                              isPast ? 'text-slate-400 dark:text-slate-500' :
+                              'text-slate-900 dark:text-white'
+                            }`}>
+                              {schedule.time}
+                            </span>
+                            {isNow && (
+                              <Badge className="bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-0 text-xs">
+                                AGORA
+                              </Badge>
+                            )}
+                            {isPast && (
+                              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                            )}
+                          </div>
+                          <span className="text-xs text-slate-400">{schedule.pets.length} pets</span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{item.pet.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {item.daysRemaining <= 0 ? 'Esgotado!' : `${item.daysRemaining} dias restantes`}
-                          </p>
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {schedule.pets.slice(0, 6).map((pet, i) => (
+                            <Badge 
+                              key={i} 
+                              variant="outline" 
+                              className={`text-xs ${
+                                isPast 
+                                  ? 'border-slate-200 dark:border-slate-700 text-slate-400' 
+                                  : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300'
+                              }`}
+                            >
+                              {pet}
+                            </Badge>
+                          ))}
+                          {schedule.pets.length > 6 && (
+                            <Badge variant="outline" className="text-xs border-slate-200 dark:border-slate-700">
+                              +{schedule.pets.length - 6}
+                            </Badge>
+                          )}
                         </div>
-                        <Badge variant="outline" className={item.isCriticalStock ? 'border-slate-400 text-slate-600' : 'border-slate-300 text-slate-500'}>
-                          {item.isCriticalStock ? 'Crítico' : 'Baixo'}
-                        </Badge>
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
               </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
+                  <Clock className="h-6 w-6 text-slate-400 dark:text-slate-500" />
+                </div>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">Nenhum horário de refeição configurado</p>
+                <p className="text-slate-400 dark:text-slate-500 text-xs mt-1">Configure os planos de alimentação para ver o cronograma</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Alertas e Próximas Ações */}
+        <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+          <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
+            <CardTitle className="text-slate-900 dark:text-white text-base flex items-center gap-2">
+              <Bell className="h-4 w-4 text-amber-500" />
+              Alertas & Ações
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-3">
+            {/* Próximas refeições */}
+            {dashboardData?.petsNearMealTime && dashboardData.petsNearMealTime.length > 0 && (
+              <div className="bg-orange-50 dark:bg-orange-500/10 p-3 rounded-lg border-l-2 border-orange-500">
+                <div className="flex items-start gap-3">
+                  <Timer className="h-4 w-4 text-orange-500 mt-0.5" />
+                  <div>
+                    <h5 className="text-slate-700 dark:text-slate-200 text-sm font-medium">Próxima Refeição</h5>
+                    <p className="text-xs text-slate-500">{dashboardData.petsNearMealTime.length} pet(s) em até 30 min</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Estoque crítico */}
+            {summaries?.filter(s => s.isCriticalStock).slice(0, 3).map(item => (
+              <div 
+                key={item.pet.id}
+                className="bg-rose-50 dark:bg-rose-500/10 p-3 rounded-lg border-l-2 border-rose-500"
+              >
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-4 w-4 text-rose-500 mt-0.5" />
+                  <div className="flex-1">
+                    <h5 className="text-slate-700 dark:text-slate-200 text-sm font-medium">{item.pet.name}</h5>
+                    <p className="text-xs text-slate-500">
+                      {item.daysRemaining <= 0 ? 'Sem estoque!' : `${item.daysRemaining} dias restantes`}
+                    </p>
+                    <Button 
+                      variant="link" 
+                      className="text-xs h-auto p-0 mt-1 text-rose-600 dark:text-rose-400"
+                      onClick={() => {
+                        setSelectedPetId(item.pet.id);
+                        setIsAddStockOpen(true);
+                      }}
+                    >
+                      Adicionar estoque
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Estoque baixo */}
+            {summaries?.filter(s => s.isLowStock && !s.isCriticalStock).slice(0, 2).map(item => (
+              <div 
+                key={item.pet.id}
+                className="bg-amber-50 dark:bg-amber-500/10 p-3 rounded-lg border-l-2 border-amber-500"
+              >
+                <div className="flex items-start gap-3">
+                  <TrendingDown className="h-4 w-4 text-amber-500 mt-0.5" />
+                  <div className="flex-1">
+                    <h5 className="text-slate-700 dark:text-slate-200 text-sm font-medium">{item.pet.name}</h5>
+                    <p className="text-xs text-slate-500">{item.daysRemaining} dias restantes</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Sem alertas */}
+            {(!summaries?.some(s => s.isCriticalStock || s.isLowStock) && (!dashboardData?.petsNearMealTime || dashboardData.petsNearMealTime.length === 0)) && (
+              <div className="text-center py-6">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center mx-auto mb-2">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-500" />
+                </div>
+                <p className="text-slate-600 dark:text-slate-400 text-sm">Tudo em ordem!</p>
+                <p className="text-slate-400 dark:text-slate-500 text-xs">Nenhum alerta no momento</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* GRÁFICO DE PROJEÇÃO DE ESTOQUE */}
+      <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+        <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="text-slate-900 dark:text-white text-base flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-blue-500" />
+                Projeção de Estoque
+              </CardTitle>
+              <CardDescription className="mt-1">Dias restantes de ração por pet</CardDescription>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-slate-500">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded bg-orange-500"></div>
+                <span>Dias restantes</span>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-4">
+          {dashboardData?.stockProjection && dashboardData.stockProjection.length > 0 ? (
+            <div className="h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dashboardData.stockProjection} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-800" />
+                  <XAxis 
+                    type="number" 
+                    stroke="#94a3b8" 
+                    fontSize={11}
+                    tickFormatter={(value) => `${value}d`}
+                  />
+                  <YAxis 
+                    type="category" 
+                    dataKey="name" 
+                    width={60} 
+                    stroke="#94a3b8" 
+                    fontSize={11} 
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'white', 
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      fontSize: '12px'
+                    }}
+                    formatter={(value, name) => [
+                      name === 'dias' ? `${value} dias` : `${value} kg`,
+                      name === 'dias' ? 'Estoque' : 'Quantidade'
+                    ]}
+                  />
+                  <Bar 
+                    dataKey="dias" 
+                    fill="#f97316" 
+                    radius={[0, 4, 4, 0]}
+                    name="dias"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-[250px] flex items-center justify-center text-slate-400 text-sm">
+              Sem dados de estoque disponíveis
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Pets Grid - Premium */}
-      <div className="bg-card rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] border-0">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Dog className="h-4.5 w-4.5 text-primary" />
+      {/* GRID DE PETS */}
+      <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+        <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-slate-900 dark:text-white text-base flex items-center gap-2">
+              <Dog className="h-4 w-4 text-orange-500" />
+              Alimentação por Pet
+            </CardTitle>
+            <span className="text-xs text-slate-500">{summaries?.length || 0} pets</span>
           </div>
-          <div>
-            <h3 className="text-base font-semibold">Alimentação por Pet</h3>
-            <p className="text-xs text-muted-foreground">Clique em um pet para ver detalhes completos</p>
-          </div>
-        </div>
-        <div>
+        </CardHeader>
+        <CardContent className="pt-4">
           {summaries && summaries.length > 0 ? (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {summaries.map((item) => (
                 <div
                   key={item.pet.id}
                   onClick={() => openPetDetail(item.pet.id)}
-                  className={`rounded-xl p-4 cursor-pointer transition-all duration-300 hover:-translate-y-0.5 ${
+                  className={`rounded-xl p-4 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${
                     item.isCriticalStock
-                      ? "bg-slate-100 dark:bg-slate-800 ring-1 ring-slate-300 dark:ring-slate-700 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
+                      ? "bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 hover:shadow-lg"
                       : item.isLowStock
-                      ? "bg-slate-50 dark:bg-slate-800/50 ring-1 ring-slate-200 dark:ring-slate-700/50 hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)]"
-                      : "bg-muted/30 hover:bg-muted/50 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
+                      ? "bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 hover:shadow-lg"
+                      : "bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:shadow-lg hover:border-orange-300 dark:hover:border-orange-500/30"
                   }`}
                 >
                   <div className="flex items-center gap-4">
@@ -552,22 +710,22 @@ export default function AdminFoodPage() {
                         />
                       </div>
                     ) : (
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 ring-2 ring-white dark:ring-slate-800 shadow-sm">
-                        <Dog className="h-5 w-5 text-primary" />
+                      <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                        <span className="text-lg font-bold text-orange-600 dark:text-orange-400">{item.pet.name[0]}</span>
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm">{item.pet.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="font-semibold text-sm text-slate-900 dark:text-white">{item.pet.name}</p>
+                      <p className="text-xs text-slate-500 truncate">
                         {item.plan ? item.plan.brand : "Sem plano definido"}
                       </p>
                       {item.plan && (
                         <div className="flex items-center gap-3 mt-1.5">
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <span className="text-xs text-slate-500 flex items-center gap-1">
                             <Scale className="h-3 w-3" />
                             {item.plan.dailyAmount}g/dia
                           </span>
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <span className="text-xs text-slate-500 flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {item.plan.portionsPerDay}x
                           </span>
@@ -577,34 +735,42 @@ export default function AdminFoodPage() {
                     <div className="flex flex-col items-end gap-1.5">
                       {item.hasPlan ? (
                         <>
-                          <Badge className={item.isCriticalStock ? "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 border-0" : item.isLowStock ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-0" : "bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-0"}>
+                          <Badge 
+                            className={`border-0 ${
+                              item.isCriticalStock 
+                                ? "bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400" 
+                                : item.isLowStock 
+                                ? "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400" 
+                                : "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400"
+                            }`}
+                          >
                             {item.daysRemaining > 0 ? `${item.daysRemaining} dias` : "Sem estoque"}
                           </Badge>
                           {item.totalStock > 0 && (
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-slate-500">
                               {(item.totalStock / 1000).toFixed(1)} kg
                             </span>
                           )}
                         </>
                       ) : (
-                        <Badge variant="outline" className="text-xs">Configurar</Badge>
+                        <Badge variant="outline" className="text-xs border-slate-300 dark:border-slate-600">Configurar</Badge>
                       )}
-                      <ChevronRight className="h-4 w-4 text-muted-foreground mt-1" />
+                      <ChevronRight className="h-4 w-4 text-slate-400 mt-1" />
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center py-10 text-muted-foreground">
-              <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center mb-3">
-                <Dog className="h-7 w-7 opacity-50" />
+            <div className="flex flex-col items-center py-10">
+              <div className="h-14 w-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+                <Dog className="h-7 w-7 text-slate-400" />
               </div>
-              <p className="text-sm font-medium">Nenhum pet cadastrado</p>
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Nenhum pet cadastrado</p>
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Pet Detail Modal */}
       <Dialog open={isPetDetailOpen} onOpenChange={setIsPetDetailOpen}>
@@ -621,8 +787,8 @@ export default function AdminFoodPage() {
                   />
                 </div>
               ) : (
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Dog className="h-8 w-8 text-primary" />
+                <div className="w-16 h-16 rounded-full bg-orange-100 dark:bg-orange-500/20 flex items-center justify-center">
+                  <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">{petSummary?.pet?.name?.[0]}</span>
                 </div>
               )}
               <div>
@@ -663,7 +829,7 @@ export default function AdminFoodPage() {
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-base flex items-center gap-2">
-                        <UtensilsCrossed className="h-4 w-4 text-primary" />
+                        <UtensilsCrossed className="h-4 w-4 text-orange-500" />
                         Plano de Alimentação
                       </CardTitle>
                       <Button
@@ -734,7 +900,7 @@ export default function AdminFoodPage() {
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-base flex items-center gap-2">
-                        <Package className="h-4 w-4 text-primary" />
+                        <Package className="h-4 w-4 text-blue-500" />
                         Controle de Estoque
                       </CardTitle>
                       <Button
@@ -750,34 +916,33 @@ export default function AdminFoodPage() {
                   <CardContent>
                     {petSummary?.inventory && petSummary.inventory.items.length > 0 ? (
                       <div className="space-y-4">
-                        {/* Resumo */}
-                        <div className="flex items-center gap-6 p-4 rounded-lg bg-muted/50">
+                        <div className="flex items-center gap-6 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50">
                           <div className="text-center">
-                            <p className="text-2xl font-bold">{(petSummary.inventory.totalStock / 1000).toFixed(1)}</p>
-                            <p className="text-xs text-muted-foreground">kg disponíveis</p>
+                            <p className="text-2xl font-bold text-slate-900 dark:text-white">{(petSummary.inventory.totalStock / 1000).toFixed(1)}</p>
+                            <p className="text-xs text-slate-500">kg disponíveis</p>
                           </div>
-                          <div className="h-12 w-px bg-border" />
+                          <div className="h-12 w-px bg-slate-200 dark:bg-slate-700" />
                           <div className="text-center">
                             <p className={`text-2xl font-bold ${
                               petSummary.inventory.daysRemaining < 3
-                                ? "text-slate-900 dark:text-slate-100"
+                                ? "text-rose-600 dark:text-rose-400"
                                 : petSummary.inventory.daysRemaining < 7
-                                ? "text-slate-700 dark:text-slate-300"
-                                : "text-slate-600 dark:text-slate-400"
+                                ? "text-amber-600 dark:text-amber-400"
+                                : "text-emerald-600 dark:text-emerald-400"
                             }`}>
                               {petSummary.inventory.daysRemaining}
                             </p>
-                            <p className="text-xs text-muted-foreground">dias restantes</p>
+                            <p className="text-xs text-slate-500">dias restantes</p>
                           </div>
                           <div className="flex-1">
-                            <div className="h-2 bg-muted rounded-full overflow-hidden">
+                            <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                               <div
                                 className={`h-full transition-all ${
                                   petSummary.inventory.daysRemaining > 14
-                                    ? "bg-slate-400 dark:bg-slate-500"
+                                    ? "bg-emerald-500"
                                     : petSummary.inventory.daysRemaining > 7
-                                    ? "bg-slate-500 dark:bg-slate-400"
-                                    : "bg-slate-700 dark:bg-slate-300"
+                                    ? "bg-amber-500"
+                                    : "bg-rose-500"
                                 }`}
                                 style={{
                                   width: `${Math.min((petSummary.inventory.daysRemaining / 30) * 100, 100)}%`,
@@ -787,21 +952,20 @@ export default function AdminFoodPage() {
                           </div>
                         </div>
 
-                        {/* Lista de itens */}
                         <div className="space-y-2">
                           <p className="text-sm font-medium">Entregas Recentes</p>
-                          {petSummary.inventory.items.slice(0, 3).map((item) => (
-                            <div key={item.id} className="flex items-center justify-between p-3 rounded-lg border">
+                          {petSummary.inventory.items.slice(0, 3).map((invItem) => (
+                            <div key={invItem.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-700">
                               <div>
-                                <p className="font-medium text-sm">{item.brand}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  Recebido em {format(new Date(item.receivedDate), "dd/MM/yyyy", { locale: ptBR })}
+                                <p className="font-medium text-sm">{invItem.brand}</p>
+                                <p className="text-xs text-slate-500">
+                                  Recebido em {format(new Date(invItem.receivedDate), "dd/MM/yyyy", { locale: ptBR })}
                                 </p>
                               </div>
                               <div className="text-right">
-                                <p className="font-medium">{(item.quantityRemaining / 1000).toFixed(1)} kg</p>
-                                <p className="text-xs text-muted-foreground">
-                                  de {(item.quantityReceived / 1000).toFixed(1)} kg
+                                <p className="font-medium">{(invItem.quantityRemaining / 1000).toFixed(1)} kg</p>
+                                <p className="text-xs text-slate-500">
+                                  de {(invItem.quantityReceived / 1000).toFixed(1)} kg
                                 </p>
                               </div>
                             </div>
@@ -837,8 +1001,8 @@ export default function AdminFoodPage() {
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                                <Cookie className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                              <div className="h-10 w-10 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
+                                <Cookie className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                               </div>
                               <div>
                                 <p className="font-medium">{treat.name}</p>
@@ -892,8 +1056,8 @@ export default function AdminFoodPage() {
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                                <Leaf className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                              <div className="h-10 w-10 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center">
+                                <Leaf className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                               </div>
                               <div>
                                 <p className="font-medium">{food.name}</p>
@@ -964,8 +1128,8 @@ export default function AdminFoodPage() {
                                       key={i}
                                       className={`h-3.5 w-3.5 ${
                                         i < record.overallRating!
-                                          ? "fill-slate-500 text-slate-500 dark:fill-slate-400 dark:text-slate-400"
-                                          : "text-muted-foreground/30"
+                                          ? "fill-amber-400 text-amber-400"
+                                          : "text-slate-300 dark:text-slate-600"
                                       }`}
                                     />
                                   ))}
@@ -984,9 +1148,9 @@ export default function AdminFoodPage() {
                             </p>
                           )}
                           {record.allergicReaction && (
-                            <div className="flex items-center gap-2 mt-2 p-2 rounded bg-slate-100 dark:bg-slate-800">
-                              <AlertCircle className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                              <span className="text-sm text-slate-700 dark:text-slate-300">
+                            <div className="flex items-center gap-2 mt-2 p-2 rounded bg-rose-50 dark:bg-rose-500/10">
+                              <AlertCircle className="h-4 w-4 text-rose-500" />
+                              <span className="text-sm text-rose-700 dark:text-rose-400">
                                 Reação alérgica reportada
                               </span>
                             </div>
