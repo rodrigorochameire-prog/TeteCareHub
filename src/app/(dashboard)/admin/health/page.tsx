@@ -251,50 +251,50 @@ export default function AdminHealthPage() {
         </div>
       )}
 
-      {/* Stats - Layout compacto e limpo */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-muted-foreground">Vacinas</span>
-            <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-              <Syringe className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+      {/* Stats - Glass Premium */}
+      <div className="stats-row">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Vacinas</span>
+            <div className="stat-card-icon">
+              <Syringe />
             </div>
           </div>
-          <div className="text-2xl font-bold text-foreground">{vaccineStats?.upcoming || 0}</div>
-          <div className="text-xs text-muted-foreground">próximos 30 dias</div>
+          <div className="stat-card-value">{vaccineStats?.upcoming || 0}</div>
+          <div className="stat-card-description">próximos 30 dias</div>
         </div>
         
-        <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-muted-foreground">Preventivos</span>
-            <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-              <Shield className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Preventivos</span>
+            <div className="stat-card-icon">
+              <Shield />
             </div>
           </div>
-          <div className="text-2xl font-bold text-foreground">{preventiveStats?.upcoming || 0}</div>
-          <div className="text-xs text-muted-foreground">próximos 30 dias</div>
+          <div className="stat-card-value">{preventiveStats?.upcoming || 0}</div>
+          <div className="stat-card-description">próximos 30 dias</div>
         </div>
         
-        <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-muted-foreground">Antipulgas</span>
-            <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-              <Bug className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Antipulgas</span>
+            <div className="stat-card-icon">
+              <Bug />
             </div>
           </div>
-          <div className="text-2xl font-bold text-foreground">{preventiveStats?.flea || 0}</div>
-          <div className="text-xs text-muted-foreground">registros</div>
+          <div className="stat-card-value">{preventiveStats?.flea || 0}</div>
+          <div className="stat-card-description">registros</div>
         </div>
         
-        <div className="bg-card rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 border-0">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-muted-foreground">Vermífugos</span>
-            <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-              <Droplets className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Vermífugos</span>
+            <div className="stat-card-icon">
+              <Droplets />
             </div>
           </div>
-          <div className="text-2xl font-bold text-foreground">{preventiveStats?.deworming || 0}</div>
-          <div className="text-xs text-muted-foreground">registros</div>
+          <div className="stat-card-value">{preventiveStats?.deworming || 0}</div>
+          <div className="stat-card-description">registros</div>
         </div>
       </div>
 

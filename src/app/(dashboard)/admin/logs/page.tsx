@@ -526,38 +526,50 @@ export default function AdminLogs() {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - Glass Premium */}
       <div className="stats-row">
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Total de Logs</span>
-            <Calendar className="stat-card-icon muted" />
+            <div className="stat-card-icon">
+              <Calendar />
+            </div>
           </div>
           <div className="stat-card-value">{stats?.total || 0}</div>
+          <div className="stat-card-description">registros</div>
         </div>
 
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Logs de Hoje</span>
-            <Smile className="stat-card-icon green" />
+            <div className="stat-card-icon">
+              <Smile />
+            </div>
           </div>
           <div className="stat-card-value">{stats?.today || 0}</div>
+          <div className="stat-card-description">registros hoje</div>
         </div>
 
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Creche Hoje</span>
-            <Building2 className="stat-card-icon blue" />
+            <div className="stat-card-icon">
+              <Building2 />
+            </div>
           </div>
           <div className="stat-card-value">{stats?.daycareToday || 0}</div>
+          <div className="stat-card-description">logs de creche</div>
         </div>
 
         <div className={`stat-card ${chartData.healthAlerts > 0 ? 'highlight' : ''}`}>
           <div className="stat-card-header">
-            <span className="stat-card-title">Alertas de Saúde</span>
-            <AlertTriangle className={`stat-card-icon ${chartData.healthAlerts > 0 ? 'amber' : 'muted'}`} />
+            <span className="stat-card-title">Alertas</span>
+            <div className="stat-card-icon">
+              <AlertTriangle />
+            </div>
           </div>
           <div className="stat-card-value">{chartData.healthAlerts}</div>
+          <div className="stat-card-description">alertas de saúde</div>
         </div>
       </div>
 

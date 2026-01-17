@@ -188,146 +188,100 @@ export default function AdminDashboard() {
 
         {/* Tab: Visão Geral */}
         <TabsContent value="overview" className="space-y-6">
-          {/* Cards de Status do Dia */}
+          {/* Cards de Status do Dia - Glass Premium */}
           {dailyStatus && (
-            <div className="grid gap-3 md:grid-cols-4">
-              <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-                <CardContent className="pt-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">
-                        {dailyStatus.petsScheduledToEnter}
-                      </p>
-                      <p className="text-sm text-blue-600 dark:text-blue-400">Pets para entrar</p>
-                    </div>
-                    <Dog className="h-8 w-8 text-blue-500 opacity-50" />
+            <div className="grid gap-4 md:grid-cols-4">
+              <div className="stat-card">
+                <div className="stat-card-header">
+                  <span className="stat-card-title">Pets para Entrar</span>
+                  <div className="stat-card-icon">
+                    <Dog />
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="stat-card-value">{dailyStatus.petsScheduledToEnter}</div>
+                <div className="stat-card-description">agendados hoje</div>
+              </div>
 
-              <Card className="bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800">
-                <CardContent className="pt-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">
-                        {dailyStatus.medicationsToApply}
-                      </p>
-                      <p className="text-sm text-purple-600 dark:text-purple-400">Medicamentos hoje</p>
-                    </div>
-                    <Pill className="h-8 w-8 text-purple-500 opacity-50" />
+              <div className="stat-card">
+                <div className="stat-card-header">
+                  <span className="stat-card-title">Medicamentos</span>
+                  <div className="stat-card-icon">
+                    <Pill />
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="stat-card-value">{dailyStatus.medicationsToApply}</div>
+                <div className="stat-card-description">para aplicar hoje</div>
+              </div>
 
-              <Card className={`${dailyStatus.lowStockPets > 0 
-                ? "bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800" 
-                : "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800"}`}>
-                <CardContent className="pt-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={`text-3xl font-bold ${dailyStatus.lowStockPets > 0 
-                        ? "text-orange-700 dark:text-orange-300" 
-                        : "text-green-700 dark:text-green-300"}`}>
-                        {dailyStatus.lowStockPets}
-                      </p>
-                      <p className={`text-sm ${dailyStatus.lowStockPets > 0 
-                        ? "text-orange-600 dark:text-orange-400" 
-                        : "text-green-600 dark:text-green-400"}`}>
-                        Estoques baixos
-                      </p>
-                    </div>
-                    <Package className={`h-8 w-8 opacity-50 ${dailyStatus.lowStockPets > 0 
-                      ? "text-orange-500" : "text-green-500"}`} />
+              <div className={`stat-card ${dailyStatus.lowStockPets > 0 ? 'highlight' : ''}`}>
+                <div className="stat-card-header">
+                  <span className="stat-card-title">Estoques Baixos</span>
+                  <div className="stat-card-icon">
+                    <Package />
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="stat-card-value">{dailyStatus.lowStockPets}</div>
+                <div className="stat-card-description">pets com estoque baixo</div>
+              </div>
 
-              <Card className={`${dailyStatus.behaviorAlertsCount > 0 
-                ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800" 
-                : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800"}`}>
-                <CardContent className="pt-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={`text-3xl font-bold ${dailyStatus.behaviorAlertsCount > 0 
-                        ? "text-red-700 dark:text-red-300" 
-                        : "text-slate-700 dark:text-slate-300"}`}>
-                        {dailyStatus.behaviorAlertsCount}
-                      </p>
-                      <p className={`text-sm ${dailyStatus.behaviorAlertsCount > 0 
-                        ? "text-red-600 dark:text-red-400" 
-                        : "text-slate-600 dark:text-slate-400"}`}>
-                        Alertas comportamento
-                      </p>
-                    </div>
-                    <Zap className={`h-8 w-8 opacity-50 ${dailyStatus.behaviorAlertsCount > 0 
-                      ? "text-red-500" : "text-slate-500"}`} />
+              <div className={`stat-card ${dailyStatus.behaviorAlertsCount > 0 ? 'highlight' : ''}`}>
+                <div className="stat-card-header">
+                  <span className="stat-card-title">Alertas</span>
+                  <div className="stat-card-icon">
+                    <Zap />
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="stat-card-value">{dailyStatus.behaviorAlertsCount}</div>
+                <div className="stat-card-description">alertas de comportamento</div>
+              </div>
             </div>
           )}
 
-          {/* Stats Cards - Cores Neutras */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total de Pets</CardTitle>
-                <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                  <Dog className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+          {/* Stats Cards - Glass Premium */}
+          <div className="stats-row">
+            <div className="stat-card">
+              <div className="stat-card-header">
+                <span className="stat-card-title">Total de Pets</span>
+                <div className="stat-card-icon">
+                  <Dog />
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stats?.totalPets || 0}</div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Cadastrados na plataforma
-                </p>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="stat-card-value">{stats?.totalPets || 0}</div>
+              <div className="stat-card-description">cadastrados na plataforma</div>
+            </div>
 
-            <Card className="shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Na Creche</CardTitle>
-                <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                  <CheckCircle2 className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+            <div className="stat-card">
+              <div className="stat-card-header">
+                <span className="stat-card-title">Na Creche</span>
+                <div className="stat-card-icon">
+                  <CheckCircle2 />
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stats?.checkedIn || 0}</div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Pets presentes hoje
-                </p>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="stat-card-value">{stats?.checkedIn || 0}</div>
+              <div className="stat-card-description">check-in ativos</div>
+            </div>
 
-            <Card className="shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total de Tutores</CardTitle>
-                <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                  <Users className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+            <div className="stat-card">
+              <div className="stat-card-header">
+                <span className="stat-card-title">Tutores</span>
+                <div className="stat-card-icon">
+                  <Users />
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stats?.totalTutors || 0}</div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Cadastrados na plataforma
-                </p>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="stat-card-value">{stats?.totalTutors || 0}</div>
+              <div className="stat-card-description">clientes ativos</div>
+            </div>
 
-            <Card className="shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Pendentes</CardTitle>
-                <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                  <AlertCircle className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+            <div className="stat-card">
+              <div className="stat-card-header">
+                <span className="stat-card-title">Pendentes</span>
+                <div className="stat-card-icon">
+                  <Clock />
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stats?.pendingApproval || 0}</div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Aguardando aprovação
-                </p>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="stat-card-value">{stats?.pendingApproval || 0}</div>
+              <div className="stat-card-description">aguardando aprovação</div>
+            </div>
           </div>
 
           {/* Main Content Grid */}

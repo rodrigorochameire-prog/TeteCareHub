@@ -352,38 +352,50 @@ export default function AdminTraining() {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats - Glass Premium */}
       <div className="stats-row">
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Total de Sessões</span>
-            <Target className="stat-card-icon primary" />
+            <div className="stat-card-icon">
+              <Target />
+            </div>
           </div>
           <div className="stat-card-value">{allLogs?.length || 0}</div>
+          <div className="stat-card-description">sessões registradas</div>
         </div>
 
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Dominados</span>
-            <Trophy className="stat-card-icon green" />
+            <div className="stat-card-icon">
+              <Trophy />
+            </div>
           </div>
           <div className="stat-card-value">{chartData.mastered}</div>
+          <div className="stat-card-description">comandos dominados</div>
         </div>
 
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Em Prática</span>
-            <RefreshCw className="stat-card-icon blue" />
+            <div className="stat-card-icon">
+              <RefreshCw />
+            </div>
           </div>
           <div className="stat-card-value">{chartData.practicing}</div>
+          <div className="stat-card-description">em progresso</div>
         </div>
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-title">Taxa de Sucesso Média</span>
-            <TrendingUp className="stat-card-icon amber" />
+            <span className="stat-card-title">Taxa de Sucesso</span>
+            <div className="stat-card-icon">
+              <TrendingUp />
+            </div>
           </div>
           <div className="stat-card-value">{chartData.successRateAvg}%</div>
+          <div className="stat-card-description">média geral</div>
         </div>
       </div>
 

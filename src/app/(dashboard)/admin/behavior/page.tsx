@@ -377,38 +377,50 @@ export default function AdminBehavior() {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - Glass Premium */}
       <div className="stats-row">
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Total de Registros</span>
-            <Brain className="stat-card-icon muted" />
+            <div className="stat-card-icon">
+              <Brain />
+            </div>
           </div>
           <div className="stat-card-value">{allLogs?.length || 0}</div>
+          <div className="stat-card-description">avaliações comportamentais</div>
         </div>
 
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Pets Avaliados</span>
-            <Dog className="stat-card-icon blue" />
+            <div className="stat-card-icon">
+              <Dog />
+            </div>
           </div>
           <div className="stat-card-value">{chartData.byPet.length}</div>
+          <div className="stat-card-description">pets com registros</div>
         </div>
 
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Esta Semana</span>
-            <Calendar className="stat-card-icon green" />
+            <div className="stat-card-icon">
+              <Calendar />
+            </div>
           </div>
           <div className="stat-card-value">{filteredLogs.length}</div>
+          <div className="stat-card-description">registros no período</div>
         </div>
 
         <div className={`stat-card ${chartData.alerts > 0 ? 'highlight' : ''}`}>
           <div className="stat-card-header">
             <span className="stat-card-title">Alertas</span>
-            <AlertTriangle className={`stat-card-icon ${chartData.alerts > 0 ? 'amber' : 'muted'}`} />
+            <div className="stat-card-icon">
+              <AlertTriangle />
+            </div>
           </div>
           <div className="stat-card-value">{chartData.alerts}</div>
+          <div className="stat-card-description">comportamentos atípicos</div>
         </div>
       </div>
 
