@@ -1427,7 +1427,7 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                 {/* Gráfico de Radar Premium - Coluna Principal */}
                 <div className="lg:col-span-3 p-4 sm:p-6">
                   {/* Container com background decorativo e margens seguras */}
-                  <div className="relative mx-1 sm:mx-2">
+                  <div className="relative mx-0.5 sm:mx-1">
                     {/* Efeito de brilho de fundo */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <div className="w-32 h-32 sm:w-48 sm:h-48 rounded-full bg-gradient-to-br from-blue-500/10 via-blue-400/5 to-transparent blur-3xl" />
@@ -1439,8 +1439,8 @@ export default function TutorPetDetailPage(props: PetPageProps) {
                           data={radarData} 
                           cx="50%" 
                           cy="50%" 
-                          outerRadius="70%"
-                          margin={{ top: 40, right: 40, bottom: 40, left: 40 }}
+                          outerRadius="73%"
+                          margin={{ top: 35, right: 35, bottom: 35, left: 35 }}
                         >
                           <defs>
                             {/* Gradiente Premium Ultra para valor atual - Azul Profundo */}

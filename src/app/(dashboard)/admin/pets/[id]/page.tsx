@@ -565,7 +565,7 @@ export default function AdminPetDetailPage() {
                 {/* Gráfico de Radar Premium */}
                 <div className="lg:col-span-3 p-4 sm:p-6">
                   {/* Container com margens seguras */}
-                  <div className="relative mx-1 sm:mx-2">
+                  <div className="relative mx-0.5 sm:mx-1">
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <div className="w-48 h-48 rounded-full bg-gradient-to-br from-purple-500/10 via-violet-500/5 to-transparent blur-3xl" />
                     </div>
@@ -576,8 +576,8 @@ export default function AdminPetDetailPage() {
                           data={behaviorProfile} 
                           cx="50%" 
                           cy="50%" 
-                          outerRadius="70%"
-                          margin={{ top: 40, right: 40, bottom: 40, left: 40 }}
+                          outerRadius="73%"
+                          margin={{ top: 35, right: 35, bottom: 35, left: 35 }}
                         >
                           <defs>
                             <linearGradient id="petRadarGradient" x1="0" y1="0" x2="1" y2="1">
