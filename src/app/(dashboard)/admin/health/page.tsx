@@ -68,6 +68,13 @@ import {
 
 const NEUTRAL_COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"];
 
+// Cores semânticas para status de imunização
+const IMMUNIZATION_COLORS = {
+  emDia: "#10b981", // Emerald - Verde
+  proximo: "#f59e0b", // Amber - Laranja
+  atrasado: "#ef4444", // Red - Vermelho
+};
+
 // Tipos de preventivos - ícones minimalistas, cor única
 const PREVENTIVE_TYPES: Array<{ value: string; label: string; icon: LucideIcon }> = [
   { value: "flea", label: "Antipulgas", icon: Bug },
@@ -621,48 +628,103 @@ export default function AdminHealthPage() {
             </Card>
           </div>
 
-          {/* Gráficos */}
+          {/* Gráficos Premium */}
           <div className="grid gap-6 lg:grid-cols-2">
-            {/* Gráfico de Vacinas por Status */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <PieChart className="h-5 w-5" />
-                  Status de Vacinas
-                </CardTitle>
-                <CardDescription>Distribuição por status de vacinação</CardDescription>
+            {/* Status de Imunização - Donut Premium */}
+            <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg text-white flex items-center gap-2">
+                      <div className="p-2 rounded-xl bg-white/10">
+                        <Syringe className="h-4 w-4 text-white" />
+                      </div>
+                      Status de Imunização
+                    </CardTitle>
+                    <CardDescription className="text-slate-400 mt-1">Visão geral da saúde vacinal</CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pb-6">
                 {vaccineStats ? (
-                  <div className="h-[280px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RechartsPie>
-                        <Pie
-                          data={[
-                            { name: "Em dia", value: Math.max(0, (vaccineStats.total || 0) - (vaccineStats.upcoming || 0) - (vaccineStats.overdue || 0)) },
-                            { name: "Próximas", value: vaccineStats.upcoming || 0 },
-                            { name: "Atrasadas", value: vaccineStats.overdue || 0 },
-                          ].filter(d => d.value > 0)}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={50}
-                          outerRadius={90}
-                          paddingAngle={2}
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-                          labelLine={false}
-                        >
-                          {[0, 1, 2].map((index) => (
-                            <Cell key={`cell-${index}`} fill={NEUTRAL_COLORS[index]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend />
-                      </RechartsPie>
-                    </ResponsiveContainer>
+                  <div className="relative">
+                    <div className="h-[220px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RechartsPie>
+                          <defs>
+                            <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#34d399" />
+                              <stop offset="100%" stopColor="#10b981" />
+                            </linearGradient>
+                            <linearGradient id="orangeGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#fbbf24" />
+                              <stop offset="100%" stopColor="#f59e0b" />
+                            </linearGradient>
+                            <linearGradient id="redGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#f87171" />
+                              <stop offset="100%" stopColor="#ef4444" />
+                            </linearGradient>
+                          </defs>
+                          <Pie
+                            data={[
+                              { name: "Em dia", value: Math.max(0, (vaccineStats.total || 0) - (vaccineStats.upcoming || 0) - (vaccineStats.overdue || 0)), fill: "url(#greenGrad)" },
+                              { name: "Vence em breve", value: vaccineStats.upcoming || 0, fill: "url(#orangeGrad)" },
+                              { name: "Atrasadas", value: vaccineStats.overdue || 0, fill: "url(#redGrad)" },
+                            ].filter(d => d.value > 0)}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={55}
+                            outerRadius={85}
+                            paddingAngle={3}
+                            dataKey="value"
+                            stroke="none"
+                          >
+                            {[
+                              { fill: "url(#greenGrad)" },
+                              { fill: "url(#orangeGrad)" },
+                              { fill: "url(#redGrad)" },
+                            ].map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
+                          </Pie>
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: 'rgba(15, 23, 42, 0.95)', 
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              borderRadius: '12px',
+                              color: 'white'
+                            }} 
+                          />
+                        </RechartsPie>
+                      </ResponsiveContainer>
+                    </div>
+                    
+                    {/* Centro do Donut - Total */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-white">{vaccineStats.total || 0}</div>
+                        <div className="text-xs text-slate-400 uppercase tracking-wider">Total</div>
+                      </div>
+                    </div>
+                    
+                    {/* Legenda Premium */}
+                    <div className="flex items-center justify-center gap-4 mt-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                        <span className="text-xs text-slate-300">Em dia ({Math.max(0, (vaccineStats.total || 0) - (vaccineStats.upcoming || 0) - (vaccineStats.overdue || 0))})</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-amber-500" />
+                        <span className="text-xs text-slate-300">Próximas ({vaccineStats.upcoming || 0})</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-red-500" />
+                        <span className="text-xs text-slate-300">Atrasadas ({vaccineStats.overdue || 0})</span>
+                      </div>
+                    </div>
                   </div>
                 ) : (
-                  <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+                  <div className="h-[280px] flex items-center justify-center text-slate-400">
                     Carregando dados...
                   </div>
                 )}
