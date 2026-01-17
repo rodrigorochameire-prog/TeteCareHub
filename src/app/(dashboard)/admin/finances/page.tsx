@@ -332,47 +332,62 @@ export default function AdminFinances() {
             </Card>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2 px-0.5">
             {/* Evolução Mensal */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Evolução Mensal
-                </CardTitle>
-                <CardDescription>Vendas e reembolsos dos últimos 6 meses</CardDescription>
+            <Card className="shadow-sm overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800/50 dark:to-blue-950/20 border-b border-slate-100/80 dark:border-slate-700/50">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
+                    <TrendingUp className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base font-bold">Evolução Mensal</CardTitle>
+                    <CardDescription className="text-xs">Vendas e reembolsos dos últimos 6 meses</CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
+              <CardContent className="p-4 sm:p-5">
+                <div className="h-[300px] mx-1">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData.months}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} />
-                      <YAxis stroke="#94a3b8" fontSize={12} />
+                    <AreaChart data={chartData.months} margin={{ top: 10, right: 10, bottom: 10, left: 0 }}>
+                      <defs>
+                        <linearGradient id="colorVendas" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#1e3a5f" stopOpacity={0.6}/>
+                          <stop offset="95%" stopColor="#1e3a5f" stopOpacity={0.05}/>
+                        </linearGradient>
+                        <linearGradient id="colorReembolsos" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#64748b" stopOpacity={0.5}/>
+                          <stop offset="95%" stopColor="#64748b" stopOpacity={0.05}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.5} />
+                      <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                       <Tooltip 
                         contentStyle={{ 
-                          backgroundColor: 'white', 
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '8px'
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                          border: 'none',
+                          borderRadius: '12px',
+                          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
                         }}
                         formatter={(value) => [`R$ ${Number(value || 0).toFixed(2)}`, '']}
                       />
-                      <Legend />
+                      <Legend iconType="circle" iconSize={8} />
                       <Area 
                         type="monotone" 
                         dataKey="vendas" 
                         name="Vendas"
-                        stroke="#475569" 
-                        fill="#94a3b8" 
-                        fillOpacity={0.3}
+                        stroke="#1e3a5f" 
+                        fill="url(#colorVendas)" 
+                        strokeWidth={2}
                       />
                       <Area 
                         type="monotone" 
                         dataKey="reembolsos" 
                         name="Reembolsos"
                         stroke="#64748b" 
-                        fill="#cbd5e1" 
-                        fillOpacity={0.3}
+                        fill="url(#colorReembolsos)" 
+                        strokeWidth={2}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -381,29 +396,40 @@ export default function AdminFinances() {
             </Card>
 
             {/* Créditos por Mês */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Créditos Vendidos
-                </CardTitle>
-                <CardDescription>Volume de créditos por mês</CardDescription>
+            <Card className="shadow-sm overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800/50 dark:to-blue-950/20 border-b border-slate-100/80 dark:border-slate-700/50">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
+                    <BarChart3 className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base font-bold">Créditos Vendidos</CardTitle>
+                    <CardDescription className="text-xs">Volume de créditos por mês</CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
+              <CardContent className="p-4 sm:p-5">
+                <div className="h-[300px] mx-1">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData.months}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} />
-                      <YAxis stroke="#94a3b8" fontSize={12} />
+                    <BarChart data={chartData.months} margin={{ top: 10, right: 10, bottom: 10, left: 0 }}>
+                      <defs>
+                        <linearGradient id="creditosBarGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#1e3a5f" stopOpacity={0.9}/>
+                          <stop offset="100%" stopColor="#1e3a5f" stopOpacity={0.6}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.5} vertical={false} />
+                      <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                       <Tooltip 
                         contentStyle={{ 
-                          backgroundColor: 'white', 
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '8px'
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                          border: 'none',
+                          borderRadius: '12px',
+                          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
                         }}
                       />
-                      <Bar dataKey="creditos" name="Créditos" fill="#64748b" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="creditos" name="Créditos" fill="url(#creditosBarGradient)" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

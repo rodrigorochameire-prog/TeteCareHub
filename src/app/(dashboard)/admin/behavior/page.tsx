@@ -629,7 +629,8 @@ export default function AdminBehavior() {
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
                 {/* Gráfico de Radar Premium */}
                 <div className="lg:col-span-3 p-4 sm:p-6">
-                  <div className="relative">
+                  {/* Container com margens seguras */}
+                  <div className="relative mx-1 sm:mx-2">
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <div className="w-48 h-48 rounded-full bg-gradient-to-br from-blue-500/10 via-blue-400/5 to-transparent blur-3xl" />
                     </div>
@@ -640,8 +641,8 @@ export default function AdminBehavior() {
                           data={chartData.radarData} 
                           cx="50%" 
                           cy="50%" 
-                          outerRadius="75%"
-                          margin={{ top: 30, right: 30, bottom: 30, left: 30 }}
+                          outerRadius="70%"
+                          margin={{ top: 40, right: 40, bottom: 40, left: 40 }}
                         >
                           <defs>
                             <linearGradient id="adminRadarGradient" x1="0" y1="0" x2="1" y2="1">
@@ -812,7 +813,7 @@ export default function AdminBehavior() {
                 </div>
                 
                 {/* Barra Lateral de Métricas */}
-                <div className="lg:col-span-2 bg-gradient-to-br from-slate-50/80 via-white to-blue-50/30 dark:from-slate-800/50 dark:via-slate-900 dark:to-blue-950/20 p-4 sm:p-5 border-t lg:border-t-0 lg:border-l border-slate-100/80 dark:border-slate-700/50">
+                <div className="lg:col-span-2 bg-gradient-to-br from-slate-50/80 via-white to-blue-50/30 dark:from-slate-800/50 dark:via-slate-900 dark:to-blue-950/20 p-4 sm:p-5 border-t lg:border-t-0 lg:border-l border-slate-100/80 dark:border-slate-700/50 mx-0.5 sm:mx-0">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <div className="w-1 h-4 rounded-full bg-gradient-to-b from-blue-500 to-blue-700" />

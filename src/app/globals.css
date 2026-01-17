@@ -184,6 +184,261 @@ img[src*="tetecare-logo"] {
 }
 
 /* ========================================
+   CHARTS PREMIUM - VISUAL CONSISTENTE
+   ======================================== */
+
+/* Container premium para gráficos */
+.chart-container-premium {
+  @apply relative rounded-2xl overflow-hidden;
+  background: linear-gradient(135deg, 
+    hsl(210 40% 98%) 0%, 
+    hsl(214 32% 96%) 50%,
+    hsl(216 33% 97%) 100%);
+  padding: 1.5rem;
+  margin: 0.25rem; /* Margem de segurança */
+}
+
+.dark .chart-container-premium {
+  background: linear-gradient(135deg, 
+    hsl(220 18% 13%) 0%, 
+    hsl(220 20% 11%) 50%,
+    hsl(220 18% 12%) 100%);
+}
+
+/* Efeito de brilho interno para gráficos */
+.chart-glow-effect {
+  @apply absolute pointer-events-none;
+  width: 60%;
+  height: 60%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, 
+    hsl(217 91% 60% / 0.08) 0%, 
+    transparent 70%);
+  border-radius: 50%;
+  filter: blur(30px);
+}
+
+.dark .chart-glow-effect {
+  background: radial-gradient(circle, 
+    hsl(217 91% 60% / 0.12) 0%, 
+    transparent 70%);
+}
+
+/* Card de infográfico com visual premium */
+.infographic-card {
+  @apply rounded-2xl bg-card overflow-hidden;
+  border: none;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 
+              0 2px 6px 0 rgba(0, 0, 0, 0.03),
+              0 4px 12px 0 rgba(0, 0, 0, 0.02);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.infographic-card:hover {
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.06), 
+              0 8px 24px 0 rgba(0, 0, 0, 0.04),
+              0 16px 32px 0 rgba(0, 0, 0, 0.02);
+  transform: translateY(-2px);
+}
+
+/* Header premium para infográficos */
+.infographic-header {
+  @apply flex items-center justify-between px-5 py-4;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  background: linear-gradient(to bottom, 
+    hsl(var(--card)) 0%, 
+    hsl(var(--card) / 0.95) 100%);
+}
+
+.infographic-title {
+  @apply flex items-center gap-2.5;
+}
+
+.infographic-title-icon {
+  @apply h-9 w-9 rounded-xl flex items-center justify-center;
+  background: linear-gradient(135deg, 
+    hsl(217 91% 60% / 0.15) 0%, 
+    hsl(217 91% 60% / 0.08) 100%);
+}
+
+.infographic-title-icon svg {
+  @apply h-4 w-4;
+  color: hsl(217 91% 55%);
+}
+
+.dark .infographic-title-icon {
+  background: linear-gradient(135deg, 
+    hsl(217 91% 60% / 0.2) 0%, 
+    hsl(217 91% 60% / 0.1) 100%);
+}
+
+.infographic-title-text h3 {
+  @apply text-sm font-bold text-foreground;
+}
+
+.infographic-title-text p {
+  @apply text-xs text-muted-foreground mt-0.5;
+}
+
+/* Badge premium para contagem de métricas */
+.infographic-badge {
+  @apply text-[10px] px-3 py-1.5 rounded-full font-semibold;
+  background: linear-gradient(135deg, 
+    hsl(217 91% 55%) 0%, 
+    hsl(217 91% 45%) 100%);
+  color: white;
+  box-shadow: 0 2px 8px 0 hsl(217 91% 55% / 0.35);
+}
+
+/* Conteúdo do infográfico com padding seguro */
+.infographic-content {
+  @apply p-5;
+  min-height: 200px;
+}
+
+/* Grid de métricas detalhadas (sidebar) */
+.metrics-sidebar {
+  @apply p-5;
+  background: linear-gradient(135deg, 
+    hsl(210 40% 98% / 0.8) 0%, 
+    hsl(0 0% 100%) 50%,
+    hsl(217 91% 98% / 0.3) 100%);
+  border-left: 1px solid hsl(var(--border) / 0.5);
+}
+
+.dark .metrics-sidebar {
+  background: linear-gradient(135deg, 
+    hsl(220 18% 12% / 0.8) 0%, 
+    hsl(220 20% 10%) 50%,
+    hsl(217 91% 15% / 0.2) 100%);
+}
+
+/* Item de métrica individual */
+.metric-item {
+  @apply p-3 rounded-xl transition-all duration-300;
+  cursor: default;
+}
+
+.metric-item:hover {
+  @apply bg-white/80 shadow-lg;
+  box-shadow: 0 4px 12px 0 hsl(217 91% 55% / 0.08);
+}
+
+.dark .metric-item:hover {
+  @apply bg-slate-800/60;
+}
+
+.metric-item.highlighted {
+  @apply ring-1 ring-blue-200/50;
+  background: hsl(217 91% 97% / 0.5);
+}
+
+.dark .metric-item.highlighted {
+  @apply ring-blue-800/30;
+  background: hsl(217 91% 15% / 0.3);
+}
+
+/* Barra de progresso premium */
+.progress-bar-premium {
+  @apply h-2 rounded-full overflow-hidden relative;
+  background: linear-gradient(to right, 
+    hsl(220 14% 93%) 0%, 
+    hsl(220 14% 96%) 100%);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.dark .progress-bar-premium {
+  background: linear-gradient(to right, 
+    hsl(220 15% 20%) 0%, 
+    hsl(220 15% 18%) 100%);
+}
+
+.progress-bar-premium .progress-fill {
+  @apply h-full rounded-full transition-all duration-700;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar-premium .progress-fill.positive {
+  background: linear-gradient(to right, 
+    hsl(217 91% 55%) 0%, 
+    hsl(217 91% 45%) 100%);
+}
+
+.progress-bar-premium .progress-fill.warning {
+  background: linear-gradient(to right, 
+    hsl(38 92% 55%) 0%, 
+    hsl(25 95% 55%) 100%);
+}
+
+/* Animação de brilho na barra de progresso */
+.progress-bar-premium .progress-fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  animation: progress-shimmer 2s infinite;
+}
+
+@keyframes progress-shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Marcador de benchmark */
+.benchmark-marker {
+  @apply absolute top-1/2 -translate-y-1/2 z-10;
+}
+
+.benchmark-marker::after {
+  content: "";
+  display: block;
+  width: 2px;
+  height: 14px;
+  background: hsl(220 14% 50%);
+  border-radius: 1px;
+}
+
+.dark .benchmark-marker::after {
+  background: hsl(220 14% 60%);
+}
+
+/* Gradiente de indicador de valor */
+.value-indicator {
+  @apply px-2 py-0.5 rounded-md text-[10px] font-bold flex items-center gap-0.5;
+}
+
+.value-indicator.positive {
+  background: hsl(142 72% 95%);
+  color: hsl(142 58% 32%);
+}
+
+.value-indicator.warning {
+  background: hsl(38 92% 95%);
+  color: hsl(25 75% 35%);
+}
+
+.dark .value-indicator.positive {
+  background: hsl(142 50% 20% / 0.4);
+  color: hsl(142 55% 58%);
+}
+
+.dark .value-indicator.warning {
+  background: hsl(38 75% 25% / 0.4);
+  color: hsl(38 80% 60%);
+}
+
+/* ========================================
    LAYOUT DE PÁGINA
    ======================================== */
 
@@ -191,6 +446,14 @@ img[src*="tetecare-logo"] {
   @apply space-y-5 animate-fade-in;
   max-width: 100%;
   overflow-x: hidden;
+  padding: 0 0.25rem; /* Margem mínima de segurança para evitar cortes */
+}
+
+/* Margem extra em telas menores para evitar cortes */
+@media (max-width: 640px) {
+  .page-container {
+    padding: 0 0.5rem;
+  }
 }
 
 /* Previne overflow horizontal em todos os containers de página */
@@ -243,12 +506,14 @@ main,
   @apply grid grid-cols-2 lg:grid-cols-4 gap-3;
   max-width: 100%;
   overflow-x: hidden;
+  padding: 0 0.125rem; /* Margem de segurança */
 }
 
 .stats-row {
   @apply grid grid-cols-2 lg:grid-cols-4 gap-3;
   max-width: 100%;
   overflow-x: hidden;
+  padding: 0 0.125rem; /* Margem de segurança */
 }
 
 .stat-card {
@@ -345,6 +610,7 @@ main,
               0 1px 3px 0 rgba(0, 0, 0, 0.05),
               0 2px 6px 0 rgba(0, 0, 0, 0.02);
   transition: all 0.3s ease;
+  margin: 0 0.125rem; /* Margem mínima de segurança */
 }
 
 .section-card:hover {
@@ -354,7 +620,7 @@ main,
 }
 
 .section-card-header {
-  @apply flex items-center justify-between px-6 py-4 border-b border-border/30;
+  @apply flex items-center justify-between px-5 py-4 border-b border-border/30;
 }
 
 .section-card-title {
@@ -389,7 +655,30 @@ main,
 }
 
 .section-card-content {
-  @apply p-6;
+  @apply p-5;
+}
+
+/* Variante premium para section-card */
+.section-card.premium {
+  background: linear-gradient(135deg, 
+    hsl(var(--card)) 0%, 
+    hsl(210 40% 99%) 100%);
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.03), 
+              0 4px 8px 0 rgba(0, 0, 0, 0.04),
+              0 8px 16px 0 rgba(0, 0, 0, 0.02);
+}
+
+.dark .section-card.premium {
+  background: linear-gradient(135deg, 
+    hsl(var(--card)) 0%, 
+    hsl(220 18% 11%) 100%);
+}
+
+.section-card.premium:hover {
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.06), 
+              0 8px 20px 0 rgba(0, 0, 0, 0.05),
+              0 12px 28px 0 rgba(0, 0, 0, 0.03);
+  transform: translateY(-1px);
 }
 
 /* ========================================
@@ -771,18 +1060,21 @@ main,
   @apply grid gap-4 lg:grid-cols-2;
   max-width: 100%;
   overflow-x: hidden;
+  padding: 0 0.125rem; /* Margem de segurança */
 }
 
 .content-grid-3 {
   @apply grid gap-4 md:grid-cols-2 lg:grid-cols-3;
   max-width: 100%;
   overflow-x: hidden;
+  padding: 0 0.125rem; /* Margem de segurança */
 }
 
 .content-grid-4 {
   @apply grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4;
   max-width: 100%;
   overflow-x: hidden;
+  padding: 0 0.125rem; /* Margem de segurança */
 }
 
 /* Previne overflow em cards dentro de grids */
@@ -793,6 +1085,108 @@ main,
 .stats-row > * {
   min-width: 0;
   overflow: hidden;
+}
+
+/* ========================================
+   CHARTS CONTAINER - MARGENS SEGURAS
+   ======================================== */
+
+/* Container seguro para gráficos dentro de cards */
+.chart-safe-container {
+  @apply relative;
+  padding: 0.5rem;
+  margin: -0.25rem; /* Compensa o padding interno */
+}
+
+/* Container responsivo para gráficos */
+.chart-responsive-wrapper {
+  @apply w-full;
+  min-height: 200px;
+}
+
+@media (min-width: 640px) {
+  .chart-responsive-wrapper {
+    min-height: 280px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .chart-responsive-wrapper {
+    min-height: 320px;
+  }
+}
+
+/* ========================================
+   RESPONSIVIDADE - AJUSTES MÓVEIS
+   ======================================== */
+
+/* Garante que cards de gráficos não cortem em mobile */
+@media (max-width: 640px) {
+  .stats-grid,
+  .stats-row {
+    gap: 0.5rem;
+    padding: 0 0.25rem;
+  }
+  
+  .stat-card {
+    padding: 0.875rem;
+  }
+  
+  .stat-card-value {
+    @apply text-xl;
+  }
+  
+  .section-card-header {
+    @apply px-4 py-3;
+  }
+  
+  .section-card-content {
+    @apply p-4;
+  }
+  
+  /* Infográficos responsivos */
+  .infographic-header {
+    @apply px-4 py-3;
+  }
+  
+  .infographic-content {
+    @apply p-4;
+    min-height: 180px;
+  }
+  
+  .infographic-title-icon {
+    @apply h-8 w-8;
+  }
+  
+  .infographic-title-icon svg {
+    @apply h-3.5 w-3.5;
+  }
+  
+  /* Métricas sidebar em mobile */
+  .metrics-sidebar {
+    @apply p-4;
+  }
+  
+  .metric-item {
+    @apply p-2;
+  }
+}
+
+/* Ajustes tablet */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .stats-grid,
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Garante overflow-x hidden em containers principais */
+@media (max-width: 1024px) {
+  .content-grid,
+  .content-grid-3,
+  .content-grid-4 {
+    @apply gap-3;
+  }
 }
 
 /* ========================================
