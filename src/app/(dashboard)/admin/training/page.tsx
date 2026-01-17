@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef } from "react";
 import { trpc } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -352,39 +353,78 @@ export default function AdminTraining() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="stats-row">
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-title">Total de Sessões</span>
-            <Target className="stat-card-icon primary" />
-          </div>
-          <div className="stat-card-value">{allLogs?.length || 0}</div>
-        </div>
+      {/* Stats - Premium */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-0.5">
+        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
+                <Target className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Total de Sessões</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{allLogs?.length || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-title">Dominados</span>
-            <Trophy className="stat-card-icon green" />
-          </div>
-          <div className="stat-card-value">{chartData.mastered}</div>
-        </div>
+        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500/15 to-emerald-600/10">
+                <Trophy className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Dominados</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{chartData.mastered}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-title">Em Prática</span>
-            <RefreshCw className="stat-card-icon blue" />
-          </div>
-          <div className="stat-card-value">{chartData.practicing}</div>
-        </div>
+        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-violet-500/15 to-violet-600/10">
+                <RefreshCw className="h-5 w-5 text-violet-600" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Em Prática</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{chartData.practicing}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-title">Taxa de Sucesso Média</span>
-            <TrendingUp className="stat-card-icon amber" />
-          </div>
-          <div className="stat-card-value">{chartData.successRateAvg}%</div>
-        </div>
+        <Card className={cn(
+          "overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5",
+          chartData.successRateAvg >= 80 && "ring-1 ring-emerald-200 dark:ring-emerald-800/50"
+        )}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "h-10 w-10 rounded-xl flex items-center justify-center",
+                chartData.successRateAvg >= 80 
+                  ? "bg-gradient-to-br from-emerald-500/15 to-emerald-600/10"
+                  : chartData.successRateAvg >= 50
+                  ? "bg-gradient-to-br from-amber-500/15 to-amber-600/10"
+                  : "bg-gradient-to-br from-slate-500/15 to-slate-600/10"
+              )}>
+                <TrendingUp className={cn(
+                  "h-5 w-5",
+                  chartData.successRateAvg >= 80 ? "text-emerald-600" 
+                    : chartData.successRateAvg >= 50 ? "text-amber-600" 
+                    : "text-slate-500"
+                )} />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Taxa de Sucesso</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{chartData.successRateAvg}%</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main Tabs */}
