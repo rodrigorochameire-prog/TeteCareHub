@@ -192,79 +192,105 @@ export default function AdminPetDetailPage() {
         </div>
       )}
 
-      {/* Header - Layout compacto e harmonioso */}
-      <div className="flex flex-col gap-3">
-        {/* Linha Principal: Voltar + Avatar + Info + Badge + Ações */}
-        <div className="flex items-center gap-3">
-          {/* Botão Voltar */}
-          <Link href="/admin/pets">
-            <Button variant="ghost" size="icon" className="shrink-0 h-9 w-9 active:scale-95 transition-transform">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          
-          {/* Avatar com ícone de raça */}
-          {pet.photoUrl ? (
-            <img
-              src={pet.photoUrl}
-              alt={pet.name}
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border-2 border-primary/20 shadow-md shrink-0"
-            />
-          ) : (
-            <BreedIconLarge breed={pet.breed} className="shrink-0 !w-14 !h-14 sm:!w-16 sm:!h-16" />
-          )}
-          
-          {/* Info do Pet + Badge */}
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-lg sm:text-xl font-bold truncate">{pet.name}</h1>
-              <Badge 
-                variant={pet.status === "checked-in" ? "default" : "secondary"} 
-                className="text-[10px] px-2 py-0.5 shrink-0"
+      {/* Hero Header Premium - Azul Escuro Sofisticado */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-xl">
+        {/* Elementos decorativos de fundo */}
+        <div className="absolute top-0 right-0 w-40 h-40 bg-orange-500/15 rounded-full blur-3xl -mr-16 -mt-16" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -ml-12 -mb-12" />
+        
+        {/* Conteúdo do Header */}
+        <div className="relative z-10 p-4 sm:p-6">
+          {/* Linha Superior: Voltar + Ações */}
+          <div className="flex items-center justify-between mb-4">
+            <Link href="/admin/pets">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-white/80 hover:text-white hover:bg-white/10 active:scale-95 transition-all"
               >
-                {pet.status === "checked-in" ? "Na Creche" : "Fora"}
-              </Badge>
-            </div>
-            <p className="text-xs sm:text-sm text-muted-foreground truncate">
-              {pet.breed || "Raça não informada"} • {calculateAge()}
-            </p>
-          </div>
-          
-          {/* Ações - Desktop */}
-          <div className="hidden sm:flex items-center gap-2 shrink-0">
-            <Link href={`/admin/pets/${petId}/edit`}>
-              <Button variant="outline" size="sm" className="text-xs active:scale-95 transition-transform">
-                <Edit className="h-3.5 w-3.5 mr-1.5" />
-                Perfil Avançado
+                <ArrowLeft className="h-4 w-4 mr-1.5" />
+                <span className="text-xs">Voltar</span>
               </Button>
             </Link>
-            <Button 
-              onClick={() => setIsEditDialogOpen(true)} 
-              size="sm" 
-              className="text-xs active:scale-95 transition-transform bg-blue-600 hover:bg-blue-700 text-white shadow-md"
-            >
-              <Edit className="h-3.5 w-3.5 mr-1.5" />
-              Edição
-            </Button>
+            
+            <div className="flex items-center gap-2">
+              <Link href={`/admin/pets/${petId}/edit`}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="text-xs border-white/20 text-white/90 hover:bg-white/10 hover:text-white active:scale-95 transition-all"
+                >
+                  <Edit className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="hidden sm:inline">Perfil Avançado</span>
+                  <span className="sm:hidden">Perfil</span>
+                </Button>
+              </Link>
+              <Button 
+                onClick={() => setIsEditDialogOpen(true)} 
+                size="sm" 
+                className="text-xs bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 active:scale-95 transition-all"
+              >
+                <Edit className="h-3.5 w-3.5 mr-1.5" />
+                Edição
+              </Button>
+            </div>
           </div>
-        </div>
-        
-        {/* Ações - Mobile (linha separada) */}
-        <div className="flex sm:hidden items-center gap-2 justify-end">
-          <Link href={`/admin/pets/${petId}/edit`}>
-            <Button variant="outline" size="sm" className="text-xs h-8 px-2.5 active:scale-95 transition-transform">
-              <Edit className="h-3.5 w-3.5 mr-1" />
-              Perfil
-            </Button>
-          </Link>
-          <Button 
-            onClick={() => setIsEditDialogOpen(true)} 
-            size="sm" 
-            className="text-xs h-8 px-3 active:scale-95 transition-transform bg-blue-600 hover:bg-blue-700 text-white shadow-md"
-          >
-            <Edit className="h-3.5 w-3.5 mr-1" />
-            Edição
-          </Button>
+          
+          {/* Linha Principal: Avatar + Info */}
+          <div className="flex items-center gap-4 sm:gap-5">
+            {/* Avatar com borda laranja */}
+            <div className="relative">
+              <div className="p-0.5 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl shadow-lg shadow-orange-500/20">
+                {pet.photoUrl ? (
+                  <img
+                    src={pet.photoUrl}
+                    alt={pet.name}
+                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover bg-white"
+                  />
+                ) : (
+                  <div className="bg-white rounded-2xl p-0.5">
+                    <BreedIconLarge breed={pet.breed} className="!w-[60px] !h-[60px] sm:!w-[76px] sm:!h-[76px] !shadow-none !ring-0" />
+                  </div>
+                )}
+              </div>
+              {/* Indicador de status */}
+              <div className={cn(
+                "absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-slate-800",
+                pet.status === "checked-in" ? "bg-emerald-500" : "bg-slate-500"
+              )} />
+            </div>
+            
+            {/* Info do Pet */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate">
+                  {pet.name}
+                </h1>
+                <Badge 
+                  className={cn(
+                    "text-[10px] px-2.5 py-0.5 border-none",
+                    pet.status === "checked-in" 
+                      ? "bg-emerald-500/20 text-emerald-300" 
+                      : "bg-slate-500/30 text-slate-300"
+                  )}
+                >
+                  {pet.status === "checked-in" ? "Na Creche" : "Fora"}
+                </Badge>
+              </div>
+              <p className="text-sm text-slate-400 uppercase tracking-wider font-medium truncate">
+                {pet.breed || "Raça não informada"}
+              </p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {calculateAge()}
+              </p>
+            </div>
+            
+            {/* Score Badge - Desktop */}
+            <div className="hidden md:flex flex-col items-center px-4 py-2 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
+              <div className="text-2xl font-bold text-white">{avgBehaviorScore}</div>
+              <div className="text-[10px] text-slate-400 uppercase tracking-wider">Score</div>
+            </div>
+          </div>
         </div>
       </div>
 
