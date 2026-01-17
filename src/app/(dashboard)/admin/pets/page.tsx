@@ -575,7 +575,7 @@ export default function AdminPetsPage() {
 
   return (
     <div className="page-container">
-      {/* Header */}
+      {/* Header Premium */}
       <div className="page-header">
         <div className="page-header-content">
           <div className="page-header-icon"><PawPrint /></div>
@@ -584,9 +584,11 @@ export default function AdminPetsPage() {
             <p>Painel de controle</p>
           </div>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)} size="sm">
-          <Plus className="h-4 w-4 mr-1.5" /> Novo Pet
-        </Button>
+        <div className="page-header-actions">
+          <Button onClick={() => setIsCreateOpen(true)} size="sm" className="btn-sm btn-primary">
+            <Plus className="h-4 w-4 mr-1.5" /> Novo Pet
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
