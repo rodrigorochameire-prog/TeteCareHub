@@ -3,23 +3,33 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-300 ease focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] hover:shadow-[0_2px_4px_0_rgba(0,0,0,0.05)]",
+  "inline-flex items-center rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all duration-250 ease-out focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
   {
     variants: {
       variant: {
+        // Primary - Laranja
         default:
-          "bg-[hsl(24_80%_52%)] text-white hover:bg-[hsl(24_80%_48%)] hover:shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)]",
+          "bg-gradient-to-b from-orange-500 to-orange-600 text-white shadow-[0_1px_3px_hsl(24_92%_50%/0.25)]",
+        // Secondary - Neutro
         secondary:
-          "bg-[hsl(220_14%_96%)] text-[hsl(220_16%_42%)] hover:bg-[hsl(220_14%_92%)]",
+          "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+        // Destructive - Vermelho
         destructive:
-          "bg-[hsl(0_72%_96%)] text-[hsl(0_72%_42%)] hover:bg-[hsl(0_72%_92%)] shadow-[0_1px_2px_0_rgba(239,68,68,0.1)]",
-        outline: "text-foreground border border-border/40",
+          "bg-red-50 text-red-700 shadow-[0_1px_3px_hsl(0_70%_45%/0.1)] dark:bg-red-900/30 dark:text-red-400",
+        // Outline
+        outline: "text-foreground border-[1.5px] border-border",
+        // Success - Verde (Cheio/OK)
         success:
-          "bg-[hsl(142_76%_96%)] text-[hsl(142_71%_32%)] shadow-[0_1px_2px_0_rgba(34,197,94,0.1)] dark:bg-[hsl(142_71%_45%/0.2)] dark:text-[hsl(142_71%_60%)] hover:shadow-[0_2px_4px_0_rgba(34,197,94,0.15)]",
+          "bg-emerald-50 text-emerald-700 shadow-[0_1px_3px_hsl(142_70%_40%/0.1)] dark:bg-emerald-900/30 dark:text-emerald-400",
+        // Warning - Amarelo (Atenção)
         warning:
-          "bg-[hsl(45_100%_96%)] text-[hsl(45_75%_28%)] shadow-[0_1px_2px_0_rgba(234,179,8,0.1)] dark:bg-[hsl(45_93%_47%/0.2)] dark:text-[hsl(45_85%_60%)] hover:shadow-[0_2px_4px_0_rgba(234,179,8,0.15)]",
+          "bg-amber-50 text-amber-700 shadow-[0_1px_3px_hsl(45_90%_45%/0.12)] dark:bg-amber-900/30 dark:text-amber-400",
+        // Info - Azul (Informativo)
         info:
-          "bg-[hsl(200_60%_96%)] text-[hsl(200_55%_38%)] shadow-[0_1px_2px_0_rgba(59,130,246,0.1)] dark:bg-[hsl(200_45%_22%/0.3)] dark:text-[hsl(200_50%_65%)] hover:shadow-[0_2px_4px_0_rgba(59,130,246,0.15)]",
+          "bg-sky-50 text-sky-700 shadow-[0_1px_3px_hsl(200_65%_45%/0.1)] dark:bg-sky-900/30 dark:text-sky-400",
+        // Navy - Azul escuro (Destaque)
+        navy:
+          "bg-slate-700 text-white shadow-[0_1px_3px_hsl(215_30%_20%/0.2)] dark:bg-slate-600",
       },
     },
     defaultVariants: {

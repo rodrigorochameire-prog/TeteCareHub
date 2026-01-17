@@ -57,10 +57,13 @@ interface TutorSidebarProps {
   userEmail?: string;
 }
 
+// Menu organizado com cores padronizadas:
+// - primary (laranja): navegação principal, ações
+// - secondary (navy/slate): elementos secundários, info
 const menuGroups = [
   {
     label: "Principal",
-    color: "blue",
+    color: "primary",
     items: [
       { icon: LayoutDashboard, label: "Dashboard", path: "/tutor" },
       { icon: Dog, label: "Meus Pets", path: "/tutor/pets" },
@@ -70,7 +73,7 @@ const menuGroups = [
   },
   {
     label: "Saúde",
-    color: "red",
+    color: "primary",
     items: [
       { icon: Heart, label: "Central de Saúde", path: "/tutor/health" },
       { icon: GraduationCap, label: "Treinamento", path: "/tutor/training" },
@@ -79,7 +82,7 @@ const menuGroups = [
   },
   {
     label: "Comunicação",
-    color: "orange",
+    color: "secondary",
     items: [
       { icon: MessageSquare, label: "Mural", path: "/tutor/wall" },
       { icon: FileText, label: "Documentos", path: "/tutor/documents" },
@@ -87,7 +90,7 @@ const menuGroups = [
   },
   {
     label: "Financeiro",
-    color: "green",
+    color: "secondary",
     items: [
       { icon: CreditCard, label: "Créditos", path: "/tutor/credits" },
       { icon: BarChart3, label: "Relatórios", path: "/tutor/reports" },
@@ -95,46 +98,70 @@ const menuGroups = [
   },
 ];
 
+// Sistema de cores TeteCare Premium iOS
+// - Primary (Laranja): Elementos principais de navegação
+// - Secondary (Slate/Navy): Elementos secundários e informativos
 const colorClasses = {
+  primary: {
+    icon: "text-orange-500 dark:text-orange-400",
+    iconHover: "group-hover:text-orange-500 dark:group-hover:text-orange-400",
+    iconActive: "text-orange-600 dark:text-orange-400",
+    bg: "bg-orange-50/50 dark:bg-orange-950/30",
+    bgHover: "hover:bg-orange-50/70 dark:hover:bg-orange-950/40",
+    bgActive: "bg-orange-100/70 dark:bg-orange-950/50",
+    border: "border-orange-200/50 dark:border-orange-800/30",
+    glow: "",
+  },
+  secondary: {
+    icon: "text-slate-500 dark:text-slate-400",
+    iconHover: "group-hover:text-slate-600 dark:group-hover:text-slate-300",
+    iconActive: "text-slate-700 dark:text-slate-300",
+    bg: "bg-slate-50/60 dark:bg-slate-800/40",
+    bgHover: "hover:bg-slate-100/70 dark:hover:bg-slate-800/50",
+    bgActive: "bg-slate-100/80 dark:bg-slate-800/60",
+    border: "border-slate-200/50 dark:border-slate-700/40",
+    glow: "",
+  },
+  // Aliases para compatibilidade
   blue: {
-    icon: "text-cyan-500 dark:text-cyan-400",
-    iconHover: "group-hover:text-cyan-500 dark:group-hover:text-cyan-400",
-    iconActive: "text-cyan-600 dark:text-cyan-300",
-    bg: "bg-cyan-50 dark:bg-cyan-950/50",
-    bgHover: "hover:bg-cyan-50/80 dark:hover:bg-cyan-950/40",
-    bgActive: "bg-cyan-100 dark:bg-cyan-900/60",
-    border: "border-cyan-200 dark:border-cyan-700/50",
-    glow: "dark:shadow-cyan-500/20",
+    icon: "text-orange-500 dark:text-orange-400",
+    iconHover: "group-hover:text-orange-500 dark:group-hover:text-orange-400",
+    iconActive: "text-orange-600 dark:text-orange-400",
+    bg: "bg-orange-50/50 dark:bg-orange-950/30",
+    bgHover: "hover:bg-orange-50/70 dark:hover:bg-orange-950/40",
+    bgActive: "bg-orange-100/70 dark:bg-orange-950/50",
+    border: "border-orange-200/50 dark:border-orange-800/30",
+    glow: "",
   },
   orange: {
     icon: "text-orange-500 dark:text-orange-400",
     iconHover: "group-hover:text-orange-500 dark:group-hover:text-orange-400",
-    iconActive: "text-orange-600 dark:text-orange-300",
-    bg: "bg-orange-50 dark:bg-orange-950/50",
-    bgHover: "hover:bg-orange-50/80 dark:hover:bg-orange-950/40",
-    bgActive: "bg-orange-100 dark:bg-orange-900/60",
-    border: "border-orange-200 dark:border-orange-700/50",
-    glow: "dark:shadow-orange-500/20",
+    iconActive: "text-orange-600 dark:text-orange-400",
+    bg: "bg-orange-50/50 dark:bg-orange-950/30",
+    bgHover: "hover:bg-orange-50/70 dark:hover:bg-orange-950/40",
+    bgActive: "bg-orange-100/70 dark:bg-orange-950/50",
+    border: "border-orange-200/50 dark:border-orange-800/30",
+    glow: "",
   },
   red: {
-    icon: "text-rose-500 dark:text-rose-400",
-    iconHover: "group-hover:text-rose-500 dark:group-hover:text-rose-400",
-    iconActive: "text-rose-600 dark:text-rose-300",
-    bg: "bg-rose-50 dark:bg-rose-950/50",
-    bgHover: "hover:bg-rose-50/80 dark:hover:bg-rose-950/40",
-    bgActive: "bg-rose-100 dark:bg-rose-900/60",
-    border: "border-rose-200 dark:border-rose-700/50",
-    glow: "dark:shadow-rose-500/20",
+    icon: "text-orange-500 dark:text-orange-400",
+    iconHover: "group-hover:text-orange-500 dark:group-hover:text-orange-400",
+    iconActive: "text-orange-600 dark:text-orange-400",
+    bg: "bg-orange-50/50 dark:bg-orange-950/30",
+    bgHover: "hover:bg-orange-50/70 dark:hover:bg-orange-950/40",
+    bgActive: "bg-orange-100/70 dark:bg-orange-950/50",
+    border: "border-orange-200/50 dark:border-orange-800/30",
+    glow: "",
   },
   green: {
-    icon: "text-emerald-500 dark:text-emerald-400",
-    iconHover: "group-hover:text-emerald-500 dark:group-hover:text-emerald-400",
-    iconActive: "text-emerald-600 dark:text-emerald-300",
-    bg: "bg-emerald-50 dark:bg-emerald-950/50",
-    bgHover: "hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40",
-    bgActive: "bg-emerald-100 dark:bg-emerald-900/60",
-    border: "border-emerald-200 dark:border-emerald-700/50",
-    glow: "dark:shadow-emerald-500/20",
+    icon: "text-slate-500 dark:text-slate-400",
+    iconHover: "group-hover:text-slate-600 dark:group-hover:text-slate-300",
+    iconActive: "text-slate-700 dark:text-slate-300",
+    bg: "bg-slate-50/60 dark:bg-slate-800/40",
+    bgHover: "hover:bg-slate-100/70 dark:hover:bg-slate-800/50",
+    bgActive: "bg-slate-100/80 dark:bg-slate-800/60",
+    border: "border-slate-200/50 dark:border-slate-700/40",
+    glow: "",
   },
 };
 
@@ -259,7 +286,7 @@ function TutorSidebarContent({
             <div className="flex items-center gap-3 px-6 transition-all w-full">
               {!isCollapsed && (
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold tracking-wider uppercase bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
+                  <span className="text-xs font-bold tracking-wider uppercase bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
                     Portal do Tutor
                   </span>
                 </div>
@@ -361,14 +388,14 @@ function TutorSidebarContent({
             </SidebarMenu>
           </SidebarContent>
 
-          <SidebarFooter className="p-3 border-t border-border/40 bg-gradient-to-t from-cyan-500/5 to-transparent">
+          <SidebarFooter className="p-3 border-t border-border/40 bg-gradient-to-t from-orange-500/5 to-transparent">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-[14px] px-3 py-3 hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 transition-all duration-300 ease w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 group shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] hover:shadow-[0_2px_4px_0_rgba(0,0,0,0.06)] hover:translate-y-[-1px]">
+                <button className="flex items-center gap-3 rounded-2xl px-3 py-3 hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 transition-all duration-300 ease w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 group shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] hover:shadow-[0_2px_4px_0_rgba(0,0,0,0.06)] hover:translate-y-[-1px]">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/30 to-cyan-500/10 blur-lg rounded-full" />
-                    <Avatar className="h-11 w-11 border-2 border-cyan-500/30 shadow-lg relative ring-2 ring-background">
-                      <AvatarFallback className="text-sm font-bold bg-gradient-to-br from-cyan-500/25 to-blue-500/15 text-cyan-600">
+                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/30 to-orange-500/10 blur-lg rounded-full" />
+                    <Avatar className="h-11 w-11 border-2 border-orange-500/30 shadow-lg relative ring-2 ring-background">
+                      <AvatarFallback className="text-sm font-bold bg-gradient-to-br from-orange-500/25 to-orange-400/15 text-orange-600">
                         {getInitials(userName)}
                       </AvatarFallback>
                     </Avatar>
@@ -408,7 +435,7 @@ function TutorSidebarContent({
         </Sidebar>
 
         <div
-          className={`absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-gradient-to-b hover:from-cyan-400/40 hover:via-blue-300/30 hover:to-cyan-400/40 transition-all duration-300 ${
+          className={`absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-gradient-to-b hover:from-orange-400/40 hover:via-orange-300/30 hover:to-orange-400/40 transition-all duration-300 ${
             isCollapsed ? "hidden" : ""
           }`}
           onMouseDown={() => {
@@ -423,7 +450,7 @@ function TutorSidebarContent({
         {isMobile && (
           <div className="flex border-b border-border/40 h-16 items-center justify-between bg-background/95 backdrop-blur-xl px-4 sticky top-0 z-40 shadow-sm">
             <div className="flex items-center gap-3">
-              <SidebarTrigger className="h-10 w-10 rounded-xl bg-accent/50 hover:bg-cyan-500/20 transition-colors" />
+              <SidebarTrigger className="h-10 w-10 rounded-xl bg-accent/50 hover:bg-orange-500/20 transition-colors" />
               <Link href="/tutor" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <div className="w-9 h-9 rounded-full overflow-hidden shadow-sm bg-white flex items-center justify-center">
                   <Image
