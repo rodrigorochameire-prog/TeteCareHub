@@ -48,8 +48,7 @@ import {
   Legend,
   AreaChart,
   Area,
-  ComposedChart,
-  ReferenceLine
+  ComposedChart
 } from "recharts";
 
 const NEUTRAL_COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"];
@@ -342,76 +341,64 @@ export default function AdminFinances() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2 px-0.5">
-            {/* Fluxo Financeiro Premium - Barras + Linha de Média */}
-            <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-              <CardHeader className="pb-2">
+            {/* Fluxo Financeiro - Clean */}
+            <Card className="shadow-sm">
+              <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-white/10">
-                      <DollarSign className="h-4 w-4 text-white" />
+                    <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800">
+                      <DollarSign className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                     </div>
                     <div>
-                      <CardTitle className="text-base font-bold text-white">Fluxo Financeiro</CardTitle>
-                      <CardDescription className="text-xs text-slate-400">Receita vs Média Mensal</CardDescription>
+                      <CardTitle className="text-base font-semibold">Fluxo Financeiro</CardTitle>
+                      <CardDescription className="text-xs">Receita vs Média Mensal</CardDescription>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-orange-500/20 text-orange-400 text-xs font-medium">
-                    <TrendingUp className="h-3 w-3" />
+                  <Badge variant="outline" className="text-xs">
                     Média: R$ {(chartData.avgVendas || 0).toFixed(0)}
-                  </div>
+                  </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="p-4 sm:p-5">
-                <div className="h-[300px] mx-1">
+              <CardContent>
+                <div className="h-[280px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={chartData.months} margin={{ top: 20, right: 10, bottom: 10, left: 0 }}>
-                      <defs>
-                        <linearGradient id="barGradientPremium" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9}/>
-                          <stop offset="100%" stopColor="#1e40af" stopOpacity={0.7}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" strokeOpacity={0.4} vertical={false} />
-                      <XAxis dataKey="month" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
-                      <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
+                    <ComposedChart data={chartData.months} margin={{ top: 10, right: 10, bottom: 10, left: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.5} vertical={false} />
+                      <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
                       <Tooltip 
                         contentStyle={{ 
-                          backgroundColor: 'rgba(15, 23, 42, 0.95)', 
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          borderRadius: '12px',
-                          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
-                          color: 'white'
+                          backgroundColor: 'white', 
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                          fontSize: '12px'
                         }}
                         formatter={(value, name) => [
                           `R$ ${Number(value || 0).toFixed(2)}`, 
                           name === 'vendas' ? 'Receita' : name === 'media' ? 'Média' : name
                         ]}
-                        labelStyle={{ color: '#94a3b8' }}
                       />
                       <Legend 
                         iconType="circle" 
                         iconSize={8} 
-                        wrapperStyle={{ color: '#94a3b8' }}
-                        formatter={(value) => <span style={{ color: '#94a3b8' }}>{value === 'vendas' ? 'Receita Mensal' : value === 'media' ? 'Média (6 meses)' : value}</span>}
+                        formatter={(value) => value === 'vendas' ? 'Receita Mensal' : value === 'media' ? 'Média (6 meses)' : value}
                       />
-                      {/* Barras de Receita - Azul */}
                       <Bar 
                         dataKey="vendas" 
                         name="vendas"
-                        fill="url(#barGradientPremium)" 
-                        radius={[6, 6, 0, 0]}
-                        maxBarSize={40}
+                        fill="#64748b" 
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={36}
                       />
-                      {/* Linha de Média - Laranja */}
                       <Line 
                         type="monotone" 
                         dataKey="media" 
                         name="media"
-                        stroke="#f97316" 
-                        strokeWidth={3}
-                        strokeDasharray="8 4"
+                        stroke="#94a3b8" 
+                        strokeWidth={2}
+                        strokeDasharray="6 3"
                         dot={false}
-                        activeDot={{ r: 6, fill: '#f97316', stroke: '#fff', strokeWidth: 2 }}
                       />
                     </ComposedChart>
                   </ResponsiveContainer>
