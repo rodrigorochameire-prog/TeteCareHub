@@ -389,74 +389,62 @@ export default function AdminCalendarPage() {
         showCreateButton={true}
       />
 
-      {/* Mapa de Calor de Ocupação - Premium */}
-      <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <CardHeader className="flex flex-row items-center justify-between pb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-white/10">
-              <Thermometer className="h-4 w-4 text-orange-400" />
-            </div>
-            <div>
-              <CardTitle className="text-base font-bold text-white">Mapa de Ocupação</CardTitle>
-              <p className="text-xs text-slate-400">Visualize a demanda do mês</p>
-            </div>
-          </div>
+      {/* Mapa de Calor de Ocupação - Integrado */}
+      <Card className="shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Thermometer className="h-5 w-5 text-primary" />
+            Mapa de Ocupação
+          </CardTitle>
           <div className="flex items-center gap-2">
             <Button 
-              variant="ghost" 
+              variant="outline" 
               size="icon"
-              className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
+              className="h-8 w-8"
               onClick={() => setHeatmapMonth(subMonths(heatmapMonth, 1))}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-medium min-w-[120px] text-center text-white capitalize">
+            <span className="text-sm font-medium min-w-[120px] text-center capitalize">
               {format(heatmapMonth, "MMMM yyyy", { locale: ptBR })}
             </span>
             <Button 
-              variant="ghost" 
+              variant="outline" 
               size="icon"
-              className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
+              className="h-8 w-8"
               onClick={() => setHeatmapMonth(addMonths(heatmapMonth, 1))}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="pb-6">
+        <CardContent>
           {heatmapData && (
             <>
-              {/* Barra de Gradiente com Legenda Premium */}
-              <div className="mb-5 p-3 rounded-xl bg-white/5 backdrop-blur-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-slate-400 uppercase tracking-wider">Ocupação</span>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/10">
-                      <span className="text-xs text-slate-400">Capacidade:</span>
-                      <span className="text-xs font-semibold text-white">{heatmapData.maxCapacity}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-orange-500/20">
-                      <span className="text-xs text-orange-400">Média:</span>
-                      <span className="text-xs font-semibold text-orange-300">{heatmapData.avgOccupancy.toFixed(0)}%</span>
-                    </div>
+              {/* Legenda com gradiente sutil */}
+              <div className="mb-4 p-3 rounded-lg bg-muted/50">
+                <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-muted-foreground">Vazio</span>
+                    <div className="w-24 sm:w-32 h-2 rounded-full overflow-hidden" 
+                      style={{ 
+                        background: 'linear-gradient(to right, #e2e8f0 0%, #22c55e 25%, #eab308 50%, #f97316 75%, #ef4444 100%)' 
+                      }} 
+                    />
+                    <span className="text-[10px] text-muted-foreground">Lotado</span>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-slate-500">Vazio</span>
-                  <div className="flex-1 h-3 rounded-full overflow-hidden" 
-                    style={{ 
-                      background: 'linear-gradient(to right, #374151 0%, #22c55e 25%, #eab308 50%, #f97316 75%, #ef4444 100%)' 
-                    }} 
-                  />
-                  <span className="text-[10px] text-slate-500">Lotado</span>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span>Capacidade: <strong className="text-foreground">{heatmapData.maxCapacity}</strong></span>
+                    <span>Média: <strong className="text-primary">{heatmapData.avgOccupancy.toFixed(0)}%</strong></span>
+                  </div>
                 </div>
               </div>
 
-              {/* Grid do mapa de calor - Premium */}
-              <div className="grid grid-cols-7 gap-1.5">
+              {/* Grid do mapa de calor */}
+              <div className="grid grid-cols-7 gap-1">
                 {/* Cabeçalho dos dias da semana */}
                 {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((day) => (
-                  <div key={day} className="text-center text-[10px] text-slate-500 font-medium py-1.5 uppercase tracking-wider">
+                  <div key={day} className="text-center text-xs text-muted-foreground font-medium py-1">
                     {day}
                   </div>
                 ))}
@@ -472,29 +460,26 @@ export default function AdminCalendarPage() {
                   const isToday = isSameDay(new Date(day.date), new Date());
                   
                   const bgColor = 
-                    day.level === "full" ? "bg-red-500" :
-                    day.level === "high" ? "bg-orange-500" :
-                    day.level === "medium" ? "bg-yellow-500" :
-                    day.level === "low" ? "bg-emerald-500" :
-                    "bg-slate-700";
-                  
-                  const textColor = day.level === "empty" ? "text-slate-400" : "text-white";
+                    day.level === "full" ? "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300" :
+                    day.level === "high" ? "bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300" :
+                    day.level === "medium" ? "bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300" :
+                    day.level === "low" ? "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300" :
+                    "bg-muted text-muted-foreground";
 
                   return (
                     <div
                       key={day.date}
                       className={cn(
-                        "aspect-square rounded-lg flex flex-col items-center justify-center text-xs cursor-default transition-all duration-200",
-                        "hover:scale-105 hover:shadow-lg hover:z-10",
+                        "aspect-square rounded-md flex flex-col items-center justify-center text-xs cursor-default transition-all",
+                        "hover:ring-2 hover:ring-primary/50",
                         bgColor,
-                        textColor,
-                        isToday && "ring-2 ring-white ring-offset-2 ring-offset-slate-900"
+                        isToday && "ring-2 ring-primary"
                       )}
                       title={`${format(new Date(day.date), "dd/MM")}: ${day.count} check-ins (${day.percentage.toFixed(0)}%)`}
                     >
-                      <span className="font-semibold">{dayNum}</span>
+                      <span className="font-medium">{dayNum}</span>
                       {day.count > 0 && (
-                        <span className="text-[9px] opacity-80 font-medium">{day.count}</span>
+                        <span className="text-[10px] opacity-70">{day.count}</span>
                       )}
                     </div>
                   );
