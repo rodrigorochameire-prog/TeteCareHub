@@ -194,23 +194,26 @@ export function PetCard({
         )}
       </div>
 
-      {/* Credits Section */}
+      {/* Credits Section - Usando cores funcionais padronizadas */}
       {showCreditsBar && variant !== "minimal" && (
         <div className="mt-4">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs text-muted-foreground">Créditos</span>
             {hasLowCredits ? (
-              <span className="text-xs font-medium text-red-500">Sem créditos!</span>
+              <span className="text-xs font-semibold text-red-600 dark:text-red-400">Sem créditos!</span>
+            ) : pet.credits <= 5 ? (
+              <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">{pet.credits}</span>
             ) : (
-              <span className="text-xs font-medium text-foreground">{pet.credits}</span>
+              <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">{pet.credits}</span>
             )}
           </div>
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <div className="progress-credits">
             <div 
               className={cn(
-                "h-full rounded-full transition-all",
-                hasLowCredits ? "bg-red-500" : 
-                pet.credits <= 3 ? "bg-amber-500" : "bg-green-500"
+                "progress-fill",
+                creditsPercent >= 60 ? "full" : // Verde
+                creditsPercent >= 30 ? "medium" : // Amarelo
+                "low" // Vermelho
               )}
               style={{ width: `${creditsPercent}%` }}
             />

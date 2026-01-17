@@ -47,15 +47,15 @@ export default function TutorPetsPage() {
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Total</span>
-            <Dog className="stat-card-icon primary" />
+            <div className="stat-card-icon"><Dog /></div>
           </div>
           <div className="stat-card-value">{totalPets}</div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card success">
           <div className="stat-card-header">
             <span className="stat-card-title">Aprovados</span>
-            <Heart className="stat-card-icon green" />
+            <div className="stat-card-icon"><Heart /></div>
           </div>
           <div className="stat-card-value">{approvedPets}</div>
         </div>
@@ -63,15 +63,15 @@ export default function TutorPetsPage() {
         <div className={`stat-card ${pendingPets > 0 ? 'highlight' : ''}`}>
           <div className="stat-card-header">
             <span className="stat-card-title">Pendentes</span>
-            <Calendar className={`stat-card-icon ${pendingPets > 0 ? 'amber' : 'muted'}`} />
+            <div className="stat-card-icon"><Calendar /></div>
           </div>
           <div className="stat-card-value">{pendingPets}</div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card info">
           <div className="stat-card-header">
             <span className="stat-card-title">Dias Totais</span>
-            <CreditCard className="stat-card-icon blue" />
+            <div className="stat-card-icon"><CreditCard /></div>
           </div>
           <div className="stat-card-value">{totalCredits}</div>
         </div>

@@ -228,24 +228,24 @@ export default function TutorHealthPage() {
         <>
           {/* Stats */}
           <div className="stats-row">
-            <div className="stat-card">
+            <div className="stat-card info">
               <div className="stat-card-header">
                 <span className="stat-card-title">Vacinas</span>
-                <Syringe className="stat-card-icon blue" />
+                <div className="stat-card-icon"><Syringe /></div>
               </div>
               <div className="stat-card-value">{petVaccinations?.length || 0}</div>
             </div>
             <div className="stat-card">
               <div className="stat-card-header">
                 <span className="stat-card-title">Preventivos</span>
-                <Shield className="stat-card-icon primary" />
+                <div className="stat-card-icon"><Shield /></div>
               </div>
               <div className="stat-card-value">{petPreventives?.length || 0}</div>
             </div>
-            <div className="stat-card">
+            <div className="stat-card info">
               <div className="stat-card-header">
                 <span className="stat-card-title">Medicamentos</span>
-                <Pill className="stat-card-icon blue" />
+                <div className="stat-card-icon"><Pill /></div>
               </div>
               <div className="stat-card-value">{medicationsOnly.length}</div>
             </div>
