@@ -27,7 +27,7 @@ import {
 } from "recharts";
 import { Brain, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { BreedIcon } from "@/components/breed-icons";
+import { BreedIconLarge } from "@/components/premium-breed-icon";
 
 export default function AdminPetDetailPage() {
   const params = useParams();
@@ -192,25 +192,25 @@ export default function AdminPetDetailPage() {
         </div>
       )}
 
-      {/* Header - Responsivo */}
+      {/* Header - Responsivo com Ícone Premium */}
       <div className="flex flex-col gap-4">
         {/* Linha 1: Voltar + Info do Pet */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <Link href="/admin/pets">
-            <Button variant="ghost" size="icon" className="shrink-0">
+            <Button variant="ghost" size="icon" className="shrink-0 active:scale-95 transition-transform">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
           
-          {/* Avatar com ícone de raça */}
+          {/* Avatar com ícone de raça - Grande e Imponente */}
           {pet.photoUrl ? (
             <img
               src={pet.photoUrl}
               alt={pet.name}
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border-2 border-primary/20 shadow-md shrink-0"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-primary/20 shadow-lg shrink-0"
             />
           ) : (
-            <BreedIcon breed={pet.breed} size={56} className="shrink-0 sm:!w-16 sm:!h-16" />
+            <BreedIconLarge breed={pet.breed} className="shrink-0" />
           )}
           
           {/* Nome e raça */}
@@ -243,12 +243,12 @@ export default function AdminPetDetailPage() {
           <div className="flex-1" />
           
           <Link href={`/admin/pets/${petId}/edit`}>
-            <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+            <Button variant="outline" size="sm" className="text-xs sm:text-sm active:scale-95 transition-transform">
               <Edit className="h-3.5 w-3.5 sm:mr-1.5" />
               <span className="hidden sm:inline">Perfil Avançado</span>
             </Button>
           </Link>
-          <Button onClick={() => setIsEditDialogOpen(true)} size="sm" className="text-xs sm:text-sm">
+          <Button onClick={() => setIsEditDialogOpen(true)} size="sm" className="text-xs sm:text-sm active:scale-95 transition-transform">
             <Edit className="h-3.5 w-3.5 sm:mr-1.5" />
             <span className="hidden sm:inline">Edição</span>
           </Button>
