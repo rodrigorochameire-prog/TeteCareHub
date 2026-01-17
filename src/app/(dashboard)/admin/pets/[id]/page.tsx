@@ -27,6 +27,7 @@ import {
 } from "recharts";
 import { Brain, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BreedIcon } from "@/components/breed-icons";
 
 export default function AdminPetDetailPage() {
   const params = useParams();
@@ -191,45 +192,65 @@ export default function AdminPetDetailPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+      {/* Header - Responsivo */}
+      <div className="flex flex-col gap-4">
+        {/* Linha 1: Voltar + Info do Pet */}
+        <div className="flex items-center gap-3">
           <Link href="/admin/pets">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="shrink-0">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
-          <div className="flex items-center gap-4">
-            {pet.photoUrl ? (
-              <img
-                src={pet.photoUrl}
-                alt={pet.name}
-                className="w-16 h-16 rounded-full object-cover border-2 border-primary"
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <Dog className="w-8 h-8 text-primary/50" />
-              </div>
-            )}
-            <div>
-              <h1 className="text-3xl font-bold">{pet.name}</h1>
-              <p className="text-muted-foreground">{pet.breed || "Raça não informada"} • {calculateAge()}</p>
-            </div>
+          
+          {/* Avatar com ícone de raça */}
+          {pet.photoUrl ? (
+            <img
+              src={pet.photoUrl}
+              alt={pet.name}
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border-2 border-primary/20 shadow-md shrink-0"
+            />
+          ) : (
+            <BreedIcon breed={pet.breed} size={56} className="shrink-0 sm:!w-16 sm:!h-16" />
+          )}
+          
+          {/* Nome e raça */}
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl font-bold truncate">{pet.name}</h1>
+            <p className="text-sm text-muted-foreground truncate">
+              {pet.breed || "Raça não informada"} • {calculateAge()}
+            </p>
           </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Badge variant={pet.status === "checked-in" ? "default" : "secondary"} className="text-sm">
-            {pet.status === "checked-in" ? "Na Creche" : "Fora da Creche"}
+          
+          {/* Badge de status - inline em desktop */}
+          <Badge 
+            variant={pet.status === "checked-in" ? "default" : "secondary"} 
+            className="hidden sm:flex text-xs whitespace-nowrap shrink-0"
+          >
+            {pet.status === "checked-in" ? "Na Creche" : "Fora"}
           </Badge>
+        </div>
+        
+        {/* Linha 2: Badge mobile + Botões */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Badge de status - apenas mobile */}
+          <Badge 
+            variant={pet.status === "checked-in" ? "default" : "secondary"} 
+            className="sm:hidden text-xs"
+          >
+            {pet.status === "checked-in" ? "Na Creche" : "Fora"}
+          </Badge>
+          
+          <div className="flex-1" />
+          
           <Link href={`/admin/pets/${petId}/edit`}>
-            <Button variant="outline">
-              <Edit className="h-4 w-4 mr-2" />
-              Perfil Avançado
+            <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+              <Edit className="h-3.5 w-3.5 sm:mr-1.5" />
+              <span className="hidden sm:inline">Perfil Avançado</span>
             </Button>
           </Link>
-          <Button onClick={() => setIsEditDialogOpen(true)}>
-            <Edit className="h-4 w-4 mr-2" />
-            Edição Rápida
+          <Button onClick={() => setIsEditDialogOpen(true)} size="sm" className="text-xs sm:text-sm">
+            <Edit className="h-3.5 w-3.5 sm:mr-1.5" />
+            <span className="hidden sm:inline">Edição</span>
           </Button>
         </div>
       </div>
