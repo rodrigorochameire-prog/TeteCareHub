@@ -240,8 +240,8 @@ export default function TutorBookingsPage() {
               </form>
             </DialogContent>
           </Dialog>
-        }
-      />
+        </div>
+      </div>
 
       {/* Aviso se não tem pets aprovados */}
       {approvedPets.length === 0 && (
