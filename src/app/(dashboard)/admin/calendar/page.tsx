@@ -52,7 +52,6 @@ import {
 } from "@/components/ui/tabs";
 import { PremiumCalendar, CalendarEvent } from "@/components/premium-calendar";
 import { CalendarSkeleton } from "@/components/shared/skeletons";
-import { PageHeader } from "@/components/shared/page-header";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
