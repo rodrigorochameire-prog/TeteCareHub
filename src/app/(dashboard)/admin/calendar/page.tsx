@@ -342,15 +342,15 @@ export default function AdminCalendarPage() {
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Eventos Hoje</span>
-            <Calendar className="stat-card-icon primary" />
+            <div className="stat-card-icon"><Calendar /></div>
           </div>
           <div className="stat-card-value">{todayEvents.length}</div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card info">
           <div className="stat-card-header">
             <span className="stat-card-title">Este Mês</span>
-            <TrendingUp className="stat-card-icon blue" />
+            <div className="stat-card-icon"><TrendingUp /></div>
           </div>
           <div className="stat-card-value">{thisMonthEvents.length}</div>
         </div>
@@ -358,23 +358,23 @@ export default function AdminCalendarPage() {
         <div className={`stat-card ${upcomingVaccinations.length > 0 ? "highlight" : ""}`}>
           <div className="stat-card-header">
             <span className="stat-card-title">Vacinas (30d)</span>
-            <Syringe className={`stat-card-icon ${upcomingVaccinations.length > 0 ? "amber" : "muted"}`} />
+            <div className="stat-card-icon"><Syringe /></div>
           </div>
           <div className="stat-card-value">{upcomingVaccinations.length}</div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card info">
           <div className="stat-card-header">
             <span className="stat-card-title">Medicamentos</span>
-            <Pill className="stat-card-icon blue" />
+            <div className="stat-card-icon"><Pill /></div>
           </div>
           <div className="stat-card-value">{upcomingMedications.length}</div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card success">
           <div className="stat-card-header">
             <span className="stat-card-title">Preventivos</span>
-            <Shield className="stat-card-icon green" />
+            <div className="stat-card-icon"><Shield /></div>
           </div>
           <div className="stat-card-value">{upcomingPreventives.length}</div>
         </div>

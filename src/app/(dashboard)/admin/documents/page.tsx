@@ -438,28 +438,28 @@ export default function AdminDocuments() {
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Total</span>
-            <FolderOpen className="stat-card-icon muted" />
+            <div className="stat-card-icon"><FolderOpen /></div>
           </div>
           <div className="stat-card-value">{chartData.stats.total}</div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card info">
           <div className="stat-card-header">
             <span className="stat-card-title">Esta Semana</span>
-            <Calendar className="stat-card-icon blue" />
+            <div className="stat-card-icon"><Calendar /></div>
           </div>
           <div className="stat-card-value">{chartData.stats.thisWeek}</div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card success">
           <div className="stat-card-header">
             <span className="stat-card-title">Este Mês</span>
-            <TrendingUp className="stat-card-icon green" />
+            <div className="stat-card-icon"><TrendingUp /></div>
           </div>
           <div className="stat-card-value">{chartData.stats.thisMonth}</div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card highlight">
           <div className="stat-card-header">
             <span className="stat-card-title">Categorias</span>
-            <BarChart3 className="stat-card-icon amber" />
+            <div className="stat-card-icon"><BarChart3 /></div>
           </div>
           <div className="stat-card-value">{chartData.stats.categories}</div>
         </div>

@@ -6,7 +6,6 @@ import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CreditCard, Plus, Coins, Dog, ShoppingCart, Loader2, CheckCircle, Sparkles } from "lucide-react";
-import { PageHeader } from "@/components/shared/page-header";
 import { LoadingPage } from "@/components/shared/loading";
 import { formatCurrency, cn } from "@/lib/utils";
 import { toast } from "sonner";

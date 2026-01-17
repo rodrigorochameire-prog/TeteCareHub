@@ -108,15 +108,15 @@ export default async function TutorDashboard() {
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Meus Pets</span>
-            <Dog className="stat-card-icon primary" />
+            <div className="stat-card-icon"><Dog /></div>
           </div>
           <div className="stat-card-value">{data.pets.length}</div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card info">
           <div className="stat-card-header">
             <span className="stat-card-title">Dias Disponíveis</span>
-            <CreditCard className="stat-card-icon blue" />
+            <div className="stat-card-icon"><CreditCard /></div>
           </div>
           <div className="stat-card-value">{data.totalCredits}</div>
         </div>
@@ -124,15 +124,15 @@ export default async function TutorDashboard() {
         <div className={`stat-card ${data.unreadNotifications > 0 ? "highlight" : ""}`}>
           <div className="stat-card-header">
             <span className="stat-card-title">Notificações</span>
-            <Bell className={`stat-card-icon ${data.unreadNotifications > 0 ? "amber" : "muted"}`} />
+            <div className="stat-card-icon"><Bell /></div>
           </div>
           <div className="stat-card-value">{data.unreadNotifications}</div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card info">
           <div className="stat-card-header">
             <span className="stat-card-title">Próx. Eventos</span>
-            <Calendar className="stat-card-icon blue" />
+            <div className="stat-card-icon"><Calendar /></div>
           </div>
           <div className="stat-card-value">{data.upcomingEvents.length}</div>
         </div>

@@ -108,31 +108,31 @@ export default function TutorTraining() {
             <div className="stat-card">
               <div className="stat-card-header">
                 <span className="stat-card-title">Total de Comandos</span>
-                <Target className="stat-card-icon muted" />
+                <div className="stat-card-icon"><Target /></div>
               </div>
               <div className="stat-card-value">{progress.totalCommands}</div>
             </div>
 
-            <div className="stat-card">
+            <div className="stat-card success">
               <div className="stat-card-header">
                 <span className="stat-card-title">Dominados</span>
-                <Trophy className="stat-card-icon green" />
+                <div className="stat-card-icon"><Trophy /></div>
               </div>
               <div className="stat-card-value">{progress.mastered}</div>
             </div>
 
-            <div className="stat-card">
+            <div className="stat-card info">
               <div className="stat-card-header">
                 <span className="stat-card-title">Praticando</span>
-                <TrendingUp className="stat-card-icon blue" />
+                <div className="stat-card-icon"><TrendingUp /></div>
               </div>
               <div className="stat-card-value">{progress.practicing}</div>
             </div>
 
-            <div className="stat-card">
+            <div className="stat-card highlight">
               <div className="stat-card-header">
                 <span className="stat-card-title">Aprendendo</span>
-                <BookOpen className="stat-card-icon primary" />
+                <div className="stat-card-icon"><BookOpen /></div>
               </div>
               <div className="stat-card-value">{progress.learning}</div>
             </div>
