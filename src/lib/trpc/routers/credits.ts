@@ -4,6 +4,7 @@ import { db, creditPackages, pets, petTutors } from "@/lib/db";
 import { eq, desc, and } from "drizzle-orm";
 import { Errors, safeAsync } from "@/lib/errors";
 import { idSchema } from "@/lib/validations";
+import { addCredits as creditEngineAddCredits, debitCredits } from "@/lib/services/credit-engine";
 
 export const creditsRouter = router({
   /**
@@ -147,7 +148,14 @@ export const creditsRouter = router({
         reason: z.string().max(200).optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Verificar autenticação
+      if (!ctx.user || !ctx.user.id) {
+        throw Errors.unauthorized("Sessão expirada");
+      }
+
+      const userId = ctx.user.id;
+
       return safeAsync(async () => {
         const pet = await db.query.pets.findFirst({
           where: eq(pets.id, input.petId),
@@ -157,14 +165,25 @@ export const creditsRouter = router({
           throw Errors.notFound("Pet");
         }
 
+        // Usar Credit Engine para garantir transação e consistência
+        const result = await creditEngineAddCredits(
+          input.petId,
+          input.credits,
+          userId,
+          {
+            packageName: input.reason,
+          }
+        );
+
+        if (!result.success) {
+          throw Errors.badRequest(result.error || "Erro ao adicionar créditos");
+        }
+
+        // Retornar pet atualizado
         const [updated] = await db
-          .update(pets)
-          .set({
-            credits: pet.credits + input.credits,
-            updatedAt: new Date(),
-          })
-          .where(eq(pets.id, input.petId))
-          .returning();
+          .select()
+          .from(pets)
+          .where(eq(pets.id, input.petId));
 
         return updated;
       }, "Erro ao adicionar créditos");
@@ -181,7 +200,14 @@ export const creditsRouter = router({
         reason: z.string().max(200).optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Verificar autenticação
+      if (!ctx.user || !ctx.user.id) {
+        throw Errors.unauthorized("Sessão expirada");
+      }
+
+      const userId = ctx.user.id;
+
       return safeAsync(async () => {
         const pet = await db.query.pets.findFirst({
           where: eq(pets.id, input.petId),
@@ -195,14 +221,25 @@ export const creditsRouter = router({
           throw Errors.badRequest("Pet não tem créditos suficientes");
         }
 
+        // Usar Credit Engine para garantir transação e consistência
+        const result = await debitCredits(
+          input.petId,
+          input.credits,
+          userId,
+          {
+            description: input.reason || "Remoção manual de créditos",
+          }
+        );
+
+        if (!result.success) {
+          throw Errors.badRequest(result.error || "Erro ao remover créditos");
+        }
+
+        // Retornar pet atualizado
         const [updated] = await db
-          .update(pets)
-          .set({
-            credits: pet.credits - input.credits,
-            updatedAt: new Date(),
-          })
-          .where(eq(pets.id, input.petId))
-          .returning();
+          .select()
+          .from(pets)
+          .where(eq(pets.id, input.petId));
 
         return updated;
       }, "Erro ao remover créditos");
@@ -212,9 +249,13 @@ export const creditsRouter = router({
    * Resumo de créditos do tutor
    */
   mySummary: protectedProcedure.query(async ({ ctx }) => {
-    return safeAsync(async () => {
-      const userId = ctx.user!.id;
+    if (!ctx.user || !ctx.user.id) {
+      throw Errors.unauthorized("Sessão expirada");
+    }
 
+    const userId = ctx.user.id;
+
+    return safeAsync(async () => {
       // Buscar todos os pets do tutor
       const myPets = await db
         .select({
