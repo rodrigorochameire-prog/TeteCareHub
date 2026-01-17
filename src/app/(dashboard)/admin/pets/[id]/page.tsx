@@ -255,95 +255,164 @@ export default function AdminPetDetailPage() {
         </div>
       </div>
 
-      {/* Cards Rápidos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Cards Rápidos - Premium */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 px-0.5">
         {/* Estoque de Ração */}
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setStockModalOpen(true)}>
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                <Package className="h-4 w-4" />
-                Estoque Ração
-              </span>
-              <Badge variant="outline" className={getAlertColor(stockForecast?.alertLevel || "unknown")}>
-                {stockForecast?.daysRemaining != null ? `${stockForecast.daysRemaining} dias` : "N/A"}
-              </Badge>
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden border-0 shadow-sm hover:-translate-y-0.5" 
+          onClick={() => setStockModalOpen(true)}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className={cn(
+                "h-10 w-10 rounded-xl flex items-center justify-center",
+                stockForecast?.alertLevel === "ok" 
+                  ? "bg-gradient-to-br from-emerald-500/15 to-emerald-600/10" 
+                  : stockForecast?.alertLevel === "warning"
+                  ? "bg-gradient-to-br from-amber-500/15 to-amber-600/10"
+                  : "bg-gradient-to-br from-red-500/15 to-red-600/10"
+              )}>
+                <Package className={cn(
+                  "h-5 w-5",
+                  stockForecast?.alertLevel === "ok" ? "text-emerald-600" 
+                    : stockForecast?.alertLevel === "warning" ? "text-amber-600" 
+                    : "text-red-600"
+                )} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-muted-foreground">Estoque Ração</p>
+                <Badge 
+                  variant="outline" 
+                  className={cn(
+                    "text-[10px] mt-0.5",
+                    getAlertColor(stockForecast?.alertLevel || "unknown")
+                  )}
+                >
+                  {stockForecast?.daysRemaining != null ? `${stockForecast.daysRemaining} dias` : "N/A"}
+                </Badge>
+              </div>
             </div>
-            <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div className="h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
               <div 
-                className={`h-full transition-all ${
-                  stockForecast?.alertLevel === "ok" ? "bg-green-500" :
-                  stockForecast?.alertLevel === "warning" ? "bg-yellow-500" : "bg-red-500"
-                }`}
+                className={cn(
+                  "h-full transition-all duration-500 rounded-full",
+                  stockForecast?.alertLevel === "ok" 
+                    ? "bg-gradient-to-r from-emerald-500 to-emerald-400" 
+                    : stockForecast?.alertLevel === "warning"
+                    ? "bg-gradient-to-r from-amber-500 to-amber-400"
+                    : "bg-gradient-to-r from-red-500 to-red-400"
+                )}
                 style={{ width: `${getStockProgress()}%` }}
               />
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {stockForecast?.currentStock ? `${(stockForecast.currentStock / 1000).toFixed(1)} kg restante` : "Não configurado"}
+            <p className="text-xs text-muted-foreground mt-2">
+              {stockForecast?.currentStock 
+                ? `${(stockForecast.currentStock / 1000).toFixed(1)} kg restante` 
+                : "Clique para configurar"}
             </p>
           </CardContent>
         </Card>
 
         {/* Peso */}
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                <Weight className="h-4 w-4" />
-                Peso Atual
-              </span>
-              {weightHistory?.trend && (
-                <span className="flex items-center gap-1">
-                  {weightHistory.trend === "gaining" && <TrendingUp className="h-4 w-4 text-yellow-500" />}
-                  {weightHistory.trend === "losing" && <TrendingDown className="h-4 w-4 text-red-500" />}
-                  {weightHistory.trend === "stable" && <Minus className="h-4 w-4 text-green-500" />}
-                </span>
-              )}
+        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
+                <Weight className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-medium text-muted-foreground">Peso Atual</p>
+                {weightHistory?.trend && (
+                  <div className="flex items-center gap-1 mt-0.5">
+                    {weightHistory.trend === "gaining" && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 flex items-center gap-0.5">
+                        <TrendingUp className="h-3 w-3" /> Ganhando
+                      </span>
+                    )}
+                    {weightHistory.trend === "losing" && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 flex items-center gap-0.5">
+                        <TrendingDown className="h-3 w-3" /> Perdendo
+                      </span>
+                    )}
+                    {weightHistory.trend === "stable" && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 flex items-center gap-0.5">
+                        <Minus className="h-3 w-3" /> Estável
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-            <p className="text-2xl font-bold">
-              {pet.weight ? `${(pet.weight / 1000).toFixed(1)} kg` : "N/A"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {weightHistory?.trend === "gaining" && "Ganhando peso"}
-              {weightHistory?.trend === "losing" && "Perdendo peso"}
-              {weightHistory?.trend === "stable" && "Peso estável"}
+            <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">
+              {pet.weight ? `${(pet.weight / 1000).toFixed(1)} kg` : "0.0 kg"}
             </p>
           </CardContent>
         </Card>
 
         {/* Créditos */}
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                <Star className="h-4 w-4" />
-                Créditos
-              </span>
+        <Card className={cn(
+          "overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5",
+          pet.credits < 3 && "ring-1 ring-amber-200 dark:ring-amber-800/50"
+        )}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className={cn(
+                "h-10 w-10 rounded-xl flex items-center justify-center",
+                pet.credits < 3 
+                  ? "bg-gradient-to-br from-amber-500/15 to-amber-600/10"
+                  : "bg-gradient-to-br from-blue-500/15 to-blue-600/10"
+              )}>
+                <Star className={cn(
+                  "h-5 w-5",
+                  pet.credits < 3 ? "text-amber-600" : "text-blue-600"
+                )} />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-medium text-muted-foreground">Créditos</p>
+                {pet.credits < 3 && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                    Baixo - avisar tutor
+                  </span>
+                )}
+              </div>
             </div>
-            <p className="text-2xl font-bold">{pet.credits}</p>
-            <p className="text-xs text-muted-foreground">
-              {pet.credits < 3 ? "Baixo - avisar tutor" : "Saldo adequado"}
-            </p>
+            <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{pet.credits}</p>
           </CardContent>
         </Card>
 
         {/* Nível de Energia */}
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                <Zap className="h-4 w-4" />
-                Energia
-              </span>
+        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className={cn(
+                "h-10 w-10 rounded-xl flex items-center justify-center",
+                pet.energyLevel === "very_high" || pet.energyLevel === "high"
+                  ? "bg-gradient-to-br from-orange-500/15 to-orange-600/10"
+                  : pet.energyLevel === "medium"
+                  ? "bg-gradient-to-br from-blue-500/15 to-blue-600/10"
+                  : "bg-gradient-to-br from-slate-500/15 to-slate-600/10"
+              )}>
+                <Zap className={cn(
+                  "h-5 w-5",
+                  pet.energyLevel === "very_high" || pet.energyLevel === "high" ? "text-orange-600" 
+                    : pet.energyLevel === "medium" ? "text-blue-600" 
+                    : "text-slate-500"
+                )} />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-medium text-muted-foreground">Energia</p>
+                {pet.roomPreference && (
+                  <span className="text-[10px] text-muted-foreground">
+                    Sala: {pet.roomPreference}
+                  </span>
+                )}
+              </div>
             </div>
-            <p className="text-2xl font-bold capitalize">
+            <p className="text-xl font-bold text-slate-800 dark:text-slate-200 capitalize">
               {pet.energyLevel === "very_high" ? "Muito Alta" :
                pet.energyLevel === "high" ? "Alta" :
                pet.energyLevel === "medium" ? "Média" :
                pet.energyLevel === "low" ? "Baixa" : "N/A"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {pet.roomPreference ? `Sala: ${pet.roomPreference}` : "Sem preferência de sala"}
             </p>
           </CardContent>
         </Card>
