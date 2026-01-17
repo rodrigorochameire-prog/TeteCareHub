@@ -213,14 +213,12 @@ export default function WhatsAppPage() {
 
       {/* Status Cards */}
       <div className="stats-row">
-        <div className="stat-card">
+        <div className={`stat-card ${connectionStatus?.connected ? "success" : "highlight"}`}>
           <div className="stat-card-header">
             <span className="stat-card-title">Status</span>
-            {connectionStatus?.connected ? (
-              <Wifi className="stat-card-icon green" />
-            ) : (
-              <WifiOff className="stat-card-icon amber" />
-            )}
+            <div className="stat-card-icon">
+              {connectionStatus?.connected ? <Wifi /> : <WifiOff />}
+            </div>
           </div>
           <div className="stat-card-value">
             <Badge variant={connectionStatus?.connected ? "default" : "secondary"}>
@@ -229,10 +227,10 @@ export default function WhatsAppPage() {
           </div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card info">
           <div className="stat-card-header">
             <span className="stat-card-title">Fonte</span>
-            <Key className="stat-card-icon blue" />
+            <div className="stat-card-icon"><Key /></div>
           </div>
           <div className="stat-card-value">
             <Badge variant="outline">
@@ -245,17 +243,17 @@ export default function WhatsAppPage() {
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Número</span>
-            <Smartphone className="stat-card-icon primary" />
+            <div className="stat-card-icon"><Smartphone /></div>
           </div>
           <div className="stat-card-value text-sm font-medium">
             {connectionStatus?.profile?.phone || myConfig?.config?.displayPhoneNumber || "—"}
           </div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card highlight">
           <div className="stat-card-header">
             <span className="stat-card-title">Qualidade</span>
-            <Star className="stat-card-icon amber" />
+            <div className="stat-card-icon"><Star /></div>
           </div>
           <div className="stat-card-value">
             <Badge variant="outline" className={

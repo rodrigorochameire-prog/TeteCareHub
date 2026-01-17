@@ -128,21 +128,21 @@ export default function AdminVaccines() {
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Total de Vacinações</span>
-            <Syringe className="stat-card-icon primary" />
+            <div className="stat-card-icon"><Syringe /></div>
           </div>
           <div className="stat-card-value">{stats?.total || 0}</div>
         </div>
         <div className={`stat-card ${(stats?.upcoming || 0) > 0 ? "highlight" : ""}`}>
           <div className="stat-card-header">
             <span className="stat-card-title">Próximas (30 dias)</span>
-            <AlertCircle className={`stat-card-icon ${(stats?.upcoming || 0) > 0 ? "amber" : "muted"}`} />
+            <div className="stat-card-icon"><AlertCircle /></div>
           </div>
           <div className="stat-card-value">{stats?.upcoming || 0}</div>
         </div>
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Atrasadas</span>
-            <AlertCircle className="stat-card-icon muted" />
+            <div className="stat-card-icon"><AlertCircle /></div>
           </div>
           <div className="stat-card-value">{stats?.overdue || 0}</div>
         </div>

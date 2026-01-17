@@ -137,10 +137,10 @@ export default function TutorAnalyticsPage() {
         <div className="space-y-6">
           {/* Summary Cards */}
           <div className="stats-row">
-            <div className="stat-card">
+            <div className="stat-card highlight">
               <div className="stat-card-header">
                 <span className="stat-card-title">Créditos</span>
-                <CreditCard className="stat-card-icon primary" />
+                <div className="stat-card-icon"><CreditCard /></div>
               </div>
               <div className="stat-card-value">{selectedPet.credits}</div>
               {topUpSuggestion && (
@@ -152,10 +152,10 @@ export default function TutorAnalyticsPage() {
               )}
             </div>
 
-            <div className="stat-card">
+            <div className="stat-card info">
               <div className="stat-card-header">
                 <span className="stat-card-title">Frequência Média</span>
-                <Calendar className="stat-card-icon blue" />
+                <div className="stat-card-icon"><Calendar /></div>
               </div>
               <div className="stat-card-value">
                 {loadingFrequency ? "..." : `${frequency?.avgMonthlyVisits || 0}`}
@@ -163,16 +163,18 @@ export default function TutorAnalyticsPage() {
               <p className="stat-card-description">visitas/mês</p>
             </div>
 
-            <div className="stat-card">
+            <div className={`stat-card ${(wellness?.moodStats.positivePercent || 0) >= 60 ? "success" : (wellness?.moodStats.positivePercent || 0) >= 30 ? "highlight" : ""}`}>
               <div className="stat-card-header">
                 <span className="stat-card-title">Humor</span>
-                {(wellness?.moodStats.positivePercent || 0) >= 60 ? (
-                  <Smile className="stat-card-icon green" />
-                ) : (wellness?.moodStats.positivePercent || 0) >= 30 ? (
-                  <Meh className="stat-card-icon amber" />
-                ) : (
-                  <Frown className="stat-card-icon red" />
-                )}
+                <div className="stat-card-icon">
+                  {(wellness?.moodStats.positivePercent || 0) >= 60 ? (
+                    <Smile />
+                  ) : (wellness?.moodStats.positivePercent || 0) >= 30 ? (
+                    <Meh />
+                  ) : (
+                    <Frown />
+                  )}
+                </div>
               </div>
               <div className="stat-card-value">
                 {loadingWellness ? "..." : `${wellness?.moodStats.positivePercent || 0}%`}
@@ -183,7 +185,7 @@ export default function TutorAnalyticsPage() {
             <div className="stat-card">
               <div className="stat-card-header">
                 <span className="stat-card-title">Peso</span>
-                <Activity className="stat-card-icon muted" />
+                <div className="stat-card-icon"><Activity /></div>
               </div>
               <div className="stat-card-value">
                 {selectedPet.weight ? `${(selectedPet.weight / 1000).toFixed(1)} kg` : "—"}

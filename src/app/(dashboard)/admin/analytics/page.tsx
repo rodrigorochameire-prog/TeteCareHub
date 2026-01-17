@@ -89,7 +89,7 @@ export default function AdminAnalyticsPage() {
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Taxa de Ocupação</span>
-            <Activity className="stat-card-icon primary" />
+            <div className="stat-card-icon"><Activity /></div>
           </div>
           <div className="stat-card-value">
             {loadingOccupancy ? "..." : `${occupancy?.avgOccupancyPercent || 0}%`}
@@ -99,14 +99,12 @@ export default function AdminAnalyticsPage() {
           </p>
         </div>
 
-        <div className="stat-card">
+        <div className={`stat-card ${(churn?.churnRate || 0) > 20 ? "" : "success"}`}>
           <div className="stat-card-header">
             <span className="stat-card-title">Churn Rate</span>
-            {(churn?.churnRate || 0) > 20 ? (
-              <TrendingDown className="stat-card-icon red" />
-            ) : (
-              <TrendingUp className="stat-card-icon green" />
-            )}
+            <div className="stat-card-icon">
+              {(churn?.churnRate || 0) > 20 ? <TrendingDown /> : <TrendingUp />}
+            </div>
           </div>
           <div className="stat-card-value">
             {loadingChurn ? "..." : `${churn?.churnRate || 0}%`}
@@ -116,10 +114,10 @@ export default function AdminAnalyticsPage() {
           </p>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card highlight">
           <div className="stat-card-header">
             <span className="stat-card-title">Pets em Alerta</span>
-            <AlertTriangle className="stat-card-icon amber" />
+            <div className="stat-card-icon"><AlertTriangle /></div>
           </div>
           <div className="stat-card-value">
             {loadingAttention ? "..." : attention?.summary.petsAffected || 0}
@@ -129,10 +127,10 @@ export default function AdminAnalyticsPage() {
           </p>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card info">
           <div className="stat-card-header">
             <span className="stat-card-title">Horário de Pico</span>
-            <Clock className="stat-card-icon blue" />
+            <div className="stat-card-icon"><Clock /></div>
           </div>
           <div className="stat-card-value">
             {loadingPeak ? "..." : peakHours?.peakHour ? `${peakHours.peakHour}:00` : "—"}

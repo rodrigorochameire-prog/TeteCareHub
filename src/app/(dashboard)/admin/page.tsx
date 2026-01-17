@@ -104,15 +104,15 @@ export default function AdminDashboard() {
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Pets Cadastrados</span>
-            <Dog className="stat-card-icon primary" />
+            <div className="stat-card-icon"><Dog /></div>
           </div>
           <div className="stat-card-value">{totalPets}</div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card info">
           <div className="stat-card-header">
             <span className="stat-card-title">Tutores Ativos</span>
-            <Users className="stat-card-icon blue" />
+            <div className="stat-card-icon"><Users /></div>
           </div>
           <div className="stat-card-value">{totalTutors}</div>
         </div>
@@ -120,15 +120,15 @@ export default function AdminDashboard() {
         <div className={`stat-card ${pendingCount > 0 ? 'highlight' : ''}`}>
           <div className="stat-card-header">
             <span className="stat-card-title">Aguardando Aprovação</span>
-            <AlertCircle className={`stat-card-icon ${pendingCount > 0 ? 'amber' : 'muted'}`} />
+            <div className="stat-card-icon"><AlertCircle /></div>
           </div>
           <div className="stat-card-value">{pendingCount}</div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card info">
           <div className="stat-card-header">
             <span className="stat-card-title">Eventos Hoje</span>
-            <CalendarCheck className="stat-card-icon blue" />
+            <div className="stat-card-icon"><CalendarCheck /></div>
           </div>
           <div className="stat-card-value">{todayEvents.length}</div>
         </div>

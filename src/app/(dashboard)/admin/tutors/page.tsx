@@ -167,15 +167,15 @@ export default function AdminTutorsPage() {
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Total</span>
-            <Users className="stat-card-icon primary" />
+            <div className="stat-card-icon"><Users /></div>
           </div>
           <div className="stat-card-value">{stats?.tutors || 0}</div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card success">
           <div className="stat-card-header">
             <span className="stat-card-title">Aprovados</span>
-            <CheckCircle2 className="stat-card-icon green" />
+            <div className="stat-card-icon"><CheckCircle2 /></div>
           </div>
           <div className="stat-card-value">{statsSummary.approved}</div>
         </div>
@@ -183,15 +183,15 @@ export default function AdminTutorsPage() {
         <div className={`stat-card ${statsSummary.pending > 0 ? 'highlight' : ''}`}>
           <div className="stat-card-header">
             <span className="stat-card-title">Pendentes</span>
-            <Clock className={`stat-card-icon ${statsSummary.pending > 0 ? 'amber' : 'muted'}`} />
+            <div className="stat-card-icon"><Clock /></div>
           </div>
           <div className="stat-card-value">{statsSummary.pending}</div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card info">
           <div className="stat-card-header">
             <span className="stat-card-title">Com Pets</span>
-            <Dog className="stat-card-icon blue" />
+            <div className="stat-card-icon"><Dog /></div>
           </div>
           <div className="stat-card-value">{statsSummary.withPets}</div>
         </div>

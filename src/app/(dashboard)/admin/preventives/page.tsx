@@ -108,28 +108,28 @@ export default function AdminPreventives() {
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Total</span>
-            <Shield className="stat-card-icon primary" />
+            <div className="stat-card-icon"><Shield /></div>
           </div>
           <div className="stat-card-value">{stats?.total || 0}</div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card info">
           <div className="stat-card-header">
             <span className="stat-card-title">Antipulgas</span>
-            <Shield className="stat-card-icon blue" />
+            <div className="stat-card-icon"><Shield /></div>
           </div>
           <div className="stat-card-value">{stats?.flea || 0}</div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card success">
           <div className="stat-card-header">
             <span className="stat-card-title">Vermífugos</span>
-            <Shield className="stat-card-icon green" />
+            <div className="stat-card-icon"><Shield /></div>
           </div>
           <div className="stat-card-value">{stats?.deworming || 0}</div>
         </div>
         <div className={`stat-card ${(overdueTreatments?.length || 0) > 0 ? "highlight" : ""}`}>
           <div className="stat-card-header">
             <span className="stat-card-title">Atrasados</span>
-            <AlertCircle className={`stat-card-icon ${(overdueTreatments?.length || 0) > 0 ? "amber" : "muted"}`} />
+            <div className="stat-card-icon"><AlertCircle /></div>
           </div>
           <div className="stat-card-value">{overdueTreatments?.length || 0}</div>
         </div>
