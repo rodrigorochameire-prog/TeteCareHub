@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useRef } from "react";
 import { trpc } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -97,12 +96,12 @@ const categoryOptions: { value: string; label: string; icon: LucideIcon }[] = [
   { value: "advanced", label: "Avançado", icon: Trophy },
 ];
 
-// Opções de status agora com mais granularidade
+// Opções de status harmonizadas com COMMAND_PROFICIENCY em pet-options.ts
 const statusOptions: { value: string; label: string; icon: LucideIcon; color: string; percent: number }[] = [
   { value: "not_started", label: "Não Iniciado", icon: BookOpen, color: "text-gray-500", percent: 0 },
   { value: "learning", label: "Entendendo o Sinal", icon: BookOpen, color: "text-blue-600", percent: 25 },
-  { value: "practicing", label: "Faz com Petisco", icon: RefreshCw, color: "text-yellow-600", percent: 50 },
-  { value: "mastered", label: "Dominado", icon: Star, color: "text-green-600", percent: 75 },
+  { value: "with_treat", label: "Faz com Petisco", icon: RefreshCw, color: "text-yellow-600", percent: 50 },
+  { value: "reliable", label: "Dominado", icon: Star, color: "text-green-600", percent: 75 },
   { value: "proofed", label: "Dominado com Distração", icon: Trophy, color: "text-emerald-600", percent: 100 },
 ];
 
@@ -234,7 +233,7 @@ export default function AdminTraining() {
       return {
         date: date.toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" }),
         sessoes: dayLogs.length,
-        mastered: dayLogs.filter(l => l.status === "mastered").length,
+        mastered: dayLogs.filter(l => l.status === "reliable" || l.status === "mastered").length,
       };
     });
 
@@ -246,7 +245,7 @@ export default function AdminTraining() {
         petProgress[petName] = { total: 0, mastered: 0 };
       }
       petProgress[petName].total++;
-      if (log.status === "mastered") {
+      if (log.status === "reliable" || log.status === "mastered") {
         petProgress[petName].mastered++;
       }
     });
@@ -266,8 +265,8 @@ export default function AdminTraining() {
       timeline,
       successRateAvg: successRateCount > 0 ? Math.round(totalSuccessRate / successRateCount) : 0,
       totalCommands: commandsSet.size,
-      mastered: statusCount["mastered"] || 0,
-      practicing: statusCount["practicing"] || 0,
+      mastered: (statusCount["reliable"] || 0) + (statusCount["mastered"] || 0),
+      practicing: (statusCount["with_treat"] || 0) + (statusCount["practicing"] || 0),
       learning: statusCount["learning"] || 0,
       progressByPet,
     };
@@ -353,78 +352,51 @@ export default function AdminTraining() {
         </div>
       </div>
 
-      {/* Stats - Premium */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-0.5">
-        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
-                <Target className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">Total de Sessões</p>
-                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{allLogs?.length || 0}</p>
-              </div>
+      {/* Stats - Glass Premium */}
+      <div className="stats-row">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Total de Sessões</span>
+            <div className="stat-card-icon">
+              <Target />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="stat-card-value">{allLogs?.length || 0}</div>
+          <div className="stat-card-description">sessões registradas</div>
+        </div>
 
-        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500/15 to-emerald-600/10">
-                <Trophy className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">Dominados</p>
-                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{chartData.mastered}</p>
-              </div>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Dominados</span>
+            <div className="stat-card-icon">
+              <Trophy />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="stat-card-value">{chartData.mastered}</div>
+          <div className="stat-card-description">comandos dominados</div>
+        </div>
 
-        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-violet-500/15 to-violet-600/10">
-                <RefreshCw className="h-5 w-5 text-violet-600" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">Em Prática</p>
-                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{chartData.practicing}</p>
-              </div>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Em Prática</span>
+            <div className="stat-card-icon">
+              <RefreshCw />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="stat-card-value">{chartData.practicing}</div>
+          <div className="stat-card-description">em progresso</div>
+        </div>
 
-        <Card className={cn(
-          "overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5",
-          chartData.successRateAvg >= 80 && "ring-1 ring-emerald-200 dark:ring-emerald-800/50"
-        )}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "h-10 w-10 rounded-xl flex items-center justify-center",
-                chartData.successRateAvg >= 80 
-                  ? "bg-gradient-to-br from-emerald-500/15 to-emerald-600/10"
-                  : chartData.successRateAvg >= 50
-                  ? "bg-gradient-to-br from-amber-500/15 to-amber-600/10"
-                  : "bg-gradient-to-br from-slate-500/15 to-slate-600/10"
-              )}>
-                <TrendingUp className={cn(
-                  "h-5 w-5",
-                  chartData.successRateAvg >= 80 ? "text-emerald-600" 
-                    : chartData.successRateAvg >= 50 ? "text-amber-600" 
-                    : "text-slate-500"
-                )} />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">Taxa de Sucesso</p>
-                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{chartData.successRateAvg}%</p>
-              </div>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Taxa de Sucesso</span>
+            <div className="stat-card-icon">
+              <TrendingUp />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="stat-card-value">{chartData.successRateAvg}%</div>
+          <div className="stat-card-description">média geral</div>
+        </div>
       </div>
 
       {/* Main Tabs */}
@@ -562,7 +534,7 @@ export default function AdminTraining() {
                           </div>
                         </div>
                         <Badge 
-                          variant={log.status === "mastered" ? "default" : log.status === "practicing" ? "secondary" : "outline"}
+                          variant={(log.status === "reliable" || log.status === "mastered") ? "default" : (log.status === "with_treat" || log.status === "practicing") ? "secondary" : "outline"}
                           className={`gap-1 ${status?.color}`}
                         >
                           <StatusIcon className="h-3 w-3" />
@@ -1217,8 +1189,8 @@ export default function AdminTraining() {
                   <Badge variant="outline">
                     {categoryOptions.find(c => c.value === selectedLog.category)?.label}
                   </Badge>
-                  <Badge variant={selectedLog.status === "mastered" ? "default" : "secondary"}>
-                    {statusOptions.find(s => s.value === selectedLog.status)?.label}
+                  <Badge variant={(selectedLog.status === "reliable" || selectedLog.status === "mastered") ? "default" : "secondary"}>
+                    {statusOptions.find(s => s.value === selectedLog.status)?.label || selectedLog.status}
                   </Badge>
                 </div>
               </div>

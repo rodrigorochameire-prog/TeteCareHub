@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useRef } from "react";
 import { trpc } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -74,28 +73,36 @@ import {
   PolarRadiusAxis,
 } from "recharts";
 import { generateAggregatedRadarDataPremium, type RadarMetric } from "@/lib/behavior-metrics";
+import { DOG_SOCIABILITY, ENERGY_LEVELS } from "@/lib/constants/pet-options";
 
 const NEUTRAL_COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"];
 
+// Opções harmonizadas com pet-options.ts
+// Sociabilidade - baseado em DOG_SOCIABILITY
 const socializationOptions = [
-  { value: "excellent", label: "Excelente", color: "text-green-600", score: 4 },
-  { value: "good", label: "Bom", color: "text-blue-600", score: 3 },
-  { value: "moderate", label: "Moderado", color: "text-yellow-600", score: 2 },
-  { value: "poor", label: "Ruim", color: "text-red-600", score: 1 },
+  { value: "social", label: "Sociável", color: "text-green-600", score: 4, description: "Brinca bem com todos" },
+  { value: "selective", label: "Seletivo", color: "text-blue-600", score: 3, description: "Escolhe amigos" },
+  { value: "reactive", label: "Reativo", color: "text-orange-600", score: 2, description: "Precisa de espaço" },
+  { value: "antisocial", label: "Antissocial", color: "text-red-600", score: 1, description: "Guarda de recursos" },
 ];
 
+// Energia - baseado em ENERGY_LEVELS
 const energyOptions = [
-  { value: "high", label: "Alta", color: "text-orange-600", score: 3 },
-  { value: "normal", label: "Normal", color: "text-blue-600", score: 2 },
-  { value: "low", label: "Baixa", color: "text-gray-600", score: 1 },
+  { value: "hyperactive", label: "Hiperativo", color: "text-red-500", score: 5 },
+  { value: "high", label: "Alta", color: "text-orange-600", score: 4 },
+  { value: "moderate", label: "Moderada", color: "text-blue-600", score: 3 },
+  { value: "low", label: "Baixa", color: "text-gray-600", score: 2 },
+  { value: "very_low", label: "Muito Baixa", color: "text-gray-400", score: 1 },
 ];
 
+// Obediência - baseado em avaliação de comportamento durante a sessão
 const obedienceOptions = [
   { value: "excellent", label: "Excelente", color: "text-green-600", score: 3 },
   { value: "good", label: "Boa", color: "text-blue-600", score: 2 },
   { value: "needs_work", label: "Precisa Melhorar", color: "text-yellow-600", score: 1 },
 ];
 
+// Ansiedade - níveis observados
 const anxietyOptions = [
   { value: "none", label: "Nenhuma", color: "text-green-600", score: 4 },
   { value: "mild", label: "Leve", color: "text-yellow-600", score: 3 },
@@ -103,9 +110,10 @@ const anxietyOptions = [
   { value: "severe", label: "Severa", color: "text-red-600", score: 1 },
 ];
 
+// Agressividade - níveis observados
 const aggressionOptions = [
   { value: "none", label: "Nenhuma", color: "text-green-600", score: 4 },
-  { value: "mild", label: "Leve", color: "text-yellow-600", score: 3 },
+  { value: "minor", label: "Menor", color: "text-yellow-600", score: 3 },
   { value: "moderate", label: "Moderada", color: "text-orange-600", score: 2 },
   { value: "severe", label: "Severa", color: "text-red-600", score: 1 },
 ];
@@ -369,74 +377,51 @@ export default function AdminBehavior() {
         </div>
       </div>
 
-      {/* Stats Cards - Premium */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-0.5">
-        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
-                <Brain className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">Total de Registros</p>
-                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{allLogs?.length || 0}</p>
-              </div>
+      {/* Stats Cards - Glass Premium */}
+      <div className="stats-row">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Total de Registros</span>
+            <div className="stat-card-icon">
+              <Brain />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="stat-card-value">{allLogs?.length || 0}</div>
+          <div className="stat-card-description">avaliações comportamentais</div>
+        </div>
 
-        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500/15 to-emerald-600/10">
-                <Dog className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">Pets Avaliados</p>
-                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{chartData.byPet.length}</p>
-              </div>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Pets Avaliados</span>
+            <div className="stat-card-icon">
+              <Dog />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="stat-card-value">{chartData.byPet.length}</div>
+          <div className="stat-card-description">pets com registros</div>
+        </div>
 
-        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-violet-500/15 to-violet-600/10">
-                <Calendar className="h-5 w-5 text-violet-600" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">Esta Semana</p>
-                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{filteredLogs.length}</p>
-              </div>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Esta Semana</span>
+            <div className="stat-card-icon">
+              <Calendar />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="stat-card-value">{filteredLogs.length}</div>
+          <div className="stat-card-description">registros no período</div>
+        </div>
 
-        <Card className={cn(
-          "overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5",
-          chartData.alerts > 0 && "ring-1 ring-amber-200 dark:ring-amber-800/50"
-        )}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "h-10 w-10 rounded-xl flex items-center justify-center",
-                chartData.alerts > 0 
-                  ? "bg-gradient-to-br from-amber-500/15 to-amber-600/10"
-                  : "bg-gradient-to-br from-slate-500/15 to-slate-600/10"
-              )}>
-                <AlertTriangle className={cn(
-                  "h-5 w-5",
-                  chartData.alerts > 0 ? "text-amber-600" : "text-slate-500"
-                )} />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">Alertas</p>
-                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{chartData.alerts}</p>
-              </div>
+        <div className={`stat-card ${chartData.alerts > 0 ? 'highlight' : ''}`}>
+          <div className="stat-card-header">
+            <span className="stat-card-title">Alertas</span>
+            <div className="stat-card-icon">
+              <AlertTriangle />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="stat-card-value">{chartData.alerts}</div>
+          <div className="stat-card-description">comportamentos atípicos</div>
+        </div>
       </div>
 
       {/* Main Tabs */}
@@ -666,7 +651,7 @@ export default function AdminBehavior() {
                 {/* Gráfico de Radar Premium */}
                 <div className="lg:col-span-3 p-4 sm:p-6">
                   {/* Container com margens seguras */}
-                  <div className="relative mx-0.5 sm:mx-1">
+                  <div className="relative mx-1 sm:mx-2">
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <div className="w-48 h-48 rounded-full bg-gradient-to-br from-blue-500/10 via-blue-400/5 to-transparent blur-3xl" />
                     </div>
@@ -677,8 +662,8 @@ export default function AdminBehavior() {
                           data={chartData.radarData} 
                           cx="50%" 
                           cy="50%" 
-                          outerRadius="73%"
-                          margin={{ top: 35, right: 35, bottom: 35, left: 35 }}
+                          outerRadius="70%"
+                          margin={{ top: 40, right: 40, bottom: 40, left: 40 }}
                         >
                           <defs>
                             <linearGradient id="adminRadarGradient" x1="0" y1="0" x2="1" y2="1">
@@ -932,33 +917,28 @@ export default function AdminBehavior() {
             </CardContent>
           </Card>
 
-          {/* Gráficos de Distribuição - Premium */}
-          <div className="grid gap-4 lg:grid-cols-3 px-0.5">
+          {/* Gráficos de Distribuição */}
+          <div className="grid gap-6 lg:grid-cols-3">
             {/* Socialização */}
-            <Card className="shadow-sm overflow-hidden">
-              <CardHeader className="pb-2 bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800/50 dark:to-blue-950/20 border-b border-slate-100/80 dark:border-slate-700/50">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
-                    <Users className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-sm font-bold">Socialização</CardTitle>
-                    <CardDescription className="text-[10px]">Interação com outros pets</CardDescription>
-                  </div>
-                </div>
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Socialização
+                </CardTitle>
               </CardHeader>
-              <CardContent className="p-4">
+              <CardContent>
                 {chartData.socialization.length > 0 ? (
-                  <div className="h-[200px] mx-1">
+                  <div className="h-[200px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <RechartsPie>
                         <Pie
                           data={chartData.socialization}
                           cx="50%"
                           cy="50%"
-                          innerRadius={35}
-                          outerRadius={65}
-                          paddingAngle={3}
+                          innerRadius={30}
+                          outerRadius={60}
+                          paddingAngle={2}
                           dataKey="value"
                           label={({ name }) => name}
                           labelLine={false}
@@ -967,14 +947,7 @@ export default function AdminBehavior() {
                             <Cell key={`soc-${index}`} fill={NEUTRAL_COLORS[index % NEUTRAL_COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                            border: 'none',
-                            borderRadius: '12px',
-                            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
-                          }} 
-                        />
+                        <Tooltip />
                       </RechartsPie>
                     </ResponsiveContainer>
                   </div>
@@ -987,30 +960,25 @@ export default function AdminBehavior() {
             </Card>
 
             {/* Energia */}
-            <Card className="shadow-sm overflow-hidden">
-              <CardHeader className="pb-2 bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800/50 dark:to-blue-950/20 border-b border-slate-100/80 dark:border-slate-700/50">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-orange-500/15 to-orange-600/10">
-                    <Zap className="h-4 w-4 text-orange-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-sm font-bold">Energia</CardTitle>
-                    <CardDescription className="text-[10px]">Nível de atividade</CardDescription>
-                  </div>
-                </div>
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Zap className="h-4 w-4" />
+                  Energia
+                </CardTitle>
               </CardHeader>
-              <CardContent className="p-4">
+              <CardContent>
                 {chartData.energy.length > 0 ? (
-                  <div className="h-[200px] mx-1">
+                  <div className="h-[200px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <RechartsPie>
                         <Pie
                           data={chartData.energy}
                           cx="50%"
                           cy="50%"
-                          innerRadius={35}
-                          outerRadius={65}
-                          paddingAngle={3}
+                          innerRadius={30}
+                          outerRadius={60}
+                          paddingAngle={2}
                           dataKey="value"
                           label={({ name }) => name}
                           labelLine={false}
@@ -1019,14 +987,7 @@ export default function AdminBehavior() {
                             <Cell key={`energy-${index}`} fill={NEUTRAL_COLORS[index % NEUTRAL_COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                            border: 'none',
-                            borderRadius: '12px',
-                            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
-                          }} 
-                        />
+                        <Tooltip />
                       </RechartsPie>
                     </ResponsiveContainer>
                   </div>
@@ -1039,30 +1000,25 @@ export default function AdminBehavior() {
             </Card>
 
             {/* Ansiedade */}
-            <Card className="shadow-sm overflow-hidden">
-              <CardHeader className="pb-2 bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800/50 dark:to-blue-950/20 border-b border-slate-100/80 dark:border-slate-700/50">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-amber-500/15 to-amber-600/10">
-                    <Frown className="h-4 w-4 text-amber-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-sm font-bold">Ansiedade</CardTitle>
-                    <CardDescription className="text-[10px]">Níveis de estresse</CardDescription>
-                  </div>
-                </div>
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Frown className="h-4 w-4" />
+                  Ansiedade
+                </CardTitle>
               </CardHeader>
-              <CardContent className="p-4">
+              <CardContent>
                 {chartData.anxiety.length > 0 ? (
-                  <div className="h-[200px] mx-1">
+                  <div className="h-[200px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <RechartsPie>
                         <Pie
                           data={chartData.anxiety}
                           cx="50%"
                           cy="50%"
-                          innerRadius={35}
-                          outerRadius={65}
-                          paddingAngle={3}
+                          innerRadius={30}
+                          outerRadius={60}
+                          paddingAngle={2}
                           dataKey="value"
                           label={({ name }) => name}
                           labelLine={false}
@@ -1071,14 +1027,7 @@ export default function AdminBehavior() {
                             <Cell key={`anx-${index}`} fill={NEUTRAL_COLORS[index % NEUTRAL_COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                            border: 'none',
-                            borderRadius: '12px',
-                            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
-                          }} 
-                        />
+                        <Tooltip />
                       </RechartsPie>
                     </ResponsiveContainer>
                   </div>
@@ -1091,44 +1040,32 @@ export default function AdminBehavior() {
             </Card>
           </div>
 
-          {/* Timeline e Por Pet - Premium */}
-          <div className="grid gap-4 lg:grid-cols-2 px-0.5">
+          {/* Timeline e Por Pet */}
+          <div className="grid gap-6 lg:grid-cols-2">
             {/* Timeline */}
-            <Card className="shadow-sm overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800/50 dark:to-blue-950/20 border-b border-slate-100/80 dark:border-slate-700/50">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
-                    <TrendingUp className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base font-bold">Registros por Dia</CardTitle>
-                    <CardDescription className="text-xs">Evolução dos últimos 14 dias</CardDescription>
-                  </div>
-                </div>
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Registros por Dia
+                </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 sm:p-5">
+              <CardContent>
                 {chartData.timeline.length > 0 ? (
-                  <div className="h-[280px] mx-1">
+                  <div className="h-[280px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData.timeline} margin={{ top: 10, right: 10, bottom: 10, left: 0 }}>
-                        <defs>
-                          <linearGradient id="behaviorBarGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#1e3a5f" stopOpacity={0.9}/>
-                            <stop offset="100%" stopColor="#1e3a5f" stopOpacity={0.6}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.5} vertical={false} />
-                        <XAxis dataKey="date" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
-                        <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+                      <BarChart data={chartData.timeline}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis dataKey="date" stroke="#94a3b8" fontSize={10} />
+                        <YAxis stroke="#94a3b8" fontSize={11} />
                         <Tooltip 
                           contentStyle={{ 
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                            border: 'none',
-                            borderRadius: '12px',
-                            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
+                            backgroundColor: 'white', 
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '8px'
                           }} 
                         />
-                        <Bar dataKey="registros" name="Registros" fill="url(#behaviorBarGradient)" radius={[6, 6, 0, 0]} />
+                        <Bar dataKey="registros" name="Registros" fill="#64748b" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -1141,41 +1078,29 @@ export default function AdminBehavior() {
             </Card>
 
             {/* Por Pet */}
-            <Card className="shadow-sm overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800/50 dark:to-blue-950/20 border-b border-slate-100/80 dark:border-slate-700/50">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/10">
-                    <Dog className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base font-bold">Registros por Pet</CardTitle>
-                    <CardDescription className="text-xs">Pets com mais avaliações</CardDescription>
-                  </div>
-                </div>
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Dog className="h-5 w-5" />
+                  Registros por Pet
+                </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 sm:p-5">
+              <CardContent>
                 {chartData.byPet.length > 0 ? (
-                  <div className="h-[280px] mx-1">
+                  <div className="h-[280px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData.byPet} layout="vertical" margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-                        <defs>
-                          <linearGradient id="behaviorPetBarGradient" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0%" stopColor="#1e3a5f" stopOpacity={0.9}/>
-                            <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.7}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.5} horizontal={false} />
-                        <XAxis type="number" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
-                        <YAxis type="category" dataKey="name" width={80} stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+                      <BarChart data={chartData.byPet} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis type="number" stroke="#94a3b8" fontSize={11} />
+                        <YAxis type="category" dataKey="name" width={80} stroke="#94a3b8" fontSize={11} />
                         <Tooltip 
                           contentStyle={{ 
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                            border: 'none',
-                            borderRadius: '12px',
-                            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
+                            backgroundColor: 'white', 
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '8px'
                           }} 
                         />
-                        <Bar dataKey="value" name="Registros" fill="url(#behaviorPetBarGradient)" radius={[0, 6, 6, 0]} />
+                        <Bar dataKey="value" name="Registros" fill="#475569" radius={[0, 4, 4, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
