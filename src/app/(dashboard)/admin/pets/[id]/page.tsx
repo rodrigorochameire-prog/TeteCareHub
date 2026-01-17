@@ -186,7 +186,7 @@ export default function AdminPetDetailPage() {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6 px-3 sm:px-4">
       {/* Header com Alertas Ativos */}
       {activeAlerts && activeAlerts.length > 0 && (
         <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4">
@@ -216,36 +216,41 @@ export default function AdminPetDetailPage() {
 
       {/* Header - Clean com ícone de raça */}
       <Card className="shadow-sm">
-        <CardContent className="py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/admin/pets">
-                <Button variant="ghost" size="icon" className="shrink-0">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </Link>
-              
-              {/* Foto ou Ícone de Raça */}
-              {pet.photoUrl ? (
-                <img
-                  src={pet.photoUrl}
-                  alt={pet.name}
-                  className="w-16 h-16 rounded-xl object-cover border-2 border-primary/20 shadow-sm"
-                />
-              ) : (
-                <BreedIcon breed={pet.breed} size={64} />
-              )}
-              
-              <div className="min-w-0">
-                <h1 className="text-2xl font-bold truncate">{pet.name}</h1>
-                <p className="text-muted-foreground text-sm">{pet.breed || "Raça não informada"} • {calculateAge()}</p>
-              </div>
+        <CardContent className="p-3 sm:py-4 sm:px-6">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Link href="/admin/pets">
+              <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 sm:h-10 sm:w-10">
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Button>
+            </Link>
+            
+            {/* Foto ou Ícone de Raça */}
+            {pet.photoUrl ? (
+              <img
+                src={pet.photoUrl}
+                alt={pet.name}
+                className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl object-cover border-2 border-primary/20 shadow-sm shrink-0"
+              />
+            ) : (
+              <>
+                <div className="shrink-0 sm:hidden">
+                  <BreedIcon breed={pet.breed} size={48} />
+                </div>
+                <div className="shrink-0 hidden sm:block">
+                  <BreedIcon breed={pet.breed} size={64} />
+                </div>
+              </>
+            )}
+            
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg sm:text-2xl font-bold truncate">{pet.name}</h1>
+              <p className="text-muted-foreground text-xs sm:text-sm truncate">{pet.breed || "Raça não informada"} • {calculateAge()}</p>
             </div>
             
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <Badge 
                 variant={pet.status === "checked-in" ? "default" : "secondary"} 
-                className="text-xs whitespace-nowrap"
+                className="text-[10px] sm:text-xs whitespace-nowrap px-1.5 sm:px-2.5"
               >
                 {pet.status === "checked-in" ? "Na Creche" : "Fora da Creche"}
               </Badge>
@@ -260,22 +265,22 @@ export default function AdminPetDetailPage() {
       </Card>
 
       {/* Cards Rápidos - Visual clean e elegante */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Estoque de Ração */}
         <Card 
           className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 bg-white/90 dark:bg-slate-900/80 border-slate-200/60 dark:border-slate-700/40" 
           onClick={() => setStockModalOpen(true)}
         >
-          <CardContent className="pt-5 pb-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
-                  <Package className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" />
+          <CardContent className="p-3 sm:pt-5 sm:pb-4 sm:px-6">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shrink-0">
+                  <Package className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                <span className="text-sm font-medium text-foreground">Estoque Ração</span>
+                <span className="text-xs sm:text-sm font-medium text-foreground">Estoque Ração</span>
               </div>
               <Badge variant="secondary" className={cn(
-                "text-xs font-semibold px-2.5",
+                "text-[10px] sm:text-xs font-semibold px-1.5 sm:px-2.5 shrink-0",
                 stockForecast?.alertLevel === "ok" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400" :
                 stockForecast?.alertLevel === "warning" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400" :
                 "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
@@ -283,7 +288,7 @@ export default function AdminPetDetailPage() {
                 {stockForecast?.daysRemaining != null ? `${stockForecast.daysRemaining} dias` : "N/A"}
               </Badge>
             </div>
-            <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-1.5 sm:h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
               <div 
                 className={cn(
                   "h-full transition-all duration-500 rounded-full",
@@ -294,7 +299,7 @@ export default function AdminPetDetailPage() {
                 style={{ width: `${getStockProgress()}%` }}
               />
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1.5 sm:mt-2">
               {stockForecast?.currentStock ? `${(stockForecast.currentStock / 1000).toFixed(1)} kg restante` : "Não configurado"}
             </p>
           </CardContent>
@@ -302,58 +307,58 @@ export default function AdminPetDetailPage() {
 
         {/* Peso */}
         <Card className="transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 bg-white/90 dark:bg-slate-900/80 border-slate-200/60 dark:border-slate-700/40">
-          <CardContent className="pt-5 pb-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
-                  <Weight className="h-4.5 w-4.5 text-blue-600 dark:text-blue-400" />
+          <CardContent className="p-3 sm:pt-5 sm:pb-4 sm:px-6">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
+                  <Weight className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 </div>
-                <span className="text-sm font-medium text-foreground">Peso Atual</span>
+                <span className="text-xs sm:text-sm font-medium text-foreground">Peso Atual</span>
               </div>
               {weightHistory?.trend && (
                 <div className={cn(
-                  "h-7 w-7 rounded-lg flex items-center justify-center",
+                  "h-6 w-6 sm:h-7 sm:w-7 rounded-lg flex items-center justify-center shrink-0",
                   weightHistory.trend === "stable" ? "bg-emerald-100 dark:bg-emerald-900/40" :
                   weightHistory.trend === "gaining" ? "bg-amber-100 dark:bg-amber-900/40" :
                   "bg-slate-100 dark:bg-slate-800"
                 )}>
-                  {weightHistory.trend === "gaining" && <TrendingUp className="h-4 w-4 text-amber-600 dark:text-amber-400" />}
-                  {weightHistory.trend === "losing" && <TrendingDown className="h-4 w-4 text-slate-500 dark:text-slate-400" />}
-                  {weightHistory.trend === "stable" && <Minus className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
+                  {weightHistory.trend === "gaining" && <TrendingUp className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />}
+                  {weightHistory.trend === "losing" && <TrendingDown className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />}
+                  {weightHistory.trend === "stable" && <Minus className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />}
                 </div>
               )}
             </div>
-            <p className="text-2xl font-bold tracking-tight">
-              {pet.weight ? `${(pet.weight / 1000).toFixed(1)} kg` : "N/A"}
+            <p className="text-xl sm:text-2xl font-bold tracking-tight">
+              {pet.weight ? `${(pet.weight / 1000).toFixed(1)} kg` : "0.0 kg"}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
               {weightHistory?.trend === "gaining" && "Ganhando peso"}
               {weightHistory?.trend === "losing" && "Perdendo peso"}
               {weightHistory?.trend === "stable" && "Peso estável"}
-              {!weightHistory?.trend && "Sem preferência de sala"}
+              {!weightHistory?.trend && "—"}
             </p>
           </CardContent>
         </Card>
 
         {/* Créditos */}
         <Card className="transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 bg-white/90 dark:bg-slate-900/80 border-slate-200/60 dark:border-slate-700/40">
-          <CardContent className="pt-5 pb-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2.5">
+          <CardContent className="p-3 sm:pt-5 sm:pb-4 sm:px-6">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <div className="flex items-center gap-2">
                 <div className={cn(
-                  "h-9 w-9 rounded-xl flex items-center justify-center",
+                  "h-8 w-8 sm:h-9 sm:w-9 rounded-xl flex items-center justify-center shrink-0",
                   pet.credits >= 5 ? "bg-amber-100 dark:bg-amber-900/40" : "bg-slate-100 dark:bg-slate-800"
                 )}>
                   <Star className={cn(
-                    "h-4.5 w-4.5",
+                    "h-4 w-4",
                     pet.credits >= 5 ? "text-amber-600 dark:text-amber-400" : "text-slate-500 dark:text-slate-400"
                   )} />
                 </div>
-                <span className="text-sm font-medium text-foreground">Créditos</span>
+                <span className="text-xs sm:text-sm font-medium text-foreground">Créditos</span>
               </div>
             </div>
-            <p className="text-2xl font-bold tracking-tight">{pet.credits}</p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xl sm:text-2xl font-bold tracking-tight">{pet.credits}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
               {pet.credits < 3 ? "Baixo - avisar tutor" : "Saldo adequado"}
             </p>
           </CardContent>
@@ -361,26 +366,26 @@ export default function AdminPetDetailPage() {
 
         {/* Nível de Energia */}
         <Card className="transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 bg-white/90 dark:bg-slate-900/80 border-slate-200/60 dark:border-slate-700/40">
-          <CardContent className="pt-5 pb-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2.5">
+          <CardContent className="p-3 sm:pt-5 sm:pb-4 sm:px-6">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <div className="flex items-center gap-2">
                 <div className={cn(
-                  "h-9 w-9 rounded-xl flex items-center justify-center",
+                  "h-8 w-8 sm:h-9 sm:w-9 rounded-xl flex items-center justify-center shrink-0",
                   pet.energyLevel === "hyperactive" || pet.energyLevel === "very_high" ? "bg-orange-100 dark:bg-orange-900/40" :
                   pet.energyLevel === "high" ? "bg-amber-100 dark:bg-amber-900/40" :
                   "bg-slate-100 dark:bg-slate-800"
                 )}>
                   <Zap className={cn(
-                    "h-4.5 w-4.5",
+                    "h-4 w-4",
                     pet.energyLevel === "hyperactive" || pet.energyLevel === "very_high" ? "text-orange-600 dark:text-orange-400" :
                     pet.energyLevel === "high" ? "text-amber-600 dark:text-amber-400" :
                     "text-slate-500 dark:text-slate-400"
                   )} />
                 </div>
-                <span className="text-sm font-medium text-foreground">Energia</span>
+                <span className="text-xs sm:text-sm font-medium text-foreground">Energia</span>
               </div>
             </div>
-            <p className="text-2xl font-bold tracking-tight capitalize">
+            <p className="text-xl sm:text-2xl font-bold tracking-tight capitalize">
               {/* Valores harmonizados (ENERGY_LEVELS) + legacy */}
               {pet.energyLevel === "hyperactive" ? "Hiperativo" :
                pet.energyLevel === "very_high" ? "Muito Alta" :
@@ -389,7 +394,7 @@ export default function AdminPetDetailPage() {
                pet.energyLevel === "low" ? "Baixa" :
                pet.energyLevel === "very_low" ? "Muito Baixa" : "N/A"}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
               {pet.roomPreference ? `Sala: ${pet.roomPreference}` : "Sem preferência de sala"}
             </p>
           </CardContent>
