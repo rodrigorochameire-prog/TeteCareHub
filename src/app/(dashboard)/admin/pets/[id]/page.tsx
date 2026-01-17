@@ -186,7 +186,7 @@ export default function AdminPetDetailPage() {
   };
 
   return (
-    <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6 px-3 sm:px-4">
+    <div className="page-container max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
       {/* Header com Alertas Ativos */}
       {activeAlerts && activeAlerts.length > 0 && (
         <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4">
