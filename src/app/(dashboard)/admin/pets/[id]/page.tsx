@@ -192,65 +192,78 @@ export default function AdminPetDetailPage() {
         </div>
       )}
 
-      {/* Header - Responsivo com Ícone Premium */}
-      <div className="flex flex-col gap-4">
-        {/* Linha 1: Voltar + Info do Pet */}
-        <div className="flex items-center gap-4">
+      {/* Header - Layout compacto e harmonioso */}
+      <div className="flex flex-col gap-3">
+        {/* Linha Principal: Voltar + Avatar + Info + Badge + Ações */}
+        <div className="flex items-center gap-3">
+          {/* Botão Voltar */}
           <Link href="/admin/pets">
-            <Button variant="ghost" size="icon" className="shrink-0 active:scale-95 transition-transform">
-              <ArrowLeft className="h-5 w-5" />
+            <Button variant="ghost" size="icon" className="shrink-0 h-9 w-9 active:scale-95 transition-transform">
+              <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           
-          {/* Avatar com ícone de raça - Grande e Imponente */}
+          {/* Avatar com ícone de raça */}
           {pet.photoUrl ? (
             <img
               src={pet.photoUrl}
               alt={pet.name}
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-primary/20 shadow-lg shrink-0"
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border-2 border-primary/20 shadow-md shrink-0"
             />
           ) : (
-            <BreedIconLarge breed={pet.breed} className="shrink-0" />
+            <BreedIconLarge breed={pet.breed} className="shrink-0 !w-14 !h-14 sm:!w-16 sm:!h-16" />
           )}
           
-          {/* Nome e raça */}
+          {/* Info do Pet + Badge */}
           <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl font-bold truncate">{pet.name}</h1>
-            <p className="text-sm text-muted-foreground truncate">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-lg sm:text-xl font-bold truncate">{pet.name}</h1>
+              <Badge 
+                variant={pet.status === "checked-in" ? "default" : "secondary"} 
+                className="text-[10px] px-2 py-0.5 shrink-0"
+              >
+                {pet.status === "checked-in" ? "Na Creche" : "Fora"}
+              </Badge>
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground truncate">
               {pet.breed || "Raça não informada"} • {calculateAge()}
             </p>
           </div>
           
-          {/* Badge de status - inline em desktop */}
-          <Badge 
-            variant={pet.status === "checked-in" ? "default" : "secondary"} 
-            className="hidden sm:flex text-xs whitespace-nowrap shrink-0"
-          >
-            {pet.status === "checked-in" ? "Na Creche" : "Fora"}
-          </Badge>
+          {/* Ações - Desktop */}
+          <div className="hidden sm:flex items-center gap-2 shrink-0">
+            <Link href={`/admin/pets/${petId}/edit`}>
+              <Button variant="outline" size="sm" className="text-xs active:scale-95 transition-transform">
+                <Edit className="h-3.5 w-3.5 mr-1.5" />
+                Perfil Avançado
+              </Button>
+            </Link>
+            <Button 
+              onClick={() => setIsEditDialogOpen(true)} 
+              size="sm" 
+              className="text-xs active:scale-95 transition-transform bg-blue-600 hover:bg-blue-700 text-white shadow-md"
+            >
+              <Edit className="h-3.5 w-3.5 mr-1.5" />
+              Edição
+            </Button>
+          </div>
         </div>
         
-        {/* Linha 2: Badge mobile + Botões */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Badge de status - apenas mobile */}
-          <Badge 
-            variant={pet.status === "checked-in" ? "default" : "secondary"} 
-            className="sm:hidden text-xs"
-          >
-            {pet.status === "checked-in" ? "Na Creche" : "Fora"}
-          </Badge>
-          
-          <div className="flex-1" />
-          
+        {/* Ações - Mobile (linha separada) */}
+        <div className="flex sm:hidden items-center gap-2 justify-end">
           <Link href={`/admin/pets/${petId}/edit`}>
-            <Button variant="outline" size="sm" className="text-xs sm:text-sm active:scale-95 transition-transform">
-              <Edit className="h-3.5 w-3.5 sm:mr-1.5" />
-              <span className="hidden sm:inline">Perfil Avançado</span>
+            <Button variant="outline" size="sm" className="text-xs h-8 px-2.5 active:scale-95 transition-transform">
+              <Edit className="h-3.5 w-3.5 mr-1" />
+              Perfil
             </Button>
           </Link>
-          <Button onClick={() => setIsEditDialogOpen(true)} size="sm" className="text-xs sm:text-sm active:scale-95 transition-transform">
-            <Edit className="h-3.5 w-3.5 sm:mr-1.5" />
-            <span className="hidden sm:inline">Edição</span>
+          <Button 
+            onClick={() => setIsEditDialogOpen(true)} 
+            size="sm" 
+            className="text-xs h-8 px-3 active:scale-95 transition-transform bg-blue-600 hover:bg-blue-700 text-white shadow-md"
+          >
+            <Edit className="h-3.5 w-3.5 mr-1" />
+            Edição
           </Button>
         </div>
       </div>
