@@ -607,9 +607,9 @@ export default function AdminPetsPage() {
             onClick={() => setSmartFilter(key as SmartFilter)}
             className={cn(
               "flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all duration-200",
-              "border border-transparent hover:border-slate-200 dark:hover:border-slate-700",
+              "border-2 border-transparent hover:border-slate-200 dark:hover:border-slate-700",
               bgColor,
-              smartFilter === key && "ring-2 ring-primary/60 ring-offset-2 ring-offset-background shadow-sm"
+              smartFilter === key && "border-primary/70 shadow-sm"
             )}
           >
             <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center shrink-0", iconBg)}>
