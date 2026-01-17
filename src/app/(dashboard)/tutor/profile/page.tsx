@@ -11,7 +11,6 @@ import { User, Mail, Phone, Shield, Calendar, CheckCircle, Key, Eye, EyeOff, Loc
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import { LoadingPage } from "@/components/shared/loading";
-import { PageHeader } from "@/components/shared/page-header";
 
 export default function TutorProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
@@ -120,11 +119,19 @@ export default function TutorProfilePage() {
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Meu Perfil"
-        description="Gerencie suas informações pessoais"
-      />
+    <div className="page-container">
+      {/* Header */}
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <User />
+          </div>
+          <div className="page-header-info">
+            <h1>Meu Perfil</h1>
+            <p>Gerencie suas informações pessoais</p>
+          </div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Info Card */}

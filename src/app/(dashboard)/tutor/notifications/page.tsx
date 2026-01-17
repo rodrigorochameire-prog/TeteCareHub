@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -75,51 +74,49 @@ export default function TutorNotificationsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="page-container">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <Bell className="h-8 w-8 text-cyan-500" />
-            Notificações
-            {unreadCount > 0 && (
-              <Badge className="bg-red-500 text-white">
-                {unreadCount} novas
-              </Badge>
-            )}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Atualizações sobre seus pets
-          </p>
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <Bell />
+          </div>
+          <div className="page-header-info">
+            <div className="flex items-center gap-3">
+              <h1>Notificações</h1>
+              {unreadCount > 0 && (
+                <Badge className="badge-rose">
+                  {unreadCount} novas
+                </Badge>
+              )}
+            </div>
+            <p>Atualizações sobre seus pets</p>
+          </div>
         </div>
         {unreadCount > 0 && (
-          <Button variant="outline" onClick={markAllAsRead} className="gap-2">
-            <CheckCheck className="h-4 w-4" />
-            Marcar todas como lidas
-          </Button>
+          <div className="page-header-actions">
+            <Button variant="outline" onClick={markAllAsRead} size="sm" className="btn-sm btn-outline gap-2">
+              <CheckCheck className="h-4 w-4" />
+              Marcar todas como lidas
+            </Button>
+          </div>
         )}
       </div>
 
       {/* Notifications List */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-cyan-500/10">
-              <Sparkles className="h-5 w-5 text-cyan-500" />
-            </div>
-            <div>
-              <CardTitle>Atividades Recentes</CardTitle>
-              <CardDescription>
-                Novidades sobre seus pets e reservas
-              </CardDescription>
-            </div>
+      <div className="section-card">
+        <div className="section-card-header">
+          <div className="section-card-title">
+            <Sparkles />
+            Atividades Recentes
           </div>
-        </CardHeader>
-        <CardContent>
+          <span className="section-card-subtitle">Novidades sobre seus pets e reservas</span>
+        </div>
+        <div className="section-card-content">
           {notifications.length === 0 ? (
-            <div className="text-center py-12">
-              <BellOff className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Nenhuma notificação</p>
+            <div className="empty-state">
+              <div className="empty-state-icon"><BellOff /></div>
+              <p className="empty-state-text">Nenhuma notificação</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -130,7 +127,7 @@ export default function TutorNotificationsPage() {
                     key={notification.id}
                     className={`flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer ${
                       !notification.read 
-                        ? "bg-cyan-500/5 border-cyan-500/20" 
+                        ? "bg-primary/5 border-primary/20" 
                         : "bg-muted/30 border-transparent hover:border-border"
                     }`}
                     onClick={() => markAsRead(notification.id)}
@@ -142,7 +139,7 @@ export default function TutorNotificationsPage() {
                       <div className="flex items-center gap-2">
                         <p className="font-semibold">{notification.title}</p>
                         {!notification.read && (
-                          <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
+                          <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">
@@ -169,8 +166,8 @@ export default function TutorNotificationsPage() {
               })}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
