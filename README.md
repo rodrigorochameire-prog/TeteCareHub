@@ -80,13 +80,15 @@ Antes de começar, certifique-se de ter o Git instalado em sua máquina:
 
 ### Clonar o Repositório
 
-Abra o terminal (ou Git Bash no Windows) e execute:
+Abra o terminal (ou Git Bash no Windows) e execute os comandos abaixo:
 
+**1. Clone o repositório:**
 ```bash
-# Clone o repositório
 git clone https://github.com/rodrigorochameire-prog/TeteCareHub.git
+```
 
-# Entre na pasta do projeto
+**2. Entre na pasta do projeto:**
+```bash
 cd TeteCareHub
 ```
 
