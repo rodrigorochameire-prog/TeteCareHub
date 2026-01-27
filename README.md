@@ -68,12 +68,55 @@ Sistema de gestão de creche para pets, reconstruído do zero com Next.js 14.
 
 ---
 
+## 📦 Pré-requisitos
+
+Antes de começar, certifique-se de ter instalado:
+
+- **Git** - [Download](https://git-scm.com/downloads)
+- **Node.js** (versão 18 ou superior) - [Download](https://nodejs.org/)
+- **npm** ou **yarn** (incluído com Node.js)
+
+---
+
+## 📥 Como Clonar o Repositório
+
+Para clonar o repositório TeteCare Hub para o seu computador local, siga os passos abaixo:
+
+### Opção 1: Clone via HTTPS (Recomendado)
+
+```bash
+git clone https://github.com/rodrigorochameire-prog/TeteCareHub.git
+```
+
+### Opção 2: Clone via SSH
+
+Se você configurou chaves SSH no GitHub:
+
+```bash
+git clone git@github.com:rodrigorochameire-prog/TeteCareHub.git
+```
+
+### Opção 3: Download ZIP
+
+Você também pode baixar o código como arquivo ZIP:
+
+1. Acesse: https://github.com/rodrigorochameire-prog/TeteCareHub
+2. Clique em **Code** > **Download ZIP**
+3. Extraia o arquivo no diretório desejado
+
+### Após clonar, acesse o diretório:
+
+```bash
+cd TeteCareHub
+```
+
+---
+
 ## 🚀 Início Rápido
 
 ### 1. Instalar Dependências
 
 ```bash
-cd tetecare-v2
 npm install
 ```
 
