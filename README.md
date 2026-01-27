@@ -68,12 +68,37 @@ Sistema de gestão de creche para pets, reconstruído do zero com Next.js 14.
 
 ---
 
+## 📥 Como Clonar o Repositório
+
+### Pré-requisitos
+
+Antes de começar, certifique-se de ter o Git instalado em sua máquina:
+
+- **Windows**: [Download Git](https://git-scm.com/download/win)
+- **macOS**: `brew install git` ou [Download Git](https://git-scm.com/download/mac)
+- **Linux**: `sudo apt-get install git` (Ubuntu/Debian) ou `sudo yum install git` (Fedora/RHEL)
+
+### Clonar o Repositório
+
+Abra o terminal (ou Git Bash no Windows) e execute:
+
+```bash
+# Clone o repositório
+git clone https://github.com/rodrigorochameire-prog/TeteCareHub.git
+
+# Entre na pasta do projeto
+cd TeteCareHub
+```
+
+Pronto! Agora você já tem o projeto clonado localmente e pode seguir os passos abaixo para configurar e executar.
+
+---
+
 ## 🚀 Início Rápido
 
 ### 1. Instalar Dependências
 
 ```bash
-cd tetecare-v2
 npm install
 ```
 
