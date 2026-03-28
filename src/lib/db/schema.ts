@@ -25,6 +25,8 @@ export const users = pgTable("users", {
   phone: text("phone"),
   emailVerified: boolean("email_verified").default(false).notNull(),
   approvalStatus: varchar("approval_status", { length: 20 }).default("pending").notNull(), // 'pending' | 'approved' | 'rejected'
+  onboardingStatus: varchar("onboarding_status", { length: 20 }).default("not_started").notNull(),
+  invitedBy: integer("invited_by").references((): any => users.id),
   // Soft delete
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -109,6 +111,7 @@ export const pets = pgTable("pets", {
   medicalConditions: text("medical_conditions"), // condições médicas crônicas
   
   credits: integer("credits").default(0).notNull(), // créditos de creche
+  adminLockedFields: jsonb("admin_locked_fields").$type<string[]>().default([]),
   // Soft delete
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -180,6 +183,9 @@ export const calendarEvents = pgTable("calendar_events", {
   recurrenceCount: integer("recurrence_count"), // Número de ocorrências (alternativa a endDate)
   recurrenceDays: varchar("recurrence_days", { length: 50 }), // Para weekly: "0,1,2,3,4" (Dom-Qui)
   parentEventId: integer("parent_event_id"), // Referência ao evento pai (para séries)
+  // Ownership
+  source: varchar("source", { length: 10 }).default("admin").notNull(),
+  createdByUserId: integer("created_by_user_id").references(() => users.id),
   // Soft delete
   deletedAt: timestamp("deleted_at"),
   // Metadados
@@ -238,6 +244,8 @@ export const petVaccinations = pgTable("pet_vaccinations", {
   clinic: varchar("clinic", { length: 200 }),
   notes: text("notes"),
   documentUrl: text("document_url"),
+  source: varchar("source", { length: 10 }).default("admin").notNull(),
+  createdByUserId: integer("created_by_user_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -459,6 +467,8 @@ export const petMedications = pgTable("pet_medications", {
   administrationTimes: text("administration_times"), // JSON array
   notes: text("notes"),
   isActive: boolean("is_active").default(true).notNull(),
+  source: varchar("source", { length: 10 }).default("admin").notNull(),
+  createdByUserId: integer("created_by_user_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -480,6 +490,8 @@ export const preventiveTreatments = pgTable("preventive_treatments", {
   nextDueDate: timestamp("next_due_date"),
   dosage: varchar("dosage", { length: 100 }),
   notes: text("notes"),
+  source: varchar("source", { length: 10 }).default("admin").notNull(),
+  createdByUserId: integer("created_by_user_id").references(() => users.id),
   createdById: integer("created_by_id")
     .notNull()
     .references(() => users.id),
@@ -512,6 +524,8 @@ export const documents = pgTable("documents", {
   // Campos para integração com funcionalidades
   relatedModule: varchar("related_module", { length: 50 }), // 'daily_log' | 'behavior' | 'training' | 'health' | 'vaccination' | null
   relatedId: integer("related_id"), // ID do registro relacionado
+  source: varchar("source", { length: 10 }).default("admin").notNull(),
+  createdByUserId: integer("created_by_user_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -544,6 +558,8 @@ export const behaviorLogs = pgTable("behavior_logs", {
   notes: text("notes"),
   activities: text("activities"), // JSON array
   attachments: text("attachments"), // JSON array de URLs de anexos (fotos, vídeos, docs)
+  source: varchar("source", { length: 10 }).default("admin").notNull(),
+  createdByUserId: integer("created_by_user_id").references(() => users.id),
   createdById: integer("created_by_id")
     .notNull()
     .references(() => users.id),
@@ -679,6 +695,8 @@ export const trainingLogs = pgTable("training_logs", {
   notes: text("notes"),
   videoUrl: text("video_url"),
   attachments: text("attachments"), // JSON array de URLs de anexos (fotos, vídeos, docs)
+  source: varchar("source", { length: 10 }).default("admin").notNull(),
+  createdByUserId: integer("created_by_user_id").references(() => users.id),
   createdById: integer("created_by_id")
     .notNull()
     .references(() => users.id),
@@ -757,6 +775,8 @@ export const petFoodPlans = pgTable("pet_food_plans", {
   isActive: boolean("is_active").default(true).notNull(),
   startDate: timestamp("start_date").defaultNow().notNull(),
   endDate: timestamp("end_date"),
+  source: varchar("source", { length: 10 }).default("admin").notNull(),
+  createdByUserId: integer("created_by_user_id").references(() => users.id),
   createdById: integer("created_by_id")
     .notNull()
     .references(() => users.id),
@@ -1057,6 +1077,8 @@ export const petWeightHistory = pgTable("pet_weight_history", {
   weight: integer("weight").notNull(), // em gramas
   measuredAt: timestamp("measured_at").notNull(),
   notes: text("notes"),
+  source: varchar("source", { length: 10 }).default("admin").notNull(),
+  createdByUserId: integer("created_by_user_id").references(() => users.id),
   createdById: integer("created_by_id")
     .notNull()
     .references(() => users.id),
