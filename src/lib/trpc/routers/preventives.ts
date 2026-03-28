@@ -1,30 +1,8 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db, pets, petVaccinations, vaccineLibrary, calendarEvents } from "@/lib/db";
+import { db, pets, petVaccinations, vaccineLibrary, calendarEvents, preventiveTreatments } from "@/lib/db";
 import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
-import {
-  pgTable,
-  serial,
-  text,
-  varchar,
-  timestamp,
-  integer,
-} from "drizzle-orm/pg-core";
-
-// Schema para tratamentos preventivos (antipulgas, vermífugos)
-export const preventiveTreatments = pgTable("preventive_treatments", {
-  id: serial("id").primaryKey(),
-  petId: integer("pet_id").notNull(),
-  type: varchar("type", { length: 50 }).notNull(), // 'flea' | 'deworming' | 'heartworm'
-  productName: varchar("product_name", { length: 200 }).notNull(),
-  applicationDate: timestamp("application_date").notNull(),
-  nextDueDate: timestamp("next_due_date"),
-  dosage: varchar("dosage", { length: 100 }),
-  notes: text("notes"),
-  createdById: integer("created_by_id").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
 
 // Helper para nomes de tipos de preventivos
 const PREVENTIVE_TYPES = {

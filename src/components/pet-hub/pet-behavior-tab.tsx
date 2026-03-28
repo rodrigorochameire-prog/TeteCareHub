@@ -88,7 +88,7 @@ export function PetBehaviorTab({ petId, role }: PetBehaviorTabProps) {
                     <span className="font-medium">
                       {format(new Date(log.logDate), "dd/MM/yyyy", { locale: ptBR })}
                     </span>
-                    {(log as Record<string, unknown>).source && (
+                    {String((log as Record<string, unknown>).source || "") !== "" && (
                       <SourceBadge source={(log as Record<string, unknown>).source as "admin" | "tutor"} />
                     )}
                   </div>

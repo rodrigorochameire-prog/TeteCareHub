@@ -66,7 +66,7 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
                       <p className="font-medium truncate">
                         {item.vaccine?.name ?? "Vacina"}
                       </p>
-                      {(item.vaccination as Record<string, unknown>).source && (
+                      {String((item.vaccination as Record<string, unknown>).source || "") !== "" && (
                         <SourceBadge
                           source={(item.vaccination as Record<string, unknown>).source as "admin" | "tutor"}
                         />
@@ -136,7 +136,7 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
                       ) : (
                         <Badge variant="secondary" className="text-[10px]">Encerrado</Badge>
                       )}
-                      {(item.medication as Record<string, unknown>).source && (
+                      {String((item.medication as Record<string, unknown>).source || "") !== "" && (
                         <SourceBadge
                           source={(item.medication as Record<string, unknown>).source as "admin" | "tutor"}
                         />
@@ -207,7 +207,7 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
                         <Badge variant="secondary" className="text-[10px]">
                           {typeLabels[treatment.type] ?? treatment.type}
                         </Badge>
-                        {(treatment as Record<string, unknown>).source && (
+                        {String((treatment as Record<string, unknown>).source || "") !== "" && (
                           <SourceBadge
                             source={(treatment as Record<string, unknown>).source as "admin" | "tutor"}
                           />

@@ -36,7 +36,7 @@ interface Pet {
   dogSociability?: string | null;
   humanSociability?: string | null;
   playStyle?: string | null;
-  fearTriggers?: string | null;
+  fearTriggers?: string[] | string | null;
   hasFoodAllergy?: boolean | null;
   foodAllergyDetails?: string | null;
   hasMedicationAllergy?: boolean | null;
@@ -193,7 +193,7 @@ export function PetGeneralTab({ pet, role }: PetGeneralTabProps) {
           {pet.fearTriggers && (
             <div className="pt-2 border-t">
               <p className="text-muted-foreground text-xs mb-1">Gatilhos de medo</p>
-              <p>{pet.fearTriggers}</p>
+              <p>{Array.isArray(pet.fearTriggers) ? pet.fearTriggers.join(", ") : pet.fearTriggers}</p>
             </div>
           )}
         </CardContent>

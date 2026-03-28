@@ -113,7 +113,7 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
                         <Badge variant="secondary" className="text-[10px]">
                           {CATEGORY_MAP[log.category] ?? log.category}
                         </Badge>
-                        {(log as Record<string, unknown>).source && (
+                        {String((log as Record<string, unknown>).source || "") !== "" && (
                           <SourceBadge source={(log as Record<string, unknown>).source as "admin" | "tutor"} />
                         )}
                       </div>

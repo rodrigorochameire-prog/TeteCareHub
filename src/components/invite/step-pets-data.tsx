@@ -26,9 +26,9 @@ interface Pet {
   id: number;
   name: string;
   breed: string | null;
-  species: string | null;
+  species: string;
   birthDate: Date | null;
-  weight: string | null;
+  weight: number | null;
   photoUrl: string | null;
   adminLockedFields: string[];
   emergencyVetName: string | null;

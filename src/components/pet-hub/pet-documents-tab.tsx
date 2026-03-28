@@ -77,7 +77,7 @@ export function PetDocumentsTab({ petId, role }: PetDocumentsTabProps) {
                     <Badge variant="secondary" className="text-[10px]">
                       {CATEGORY_LABELS[doc.category] ?? doc.category}
                     </Badge>
-                    {(doc as Record<string, unknown>).source && (
+                    {String((doc as Record<string, unknown>).source || "") !== "" && (
                       <SourceBadge
                         source={(doc as Record<string, unknown>).source as "admin" | "tutor"}
                       />

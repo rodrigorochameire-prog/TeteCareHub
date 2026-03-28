@@ -17,9 +17,11 @@ export const invitePublicRouter = router({
     .input(z.object({ token: z.string().min(1) }))
     .query(async ({ input }) => {
       return safeAsync(async () => {
-        const invitation = await db.query.invitations.findFirst({
-          where: eq(invitations.token, input.token),
-        });
+        const [invitation] = await db
+          .select()
+          .from(invitations)
+          .where(eq(invitations.token, input.token))
+          .limit(1);
         if (!invitation) throw Errors.notFound("Convite");
 
         if (invitation.status === "expired" || new Date() > invitation.expiresAt) {
@@ -29,9 +31,11 @@ export const invitePublicRouter = router({
           throw new Error("Este convite ja foi utilizado.");
         }
 
-        const tutor = await db.query.users.findFirst({
-          where: eq(users.id, invitation.tutorId),
-        });
+        const [tutor] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, invitation.tutorId))
+          .limit(1);
         if (!tutor) throw Errors.notFound("Tutor");
 
         const petList = await db
@@ -73,9 +77,11 @@ export const invitePublicRouter = router({
     .input(tutorOnboardingStep1Schema)
     .mutation(async ({ input }) => {
       return safeAsync(async () => {
-        const invitation = await db.query.invitations.findFirst({
-          where: eq(invitations.token, input.token),
-        });
+        const [invitation] = await db
+          .select()
+          .from(invitations)
+          .where(eq(invitations.token, input.token))
+          .limit(1);
         if (!invitation || invitation.status !== "pending") {
           throw new Error("Convite invalido ou expirado");
         }
@@ -97,9 +103,11 @@ export const invitePublicRouter = router({
     .input(tutorOnboardingStep2Schema)
     .mutation(async ({ input }) => {
       return safeAsync(async () => {
-        const invitation = await db.query.invitations.findFirst({
-          where: eq(invitations.token, input.token),
-        });
+        const [invitation] = await db
+          .select()
+          .from(invitations)
+          .where(eq(invitations.token, input.token))
+          .limit(1);
         if (!invitation || invitation.status !== "pending") {
           throw new Error("Convite invalido ou expirado");
         }
@@ -107,9 +115,11 @@ export const invitePublicRouter = router({
         for (const petData of input.pets) {
           if (!(invitation.petIds as number[]).includes(petData.petId)) continue;
 
-          const pet = await db.query.pets.findFirst({
-            where: eq(pets.id, petData.petId),
-          });
+          const [pet] = await db
+            .select()
+            .from(pets)
+            .where(eq(pets.id, petData.petId))
+            .limit(1);
           if (!pet) continue;
 
           const lockedFields = (pet.adminLockedFields as string[]) || [];
@@ -136,9 +146,11 @@ export const invitePublicRouter = router({
     .input(completeOnboardingSchema)
     .mutation(async ({ input }) => {
       return safeAsync(async () => {
-        const invitation = await db.query.invitations.findFirst({
-          where: eq(invitations.token, input.token),
-        });
+        const [invitation] = await db
+          .select()
+          .from(invitations)
+          .where(eq(invitations.token, input.token))
+          .limit(1);
         if (!invitation || invitation.status !== "pending") {
           throw new Error("Convite invalido ou expirado");
         }
