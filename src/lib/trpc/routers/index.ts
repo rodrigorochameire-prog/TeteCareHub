@@ -34,6 +34,7 @@ import { inspectionsRouter } from "./inspections";
 import { alertsRouter } from "./alerts";
 import { trainingMatrixRouter } from "./trainingMatrix";
 import { compatibilityRouter } from "./compatibility";
+import { invitationsRouter } from "./invitations";
 
 export const appRouter = router({
   // Autenticação
@@ -42,6 +43,7 @@ export const appRouter = router({
   // Gestão de usuários e tutores
   users: usersRouter,
   tutors: tutorsRouter,
+  invitations: invitationsRouter,
   
   // Gestão de pets
   pets: petsRouter,
