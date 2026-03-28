@@ -60,6 +60,8 @@ async function createMedicationCalendarEvent(
     isAllDay: false,
     color: "#f59e0b",
     createdById,
+    source: "admin",
+    createdByUserId: createdById,
   });
 }
 
@@ -214,6 +216,8 @@ export const medicationsRouter = router({
             administrationTimes: input.administrationTimes ? JSON.stringify(input.administrationTimes) : null,
             notes: input.notes || null,
             isActive: true,
+            source: ctx.user.role === "admin" ? "admin" : "tutor",
+            createdByUserId: ctx.user.id,
           })
           .returning();
 

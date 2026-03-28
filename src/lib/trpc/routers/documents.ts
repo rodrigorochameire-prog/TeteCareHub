@@ -114,6 +114,8 @@ export const documentsRouter = router({
             fileName: input.fileName || null,
             mimeType: input.mimeType || null,
             fileSize: input.fileSize || null,
+            source: ctx.user.role === "admin" ? "admin" : "tutor",
+            createdByUserId: ctx.user.id,
           })
           .returning();
 

@@ -280,6 +280,8 @@ export const calendarRouter = router({
             recurrenceCount: input.recurrenceCount || null,
             recurrenceDays: input.recurrenceDays || null,
             createdById: ctx.user.id,
+            source: ctx.user.role === "admin" ? "admin" : "tutor",
+            createdByUserId: ctx.user.id,
           })
           .returning();
 
@@ -314,6 +316,8 @@ export const calendarRouter = router({
               recurrenceType: input.recurrenceType || null,
               parentEventId: event.id,
               createdById: ctx.user.id,
+              source: ctx.user.role === "admin" ? "admin" : "tutor",
+              createdByUserId: ctx.user.id,
             });
           }
         }

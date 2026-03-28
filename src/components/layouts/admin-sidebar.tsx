@@ -20,6 +20,7 @@ import {
   TrendingUp,
   MessageSquare,
   Shield,
+  Mail,
   PanelLeft,
   Heart,
   Brain,
@@ -111,6 +112,7 @@ const menuGroups = [
     color: "secondary", // Azul escuro
     items: [
       { icon: Users, label: "Tutores", path: "/admin/tutors" },
+      { icon: Mail, label: "Convites", path: "/admin/invitations" },
       { icon: Building2, label: "Creche", path: "/admin/daycare" },
       { icon: BarChart3, label: "Relatórios", path: "/admin/reports" },
       { icon: Settings, label: "Configurações", path: "/admin/settings" },

@@ -48,10 +48,10 @@ async function createPreventiveCalendarEvent(
   const typeInfo = PREVENTIVE_TYPES[type];
 
   await db.insert(calendarEvents).values({
-    title: isReminder 
+    title: isReminder
       ? `⏰ Lembrete: ${typeInfo.label} - ${petName}`
       : `${typeInfo.emoji} ${typeInfo.label}: ${productName} - ${petName}`,
-    description: isReminder 
+    description: isReminder
       ? `Lembrete para aplicar ${typeInfo.label.toLowerCase()}: ${productName}`
       : `Produto: ${productName}\nTipo: ${typeInfo.label}`,
     eventDate,
@@ -60,6 +60,8 @@ async function createPreventiveCalendarEvent(
     isAllDay: true,
     color: typeInfo.color,
     createdById,
+    source: "admin",
+    createdByUserId: createdById,
   });
 }
 
@@ -125,6 +127,8 @@ export const preventivesRouter = router({
             dosage: input.dosage || null,
             notes: input.notes || null,
             createdById: ctx.user.id,
+            source: ctx.user.role === "admin" ? "admin" : "tutor",
+            createdByUserId: ctx.user.id,
           })
           .returning();
 

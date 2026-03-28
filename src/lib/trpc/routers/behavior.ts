@@ -62,6 +62,8 @@ export const behaviorRouter = router({
             notes: input.notes || null,
             activities: input.activities ? JSON.stringify(input.activities) : null,
             createdById: ctx.user.id,
+            source: ctx.user.role === "admin" ? "admin" : "tutor",
+            createdByUserId: ctx.user.id,
           })
           .returning();
 
