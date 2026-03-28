@@ -469,3 +469,9 @@ export type NotificationInput = z.infer<typeof notificationSchema>;
 export type PaginationInput = z.infer<typeof paginationSchema>;
 export type DateRangeFilter = z.infer<typeof dateRangeFilterSchema>;
 export type LogFilter = z.infer<typeof logFilterSchema>;
+
+// ==========================================
+// RE-EXPORTS - MÓDULOS ESPECÍFICOS
+// ==========================================
+
+export * from "./validations/invitation";
