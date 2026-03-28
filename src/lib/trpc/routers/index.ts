@@ -35,6 +35,7 @@ import { alertsRouter } from "./alerts";
 import { trainingMatrixRouter } from "./trainingMatrix";
 import { compatibilityRouter } from "./compatibility";
 import { invitationsRouter } from "./invitations";
+import { invitePublicRouter } from "./invite-public";
 
 export const appRouter = router({
   // Autenticação
@@ -44,6 +45,7 @@ export const appRouter = router({
   users: usersRouter,
   tutors: tutorsRouter,
   invitations: invitationsRouter,
+  invitePublic: invitePublicRouter,
   
   // Gestão de pets
   pets: petsRouter,
