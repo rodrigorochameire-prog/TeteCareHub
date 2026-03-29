@@ -627,6 +627,34 @@ export function PetGeneralTab({ pet, role, isEditMode = false }: PetGeneralTabPr
             </div>
           </div>
 
+          {/* WhatsApp collection alert when credits are zero and pet has active plan */}
+          {credits === 0 && petPlanData && (() => {
+            const primaryTutor = pet.tutors.find((t) => t.isPrimary) ?? pet.tutors[0];
+            if (!primaryTutor) return null;
+            const tutorPhone = primaryTutor.phone?.replace(/\D/g, "") ?? "";
+            if (!tutorPhone) return null;
+            const collectionMessage = `Olá ${primaryTutor.name}! Os créditos do ${pet.name} na TeteCare estão zerados. Para continuar o atendimento, por favor realize o pagamento. Obrigado!`;
+            const collectionUrl = `https://wa.me/55${tutorPhone}?text=${encodeURIComponent(collectionMessage)}`;
+            return (
+              <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-red-600" />
+                  <span className="text-sm font-medium text-red-600">Pet sem créditos!</span>
+                </div>
+                <Button
+                  asChild
+                  size="sm"
+                  className="gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white shrink-0"
+                >
+                  <a href={collectionUrl} target="_blank" rel="noopener noreferrer">
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    Cobrar tutor via WhatsApp
+                  </a>
+                </Button>
+              </div>
+            );
+          })()}
+
           {/* Action buttons */}
           <Separator className="my-3" />
           <div className="flex flex-wrap gap-2">
