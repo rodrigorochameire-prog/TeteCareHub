@@ -35,16 +35,31 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <Skeleton className="h-6 w-32 mb-4" />
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-20 w-full" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-4">
+                <Skeleton className="h-8 w-12 mx-auto mb-1" />
+                <Skeleton className="h-3 w-16 mx-auto" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <Skeleton className="h-5 w-48" />
+              <Skeleton className="h-8 w-24" />
+            </div>
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-20 w-full rounded-lg" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -61,19 +76,19 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-emerald-600">{progress.data.mastered}</p>
+              <p className="text-2xl font-bold text-emerald-500">{progress.data.mastered}</p>
               <p className="text-xs text-muted-foreground">Dominados</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-sky-600">{progress.data.practicing}</p>
+              <p className="text-2xl font-bold text-sky-500">{progress.data.practicing}</p>
               <p className="text-xs text-muted-foreground">Praticando</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-amber-600">{progress.data.learning}</p>
+              <p className="text-2xl font-bold text-amber-500">{progress.data.learning}</p>
               <p className="text-xs text-muted-foreground">Aprendendo</p>
             </CardContent>
           </Card>
@@ -149,9 +164,13 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
               })}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              Nenhum treinamento registrado.
-            </p>
+            <div className="text-center py-8">
+              <GraduationCap className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Nenhum treinamento registrado.</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                Registre sessoes de treinamento e acompanhe o progresso.
+              </p>
+            </div>
           )}
         </CardContent>
       </Card>

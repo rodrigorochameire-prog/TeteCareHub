@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SourceBadge } from "./source-badge";
-import { FileText, Plus, Trash2, Download, ExternalLink } from "lucide-react";
+import { FileText, Plus, Trash2, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -38,10 +38,13 @@ export function PetDocumentsTab({ petId, role }: PetDocumentsTabProps) {
     return (
       <Card>
         <CardContent className="p-6">
-          <Skeleton className="h-6 w-32 mb-4" />
+          <div className="flex items-center justify-between mb-4">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-8 w-24" />
+          </div>
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-16 w-full" />
+              <Skeleton key={i} className="h-16 w-full rounded-lg" />
             ))}
           </div>
         </CardContent>
@@ -120,9 +123,13 @@ export function PetDocumentsTab({ petId, role }: PetDocumentsTabProps) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            Nenhum documento registrado.
-          </p>
+          <div className="text-center py-8">
+            <FileText className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">Nenhum documento registrado.</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">
+              Armazene exames, receitas, e outros documentos importantes.
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>

@@ -28,10 +28,13 @@ export function PetCalendarTab({ petId, role }: PetCalendarTabProps) {
     return (
       <Card>
         <CardContent className="p-6">
-          <Skeleton className="h-6 w-32 mb-4" />
+          <div className="flex items-center justify-between mb-4">
+            <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-8 w-24" />
+          </div>
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-20 w-full" />
+              <Skeleton key={i} className="h-20 w-full rounded-lg" />
             ))}
           </div>
         </CardContent>
@@ -109,9 +112,13 @@ export function PetCalendarTab({ petId, role }: PetCalendarTabProps) {
             })}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            Nenhum evento registrado.
-          </p>
+          <div className="text-center py-8">
+            <Calendar className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">Nenhum evento registrado.</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">
+              Agende consultas, banhos, e outros compromissos.
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>

@@ -49,10 +49,13 @@ export function PetBehaviorTab({ petId, role }: PetBehaviorTabProps) {
     return (
       <Card>
         <CardContent className="p-6">
-          <Skeleton className="h-6 w-32 mb-4" />
+          <div className="flex items-center justify-between mb-4">
+            <Skeleton className="h-5 w-48" />
+            <Skeleton className="h-8 w-24" />
+          </div>
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-24 w-full" />
+              <Skeleton key={i} className="h-24 w-full rounded-lg" />
             ))}
           </div>
         </CardContent>
@@ -128,9 +131,13 @@ export function PetBehaviorTab({ petId, role }: PetBehaviorTabProps) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            Nenhum registro de comportamento.
-          </p>
+          <div className="text-center py-8">
+            <Brain className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">Nenhum registro de comportamento.</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">
+              Acompanhe socializacao, energia e obediencia ao longo do tempo.
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>

@@ -19,6 +19,35 @@ const FOOD_TYPE_LABELS: Record<string, string> = {
   mixed: "Mista",
 };
 
+function StockBar({ remaining, total }: { remaining: number; total: number }) {
+  const pct = total > 0 ? Math.round((remaining / total) * 100) : 0;
+  const color =
+    pct <= 0
+      ? "bg-red-500"
+      : pct < 20
+        ? "bg-amber-500"
+        : pct < 50
+          ? "bg-sky-500"
+          : "bg-emerald-500";
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-muted-foreground">
+          {remaining}g de {total}g
+        </span>
+        <span className="font-medium">{pct}%</span>
+      </div>
+      <div className="h-2 w-full rounded-full bg-muted/40 overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all ${color}`}
+          style={{ width: `${Math.max(pct, 2)}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function PetFoodTab({ petId, role }: PetFoodTabProps) {
   const plan = trpc.food.getPlanByPet.useQuery({ petId });
   const treats = trpc.food.getTreatsByPet.useQuery({ petId });
@@ -33,7 +62,10 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
         {[1, 2, 3].map((i) => (
           <Card key={i}>
             <CardContent className="p-6">
-              <Skeleton className="h-6 w-32 mb-4" />
+              <div className="flex items-center justify-between mb-4">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-8 w-24" />
+              </div>
               <Skeleton className="h-16 w-full" />
             </CardContent>
           </Card>
@@ -91,9 +123,13 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               )}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              Nenhum plano alimentar cadastrado.
-            </p>
+            <div className="text-center py-8">
+              <UtensilsCrossed className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Nenhum plano alimentar cadastrado.</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                Crie um plano para controlar a alimentacao.
+              </p>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -116,37 +152,44 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
           {inventory.data && inventory.data.length > 0 ? (
             <div className="space-y-3">
               {inventory.data.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-3 rounded-lg border text-sm">
-                  <div>
-                    <p className="font-medium">{item.brand}</p>
-                    {item.productName && (
-                      <p className="text-xs text-muted-foreground">{item.productName}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Restante: {item.quantityRemaining}g de {item.quantityReceived}g
-                    </p>
+                <div key={item.id} className="p-3 rounded-lg border text-sm space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{item.brand}</p>
+                      {item.productName && (
+                        <p className="text-xs text-muted-foreground">{item.productName}</p>
+                      )}
+                    </div>
+                    <Badge
+                      variant={
+                        (item.quantityRemaining ?? 0) <= 0
+                          ? "destructive"
+                          : (item.quantityRemaining ?? 0) < (item.quantityReceived ?? 1) * 0.2
+                            ? "warning"
+                            : "success"
+                      }
+                      className="text-[10px]"
+                    >
+                      {(item.quantityRemaining ?? 0) <= 0
+                        ? "Vazio"
+                        : `${Math.round(((item.quantityRemaining ?? 0) / (item.quantityReceived || 1)) * 100)}%`}
+                    </Badge>
                   </div>
-                  <Badge
-                    variant={
-                      (item.quantityRemaining ?? 0) <= 0
-                        ? "destructive"
-                        : (item.quantityRemaining ?? 0) < (item.quantityReceived ?? 1) * 0.2
-                          ? "warning"
-                          : "success"
-                    }
-                    className="text-[10px]"
-                  >
-                    {(item.quantityRemaining ?? 0) <= 0
-                      ? "Vazio"
-                      : `${Math.round(((item.quantityRemaining ?? 0) / (item.quantityReceived || 1)) * 100)}%`}
-                  </Badge>
+                  <StockBar
+                    remaining={item.quantityRemaining ?? 0}
+                    total={item.quantityReceived ?? 0}
+                  />
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              Nenhum estoque registrado.
-            </p>
+            <div className="text-center py-8">
+              <Package className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Nenhum estoque registrado.</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                Controle o estoque de racao e suplementos.
+              </p>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -193,9 +236,13 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              Nenhum petisco registrado.
-            </p>
+            <div className="text-center py-8">
+              <Cookie className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Nenhum petisco registrado.</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                Registre petiscos favoritos e preferencias.
+              </p>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -244,9 +291,13 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              Nenhuma alimentacao natural registrada.
-            </p>
+            <div className="text-center py-8">
+              <Leaf className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Nenhuma alimentacao natural registrada.</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                Registre dietas naturais e ingredientes.
+              </p>
+            </div>
           )}
         </CardContent>
       </Card>
