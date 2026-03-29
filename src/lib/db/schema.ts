@@ -363,6 +363,7 @@ export const dailyLogs = pgTable("daily_logs", {
   bestFriendPetId: integer("best_friend_pet_id").references(() => pets.id, { onDelete: "set null" }), // Melhor amigo do dia
   activitiesPerformed: jsonb("activities_performed").$type<string[]>().default([]), // Atividades realizadas
   checkoutObservations: jsonb("checkout_observations").$type<string[]>().default([]), // Observações de checkout
+  absenceType: varchar("absence_type", { length: 20 }),
   createdById: integer("created_by_id")
     .notNull()
     .references(() => users.id),
