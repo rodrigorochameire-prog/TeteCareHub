@@ -100,6 +100,8 @@ export const foodRouter = router({
             : null,
           notes: input.notes,
           createdById: ctx.user.id,
+          source: ctx.user.role === "admin" ? "admin" : "tutor",
+          createdByUserId: ctx.user.id,
         })
         .returning();
 

@@ -41,6 +41,8 @@ export const trainingRouter = router({
             notes: input.notes || null,
             videoUrl: input.videoUrl || null,
             createdById: ctx.user.id,
+            source: ctx.user.role === "admin" ? "admin" : "tutor",
+            createdByUserId: ctx.user.id,
           })
           .returning();
 

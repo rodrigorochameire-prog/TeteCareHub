@@ -1,43 +1,8 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db, calendarEvents, pets } from "@/lib/db";
+import { db, calendarEvents, pets, petMedications, medicationLibrary } from "@/lib/db";
 import { eq, and, desc, sql, gte, lte } from "drizzle-orm";
 import { safeAsync } from "@/lib/errors";
-import {
-  pgTable,
-  serial,
-  text,
-  varchar,
-  boolean,
-  timestamp,
-  integer,
-} from "drizzle-orm/pg-core";
-
-// Schema para biblioteca de medicamentos
-export const medicationLibrary = pgTable("medication_library", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 200 }).notNull(),
-  type: varchar("type", { length: 100 }).notNull(), // 'flea' | 'deworming' | 'antibiotic' | 'other'
-  description: text("description"),
-  commonDosage: varchar("common_dosage", { length: 200 }),
-  isCommon: boolean("is_common").default(true).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-// Schema para medicamentos do pet
-export const petMedications = pgTable("pet_medications", {
-  id: serial("id").primaryKey(),
-  petId: integer("pet_id").notNull(),
-  medicationId: integer("medication_id").notNull(),
-  startDate: timestamp("start_date").notNull(),
-  endDate: timestamp("end_date"),
-  dosage: varchar("dosage", { length: 200 }).notNull(),
-  frequency: varchar("frequency", { length: 100 }),
-  administrationTimes: text("administration_times"), // JSON array
-  notes: text("notes"),
-  isActive: boolean("is_active").default(true).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
 
 // Helper para criar evento no calendário
 async function createMedicationCalendarEvent(
@@ -60,6 +25,8 @@ async function createMedicationCalendarEvent(
     isAllDay: false,
     color: "#f59e0b",
     createdById,
+    source: "admin",
+    createdByUserId: createdById,
   });
 }
 
@@ -214,6 +181,8 @@ export const medicationsRouter = router({
             administrationTimes: input.administrationTimes ? JSON.stringify(input.administrationTimes) : null,
             notes: input.notes || null,
             isActive: true,
+            source: ctx.user.role === "admin" ? "admin" : "tutor",
+            createdByUserId: ctx.user.id,
           })
           .returning();
 

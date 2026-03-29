@@ -1,33 +1,8 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db, pets, dailyLogs, users } from "@/lib/db";
+import { db, pets, dailyLogs, users, behaviorLogs } from "@/lib/db";
 import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
-import {
-  pgTable,
-  serial,
-  text,
-  varchar,
-  boolean,
-  timestamp,
-  integer,
-} from "drizzle-orm/pg-core";
-
-// Schema para registros de comportamento
-export const behaviorLogs = pgTable("behavior_logs", {
-  id: serial("id").primaryKey(),
-  petId: integer("pet_id").notNull(),
-  logDate: timestamp("log_date").notNull(),
-  socialization: varchar("socialization", { length: 50 }), // 'excellent' | 'good' | 'moderate' | 'poor'
-  energy: varchar("energy", { length: 50 }), // 'high' | 'normal' | 'low'
-  obedience: varchar("obedience", { length: 50 }), // 'excellent' | 'good' | 'needs_work'
-  anxiety: varchar("anxiety", { length: 50 }), // 'none' | 'mild' | 'moderate' | 'severe'
-  aggression: varchar("aggression", { length: 50 }), // 'none' | 'mild' | 'moderate' | 'severe'
-  notes: text("notes"),
-  activities: text("activities"), // JSON array
-  createdById: integer("created_by_id").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
 
 export const behaviorRouter = router({
   /**
@@ -62,6 +37,8 @@ export const behaviorRouter = router({
             notes: input.notes || null,
             activities: input.activities ? JSON.stringify(input.activities) : null,
             createdById: ctx.user.id,
+            source: ctx.user.role === "admin" ? "admin" : "tutor",
+            createdByUserId: ctx.user.id,
           })
           .returning();
 
