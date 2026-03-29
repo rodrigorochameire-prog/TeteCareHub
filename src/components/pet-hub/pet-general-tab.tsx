@@ -2,20 +2,16 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
-  Dog,
   Zap,
-  Users,
-  Heart,
-  ShieldAlert,
   Phone,
-  Mail,
   MessageCircle,
   AlertTriangle,
-  CheckCircle2,
-  Pencil,
+  Stethoscope,
+  ClipboardList,
+  UserRound,
+  PawPrint,
 } from "lucide-react";
 
 interface Tutor {
@@ -50,6 +46,7 @@ interface Pet {
   chronicConditionDetails?: string | null;
   emergencyVetName?: string | null;
   emergencyVetPhone?: string | null;
+  neuteredStatus?: string | null;
   tutors: Tutor[];
 }
 
@@ -132,6 +129,9 @@ const LABELS: Record<string, string> = {
   fetch: "Buscar",
   tug: "Cabo de Guerra",
   independent: "Independente",
+  yes: "Sim",
+  no: "Não",
+  scheduled: "Agendado",
 };
 
 function label(value: string | null | undefined): string | null {
@@ -167,15 +167,49 @@ function LevelBar({ value, levels }: { value: string | null | undefined; levels:
   );
 }
 
-// Info row with hover effect
-function InfoRow({ label: rowLabel, value }: { label: string; value: string | null }) {
+// Compact info row — only renders when value is truthy
+function CompactRow({ label: rowLabel, value }: { label: string; value: string | null | undefined }) {
+  if (!value) return null;
   return (
-    <div className="flex justify-between items-center py-2 px-2 -mx-2 rounded-md transition-colors duration-200 hover:bg-muted/50">
-      <span className="text-muted-foreground text-sm">{rowLabel}</span>
-      {value ? (
-        <span className="text-sm text-foreground font-medium">{value}</span>
-      ) : (
-        <span className="text-sm text-muted-foreground italic">Não informado</span>
+    <div className="flex justify-between items-center py-1 text-sm">
+      <span className="text-muted-foreground text-xs">{rowLabel}</span>
+      <span className="text-foreground font-medium text-xs">{value}</span>
+    </div>
+  );
+}
+
+// Tutor contact block
+function TutorContact({ tutor, isPrimary }: { tutor: Tutor; isPrimary?: boolean }) {
+  return (
+    <div className="flex items-start justify-between gap-2">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-sm text-foreground truncate">{tutor.name}</span>
+          {isPrimary && (
+            <Badge variant="secondary" className="text-[10px] shrink-0">
+              Principal
+            </Badge>
+          )}
+        </div>
+        {tutor.phone && (
+          <a
+            href={`tel:+55${tutor.phone.replace(/\D/g, "")}`}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {formatPhone(tutor.phone)}
+          </a>
+        )}
+      </div>
+      {tutor.phone && (
+        <a
+          href={`https://wa.me/55${tutor.phone.replace(/\D/g, "")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`WhatsApp de ${tutor.name}`}
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-emerald-600 hover:bg-emerald-600/10 transition-colors"
+        >
+          <MessageCircle className="h-4 w-4" />
+        </a>
       )}
     </div>
   );
@@ -193,6 +227,15 @@ export function PetGeneralTab({ pet, role }: PetGeneralTabProps) {
       : birthDateStr
     : null;
 
+  // Neutered display
+  const neuteredDisplay = pet.neuteredStatus === "yes"
+    ? "Sim"
+    : pet.neuteredStatus === "scheduled"
+      ? "Agendado"
+      : pet.neuteredStatus === "no"
+        ? "Não"
+        : null;
+
   // Check if behavior section has any data
   const hasBehaviorData =
     pet.energyLevel || pet.dogSociability || pet.humanSociability || pet.playStyle;
@@ -203,268 +246,237 @@ export function PetGeneralTab({ pet, role }: PetGeneralTabProps) {
       ? pet.fearTriggers
       : [pet.fearTriggers]
     : [];
-  const hasAnyFearTriggers = fearList.length > 0 && fearList.some((t) => t.trim() !== "");
+  const activeFearTriggers = fearList.filter((t) => t.trim() !== "");
+
+  // Allergy flags
+  const hasAnyAllergy = pet.hasFoodAllergy || pet.hasMedicationAllergy;
+  const hasChronicCondition = pet.hasChronicCondition;
+
+  // Sort tutors: primary first
+  const sortedTutors = [...pet.tutors].sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0));
+
+  // Has emergency vet
+  const hasEmergencyVet = pet.emergencyVetName || pet.emergencyVetPhone;
+
+  // Has quick-access content
+  const hasQuickAccessContent =
+    sortedTutors.length > 0 ||
+    hasEmergencyVet ||
+    hasAnyAllergy ||
+    hasChronicCondition ||
+    activeFearTriggers.length > 0 ||
+    pet.notes;
 
   return (
-    <div className="grid gap-5 md:grid-cols-2">
-      {/* Informações Básicas */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Dog className="h-4 w-4 text-muted-foreground" />
-            Informações Básicas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col divide-y divide-border">
-            <InfoRow label="Espécie" value={label(pet.species)} />
-            <InfoRow label="Raça" value={pet.breed || null} />
-            <InfoRow label="Sexo" value={label(pet.sex)} />
-            <InfoRow label="Nascimento" value={birthDisplay} />
-            <InfoRow label="Peso" value={weightStr} />
-            <InfoRow label="Porte" value={label(pet.size)} />
-            <InfoRow label="Pelagem" value={label(pet.coatType)} />
-          </div>
-          {pet.notes && (
-            <div className="mt-4 bg-muted/50 rounded-lg p-3">
-              <p className="text-xs text-muted-foreground mb-1.5">Observações</p>
-              <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
-                {pet.notes}
-              </p>
-            </div>
-          )}
-          {role === "admin" && (
-            <div className="mt-3 pt-3 border-t">
-              <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors duration-200">
-                <Pencil className="h-3 w-3" />
-                Editar informações
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Perfil Comportamental - only show if there is data */}
-      {(hasBehaviorData || hasAnyFearTriggers) && (
+    <div className="space-y-5">
+      {/* 3-column grid */}
+      <div className="grid gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {/* Column 1 — Perfil (compact) */}
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Zap className="h-4 w-4 text-muted-foreground" />
-              Perfil Comportamental
+              <PawPrint className="h-4 w-4 text-muted-foreground" />
+              Perfil
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {pet.energyLevel && (
-                <div className="space-y-1">
-                  <span className="text-xs text-muted-foreground">Energia</span>
-                  <LevelBar value={pet.energyLevel} levels={["very_low", "low", "moderate", "high", "hyperactive"]} />
-                </div>
-              )}
-              {pet.dogSociability && (
-                <div className="space-y-1">
-                  <span className="text-xs text-muted-foreground">Sociabilidade (cães)</span>
-                  <LevelBar value={pet.dogSociability} levels={["antisocial", "reactive", "selective", "social"]} />
-                </div>
-              )}
-              {pet.humanSociability && (
-                <div className="space-y-1">
-                  <span className="text-xs text-muted-foreground">Sociabilidade (humanos)</span>
-                  <LevelBar value={pet.humanSociability} levels={["reactive", "fearful", "cautious", "friendly"]} />
-                </div>
-              )}
-              {pet.playStyle && (
-                <>
-                  <Separator />
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Estilo de brincadeira</span>
-                    <span className="text-sm text-foreground font-medium">{label(pet.playStyle)}</span>
-                  </div>
-                </>
-              )}
-              {hasAnyFearTriggers && (
-                <>
-                  <Separator />
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                      <AlertTriangle className="h-3 w-3 text-amber-500" />
-                      Gatilhos de medo
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {fearList.filter((t) => t.trim() !== "").map((trigger, i) => (
-                        <Badge key={i} variant="destructive">
-                          {trigger}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
+            <div className="flex flex-col divide-y divide-border">
+              <CompactRow label="Raça" value={pet.breed} />
+              <CompactRow label="Sexo" value={label(pet.sex)} />
+              <CompactRow label="Nascimento" value={birthDisplay} />
+              <CompactRow label="Peso" value={weightStr} />
+              <CompactRow label="Porte" value={label(pet.size)} />
+              <CompactRow label="Pelagem" value={label(pet.coatType)} />
+              <CompactRow label="Castrado" value={neuteredDisplay} />
             </div>
           </CardContent>
         </Card>
-      )}
 
-      {/* Tutores */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            Tutores
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {pet.tutors.length > 0 ? (
-            <div className="space-y-3">
-              {pet.tutors.map((tutor) => (
-                <div
-                  key={tutor.id}
-                  className="p-3 rounded-lg border bg-muted/50 transition-all duration-200 hover:bg-muted/80"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm text-foreground">
-                        {tutor.name}
-                      </span>
-                      {tutor.isPrimary && (
-                        <Badge variant="secondary" className="text-[10px]">
-                          Principal
-                        </Badge>
+        {/* Column 2 — Acesso Rápido (KEY card) */}
+        <Card className="border-l-4 border-l-primary bg-primary/[0.02]">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Phone className="h-4 w-4 text-primary" />
+              Acesso Rápido
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Tutores */}
+            {sortedTutors.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Tutores
+                </span>
+                <div className="space-y-2">
+                  {sortedTutors.map((tutor) => (
+                    <TutorContact key={tutor.id} tutor={tutor} isPrimary={tutor.isPrimary} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Veterinário de emergência */}
+            {hasEmergencyVet && (
+              <>
+                <Separator />
+                <div className="space-y-1">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Stethoscope className="h-3 w-3 text-red-500" />
+                    Veterinário de emergência
+                  </span>
+                  {pet.emergencyVetName && (
+                    <p className="text-sm font-medium text-foreground">{pet.emergencyVetName}</p>
+                  )}
+                  {pet.emergencyVetPhone && (
+                    <a
+                      href={`tel:+55${pet.emergencyVetPhone.replace(/\D/g, "")}`}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+                    >
+                      <Phone className="h-3 w-3" />
+                      {formatPhone(pet.emergencyVetPhone)}
+                    </a>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Alergias */}
+            {(hasAnyAllergy || hasChronicCondition) && (
+              <>
+                <Separator />
+                <div className="space-y-2">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Saúde &amp; Alergias
+                  </span>
+                  {pet.hasFoodAllergy && (
+                    <div className="flex items-start gap-2">
+                      <Badge variant="destructive" className="text-[10px] shrink-0 mt-0.5">
+                        Alergia alimentar
+                      </Badge>
+                      {pet.foodAllergyDetails && (
+                        <span className="text-xs text-muted-foreground">{pet.foodAllergyDetails}</span>
                       )}
                     </div>
-                    {tutor.phone && (
-                      <a
-                        href={`https://wa.me/55${tutor.phone.replace(/\D/g, "")}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="h-7 w-7 inline-flex items-center justify-center rounded-md bg-emerald-600/10 text-emerald-600 hover:bg-emerald-600/20 transition-colors duration-200"
-                      >
-                        <MessageCircle className="h-3.5 w-3.5" />
-                      </a>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <a
-                      href={`mailto:${tutor.email}`}
-                      className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-1.5"
-                    >
-                      <Mail className="h-3 w-3" />
-                      {tutor.email}
-                    </a>
-                    {tutor.phone && (
-                      <a
-                        href={`tel:+55${tutor.phone.replace(/\D/g, "")}`}
-                        className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-1.5"
-                      >
-                        <Phone className="h-3 w-3" />
-                        {formatPhone(tutor.phone)}
-                      </a>
-                    )}
+                  )}
+                  {pet.hasMedicationAllergy && (
+                    <div className="flex items-start gap-2">
+                      <Badge variant="destructive" className="text-[10px] shrink-0 mt-0.5">
+                        Alergia a medicamentos
+                      </Badge>
+                      {pet.medicationAllergyDetails && (
+                        <span className="text-xs text-muted-foreground">{pet.medicationAllergyDetails}</span>
+                      )}
+                    </div>
+                  )}
+                  {pet.hasChronicCondition && (
+                    <div className="flex items-start gap-2">
+                      <Badge variant="outline" className="text-[10px] shrink-0 mt-0.5 border-amber-500 text-amber-700">
+                        Condição crônica
+                      </Badge>
+                      {pet.chronicConditionDetails && (
+                        <span className="text-xs text-muted-foreground">{pet.chronicConditionDetails}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Gatilhos de medo */}
+            {activeFearTriggers.length > 0 && (
+              <>
+                <Separator />
+                <div className="space-y-1.5">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <AlertTriangle className="h-3 w-3 text-amber-500" />
+                    Gatilhos de medo
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {activeFearTriggers.map((trigger, i) => (
+                      <Badge key={i} variant="outline" className="text-[10px] border-amber-400 bg-amber-500/10 text-amber-700">
+                        {trigger}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
-              <p className="text-sm font-medium text-muted-foreground">Nenhum tutor associado</p>
-              <p className="text-xs text-muted-foreground/70 mt-1">Associe um tutor para contato e acompanhamento.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Saúde */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Heart className="h-4 w-4 text-muted-foreground" />
-            Saúde
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col divide-y divide-border">
-            <div className="flex justify-between items-center py-2 px-2 -mx-2 rounded-md transition-colors duration-200 hover:bg-muted/50">
-              <span className="text-sm text-muted-foreground">Alergia alimentar</span>
-              {pet.hasFoodAllergy ? (
-                <Badge variant="destructive" className="gap-1 text-[11px]">
-                  <AlertTriangle className="h-3 w-3" />
-                  Sim
-                </Badge>
-              ) : (
-                <span className="flex items-center gap-1 text-emerald-600 text-xs">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Não
-                </span>
-              )}
-            </div>
-            {pet.foodAllergyDetails && (
-              <p className="text-xs text-muted-foreground py-1.5 pl-3 border-l-2 border-red-500/30">
-                {pet.foodAllergyDetails}
-              </p>
+              </>
             )}
 
-            <div className="flex justify-between items-center py-2 px-2 -mx-2 rounded-md transition-colors duration-200 hover:bg-muted/50">
-              <span className="text-sm text-muted-foreground">Alergia a medicamentos</span>
-              {pet.hasMedicationAllergy ? (
-                <Badge variant="destructive" className="gap-1 text-[11px]">
-                  <AlertTriangle className="h-3 w-3" />
-                  Sim
-                </Badge>
-              ) : (
-                <span className="flex items-center gap-1 text-emerald-600 text-xs">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Não
-                </span>
-              )}
-            </div>
-            {pet.medicationAllergyDetails && (
-              <p className="text-xs text-muted-foreground py-1.5 pl-3 border-l-2 border-red-500/30">
-                {pet.medicationAllergyDetails}
-              </p>
+            {/* Empty state */}
+            {!hasQuickAccessContent && (
+              <div className="flex flex-col items-center justify-center py-6 text-center">
+                <UserRound className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                <p className="text-xs text-muted-foreground">Nenhum dado de contato ou restrição cadastrado.</p>
+              </div>
             )}
+          </CardContent>
+        </Card>
 
-            <div className="flex justify-between items-center py-2 px-2 -mx-2 rounded-md transition-colors duration-200 hover:bg-muted/50">
-              <span className="text-sm text-muted-foreground">Condição crônica</span>
-              {pet.hasChronicCondition ? (
-                <Badge variant="destructive" className="gap-1 text-[11px]">
-                  <AlertTriangle className="h-3 w-3" />
-                  Sim
-                </Badge>
-              ) : (
-                <span className="flex items-center gap-1 text-emerald-600 text-xs">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Não
-                </span>
-              )}
-            </div>
-            {pet.chronicConditionDetails && (
-              <p className="text-xs text-muted-foreground py-1.5 pl-3 border-l-2 border-red-500/30">
-                {pet.chronicConditionDetails}
-              </p>
+        {/* Column 3 — Comportamento */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Zap className="h-4 w-4 text-muted-foreground" />
+              Comportamento
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {hasBehaviorData ? (
+              <div className="space-y-3">
+                {pet.energyLevel && (
+                  <div className="space-y-1">
+                    <span className="text-xs text-muted-foreground">Energia</span>
+                    <LevelBar value={pet.energyLevel} levels={["very_low", "low", "moderate", "high", "hyperactive"]} />
+                  </div>
+                )}
+                {pet.dogSociability && (
+                  <div className="space-y-1">
+                    <span className="text-xs text-muted-foreground">Sociabilidade (cães)</span>
+                    <LevelBar value={pet.dogSociability} levels={["antisocial", "reactive", "selective", "social"]} />
+                  </div>
+                )}
+                {pet.humanSociability && (
+                  <div className="space-y-1">
+                    <span className="text-xs text-muted-foreground">Sociabilidade (humanos)</span>
+                    <LevelBar value={pet.humanSociability} levels={["reactive", "fearful", "cautious", "friendly"]} />
+                  </div>
+                )}
+                {pet.playStyle && (
+                  <>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-muted-foreground">Estilo de brincadeira</span>
+                      <span className="text-xs text-foreground font-medium">{label(pet.playStyle)}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-6 text-center">
+                <Zap className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                <p className="text-xs text-muted-foreground">Perfil comportamental ainda não preenchido.</p>
+              </div>
             )}
-          </div>
+          </CardContent>
+        </Card>
+      </div>
 
-          {(pet.emergencyVetName || pet.emergencyVetPhone) && (
-            <div className="mt-4 pt-3 border-t">
-              <p className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1">
-                <ShieldAlert className="h-3 w-3" /> Veterinário de emergência
-              </p>
-              {pet.emergencyVetName && (
-                <p className="text-sm text-foreground font-medium">{pet.emergencyVetName}</p>
-              )}
-              {pet.emergencyVetPhone && (
-                <a
-                  href={`tel:+55${pet.emergencyVetPhone.replace(/\D/g, "")}`}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
-                >
-                  {formatPhone(pet.emergencyVetPhone)}
-                </a>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Full-width observations */}
+      {pet.notes && (
+        <Card className="border-l-4 border-l-amber-500">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ClipboardList className="h-4 w-4 text-amber-600" />
+              Observações
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+              {pet.notes}
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
