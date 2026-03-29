@@ -1,14 +1,18 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { SourceBadge } from "./source-badge";
 import { GraduationCap, Plus, Trash2, Calendar, Target } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface PetTrainingTabProps {
   petId: number;
@@ -29,7 +33,7 @@ const CATEGORY_MAP: Record<string, string> = {
   tricks: "Truques",
 };
 
-/** Visual skills matrix — colored circles per status */
+/** Visual skills matrix -- colored circles per status */
 function SkillsMatrix({ data }: { data: Array<{ command: string; status: string; category: string }> }) {
   // Group by category
   const grouped: Record<string, Array<{ command: string; status: string }>> = {};
@@ -101,8 +105,38 @@ function SkillsMatrix({ data }: { data: Array<{ command: string; status: string;
 }
 
 export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
+  const router = useRouter();
+  const utils = trpc.useUtils();
   const { data, isLoading } = trpc.training.byPet.useQuery({ petId });
   const progress = trpc.training.progress.useQuery({ petId });
+
+  const deleteTraining = trpc.training.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Sessão removida com sucesso");
+      utils.training.byPet.invalidate({ petId });
+      utils.training.progress.invalidate({ petId });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+
+  function handleDeleteClick(id: number) {
+    setPendingDeleteId(id);
+    setConfirmOpen(true);
+  }
+
+  function handleConfirmDelete() {
+    if (pendingDeleteId === null) return;
+    deleteTraining.mutate({ id: pendingDeleteId });
+    setConfirmOpen(false);
+    setPendingDeleteId(null);
+  }
+
+  function navigateToAdd() {
+    router.push(`/admin/training?petId=${petId}`);
+  }
 
   if (isLoading) {
     return (
@@ -136,6 +170,18 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
 
   return (
     <div className="space-y-4">
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Confirmar remoção"
+        description="Tem certeza que deseja remover esta sessão de treinamento? Esta ação não pode ser desfeita."
+        confirmLabel="Remover"
+        variant="destructive"
+        onConfirm={handleConfirmDelete}
+        isLoading={deleteTraining.isPending}
+      />
+
       {/* Resumo de Progresso */}
       {progress.data && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -177,7 +223,7 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
         />
       )}
 
-      {/* Sessões de Treinamento */}
+      {/* Sessoes de Treinamento */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
@@ -185,7 +231,12 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
               <GraduationCap className="h-4 w-4" />
               Sessões de Treinamento
             </CardTitle>
-            <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 transition-all duration-200 hover:bg-primary/5"
+              onClick={navigateToAdd}
+            >
               <Plus className="h-3.5 w-3.5" />
               Adicionar
             </Button>
@@ -237,7 +288,12 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
                       )}
                     </div>
                     {(role === "admin" || (log as Record<string, unknown>).source === "tutor") && (
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive shrink-0 transition-colors duration-200">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive shrink-0 transition-colors duration-200"
+                        onClick={() => handleDeleteClick(log.id)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
@@ -250,7 +306,12 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
               <GraduationCap className="h-12 w-12 text-muted-foreground/30 mb-4" />
               <p className="text-sm font-medium text-muted-foreground">Nenhum treinamento registrado</p>
               <p className="text-xs text-muted-foreground/70 mt-1">Registre sessões de treinamento e acompanhe o progresso.</p>
-              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4 gap-1.5 transition-all duration-200"
+                onClick={navigateToAdd}
+              >
                 <Plus className="h-3.5 w-3.5" /> Adicionar
               </Button>
             </div>

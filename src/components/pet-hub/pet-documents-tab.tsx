@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { SourceBadge } from "./source-badge";
 import {
   FileText,
@@ -21,6 +24,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface PetDocumentsTabProps {
   petId: number;
@@ -59,7 +63,36 @@ function getCategoryIcon(category: string) {
 }
 
 export function PetDocumentsTab({ petId, role }: PetDocumentsTabProps) {
+  const router = useRouter();
+  const utils = trpc.useUtils();
   const { data, isLoading } = trpc.documents.byPet.useQuery({ petId });
+
+  const deleteDocument = trpc.documents.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Documento removido com sucesso");
+      utils.documents.byPet.invalidate({ petId });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<{ id: number; title: string } | null>(null);
+
+  function handleDeleteClick(id: number, title: string) {
+    setPendingDelete({ id, title });
+    setConfirmOpen(true);
+  }
+
+  function handleConfirmDelete() {
+    if (!pendingDelete) return;
+    deleteDocument.mutate({ id: pendingDelete.id });
+    setConfirmOpen(false);
+    setPendingDelete(null);
+  }
+
+  function navigateToAdd() {
+    router.push(`/admin/documents?petId=${petId}`);
+  }
 
   if (isLoading) {
     return (
@@ -81,13 +114,30 @@ export function PetDocumentsTab({ petId, role }: PetDocumentsTabProps) {
 
   return (
     <Card>
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Confirmar remoção"
+        description={`Tem certeza que deseja remover o documento "${pendingDelete?.title ?? ""}"? Esta ação não pode ser desfeita.`}
+        confirmLabel="Remover"
+        variant="destructive"
+        onConfirm={handleConfirmDelete}
+        isLoading={deleteDocument.isPending}
+      />
+
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             <FileText className="h-4 w-4" />
             Documentos
           </CardTitle>
-          <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 transition-all duration-200 hover:bg-primary/5"
+            onClick={navigateToAdd}
+          >
             <Plus className="h-3.5 w-3.5" />
             Adicionar
           </Button>
@@ -117,7 +167,12 @@ export function PetDocumentsTab({ petId, role }: PetDocumentsTabProps) {
                         </Button>
                       )}
                       {(role === "admin" || (doc as Record<string, unknown>).source === "tutor") && (
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all duration-200">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all duration-200"
+                          onClick={() => handleDeleteClick(doc.id, doc.title)}
+                        >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
@@ -171,7 +226,12 @@ export function PetDocumentsTab({ petId, role }: PetDocumentsTabProps) {
             <FileText className="h-12 w-12 text-muted-foreground/30 mb-4" />
             <p className="text-sm font-medium text-muted-foreground">Nenhum documento registrado</p>
             <p className="text-xs text-muted-foreground/70 mt-1">Armazene exames, receitas e outros documentos importantes.</p>
-            <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4 gap-1.5 transition-all duration-200"
+              onClick={navigateToAdd}
+            >
               <Plus className="h-3.5 w-3.5" /> Adicionar
             </Button>
           </div>

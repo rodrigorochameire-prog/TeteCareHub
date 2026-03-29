@@ -166,8 +166,10 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground">
-                        <Pencil className="h-3.5 w-3.5" />
+                      <Button asChild variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground">
+                        <Link href={`/admin/pets/${pet.id}/edit`}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Link>
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Editar pet</TooltipContent>

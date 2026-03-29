@@ -1,14 +1,17 @@
 "use client";
 
+import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Calendar, Plus, Trash2, Clock, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isSameMonth, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useState, useMemo } from "react";
+import { toast } from "sonner";
 
 interface PetCalendarTabProps {
   petId: number;
@@ -109,8 +112,37 @@ function MiniCalendar({ events, currentMonth, onMonthChange }: {
 }
 
 export function PetCalendarTab({ petId, role }: PetCalendarTabProps) {
+  const router = useRouter();
+  const utils = trpc.useUtils();
   const { data, isLoading } = trpc.calendar.byPet.useQuery({ petId });
   const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  const deleteEvent = trpc.calendar.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Evento removido com sucesso");
+      utils.calendar.byPet.invalidate({ petId });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<{ id: number; title: string } | null>(null);
+
+  function handleDeleteClick(id: number, title: string) {
+    setPendingDelete({ id, title });
+    setConfirmOpen(true);
+  }
+
+  function handleConfirmDelete() {
+    if (!pendingDelete) return;
+    deleteEvent.mutate({ id: pendingDelete.id });
+    setConfirmOpen(false);
+    setPendingDelete(null);
+  }
+
+  function navigateToAdd() {
+    router.push(`/admin/calendar?petId=${petId}`);
+  }
 
   if (isLoading) {
     return (
@@ -145,6 +177,18 @@ export function PetCalendarTab({ petId, role }: PetCalendarTabProps) {
 
   return (
     <div className="space-y-4">
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Confirmar remoção"
+        description={`Tem certeza que deseja remover o evento "${pendingDelete?.title ?? ""}"? Esta ação não pode ser desfeita.`}
+        confirmLabel="Remover"
+        variant="destructive"
+        onConfirm={handleConfirmDelete}
+        isLoading={deleteEvent.isPending}
+      />
+
       {/* Mini Month View */}
       <MiniCalendar
         events={(data ?? []).map((e) => ({ eventDate: e.eventDate }))}
@@ -160,7 +204,12 @@ export function PetCalendarTab({ petId, role }: PetCalendarTabProps) {
               <Calendar className="h-4 w-4" />
               Próximos Eventos
             </CardTitle>
-            <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 transition-all duration-200 hover:bg-primary/5"
+              onClick={navigateToAdd}
+            >
               <Plus className="h-3.5 w-3.5" />
               Adicionar
             </Button>
@@ -213,7 +262,12 @@ export function PetCalendarTab({ petId, role }: PetCalendarTabProps) {
                       )}
                     </div>
                     {role === "admin" && (
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive shrink-0 transition-colors duration-200">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive shrink-0 transition-colors duration-200"
+                        onClick={() => handleDeleteClick(event.id, event.title)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
@@ -226,7 +280,12 @@ export function PetCalendarTab({ petId, role }: PetCalendarTabProps) {
               <Calendar className="h-12 w-12 text-muted-foreground/30 mb-4" />
               <p className="text-sm font-medium text-muted-foreground">Nenhum evento registrado</p>
               <p className="text-xs text-muted-foreground/70 mt-1">Agende consultas, banhos e outros compromissos.</p>
-              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4 gap-1.5 transition-all duration-200"
+                onClick={navigateToAdd}
+              >
                 <Plus className="h-3.5 w-3.5" /> Adicionar
               </Button>
             </div>

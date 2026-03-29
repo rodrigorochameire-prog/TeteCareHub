@@ -1,11 +1,15 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UtensilsCrossed, Plus, Package, Cookie, Leaf, AlertTriangle, Clock } from "lucide-react";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { UtensilsCrossed, Plus, Package, Cookie, Leaf, AlertTriangle, Clock, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface PetFoodTabProps {
   petId: number;
@@ -96,11 +100,59 @@ function MealSchedule({ portionsPerDay, dailyAmount }: { portionsPerDay: number;
 }
 
 export function PetFoodTab({ petId, role }: PetFoodTabProps) {
+  const router = useRouter();
+  const utils = trpc.useUtils();
+
   const plan = trpc.food.getPlanByPet.useQuery({ petId });
   const treats = trpc.food.getTreatsByPet.useQuery({ petId });
   const naturalFood = trpc.food.getNaturalFoodByPet.useQuery({ petId });
   const inventory = trpc.food.getInventoryByPet.useQuery({ petId });
 
+  // Delete mutations
+  const removeTreat = trpc.food.removeTreat.useMutation({
+    onSuccess: () => {
+      toast.success("Petisco removido com sucesso");
+      utils.food.getTreatsByPet.invalidate({ petId });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const removeNaturalFood = trpc.food.removeNaturalFood.useMutation({
+    onSuccess: () => {
+      toast.success("Alimentação natural removida com sucesso");
+      utils.food.getNaturalFoodByPet.invalidate({ petId });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  // Confirm dialog state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<{
+    type: "treat" | "naturalFood";
+    id: number;
+    label: string;
+  } | null>(null);
+
+  function handleDeleteClick(type: "treat" | "naturalFood", id: number, label: string) {
+    setPendingDelete({ type, id, label });
+    setConfirmOpen(true);
+  }
+
+  function handleConfirmDelete() {
+    if (!pendingDelete) return;
+    switch (pendingDelete.type) {
+      case "treat":
+        removeTreat.mutate({ treatId: pendingDelete.id });
+        break;
+      case "naturalFood":
+        removeNaturalFood.mutate({ naturalFoodId: pendingDelete.id });
+        break;
+    }
+    setConfirmOpen(false);
+    setPendingDelete(null);
+  }
+
+  const isDeleting = removeTreat.isPending || removeNaturalFood.isPending;
   const isLoading = plan.isLoading || treats.isLoading || naturalFood.isLoading || inventory.isLoading;
 
   if (isLoading) {
@@ -121,8 +173,24 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
     );
   }
 
+  function navigateToAdd() {
+    router.push(`/admin/food?petId=${petId}`);
+  }
+
   return (
     <div className="space-y-4">
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Confirmar remoção"
+        description={`Tem certeza que deseja remover "${pendingDelete?.label ?? ""}"? Esta ação não pode ser desfeita.`}
+        confirmLabel="Remover"
+        variant="destructive"
+        onConfirm={handleConfirmDelete}
+        isLoading={isDeleting}
+      />
+
       {/* Plano Alimentar */}
       <Card>
         <CardHeader className="pb-3">
@@ -131,7 +199,12 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               <UtensilsCrossed className="h-4 w-4" />
               Plano Alimentar
             </CardTitle>
-            <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 transition-all duration-200 hover:bg-primary/5"
+              onClick={navigateToAdd}
+            >
               <Plus className="h-3.5 w-3.5" />
               {plan.data ? "Atualizar" : "Criar Plano"}
             </Button>
@@ -179,7 +252,12 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               <UtensilsCrossed className="h-12 w-12 text-muted-foreground/30 mb-4" />
               <p className="text-sm font-medium text-muted-foreground">Nenhum plano alimentar cadastrado</p>
               <p className="text-xs text-muted-foreground/70 mt-1">Crie um plano para controlar a alimentação.</p>
-              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4 gap-1.5 transition-all duration-200"
+                onClick={navigateToAdd}
+              >
                 <Plus className="h-3.5 w-3.5" /> Criar Plano
               </Button>
             </div>
@@ -195,7 +273,12 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               <Package className="h-4 w-4" />
               Estoque
             </CardTitle>
-            <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 transition-all duration-200 hover:bg-primary/5"
+              onClick={navigateToAdd}
+            >
               <Plus className="h-3.5 w-3.5" />
               Adicionar
             </Button>
@@ -240,7 +323,12 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               <Package className="h-12 w-12 text-muted-foreground/30 mb-4" />
               <p className="text-sm font-medium text-muted-foreground">Nenhum estoque registrado</p>
               <p className="text-xs text-muted-foreground/70 mt-1">Controle o estoque de ração e suplementos.</p>
-              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4 gap-1.5 transition-all duration-200"
+                onClick={navigateToAdd}
+              >
                 <Plus className="h-3.5 w-3.5" /> Adicionar
               </Button>
             </div>
@@ -256,7 +344,12 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               <Cookie className="h-4 w-4" />
               Petiscos
             </CardTitle>
-            <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 transition-all duration-200 hover:bg-primary/5"
+              onClick={navigateToAdd}
+            >
               <Plus className="h-3.5 w-3.5" />
               Adicionar
             </Button>
@@ -278,14 +371,24 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
                       </p>
                     )}
                   </div>
-                  {treat.acceptance && (
-                    <Badge
-                      variant={treat.acceptance === "loved" ? "success" : treat.acceptance === "liked" ? "info" : "secondary"}
-                      className="text-[10px]"
+                  <div className="flex items-center gap-2">
+                    {treat.acceptance && (
+                      <Badge
+                        variant={treat.acceptance === "loved" ? "success" : treat.acceptance === "liked" ? "info" : "secondary"}
+                        className="text-[10px]"
+                      >
+                        {treat.acceptance === "loved" ? "Adora" : treat.acceptance === "liked" ? "Gosta" : treat.acceptance === "neutral" ? "Neutro" : "Não gosta"}
+                      </Badge>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive transition-colors duration-200"
+                      onClick={() => handleDeleteClick("treat", treat.id, treat.name)}
                     >
-                      {treat.acceptance === "loved" ? "Adora" : treat.acceptance === "liked" ? "Gosta" : treat.acceptance === "neutral" ? "Neutro" : "Não gosta"}
-                    </Badge>
-                  )}
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -294,7 +397,12 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               <Cookie className="h-12 w-12 text-muted-foreground/30 mb-4" />
               <p className="text-sm font-medium text-muted-foreground">Nenhum petisco registrado</p>
               <p className="text-xs text-muted-foreground/70 mt-1">Registre petiscos favoritos e preferências.</p>
-              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4 gap-1.5 transition-all duration-200"
+                onClick={navigateToAdd}
+              >
                 <Plus className="h-3.5 w-3.5" /> Adicionar
               </Button>
             </div>
@@ -310,7 +418,12 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               <Leaf className="h-4 w-4" />
               Alimentação Natural
             </CardTitle>
-            <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 transition-all duration-200 hover:bg-primary/5"
+              onClick={navigateToAdd}
+            >
               <Plus className="h-3.5 w-3.5" />
               Adicionar
             </Button>
@@ -334,14 +447,24 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
                       </p>
                     )}
                   </div>
-                  {food.acceptance && (
-                    <Badge
-                      variant={food.acceptance === "loved" ? "success" : food.acceptance === "liked" ? "info" : "secondary"}
-                      className="text-[10px]"
+                  <div className="flex items-center gap-2">
+                    {food.acceptance && (
+                      <Badge
+                        variant={food.acceptance === "loved" ? "success" : food.acceptance === "liked" ? "info" : "secondary"}
+                        className="text-[10px]"
+                      >
+                        {food.acceptance === "loved" ? "Adora" : food.acceptance === "liked" ? "Gosta" : food.acceptance === "neutral" ? "Neutro" : "Não gosta"}
+                      </Badge>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive transition-colors duration-200"
+                      onClick={() => handleDeleteClick("naturalFood", food.id, food.name)}
                     >
-                      {food.acceptance === "loved" ? "Adora" : food.acceptance === "liked" ? "Gosta" : food.acceptance === "neutral" ? "Neutro" : "Não gosta"}
-                    </Badge>
-                  )}
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -350,7 +473,12 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               <Leaf className="h-12 w-12 text-muted-foreground/30 mb-4" />
               <p className="text-sm font-medium text-muted-foreground">Nenhuma alimentação natural registrada</p>
               <p className="text-xs text-muted-foreground/70 mt-1">Registre dietas naturais e ingredientes.</p>
-              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4 gap-1.5 transition-all duration-200"
+                onClick={navigateToAdd}
+              >
                 <Plus className="h-3.5 w-3.5" /> Adicionar
               </Button>
             </div>

@@ -1,14 +1,18 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { SourceBadge } from "./source-badge";
 import { Brain, Plus, Trash2, Calendar, PawPrint } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface PetBehaviorTabProps {
   petId: number;
@@ -43,7 +47,36 @@ function LevelBadge({ value, label }: { value: string | null; label: string }) {
 }
 
 export function PetBehaviorTab({ petId, role }: PetBehaviorTabProps) {
+  const router = useRouter();
+  const utils = trpc.useUtils();
   const { data, isLoading } = trpc.behavior.byPet.useQuery({ petId });
+
+  const deleteBehavior = trpc.behavior.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Registro removido com sucesso");
+      utils.behavior.byPet.invalidate({ petId });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+
+  function handleDeleteClick(id: number) {
+    setPendingDeleteId(id);
+    setConfirmOpen(true);
+  }
+
+  function handleConfirmDelete() {
+    if (pendingDeleteId === null) return;
+    deleteBehavior.mutate({ id: pendingDeleteId });
+    setConfirmOpen(false);
+    setPendingDeleteId(null);
+  }
+
+  function navigateToAdd() {
+    router.push(`/admin/behavior?petId=${petId}`);
+  }
 
   if (isLoading) {
     return (
@@ -65,13 +98,30 @@ export function PetBehaviorTab({ petId, role }: PetBehaviorTabProps) {
 
   return (
     <Card>
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Confirmar remoção"
+        description="Tem certeza que deseja remover este registro de comportamento? Esta ação não pode ser desfeita."
+        confirmLabel="Remover"
+        variant="destructive"
+        onConfirm={handleConfirmDelete}
+        isLoading={deleteBehavior.isPending}
+      />
+
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             <Brain className="h-4 w-4" />
             Registros de Comportamento
           </CardTitle>
-          <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 transition-all duration-200 hover:bg-primary/5"
+            onClick={navigateToAdd}
+          >
             <Plus className="h-3.5 w-3.5" />
             Adicionar
           </Button>
@@ -96,7 +146,12 @@ export function PetBehaviorTab({ petId, role }: PetBehaviorTabProps) {
                     )}
                   </div>
                   {(role === "admin" || (log as Record<string, unknown>).source === "tutor") && (
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive transition-colors duration-200">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive transition-colors duration-200"
+                      onClick={() => handleDeleteClick(log.id)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
@@ -142,7 +197,12 @@ export function PetBehaviorTab({ petId, role }: PetBehaviorTabProps) {
             <p className="text-xs text-muted-foreground/70 mt-1 max-w-[280px]">
               Comece registrando o primeiro dia do pet na creche. Acompanhe socialização, energia e obediência ao longo do tempo.
             </p>
-            <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4 gap-1.5 transition-all duration-200"
+              onClick={navigateToAdd}
+            >
               <Plus className="h-3.5 w-3.5" /> Registrar primeiro dia
             </Button>
           </div>

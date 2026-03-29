@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { SourceBadge } from "./source-badge";
 import {
   Syringe,
@@ -20,6 +23,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface PetHealthTabProps {
   petId: number;
@@ -42,10 +46,69 @@ function getDueDateStatus(nextDueDate: Date | string | null | undefined): {
 }
 
 export function PetHealthTab({ petId, role }: PetHealthTabProps) {
+  const router = useRouter();
+  const utils = trpc.useUtils();
+
   const vaccinations = trpc.vaccines.getPetVaccinations.useQuery({ petId });
   const medications = trpc.medications.getPetMedications.useQuery({ petId });
   const preventives = trpc.preventives.byPet.useQuery({ petId });
 
+  // Delete mutations
+  const deleteVaccine = trpc.vaccines.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Vacina removida com sucesso");
+      utils.vaccines.getPetVaccinations.invalidate({ petId });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const deleteMedication = trpc.medications.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Medicamento removido com sucesso");
+      utils.medications.getPetMedications.invalidate({ petId });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const deletePreventive = trpc.preventives.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Preventivo removido com sucesso");
+      utils.preventives.byPet.invalidate({ petId });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  // Confirm dialog state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<{
+    type: "vaccine" | "medication" | "preventive";
+    id: number;
+    label: string;
+  } | null>(null);
+
+  function handleDeleteClick(type: "vaccine" | "medication" | "preventive", id: number, label: string) {
+    setPendingDelete({ type, id, label });
+    setConfirmOpen(true);
+  }
+
+  function handleConfirmDelete() {
+    if (!pendingDelete) return;
+    switch (pendingDelete.type) {
+      case "vaccine":
+        deleteVaccine.mutate({ id: pendingDelete.id });
+        break;
+      case "medication":
+        deleteMedication.mutate({ id: pendingDelete.id });
+        break;
+      case "preventive":
+        deletePreventive.mutate({ id: pendingDelete.id });
+        break;
+    }
+    setConfirmOpen(false);
+    setPendingDelete(null);
+  }
+
+  const isDeleting = deleteVaccine.isPending || deleteMedication.isPending || deletePreventive.isPending;
   const isLoading = vaccinations.isLoading || medications.isLoading || preventives.isLoading;
 
   if (isLoading) {
@@ -85,8 +148,24 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
     ? allDueDates.sort((a, b) => a.getTime() - b.getTime()).find((d) => d > new Date())
     : null;
 
+  function navigateToAdd(section: string) {
+    router.push(`/admin/${section}?petId=${petId}`);
+  }
+
   return (
     <div className="space-y-4">
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Confirmar remoção"
+        description={`Tem certeza que deseja remover "${pendingDelete?.label ?? ""}"? Esta ação não pode ser desfeita.`}
+        confirmLabel="Remover"
+        variant="destructive"
+        onConfirm={handleConfirmDelete}
+        isLoading={isDeleting}
+      />
+
       {/* Summary Header */}
       <Card className="bg-muted/30">
         <CardContent className="p-4">
@@ -130,7 +209,12 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               <Syringe className="h-4 w-4" />
               Vacinas
             </CardTitle>
-            <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 transition-all duration-200 hover:bg-primary/5"
+              onClick={() => navigateToAdd("vaccines")}
+            >
               <Plus className="h-3.5 w-3.5" />
               Adicionar
             </Button>
@@ -195,7 +279,12 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
                         )}
                       </div>
                       {(role === "admin" || (item.vaccination as Record<string, unknown>).source === "tutor") && (
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive transition-colors duration-200">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive transition-colors duration-200"
+                          onClick={() => handleDeleteClick("vaccine", item.vaccination.id, item.vaccine?.name ?? "Vacina")}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       )}
@@ -209,7 +298,12 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               <Syringe className="h-12 w-12 text-muted-foreground/30 mb-4" />
               <p className="text-sm font-medium text-muted-foreground">Nenhuma vacina registrada</p>
               <p className="text-xs text-muted-foreground/70 mt-1">Adicione vacinas para acompanhar o calendário vacinal.</p>
-              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4 gap-1.5 transition-all duration-200"
+                onClick={() => navigateToAdd("vaccines")}
+              >
                 <Plus className="h-3.5 w-3.5" /> Adicionar
               </Button>
             </div>
@@ -225,7 +319,12 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               <Pill className="h-4 w-4" />
               Medicamentos
             </CardTitle>
-            <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 transition-all duration-200 hover:bg-primary/5"
+              onClick={() => navigateToAdd("medications")}
+            >
               <Plus className="h-3.5 w-3.5" />
               Adicionar
             </Button>
@@ -270,7 +369,12 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
                     </div>
                   </div>
                   {(role === "admin" || (item.medication as Record<string, unknown>).source === "tutor") && (
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive transition-colors duration-200">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive transition-colors duration-200"
+                      onClick={() => handleDeleteClick("medication", item.medication.id, item.library?.name ?? "Medicamento")}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
@@ -282,7 +386,12 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               <Pill className="h-12 w-12 text-muted-foreground/30 mb-4" />
               <p className="text-sm font-medium text-muted-foreground">Nenhum medicamento registrado</p>
               <p className="text-xs text-muted-foreground/70 mt-1">Registre medicamentos em uso para controle.</p>
-              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4 gap-1.5 transition-all duration-200"
+                onClick={() => navigateToAdd("medications")}
+              >
                 <Plus className="h-3.5 w-3.5" /> Adicionar
               </Button>
             </div>
@@ -298,7 +407,12 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               <ShieldCheck className="h-4 w-4" />
               Preventivos
             </CardTitle>
-            <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 transition-all duration-200 hover:bg-primary/5"
+              onClick={() => navigateToAdd("preventives")}
+            >
               <Plus className="h-3.5 w-3.5" />
               Adicionar
             </Button>
@@ -362,7 +476,12 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
                       )}
                     </div>
                     {(role === "admin" || (treatment as Record<string, unknown>).source === "tutor") && (
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive transition-colors duration-200">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive transition-colors duration-200"
+                        onClick={() => handleDeleteClick("preventive", treatment.id, treatment.productName)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
@@ -375,7 +494,12 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               <ShieldCheck className="h-12 w-12 text-muted-foreground/30 mb-4" />
               <p className="text-sm font-medium text-muted-foreground">Nenhum preventivo registrado</p>
               <p className="text-xs text-muted-foreground/70 mt-1">Controle antipulgas, vermifugos e outros preventivos.</p>
-              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4 gap-1.5 transition-all duration-200"
+                onClick={() => navigateToAdd("preventives")}
+              >
                 <Plus className="h-3.5 w-3.5" /> Adicionar
               </Button>
             </div>
