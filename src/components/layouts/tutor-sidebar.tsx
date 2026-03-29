@@ -22,6 +22,7 @@ import {
   CalendarCheck,
   GraduationCap,
   Heart,
+  Receipt,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -93,6 +94,7 @@ const menuGroups = [
     color: "secondary",
     items: [
       { icon: CreditCard, label: "Créditos", path: "/tutor/credits" },
+      { icon: Receipt, label: "Pagamentos", path: "/tutor/payments" },
       { icon: BarChart3, label: "Relatórios", path: "/tutor/reports" },
     ],
   },

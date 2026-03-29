@@ -19,6 +19,7 @@ import {
   User,
 } from "lucide-react";
 import { PetAvatar } from "@/components/pet-avatar";
+import { InlineEdit } from "./inline-edit";
 import Link from "next/link";
 
 interface Tutor {
@@ -49,6 +50,7 @@ interface Pet {
 interface PetHubHeaderProps {
   pet: Pet;
   role?: "admin" | "tutor";
+  isEditMode?: boolean;
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
@@ -94,7 +96,7 @@ function getPlanLabel(credits: number | null | undefined): string {
   return "Sem plano";
 }
 
-export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
+export function PetHubHeader({ pet, role, isEditMode = false }: PetHubHeaderProps) {
   const primaryTutor = pet.tutors.find((t) => t.isPrimary) ?? pet.tutors[0];
   const weight = formatWeight(pet.weight);
   const age = calculateAge(pet.birthDate);
@@ -115,8 +117,8 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
     : null;
 
   // Stat items — icon color neutral
-  const stats: { icon: typeof Weight; label: string; value: string }[] = [];
-  if (weight) stats.push({ icon: Weight, label: "Peso", value: weight });
+  const stats: { icon: typeof Weight; label: string; value: string; editableField?: string; rawValue?: number | null }[] = [];
+  if (weight || isEditMode) stats.push({ icon: Weight, label: "Peso", value: weight || "—", editableField: "weight", rawValue: pet.weight });
   if (birthDateFormatted) stats.push({ icon: Cake, label: "Nascimento", value: `${birthDateFormatted} (${age})` });
   if (typeof pet.credits === "number") stats.push({ icon: Star, label: "Créditos", value: `${pet.credits} diária${pet.credits !== 1 ? "s" : ""}` });
   stats.push({ icon: Tag, label: "Plano", value: getPlanLabel(pet.credits) });
@@ -160,7 +162,12 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold tracking-tight text-foreground truncate">
-                {pet.name}
+                <InlineEdit
+                  petId={pet.id}
+                  field="name"
+                  value={pet.name}
+                  editable={isEditMode}
+                />
               </h1>
               {role === "admin" && (
                 <TooltipProvider>
@@ -211,7 +218,20 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
             <div key={stat.label} className="flex items-center gap-2">
               <stat.icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <span className="text-muted-foreground w-20">{stat.label}</span>
-              <span className="font-medium text-foreground">{stat.value}</span>
+              {stat.editableField === "weight" ? (
+                <span className="font-medium text-foreground">
+                  <InlineEdit
+                    petId={pet.id}
+                    field="weight"
+                    value={stat.rawValue}
+                    editable={isEditMode}
+                    type="number"
+                    format={(v) => formatWeight(v as number | null | undefined)}
+                  />
+                </span>
+              ) : (
+                <span className="font-medium text-foreground">{stat.value}</span>
+              )}
             </div>
           ))}
         </div>
@@ -220,7 +240,20 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
           {stats.map((stat) => (
             <span key={stat.label} className="inline-flex items-center gap-1 bg-muted/50 rounded px-2 py-1">
               <stat.icon className="h-3 w-3 text-muted-foreground" />
-              <span className="font-medium text-foreground">{stat.value}</span>
+              {stat.editableField === "weight" ? (
+                <span className="font-medium text-foreground">
+                  <InlineEdit
+                    petId={pet.id}
+                    field="weight"
+                    value={stat.rawValue}
+                    editable={isEditMode}
+                    type="number"
+                    format={(v) => formatWeight(v as number | null | undefined)}
+                  />
+                </span>
+              ) : (
+                <span className="font-medium text-foreground">{stat.value}</span>
+              )}
             </span>
           ))}
         </div>

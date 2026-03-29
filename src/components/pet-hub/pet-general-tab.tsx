@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   Zap,
@@ -16,7 +17,17 @@ import {
   Wallet,
   TrendingUp,
   TrendingDown,
+  RefreshCw,
+  CreditCard,
+  CalendarX,
+  PlusCircle,
 } from "lucide-react";
+import { trpc } from "@/lib/trpc/client";
+import { InlineEdit } from "./inline-edit";
+import { AssignPlanDialog } from "./dialogs/assign-plan-dialog";
+import { RegisterPaymentDialog } from "./dialogs/register-payment-dialog";
+import { RequestCreditsDialog } from "./dialogs/request-credits-dialog";
+import { MarkAbsenceDialog } from "./dialogs/mark-absence-dialog";
 
 interface Tutor {
   id: number;
@@ -58,6 +69,17 @@ interface Pet {
 interface PetGeneralTabProps {
   pet: Pet;
   role: "admin" | "tutor";
+  isEditMode?: boolean;
+}
+
+const PLAN_TYPE_LABELS: Record<string, string> = {
+  mensalista: "Mensalista",
+  avulso: "Avulso",
+  diaria: "Diária",
+};
+
+function formatPrice(cents: number): string {
+  return `R$ ${(cents / 100).toFixed(2).replace(".", ",")}`;
 }
 
 function formatPhone(phone: string): string {
@@ -195,7 +217,12 @@ function TutorContactCard({ tutor }: { tutor: Tutor }) {
   );
 }
 
-export function PetGeneralTab({ pet }: PetGeneralTabProps) {
+export function PetGeneralTab({ pet, role, isEditMode = false }: PetGeneralTabProps) {
+  // Fetch real plan data
+  const { data: petPlanData } = trpc.plansManagement.getPetPlan.useQuery(
+    { petId: pet.id },
+  );
+
   // Fear triggers
   const fearList = pet.fearTriggers
     ? Array.isArray(pet.fearTriggers)
@@ -399,6 +426,7 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
       <Card className={`border ${creditBorderColor}`}>
         <CardContent className="p-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
+            {/* Left: icon + plan info */}
             <div className="flex items-center gap-3">
               <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${creditBgColor}`}>
                 <Wallet className={`h-5 w-5 ${creditStatusColor}`} />
@@ -414,26 +442,115 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
               </div>
             </div>
 
+            {/* Center: credits count */}
             <div className="flex items-baseline gap-1.5">
-              <span className={`text-3xl font-bold tabular-nums ${creditStatusColor}`}>
-                {credits}
-              </span>
+              {isEditMode && role === "admin" ? (
+                <InlineEdit
+                  petId={pet.id}
+                  field="credits"
+                  value={credits}
+                  editable
+                  type="number"
+                  className={`text-3xl font-bold tabular-nums ${creditStatusColor}`}
+                />
+              ) : (
+                <span className={`text-3xl font-bold tabular-nums ${creditStatusColor}`}>
+                  {credits}
+                </span>
+              )}
               <span className="text-sm text-muted-foreground">
                 {credits === 1 ? "diária" : "diárias"}
               </span>
             </div>
 
+            {/* Right: plan badge + details */}
             <div className="text-right">
-              <Badge
-                variant="outline"
-                className={`text-xs ${creditBorderColor} ${creditStatusColor}`}
-              >
-                {credits >= 20 ? "Mensalista" : credits > 0 ? "Avulso" : "Sem plano"}
-              </Badge>
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Tipo estimado pelo saldo
-              </p>
+              {petPlanData ? (
+                <>
+                  <Badge
+                    variant="outline"
+                    className={`text-xs ${creditBorderColor} ${creditStatusColor}`}
+                  >
+                    {PLAN_TYPE_LABELS[petPlanData.plan.type] ?? petPlanData.plan.type}
+                  </Badge>
+                  <p className="text-xs font-medium text-foreground mt-1">
+                    {petPlanData.petPlan.customName || petPlanData.plan.name}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    {formatPrice(petPlanData.petPlan.customPrice ?? petPlanData.plan.price)}
+                    {" · "}
+                    {petPlanData.petPlan.customDays ?? petPlanData.plan.includedDays} diárias incluídas
+                  </p>
+                  {petPlanData.plan.type === "mensalista" && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      {credits}/{petPlanData.petPlan.customDays ?? petPlanData.plan.includedDays} diárias usadas
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Badge
+                    variant="outline"
+                    className={`text-xs ${creditBorderColor} ${creditStatusColor}`}
+                  >
+                    Sem plano
+                  </Badge>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Sem plano atribuído
+                  </p>
+                </>
+              )}
             </div>
+          </div>
+
+          {/* Action buttons */}
+          <Separator className="my-3" />
+          <div className="flex flex-wrap gap-2">
+            {role === "admin" ? (
+              <>
+                <AssignPlanDialog petId={pet.id}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Alterar plano
+                  </Button>
+                </AssignPlanDialog>
+                <RegisterPaymentDialog petId={pet.id}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                  >
+                    <CreditCard className="h-3.5 w-3.5" />
+                    Registrar pagamento
+                  </Button>
+                </RegisterPaymentDialog>
+                <MarkAbsenceDialog petId={pet.id}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                  >
+                    <CalendarX className="h-3.5 w-3.5" />
+                    Marcar falta
+                  </Button>
+                </MarkAbsenceDialog>
+              </>
+            ) : (
+              <RequestCreditsDialog petId={pet.id}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs"
+                >
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  Adicionar créditos
+                </Button>
+              </RequestCreditsDialog>
+            )}
           </div>
         </CardContent>
       </Card>

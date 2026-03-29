@@ -243,4 +243,5 @@ export async function withTransaction<T>(
 export * from "./schema";
 export * from "./schema-enhanced";
 export * from "./schema-invitations";
+export * from "./schema-plans";
 export * from "./helpers";
