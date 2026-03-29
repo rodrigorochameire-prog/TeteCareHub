@@ -95,7 +95,7 @@ export function CategoryManagerDialog({ children }: CategoryManagerDialogProps) 
   }
 
   function handleToggle(id: number, currentActive: boolean) {
-    toggleCategory.mutate({ id, active: !currentActive });
+    toggleCategory.mutate({ id });
   }
 
   return (
@@ -129,8 +129,8 @@ export function CategoryManagerDialog({ children }: CategoryManagerDialogProps) 
                 </div>
                 <div className="flex items-center gap-2">
                   <Switch
-                    checked={cat.active}
-                    onCheckedChange={() => handleToggle(cat.id, cat.active)}
+                    checked={cat.isActive}
+                    onCheckedChange={() => handleToggle(cat.id, cat.isActive)}
                     disabled={toggleCategory.isPending}
                   />
                 </div>

@@ -55,7 +55,14 @@ export default function AdminExpensesPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingExpense, setDeletingExpense] = useState<{ id: number; description: string } | null>(null);
 
-  const summary = trpc.expenses.monthlySummary.useQuery({ month, year });
+  // monthlySummary and list expect month as 0-11 (JS Date convention)
+  const summaryMonth = month - 1;
+  const summary = trpc.expenses.monthlySummary.useQuery({ month: summaryMonth, year });
+  const expenseList = trpc.expenses.list.useQuery({
+    month: summaryMonth,
+    year,
+    ...(categoryFilter !== "all" ? { categoryId: Number(categoryFilter) } : {}),
+  });
   const categories = trpc.expenses.listCategories.useQuery();
   const utils = trpc.useUtils();
 
@@ -79,28 +86,35 @@ export default function AdminExpensesPage() {
     deleteExpense.mutate({ id: deletingExpense.id });
   }
 
-  const isLoading = summary.isLoading;
+  const isLoading = summary.isLoading || expenseList.isLoading;
 
   if (isLoading) {
     return <LoadingPage />;
   }
 
   const data = summary.data;
-  const totalSpent = data?.totalSpent ?? 0;
+  const totalSpent = data?.total ?? 0;
   const previousTotal = data?.previousMonthTotal ?? 0;
   const percentChange = previousTotal > 0
     ? Math.round(((totalSpent - previousTotal) / previousTotal) * 100)
     : 0;
   const isUp = percentChange >= 0;
-  const categoryBreakdown = data?.categoryBreakdown ?? [];
+  const byCategory = data?.byCategory ?? [];
 
-  const expenses = data?.expenses ?? [];
-  const filteredExpenses = categoryFilter === "all"
-    ? expenses
-    : expenses.filter((exp) => String(exp.categoryId) === categoryFilter);
+  // Map list query results to the shape the template expects
+  const filteredExpenses = (expenseList.data ?? []).map((row) => ({
+    id: row.expense.id,
+    categoryId: row.expense.categoryId,
+    description: row.expense.description,
+    amount: row.expense.amount,
+    date: row.expense.date,
+    supplier: row.expense.supplier,
+    categoryName: row.category.name,
+    categoryIcon: row.category.icon,
+  }));
 
   const maxCategoryAmount = Math.max(
-    ...categoryBreakdown.map((c) => c.total),
+    ...byCategory.map((c) => c.total),
     1,
   );
 
@@ -176,12 +190,12 @@ export default function AdminExpensesPage() {
 
             {/* Barras por categoria */}
             <div className="flex-1 space-y-3">
-              {categoryBreakdown.length > 0 ? (
-                categoryBreakdown.map((cat) => (
-                  <div key={cat.categoryId} className="space-y-1">
+              {byCategory.length > 0 ? (
+                byCategory.map((cat) => (
+                  <div key={cat.name} className="space-y-1">
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium">
-                        {cat.icon} {cat.categoryName}
+                        {cat.icon} {cat.name}
                       </span>
                       <span className="text-muted-foreground">
                         {formatPrice(cat.total)}
@@ -306,7 +320,7 @@ export default function AdminExpensesPage() {
                     </span>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <ExpenseDialog expense={exp}>
+                    <ExpenseDialog expense={{ id: exp.id, categoryId: exp.categoryId, description: exp.description, amount: exp.amount, date: exp.date, supplier: exp.supplier }}>
                       <Button variant="ghost" size="icon" className="h-8 w-8">
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
