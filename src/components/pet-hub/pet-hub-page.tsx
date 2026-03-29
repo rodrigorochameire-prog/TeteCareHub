@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { trpc } from "@/lib/trpc/client";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,6 +16,8 @@ import {
   Calendar,
   FileText,
   PawPrint,
+  Pencil,
+  Check,
 } from "lucide-react";
 import { PetHubHeader } from "./pet-hub-header";
 import { PetTimelineTab } from "./pet-timeline-tab";
@@ -42,6 +46,7 @@ const TAB_ITEMS = [
 ] as const;
 
 export function PetHubPage({ petId, role }: PetHubPageProps) {
+  const [isEditMode, setIsEditMode] = useState(false);
   const { data: pet, isLoading, error } = trpc.pets.byId.useQuery({ id: petId });
 
   if (isLoading) {
@@ -88,13 +93,14 @@ export function PetHubPage({ petId, role }: PetHubPageProps) {
       {/* Header Card */}
       <Card className="relative overflow-hidden">
         <CardContent className="p-6 pt-4">
-          <PetHubHeader pet={pet} role={role} />
+          <PetHubHeader pet={pet} role={role} isEditMode={isEditMode} />
         </CardContent>
       </Card>
 
       {/* Tabs */}
       <Tabs defaultValue="geral" className="w-full">
-        <TabsList className="w-full h-auto p-1 flex overflow-x-auto scrollbar-none gap-0">
+        <div className="flex items-center gap-2">
+          <TabsList className="flex-1 h-auto p-1 flex overflow-x-auto scrollbar-none gap-0">
           {TAB_ITEMS.map(({ value, label, icon: Icon }) => (
             <TabsTrigger
               key={value}
@@ -105,7 +111,28 @@ export function PetHubPage({ petId, role }: PetHubPageProps) {
               <span className="truncate">{label}</span>
             </TabsTrigger>
           ))}
-        </TabsList>
+          </TabsList>
+          {role === "admin" && (
+            <Button
+              variant={isEditMode ? "default" : "ghost"}
+              size="sm"
+              className="shrink-0 gap-1.5"
+              onClick={() => setIsEditMode((prev) => !prev)}
+            >
+              {isEditMode ? (
+                <>
+                  <Check className="h-3.5 w-3.5" />
+                  Concluir
+                </>
+              ) : (
+                <>
+                  <Pencil className="h-3.5 w-3.5" />
+                  Editar
+                </>
+              )}
+            </Button>
+          )}
+        </div>
 
         <TabsContent value="timeline" className="mt-5 animate-in fade-in-50 duration-300">
           <PetTimelineTab petId={petId} role={role} />
