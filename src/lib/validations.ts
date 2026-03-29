@@ -476,3 +476,4 @@ export type LogFilter = z.infer<typeof logFilterSchema>;
 
 export * from "./validations/invitation";
 export * from "./validations/plans";
+export * from "./validations/notifications-rules";

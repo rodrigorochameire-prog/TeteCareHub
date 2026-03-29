@@ -38,6 +38,7 @@ import { invitationsRouter } from "./invitations";
 import { invitePublicRouter } from "./invite-public";
 import { plansManagementRouter } from "./plans-management";
 import { paymentRequestsRouter } from "./payment-requests";
+import { notificationRulesRouter } from "./notification-rules";
 
 export const appRouter = router({
   // Autenticação
@@ -108,6 +109,9 @@ export const appRouter = router({
   alerts: alertsRouter,
   trainingMatrix: trainingMatrixRouter,
   compatibility: compatibilityRouter,
+
+  // Regras de Notificação
+  notificationRules: notificationRulesRouter,
 });
 
 export type AppRouter = typeof appRouter;
