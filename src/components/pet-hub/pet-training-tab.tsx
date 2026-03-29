@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
+import { AddTrainingDialog } from "./dialogs/add-training-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -105,7 +105,6 @@ function SkillsMatrix({ data }: { data: Array<{ command: string; status: string;
 }
 
 export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
-  const router = useRouter();
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.training.byPet.useQuery({ petId });
   const progress = trpc.training.progress.useQuery({ petId });
@@ -134,8 +133,9 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
     setPendingDeleteId(null);
   }
 
-  function navigateToAdd() {
-    router.push(`/admin/training?petId=${petId}`);
+  function handleTrainingSuccess() {
+    utils.training.byPet.invalidate({ petId });
+    utils.training.progress.invalidate({ petId });
   }
 
   if (isLoading) {
@@ -231,15 +231,7 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
               <GraduationCap className="h-4 w-4" />
               Sessões de Treinamento
             </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 transition-all duration-200 hover:bg-primary/5"
-              onClick={navigateToAdd}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Adicionar
-            </Button>
+            <AddTrainingDialog petId={petId} onSuccess={handleTrainingSuccess} />
           </div>
         </CardHeader>
         <CardContent>
@@ -306,14 +298,11 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
               <GraduationCap className="h-12 w-12 text-muted-foreground/30 mb-4" />
               <p className="text-sm font-medium text-muted-foreground">Nenhum treinamento registrado</p>
               <p className="text-xs text-muted-foreground/70 mt-1">Registre sessões de treinamento e acompanhe o progresso.</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-4 gap-1.5 transition-all duration-200"
-                onClick={navigateToAdd}
-              >
-                <Plus className="h-3.5 w-3.5" /> Adicionar
-              </Button>
+              <AddTrainingDialog petId={petId} onSuccess={handleTrainingSuccess}>
+                <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+                  <Plus className="h-3.5 w-3.5" /> Adicionar
+                </Button>
+              </AddTrainingDialog>
             </div>
           )}
         </CardContent>

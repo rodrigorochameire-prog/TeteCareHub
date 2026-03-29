@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+
 import { trpc } from "@/lib/trpc/client";
 import { AddVaccineDialog } from "./dialogs/add-vaccine-dialog";
 import { AddMedicationDialog } from "./dialogs/add-medication-dialog";
+import { AddPreventiveDialog } from "./dialogs/add-preventive-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,7 +49,6 @@ function getDueDateStatus(nextDueDate: Date | string | null | undefined): {
 }
 
 export function PetHealthTab({ petId, role }: PetHealthTabProps) {
-  const router = useRouter();
   const utils = trpc.useUtils();
 
   const vaccinations = trpc.vaccines.getPetVaccinations.useQuery({ petId });
@@ -160,10 +160,6 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
 
   function handlePreventiveSuccess() {
     utils.preventives.byPet.invalidate({ petId });
-  }
-
-  function navigateToAdd(section: string) {
-    router.push(`/admin/${section}?petId=${petId}`);
   }
 
   return (
@@ -399,15 +395,7 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               <ShieldCheck className="h-4 w-4" />
               Preventivos
             </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 transition-all duration-200 hover:bg-primary/5"
-              onClick={() => navigateToAdd("preventives")}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Adicionar
-            </Button>
+            <AddPreventiveDialog petId={petId} onSuccess={handlePreventiveSuccess} />
           </div>
         </CardHeader>
         <CardContent>
@@ -486,14 +474,11 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               <ShieldCheck className="h-12 w-12 text-muted-foreground/30 mb-4" />
               <p className="text-sm font-medium text-muted-foreground">Nenhum preventivo registrado</p>
               <p className="text-xs text-muted-foreground/70 mt-1">Controle antipulgas, vermifugos e outros preventivos.</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-4 gap-1.5 transition-all duration-200"
-                onClick={() => navigateToAdd("preventives")}
-              >
-                <Plus className="h-3.5 w-3.5" /> Adicionar
-              </Button>
+              <AddPreventiveDialog petId={petId} onSuccess={handlePreventiveSuccess}>
+                <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+                  <Plus className="h-3.5 w-3.5" /> Adicionar
+                </Button>
+              </AddPreventiveDialog>
             </div>
           )}
         </CardContent>

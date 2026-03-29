@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
+import { AddEventDialog } from "./dialogs/add-event-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -112,7 +112,6 @@ function MiniCalendar({ events, currentMonth, onMonthChange }: {
 }
 
 export function PetCalendarTab({ petId, role }: PetCalendarTabProps) {
-  const router = useRouter();
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.calendar.byPet.useQuery({ petId });
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -140,8 +139,8 @@ export function PetCalendarTab({ petId, role }: PetCalendarTabProps) {
     setPendingDelete(null);
   }
 
-  function navigateToAdd() {
-    router.push(`/admin/calendar?petId=${petId}`);
+  function handleEventSuccess() {
+    utils.calendar.byPet.invalidate({ petId });
   }
 
   if (isLoading) {
@@ -204,15 +203,7 @@ export function PetCalendarTab({ petId, role }: PetCalendarTabProps) {
               <Calendar className="h-4 w-4" />
               Próximos Eventos
             </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 transition-all duration-200 hover:bg-primary/5"
-              onClick={navigateToAdd}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Adicionar
-            </Button>
+            <AddEventDialog petId={petId} onSuccess={handleEventSuccess} />
           </div>
         </CardHeader>
         <CardContent>
@@ -280,14 +271,11 @@ export function PetCalendarTab({ petId, role }: PetCalendarTabProps) {
               <Calendar className="h-12 w-12 text-muted-foreground/30 mb-4" />
               <p className="text-sm font-medium text-muted-foreground">Nenhum evento registrado</p>
               <p className="text-xs text-muted-foreground/70 mt-1">Agende consultas, banhos e outros compromissos.</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-4 gap-1.5 transition-all duration-200"
-                onClick={navigateToAdd}
-              >
-                <Plus className="h-3.5 w-3.5" /> Adicionar
-              </Button>
+              <AddEventDialog petId={petId} onSuccess={handleEventSuccess}>
+                <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+                  <Plus className="h-3.5 w-3.5" /> Adicionar
+                </Button>
+              </AddEventDialog>
             </div>
           )}
         </CardContent>
