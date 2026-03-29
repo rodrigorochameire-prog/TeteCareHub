@@ -245,4 +245,5 @@ export * from "./schema-enhanced";
 export * from "./schema-invitations";
 export * from "./schema-plans";
 export * from "./schema-notifications";
+export * from "./schema-activities";
 export * from "./helpers";
