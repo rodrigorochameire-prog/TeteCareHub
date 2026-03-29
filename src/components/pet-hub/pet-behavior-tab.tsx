@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { AddBehaviorDialog } from "./dialogs/add-behavior-dialog";
+import { AddActivityDialog } from "./dialogs/add-activity-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { SourceBadge } from "./source-badge";
-import { Brain, Plus, Trash2, Calendar, PawPrint } from "lucide-react";
+import { Brain, Plus, Trash2, Calendar, PawPrint, Activity } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -42,6 +44,104 @@ function LevelBadge({ value, label }: { value: string | null; label: string }) {
       <Badge variant={info.variant} className="text-[10px]">
         {info.label}
       </Badge>
+    </div>
+  );
+}
+
+interface ActivityLogEntry {
+  log: {
+    id: number;
+    petId: number;
+    activityId: number | null;
+    customName: string | null;
+    logDate: string;
+    notes: string | null;
+    createdById: number | null;
+    createdAt: Date;
+  };
+  activity: {
+    id: number;
+    name: string;
+    icon: string | null;
+  } | null;
+}
+
+function RecentActivitiesSection({ petId }: { petId: number }) {
+  const utils = trpc.useUtils();
+  const { data: activityLogs, isLoading } = trpc.activities.getByPet.useQuery({ petId });
+
+  function handleActivitySuccess() {
+    utils.activities.getByPet.invalidate({ petId });
+  }
+
+  const groupedByDate = useMemo(() => {
+    if (!activityLogs || activityLogs.length === 0) return [];
+
+    const groups: Record<string, ActivityLogEntry[]> = {};
+    for (const entry of activityLogs) {
+      const dateKey = entry.log.logDate;
+      if (!groups[dateKey]) groups[dateKey] = [];
+      groups[dateKey].push(entry);
+    }
+
+    return Object.entries(groups)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .slice(0, 10);
+  }, [activityLogs]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-16 w-full rounded-lg" />
+        <Skeleton className="h-16 w-full rounded-lg" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium flex items-center gap-2">
+          <Activity className="h-4 w-4" />
+          Atividades Recentes
+        </h3>
+        <AddActivityDialog petId={petId} onSuccess={handleActivitySuccess} />
+      </div>
+
+      {groupedByDate.length > 0 ? (
+        <div className="space-y-3">
+          {groupedByDate.map(([dateStr, entries]) => (
+            <div key={dateStr} className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-3 w-3 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground">
+                  {format(new Date(dateStr + "T12:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })}
+                </span>
+              </div>
+              <div className="ml-5 space-y-1">
+                {entries.map((entry) => (
+                  <div key={entry.log.id} className="flex items-start gap-2 text-sm">
+                    <Activity className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
+                    <div>
+                      <span className="text-foreground">
+                        {entry.activity?.name || entry.log.customName || "Atividade"}
+                      </span>
+                      {entry.log.notes && (
+                        <p className="text-xs text-muted-foreground">{entry.log.notes}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground py-2">
+          Nenhuma atividade registrada nos últimos dias.
+        </p>
+      )}
     </div>
   );
 }
@@ -109,16 +209,21 @@ export function PetBehaviorTab({ petId, role }: PetBehaviorTabProps) {
         isLoading={deleteBehavior.isPending}
       />
 
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
+      <CardContent className="p-6">
+        {/* Atividades Recentes - no topo */}
+        <RecentActivitiesSection petId={petId} />
+
+        <Separator className="my-5" />
+
+        {/* Registros de Comportamento */}
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-semibold flex items-center gap-2">
             <Brain className="h-4 w-4" />
             Registros de Comportamento
-          </CardTitle>
+          </h3>
           <AddBehaviorDialog petId={petId} onSuccess={handleBehaviorSuccess} />
         </div>
-      </CardHeader>
-      <CardContent>
+
         {data && data.length > 0 ? (
           <div className="space-y-3">
             {data.map((log) => (
