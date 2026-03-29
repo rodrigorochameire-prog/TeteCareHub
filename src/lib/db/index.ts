@@ -64,21 +64,8 @@ function getDatabaseUrl(): string {
     );
   }
   
-  // Corrigir senha com caracteres especiais (URL encode se necessário)
-  // Detecta padrão postgresql://user:password@host
-  const match = url.match(/^(postgresql:\/\/[^:]+:)([^@]+)(@.+)$/);
-  if (match) {
-    const [, prefix, password, suffix] = match;
-    // Se a senha tem caracteres que precisam de encoding
-    if (password.includes('[') || password.includes(']') || password.includes('*') || password.includes('%')) {
-      // encodeURIComponent não codifica * e outros, fazemos manualmente
-      let encodedPassword = encodeURIComponent(password);
-      // Encode adicional para asterisco (*)
-      encodedPassword = encodedPassword.replace(/\*/g, '%2A');
-      url = prefix + encodedPassword + suffix;
-      console.log('[DB] Password encoding applied');
-    }
-  }
+  // Nota: A senha ja deve estar URL-encoded no .env.local
+  // Nao fazer re-encoding aqui para evitar double-encode
   
   return url;
 }
