@@ -203,14 +203,23 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
           </div>
         </div>
 
-        {/* Right: Stats — compact list */}
-        <div className="flex-1 flex flex-wrap items-start gap-x-5 gap-y-1 text-xs lg:justify-end">
+        {/* Right: Stats — vertical aligned list */}
+        <div className="hidden sm:flex flex-col gap-1.5 text-xs ml-auto border-l border-border pl-5">
           {stats.map((stat) => (
-            <div key={stat.label} className="flex items-center gap-1.5 py-0.5">
+            <div key={stat.label} className="flex items-center gap-2">
               <stat.icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <span className="text-muted-foreground">{stat.label}:</span>
+              <span className="text-muted-foreground w-20">{stat.label}</span>
               <span className="font-medium text-foreground">{stat.value}</span>
             </div>
+          ))}
+        </div>
+        {/* Mobile: horizontal pills */}
+        <div className="flex sm:hidden flex-wrap gap-1.5 text-xs mt-2">
+          {stats.map((stat) => (
+            <span key={stat.label} className="inline-flex items-center gap-1 bg-muted/50 rounded px-2 py-1">
+              <stat.icon className="h-3 w-3 text-muted-foreground" />
+              <span className="font-medium text-foreground">{stat.value}</span>
+            </span>
           ))}
         </div>
       </div>
