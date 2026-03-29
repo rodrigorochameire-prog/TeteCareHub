@@ -157,7 +157,7 @@ function PetCard({
         {/* Header */}
         <div className="flex items-start gap-3">
           {/* Avatar */}
-          <Link href={`/admin/pets/${pet.id}`} className="shrink-0 relative">
+          <Link href={`/admin/pets/${pet.id}/hub`} className="shrink-0 relative">
             <BreedIcon breed={pet.breed} className="h-12 w-12" />
             {isCheckedIn && (
               <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-emerald-500 rounded-full border-2 border-white dark:border-gray-900" />
@@ -168,7 +168,7 @@ function PetCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <Link href={`/admin/pets/${pet.id}`} className="block">
+                <Link href={`/admin/pets/${pet.id}/hub`} className="block">
                   <h3 className="font-semibold text-sm truncate hover:text-primary transition-colors">
                     {pet.name}
                   </h3>
@@ -187,7 +187,7 @@ function PetCard({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
                   <DropdownMenuItem asChild>
-                    <Link href={`/admin/pets/${pet.id}`}>
+                    <Link href={`/admin/pets/${pet.id}/hub`}>
                       <Eye className="h-4 w-4 mr-2" /> Ver perfil
                     </Link>
                   </DropdownMenuItem>
@@ -719,7 +719,7 @@ export default function AdminPetsPage() {
                 return (
                   <TableRow key={pet.id} className={cn(isCheckedIn && "bg-emerald-50/50 dark:bg-emerald-950/10")}>
                     <TableCell>
-                      <Link href={`/admin/pets/${pet.id}`} className="flex items-center gap-2 hover:text-primary">
+                      <Link href={`/admin/pets/${pet.id}/hub`} className="flex items-center gap-2 hover:text-primary">
                         <BreedIcon breed={pet.breed} className="h-8 w-8" />
                         <div>
                           <p className="font-medium text-sm">{pet.name}</p>
@@ -769,7 +769,7 @@ export default function AdminPetsPage() {
                 ) : (
                   items.map(pet => (
                     <div key={pet.id} className={cn("flex items-center justify-between p-2 rounded-md", color === "emerald" && "bg-emerald-50 dark:bg-emerald-950/20", color === "blue" && "bg-muted/50", color === "amber" && "bg-amber-50 dark:bg-amber-950/20")}>
-                      <Link href={`/admin/pets/${pet.id}`} className="flex items-center gap-2 min-w-0">
+                      <Link href={`/admin/pets/${pet.id}/hub`} className="flex items-center gap-2 min-w-0">
                         <BreedIcon breed={pet.breed} className="h-7 w-7" />
                         <span className="text-sm font-medium truncate">{pet.name}</span>
                       </Link>

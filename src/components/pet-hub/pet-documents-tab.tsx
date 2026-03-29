@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
+import { UploadDocumentDialog } from "./dialogs/upload-document-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -63,7 +63,6 @@ function getCategoryIcon(category: string) {
 }
 
 export function PetDocumentsTab({ petId, role }: PetDocumentsTabProps) {
-  const router = useRouter();
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.documents.byPet.useQuery({ petId });
 
@@ -90,8 +89,8 @@ export function PetDocumentsTab({ petId, role }: PetDocumentsTabProps) {
     setPendingDelete(null);
   }
 
-  function navigateToAdd() {
-    router.push(`/admin/documents?petId=${petId}`);
+  function handleDocumentSuccess() {
+    utils.documents.byPet.invalidate({ petId });
   }
 
   if (isLoading) {
@@ -132,15 +131,7 @@ export function PetDocumentsTab({ petId, role }: PetDocumentsTabProps) {
             <FileText className="h-4 w-4" />
             Documentos
           </CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 transition-all duration-200 hover:bg-primary/5"
-            onClick={navigateToAdd}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Adicionar
-          </Button>
+          <UploadDocumentDialog petId={petId} onSuccess={handleDocumentSuccess} />
         </div>
       </CardHeader>
       <CardContent>
@@ -226,14 +217,11 @@ export function PetDocumentsTab({ petId, role }: PetDocumentsTabProps) {
             <FileText className="h-12 w-12 text-muted-foreground/30 mb-4" />
             <p className="text-sm font-medium text-muted-foreground">Nenhum documento registrado</p>
             <p className="text-xs text-muted-foreground/70 mt-1">Armazene exames, receitas e outros documentos importantes.</p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4 gap-1.5 transition-all duration-200"
-              onClick={navigateToAdd}
-            >
-              <Plus className="h-3.5 w-3.5" /> Adicionar
-            </Button>
+            <UploadDocumentDialog petId={petId} onSuccess={handleDocumentSuccess}>
+              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+                <Plus className="h-3.5 w-3.5" /> Adicionar
+              </Button>
+            </UploadDocumentDialog>
           </div>
         )}
       </CardContent>

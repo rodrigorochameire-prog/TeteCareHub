@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
+import { AddBehaviorDialog } from "./dialogs/add-behavior-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,7 +47,6 @@ function LevelBadge({ value, label }: { value: string | null; label: string }) {
 }
 
 export function PetBehaviorTab({ petId, role }: PetBehaviorTabProps) {
-  const router = useRouter();
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.behavior.byPet.useQuery({ petId });
 
@@ -74,8 +73,8 @@ export function PetBehaviorTab({ petId, role }: PetBehaviorTabProps) {
     setPendingDeleteId(null);
   }
 
-  function navigateToAdd() {
-    router.push(`/admin/behavior?petId=${petId}`);
+  function handleBehaviorSuccess() {
+    utils.behavior.byPet.invalidate({ petId });
   }
 
   if (isLoading) {
@@ -116,15 +115,7 @@ export function PetBehaviorTab({ petId, role }: PetBehaviorTabProps) {
             <Brain className="h-4 w-4" />
             Registros de Comportamento
           </CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 transition-all duration-200 hover:bg-primary/5"
-            onClick={navigateToAdd}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Adicionar
-          </Button>
+          <AddBehaviorDialog petId={petId} onSuccess={handleBehaviorSuccess} />
         </div>
       </CardHeader>
       <CardContent>
@@ -197,14 +188,11 @@ export function PetBehaviorTab({ petId, role }: PetBehaviorTabProps) {
             <p className="text-xs text-muted-foreground/70 mt-1 max-w-[280px]">
               Comece registrando o primeiro dia do pet na creche. Acompanhe socialização, energia e obediência ao longo do tempo.
             </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4 gap-1.5 transition-all duration-200"
-              onClick={navigateToAdd}
-            >
-              <Plus className="h-3.5 w-3.5" /> Registrar primeiro dia
-            </Button>
+            <AddBehaviorDialog petId={petId} onSuccess={handleBehaviorSuccess}>
+              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+                <Plus className="h-3.5 w-3.5" /> Registrar primeiro dia
+              </Button>
+            </AddBehaviorDialog>
           </div>
         )}
       </CardContent>

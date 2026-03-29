@@ -496,7 +496,7 @@ export default function OperationsCenterDashboard() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {checkedInPets.slice(0, 12).map((pet) => (
-                <Link key={pet.id} href={`/admin/pets/${pet.id}`}>
+                <Link key={pet.id} href={`/admin/pets/${pet.id}/hub`}>
                   <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-orange-300 dark:hover:border-orange-500/30 transition-all cursor-pointer group">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-500/20 dark:to-orange-600/20 flex items-center justify-center mx-auto mb-2 group-hover:from-orange-200 group-hover:to-orange-300 dark:group-hover:from-orange-500/30 dark:group-hover:to-orange-600/30 transition-all">
                       <span className="text-xl font-bold text-orange-600 dark:text-orange-400">{pet.name[0]}</span>

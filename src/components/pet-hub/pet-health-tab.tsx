@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
+import { AddVaccineDialog } from "./dialogs/add-vaccine-dialog";
+import { AddMedicationDialog } from "./dialogs/add-medication-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -148,6 +150,18 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
     ? allDueDates.sort((a, b) => a.getTime() - b.getTime()).find((d) => d > new Date())
     : null;
 
+  function handleVaccineSuccess() {
+    utils.vaccines.getPetVaccinations.invalidate({ petId });
+  }
+
+  function handleMedicationSuccess() {
+    utils.medications.getPetMedications.invalidate({ petId });
+  }
+
+  function handlePreventiveSuccess() {
+    utils.preventives.byPet.invalidate({ petId });
+  }
+
   function navigateToAdd(section: string) {
     router.push(`/admin/${section}?petId=${petId}`);
   }
@@ -209,15 +223,7 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               <Syringe className="h-4 w-4" />
               Vacinas
             </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 transition-all duration-200 hover:bg-primary/5"
-              onClick={() => navigateToAdd("vaccines")}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Adicionar
-            </Button>
+            <AddVaccineDialog petId={petId} onSuccess={handleVaccineSuccess} />
           </div>
         </CardHeader>
         <CardContent>
@@ -298,14 +304,11 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               <Syringe className="h-12 w-12 text-muted-foreground/30 mb-4" />
               <p className="text-sm font-medium text-muted-foreground">Nenhuma vacina registrada</p>
               <p className="text-xs text-muted-foreground/70 mt-1">Adicione vacinas para acompanhar o calendário vacinal.</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-4 gap-1.5 transition-all duration-200"
-                onClick={() => navigateToAdd("vaccines")}
-              >
-                <Plus className="h-3.5 w-3.5" /> Adicionar
-              </Button>
+              <AddVaccineDialog petId={petId} onSuccess={handleVaccineSuccess}>
+                <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+                  <Plus className="h-3.5 w-3.5" /> Adicionar
+                </Button>
+              </AddVaccineDialog>
             </div>
           )}
         </CardContent>
@@ -319,15 +322,7 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               <Pill className="h-4 w-4" />
               Medicamentos
             </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 transition-all duration-200 hover:bg-primary/5"
-              onClick={() => navigateToAdd("medications")}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Adicionar
-            </Button>
+            <AddMedicationDialog petId={petId} onSuccess={handleMedicationSuccess} />
           </div>
         </CardHeader>
         <CardContent>
@@ -386,14 +381,11 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               <Pill className="h-12 w-12 text-muted-foreground/30 mb-4" />
               <p className="text-sm font-medium text-muted-foreground">Nenhum medicamento registrado</p>
               <p className="text-xs text-muted-foreground/70 mt-1">Registre medicamentos em uso para controle.</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-4 gap-1.5 transition-all duration-200"
-                onClick={() => navigateToAdd("medications")}
-              >
-                <Plus className="h-3.5 w-3.5" /> Adicionar
-              </Button>
+              <AddMedicationDialog petId={petId} onSuccess={handleMedicationSuccess}>
+                <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+                  <Plus className="h-3.5 w-3.5" /> Adicionar
+                </Button>
+              </AddMedicationDialog>
             </div>
           )}
         </CardContent>

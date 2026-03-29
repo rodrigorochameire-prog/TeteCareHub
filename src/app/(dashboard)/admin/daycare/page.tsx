@@ -438,7 +438,7 @@ export default function DaycarePage() {
                               size="md"
                             />
                             <div>
-                              <Link href={`/admin/pets/${pet.id}`} className="font-semibold hover:underline">
+                              <Link href={`/admin/pets/${pet.id}/hub`} className="font-semibold hover:underline">
                                 {pet.name}
                               </Link>
                               <p className="text-xs text-muted-foreground">{pet.breed}</p>
@@ -537,7 +537,7 @@ export default function DaycarePage() {
                               size="md"
                             />
                             <div>
-                              <Link href={`/admin/pets/${pet.id}`} className="font-semibold hover:underline">
+                              <Link href={`/admin/pets/${pet.id}/hub`} className="font-semibold hover:underline">
                                 {pet.name}
                               </Link>
                               <p className="text-xs text-muted-foreground">{pet.breed}</p>

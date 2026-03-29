@@ -162,7 +162,7 @@ export default function EditPetAdvancedPage() {
       {/* Header */}
       <div className="page-header">
         <div className="page-header-content">
-          <Link href={`/admin/pets/${petId}`}>
+          <Link href={`/admin/pets/${petId}/hub`}>
             <Button variant="ghost" size="icon" className="mr-2">
               <ArrowLeft className="h-4 w-4" />
             </Button>
