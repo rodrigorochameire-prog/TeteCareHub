@@ -42,6 +42,7 @@ import { notificationRulesRouter } from "./notification-rules";
 import { unifiedCalendarRouter } from "./unified-calendar";
 import { occupancyRouter } from "./occupancy";
 import { activitiesRouter } from "./activities";
+import { expensesRouter } from "./expenses";
 
 export const appRouter = router({
   // Autenticação
@@ -124,6 +125,9 @@ export const appRouter = router({
 
   // Atividades da Creche
   activities: activitiesRouter,
+
+  // Despesas
+  expenses: expensesRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -76,6 +76,16 @@ export default function AdminPackagesPage() {
     onError: (error) => toast.error("Erro: " + error.message),
   });
 
+  const addCredits = trpc.credits.addToPet.useMutation({
+    onSuccess: () => {
+      toast.success("Créditos adicionados!");
+      utils.pets.list.invalidate();
+      setIsAddCreditDialogOpen(false);
+      setSelectedPetId("");
+    },
+    onError: (error) => toast.error("Erro: " + error.message),
+  });
+
   const handleCreatePackage = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -85,6 +95,27 @@ export default function AdminPackagesPage() {
       priceInCents: parseInt(formData.get("price") as string) * 100,
       description: formData.get("description") as string || undefined,
       isActive: true,
+    });
+  };
+
+  const handleAddCredits = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const credits = parseInt(formData.get("days") as string);
+
+    if (!selectedPetId) {
+      toast.error("Selecione um pet");
+      return;
+    }
+
+    if (!credits || credits < 1) {
+      toast.error("Informe a quantidade de créditos");
+      return;
+    }
+
+    addCredits.mutate({
+      petId: parseInt(selectedPetId),
+      credits,
     });
   };
 
@@ -362,7 +393,7 @@ export default function AdminPackagesPage() {
             <DialogTitle>Adicionar Créditos</DialogTitle>
             <DialogDescription>Adicione créditos para um pet</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <form onSubmit={handleAddCredits} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="petId">Pet</Label>
               <Select value={selectedPetId} onValueChange={setSelectedPetId}>
@@ -380,15 +411,17 @@ export default function AdminPackagesPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="days">Quantidade</Label>
-              <Input id="days" name="days" type="number" />
+              <Input id="days" name="days" type="number" min="1" max="365" required />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsAddCreditDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" className="btn-primary">Adicionar</Button>
+              <Button type="submit" className="btn-primary" disabled={addCredits.isPending}>
+                {addCredits.isPending ? "Adicionando..." : "Adicionar"}
+              </Button>
             </DialogFooter>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
