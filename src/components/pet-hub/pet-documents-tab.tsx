@@ -16,16 +16,16 @@ interface PetDocumentsTabProps {
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  vaccination: "Vacinacao",
+  vaccination: "Vacinação",
   exam: "Exame",
   prescription: "Receita",
-  medical_record: "Prontuario",
+  medical_record: "Prontuário",
   preventive: "Preventivo",
   training: "Treinamento",
   behavior: "Comportamento",
-  nutrition: "Nutricao",
+  nutrition: "Nutrição",
   insurance: "Seguro",
-  identification: "Identificacao",
+  identification: "Identificação",
   contract: "Contrato",
   photo: "Foto",
   other: "Outro",

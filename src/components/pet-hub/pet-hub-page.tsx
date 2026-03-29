@@ -75,9 +75,9 @@ export function PetHubPage({ petId, role }: PetHubPageProps) {
       <Card>
         <CardContent className="p-12 text-center">
           <PawPrint className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
-          <p className="text-muted-foreground font-medium">Pet nao encontrado.</p>
+          <p className="text-muted-foreground font-medium">Pet não encontrado.</p>
           <p className="text-sm text-muted-foreground/60 mt-1">
-            Verifique se o link esta correto ou tente novamente.
+            Verifique se o link está correto ou tente novamente.
           </p>
         </CardContent>
       </Card>
@@ -100,11 +100,11 @@ export function PetHubPage({ petId, role }: PetHubPageProps) {
           </TabsTrigger>
           <TabsTrigger value="saude" className="gap-1.5 flex-1 min-w-0">
             <Heart className="h-4 w-4 shrink-0" />
-            <span className="hidden sm:inline truncate">Saude</span>
+            <span className="hidden sm:inline truncate">Saúde</span>
           </TabsTrigger>
           <TabsTrigger value="alimentacao" className="gap-1.5 flex-1 min-w-0">
             <UtensilsCrossed className="h-4 w-4 shrink-0" />
-            <span className="hidden sm:inline truncate">Alimentacao</span>
+            <span className="hidden sm:inline truncate">Alimentação</span>
           </TabsTrigger>
           <TabsTrigger value="comportamento" className="gap-1.5 flex-1 min-w-0">
             <Brain className="h-4 w-4 shrink-0" />
@@ -116,7 +116,7 @@ export function PetHubPage({ petId, role }: PetHubPageProps) {
           </TabsTrigger>
           <TabsTrigger value="calendario" className="gap-1.5 flex-1 min-w-0">
             <Calendar className="h-4 w-4 shrink-0" />
-            <span className="hidden sm:inline truncate">Calendario</span>
+            <span className="hidden sm:inline truncate">Calendário</span>
           </TabsTrigger>
           <TabsTrigger value="documentos" className="gap-1.5 flex-1 min-w-0">
             <FileText className="h-4 w-4 shrink-0" />

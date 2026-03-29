@@ -22,8 +22,8 @@ const STATUS_MAP: Record<string, { label: string; variant: "success" | "info" | 
 };
 
 const CATEGORY_MAP: Record<string, string> = {
-  obedience: "Obediencia",
-  socialization: "Socializacao",
+  obedience: "Obediência",
+  socialization: "Socialização",
   behavior: "Comportamento",
   agility: "Agilidade",
   tricks: "Truques",
@@ -95,13 +95,13 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
         </div>
       )}
 
-      {/* Sessoes de Treinamento */}
+      {/* Sessões de Treinamento */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <GraduationCap className="h-4 w-4" />
-              Sessoes de Treinamento
+              Sessões de Treinamento
             </CardTitle>
             <Button variant="outline" size="sm" className="gap-1">
               <Plus className="h-3.5 w-3.5" />
@@ -168,7 +168,7 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
               <GraduationCap className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">Nenhum treinamento registrado.</p>
               <p className="text-xs text-muted-foreground/60 mt-1">
-                Registre sessoes de treinamento e acompanhe o progresso.
+                Registre sessões de treinamento e acompanhe o progresso.
               </p>
             </div>
           )}

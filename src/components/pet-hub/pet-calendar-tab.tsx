@@ -16,7 +16,7 @@ interface PetCalendarTabProps {
 
 const STATUS_LABELS: Record<string, { label: string; variant: "success" | "info" | "warning" | "secondary" | "destructive" }> = {
   scheduled: { label: "Agendado", variant: "info" },
-  completed: { label: "Concluido", variant: "success" },
+  completed: { label: "Concluído", variant: "success" },
   cancelled: { label: "Cancelado", variant: "destructive" },
   pending: { label: "Pendente", variant: "warning" },
 };

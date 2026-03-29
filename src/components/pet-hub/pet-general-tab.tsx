@@ -59,13 +59,13 @@ interface PetGeneralTabProps {
 }
 
 function formatWeight(weight: number | null | undefined): string {
-  if (!weight) return "Nao informado";
+  if (!weight) return "Não informado";
   const kg = weight > 100 ? weight / 1000 : weight;
   return `${kg.toFixed(1)} kg`;
 }
 
 function formatBirthDate(birthDate: Date | string | null | undefined): string {
-  if (!birthDate) return "Nao informada";
+  if (!birthDate) return "Não informada";
   const date = new Date(birthDate);
   return date.toLocaleDateString("pt-BR");
 }
@@ -88,27 +88,48 @@ const LABELS: Record<string, string> = {
   dog: "Cachorro",
   cat: "Gato",
   male: "Macho",
-  female: "Femea",
+  female: "Fêmea",
   small: "Pequeno",
-  medium: "Medio",
+  medium: "Médio",
   large: "Grande",
   xlarge: "Extra grande",
   short: "Curto",
-  medium_coat: "Medio",
+  medium_coat: "Médio",
   long: "Longo",
   wire: "Arame",
   curly: "Cacheado",
-  high: "Alto",
-  normal: "Normal",
+  // Energy levels (ENERGY_LEVELS enum)
+  very_low: "Muito Baixo",
   low: "Baixo",
+  moderate: "Moderado",
+  high: "Alto",
+  hyperactive: "Hiperativo",
+  normal: "Normal",
+  medium_energy: "Moderado",
+  very_high: "Muito Alto",
+  // Dog sociability (DOG_SOCIABILITY enum)
+  social: "Sociável",
+  selective: "Seletivo",
+  reactive: "Reativo",
+  antisocial: "Antissocial",
+  // Human sociability (HUMAN_SOCIABILITY enum)
+  friendly: "Amigável",
+  cautious: "Cauteloso",
+  fearful: "Medroso",
+  // Legacy sociability values
   excellent: "Excelente",
   good: "Bom",
-  moderate: "Moderado",
   poor: "Ruim",
+  // Play styles
+  wrestling: "Luta Romana",
+  chase: "Perseguição",
+  fetch: "Buscar",
+  tug: "Cabo de Guerra",
+  independent: "Independente",
 };
 
 function label(value: string | null | undefined): string {
-  if (!value) return "Nao informado";
+  if (!value) return "Não informado";
   return LABELS[value] ?? value;
 }
 
@@ -149,16 +170,16 @@ export function PetGeneralTab({ pet, role }: PetGeneralTabProps) {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Dog className="h-4 w-4" />
-            Informacoes Basicas
+            Informações Básicas
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Especie</span>
+            <span className="text-muted-foreground">Espécie</span>
             <span>{label(pet.species)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Raca</span>
+            <span className="text-muted-foreground">Raça</span>
             <span>{pet.breed || "SRD"}</span>
           </div>
           <div className="flex justify-between">
@@ -190,7 +211,7 @@ export function PetGeneralTab({ pet, role }: PetGeneralTabProps) {
           </div>
           {pet.notes && (
             <div className="pt-2 border-t">
-              <p className="text-muted-foreground text-xs mb-1">Observacoes</p>
+              <p className="text-muted-foreground text-xs mb-1">Observações</p>
               <p>{pet.notes}</p>
             </div>
           )}
@@ -208,15 +229,15 @@ export function PetGeneralTab({ pet, role }: PetGeneralTabProps) {
         <CardContent className="space-y-4 text-sm">
           <div className="space-y-1">
             <span className="text-muted-foreground text-xs">Energia</span>
-            <LevelBar value={pet.energyLevel} levels={["low", "normal", "high"]} />
+            <LevelBar value={pet.energyLevel} levels={["very_low", "low", "moderate", "high", "hyperactive"]} />
           </div>
           <div className="space-y-1">
-            <span className="text-muted-foreground text-xs">Sociabilidade (caes)</span>
-            <LevelBar value={pet.dogSociability} levels={["poor", "moderate", "good", "excellent"]} />
+            <span className="text-muted-foreground text-xs">Sociabilidade (cães)</span>
+            <LevelBar value={pet.dogSociability} levels={["antisocial", "reactive", "selective", "social"]} />
           </div>
           <div className="space-y-1">
             <span className="text-muted-foreground text-xs">Sociabilidade (humanos)</span>
-            <LevelBar value={pet.humanSociability} levels={["poor", "moderate", "good", "excellent"]} />
+            <LevelBar value={pet.humanSociability} levels={["reactive", "fearful", "cautious", "friendly"]} />
           </div>
           <Separator />
           <div className="flex justify-between">
@@ -308,7 +329,7 @@ export function PetGeneralTab({ pet, role }: PetGeneralTabProps) {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Heart className="h-4 w-4" />
-            Saude
+            Saúde
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
@@ -322,7 +343,7 @@ export function PetGeneralTab({ pet, role }: PetGeneralTabProps) {
             ) : (
               <span className="flex items-center gap-1 text-emerald-500 text-xs">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                Nao
+                Não
               </span>
             )}
           </div>
@@ -341,7 +362,7 @@ export function PetGeneralTab({ pet, role }: PetGeneralTabProps) {
             ) : (
               <span className="flex items-center gap-1 text-emerald-500 text-xs">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                Nao
+                Não
               </span>
             )}
           </div>
@@ -351,7 +372,7 @@ export function PetGeneralTab({ pet, role }: PetGeneralTabProps) {
             </p>
           )}
           <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Condicao cronica</span>
+            <span className="text-muted-foreground">Condição crônica</span>
             {pet.hasChronicCondition ? (
               <Badge variant="destructive" className="gap-1">
                 <AlertTriangle className="h-3 w-3" />
@@ -360,7 +381,7 @@ export function PetGeneralTab({ pet, role }: PetGeneralTabProps) {
             ) : (
               <span className="flex items-center gap-1 text-emerald-500 text-xs">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                Nao
+                Não
               </span>
             )}
           </div>
@@ -372,7 +393,7 @@ export function PetGeneralTab({ pet, role }: PetGeneralTabProps) {
           {(pet.emergencyVetName || pet.emergencyVetPhone) && (
             <div className="pt-2 border-t">
               <p className="text-muted-foreground text-xs mb-1 flex items-center gap-1">
-                <ShieldAlert className="h-3 w-3" /> Veterinario de emergencia
+                <ShieldAlert className="h-3 w-3" /> Veterinário de emergência
               </p>
               {pet.emergencyVetName && <p>{pet.emergencyVetName}</p>}
               {pet.emergencyVetPhone && (

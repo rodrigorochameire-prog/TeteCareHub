@@ -123,7 +123,7 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
                         {format(new Date(item.vaccination.applicationDate), "dd/MM/yyyy", { locale: ptBR })}
                         {item.vaccination.nextDueDate && (
                           <span>
-                            · Proxima: {format(new Date(item.vaccination.nextDueDate), "dd/MM/yyyy", { locale: ptBR })}
+                            · Próxima: {format(new Date(item.vaccination.nextDueDate), "dd/MM/yyyy", { locale: ptBR })}
                           </span>
                         )}
                       </div>
@@ -148,7 +148,7 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               <Syringe className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">Nenhuma vacina registrada.</p>
               <p className="text-xs text-muted-foreground/60 mt-1">
-                Adicione vacinas para acompanhar o calendario vacinal.
+                Adicione vacinas para acompanhar o calendário vacinal.
               </p>
             </div>
           )}
@@ -202,7 +202,7 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
                       {format(new Date(item.medication.startDate), "dd/MM/yyyy", { locale: ptBR })}
                       {item.medication.endDate && (
                         <span>
-                          ate {format(new Date(item.medication.endDate), "dd/MM/yyyy", { locale: ptBR })}
+                          até {format(new Date(item.medication.endDate), "dd/MM/yyyy", { locale: ptBR })}
                         </span>
                       )}
                     </div>
@@ -287,7 +287,7 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
                         {format(new Date(treatment.applicationDate), "dd/MM/yyyy", { locale: ptBR })}
                         {treatment.nextDueDate && (
                           <span>
-                            · Proxima: {format(new Date(treatment.nextDueDate), "dd/MM/yyyy", { locale: ptBR })}
+                            · Próxima: {format(new Date(treatment.nextDueDate), "dd/MM/yyyy", { locale: ptBR })}
                           </span>
                         )}
                       </div>

@@ -13,9 +13,9 @@ interface PetFoodTabProps {
 }
 
 const FOOD_TYPE_LABELS: Record<string, string> = {
-  dry: "Racao seca",
-  wet: "Racao umida",
-  natural: "Alimentacao natural",
+  dry: "Ração seca",
+  wet: "Ração úmida",
+  natural: "Alimentação natural",
   mixed: "Mista",
 };
 
@@ -108,16 +108,16 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
                 </div>
               )}
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Quantidade diaria</span>
+                <span className="text-muted-foreground">Quantidade diária</span>
                 <span>{plan.data.dailyAmount}g</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Porcoes por dia</span>
+                <span className="text-muted-foreground">Porções por dia</span>
                 <span>{plan.data.portionsPerDay}x</span>
               </div>
               {plan.data.notes && (
                 <div className="pt-2 border-t">
-                  <p className="text-muted-foreground text-xs mb-1">Observacoes</p>
+                  <p className="text-muted-foreground text-xs mb-1">Observações</p>
                   <p>{plan.data.notes}</p>
                 </div>
               )}
@@ -127,7 +127,7 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               <UtensilsCrossed className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">Nenhum plano alimentar cadastrado.</p>
               <p className="text-xs text-muted-foreground/60 mt-1">
-                Crie um plano para controlar a alimentacao.
+                Crie um plano para controlar a alimentação.
               </p>
             </div>
           )}
@@ -187,7 +187,7 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               <Package className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">Nenhum estoque registrado.</p>
               <p className="text-xs text-muted-foreground/60 mt-1">
-                Controle o estoque de racao e suplementos.
+                Controle o estoque de ração e suplementos.
               </p>
             </div>
           )}
@@ -220,7 +220,7 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
                     )}
                     {treat.frequency && (
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        Frequencia: {treat.frequency}
+                        Frequência: {treat.frequency}
                       </p>
                     )}
                   </div>
@@ -229,7 +229,7 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
                       variant={treat.acceptance === "loved" ? "success" : treat.acceptance === "liked" ? "info" : "secondary"}
                       className="text-[10px]"
                     >
-                      {treat.acceptance === "loved" ? "Adora" : treat.acceptance === "liked" ? "Gosta" : treat.acceptance === "neutral" ? "Neutro" : "Nao gosta"}
+                      {treat.acceptance === "loved" ? "Adora" : treat.acceptance === "liked" ? "Gosta" : treat.acceptance === "neutral" ? "Neutro" : "Não gosta"}
                     </Badge>
                   )}
                 </div>
@@ -240,7 +240,7 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               <Cookie className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">Nenhum petisco registrado.</p>
               <p className="text-xs text-muted-foreground/60 mt-1">
-                Registre petiscos favoritos e preferencias.
+                Registre petiscos favoritos e preferências.
               </p>
             </div>
           )}
@@ -253,7 +253,7 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Leaf className="h-4 w-4" />
-              Alimentacao Natural
+              Alimentação Natural
             </CardTitle>
             <Button variant="outline" size="sm" className="gap-1">
               <Plus className="h-3.5 w-3.5" />
@@ -270,12 +270,12 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
                     <p className="font-medium">{food.name}</p>
                     {food.proteinSource && (
                       <p className="text-xs text-muted-foreground">
-                        Proteina: {food.proteinSource}
+                        Proteína: {food.proteinSource}
                       </p>
                     )}
                     {food.frequency && (
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        Frequencia: {food.frequency}
+                        Frequência: {food.frequency}
                       </p>
                     )}
                   </div>
@@ -284,7 +284,7 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
                       variant={food.acceptance === "loved" ? "success" : food.acceptance === "liked" ? "info" : "secondary"}
                       className="text-[10px]"
                     >
-                      {food.acceptance === "loved" ? "Adora" : food.acceptance === "liked" ? "Gosta" : food.acceptance === "neutral" ? "Neutro" : "Nao gosta"}
+                      {food.acceptance === "loved" ? "Adora" : food.acceptance === "liked" ? "Gosta" : food.acceptance === "neutral" ? "Neutro" : "Não gosta"}
                     </Badge>
                   )}
                 </div>
@@ -293,7 +293,7 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
           ) : (
             <div className="text-center py-8">
               <Leaf className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Nenhuma alimentacao natural registrada.</p>
+              <p className="text-sm text-muted-foreground">Nenhuma alimentação natural registrada.</p>
               <p className="text-xs text-muted-foreground/60 mt-1">
                 Registre dietas naturais e ingredientes.
               </p>

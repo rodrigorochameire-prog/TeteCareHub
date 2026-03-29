@@ -102,9 +102,9 @@ export function PetBehaviorTab({ petId, role }: PetBehaviorTabProps) {
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <LevelBadge value={log.socialization} label="Socializacao" />
+                  <LevelBadge value={log.socialization} label="Socialização" />
                   <LevelBadge value={log.energy} label="Energia" />
-                  <LevelBadge value={log.obedience} label="Obediencia" />
+                  <LevelBadge value={log.obedience} label="Obediência" />
                   <LevelBadge value={log.anxiety} label="Ansiedade" />
                   <LevelBadge value={log.aggression} label="Agressividade" />
                 </div>
@@ -135,7 +135,7 @@ export function PetBehaviorTab({ petId, role }: PetBehaviorTabProps) {
             <Brain className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">Nenhum registro de comportamento.</p>
             <p className="text-xs text-muted-foreground/60 mt-1">
-              Acompanhe socializacao, energia e obediencia ao longo do tempo.
+              Acompanhe socialização, energia e obediência ao longo do tempo.
             </p>
           </div>
         )}

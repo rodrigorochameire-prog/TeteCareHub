@@ -1,6 +1,5 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -11,7 +10,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  PawPrint,
   MessageCircle,
   Phone,
   Zap,
@@ -20,6 +18,7 @@ import {
   Star,
   Pencil,
 } from "lucide-react";
+import { PetAvatar } from "@/components/pet-avatar";
 
 interface Tutor {
   id: number;
@@ -40,6 +39,7 @@ interface Pet {
   energyLevel?: string | null;
   credits?: number | null;
   tutors: Tutor[];
+  species?: string | null;
 }
 
 interface PetHubHeaderProps {
@@ -53,6 +53,8 @@ function getStatusBadge(status?: string | null) {
       return <Badge variant="success">Ativo</Badge>;
     case "at_daycare":
       return <Badge variant="info">Na creche</Badge>;
+    case "checked-out":
+      return <Badge variant="warning">Fora da Creche</Badge>;
     case "inactive":
       return <Badge variant="secondary">Inativo</Badge>;
     default:
@@ -82,9 +84,14 @@ function calculateAge(birthDate: Date | string | null | undefined): string {
 }
 
 const ENERGY_LABELS: Record<string, { label: string; color: string }> = {
+  hyperactive: { label: "Hiperativo", color: "text-red-400" },
+  very_high: { label: "Muito Alta", color: "text-orange-400" },
   high: { label: "Alta", color: "text-emerald-400" },
+  moderate: { label: "Moderada", color: "text-sky-400" },
+  medium: { label: "Moderada", color: "text-sky-400" },
   normal: { label: "Normal", color: "text-sky-400" },
   low: { label: "Baixa", color: "text-amber-400" },
+  very_low: { label: "Muito Baixa", color: "text-blue-400" },
 };
 
 export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
@@ -97,7 +104,7 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
 
   const whatsappUrl = primaryTutor?.phone
     ? `https://wa.me/55${primaryTutor.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
-        `Ola ${primaryTutor.name}, sobre ${pet.name}...`
+        `Olá ${primaryTutor.name}, sobre ${pet.name}...`
       )}`
     : null;
 
@@ -111,12 +118,14 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
         {/* Large Avatar */}
         <div className="relative shrink-0">
-          <Avatar className="h-24 w-24 ring-2 ring-border ring-offset-2 ring-offset-background">
-            <AvatarImage src={pet.photoUrl ?? undefined} alt={pet.name} />
-            <AvatarFallback className="bg-muted">
-              <PawPrint className="h-10 w-10 text-muted-foreground" />
-            </AvatarFallback>
-          </Avatar>
+          <PetAvatar
+            photoUrl={pet.photoUrl}
+            breed={pet.breed}
+            name={pet.name}
+            size={96}
+            rounded="full"
+            className="ring-2 ring-border ring-offset-2 ring-offset-background"
+          />
           <div className="absolute -bottom-1 -right-1">
             {getStatusBadge(pet.status)}
           </div>
