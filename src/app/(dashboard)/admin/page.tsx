@@ -35,6 +35,7 @@ import {
 } from "recharts";
 import Link from "next/link";
 import { DashboardSkeleton } from "@/components/shared/skeletons";
+import { OccupancyCard } from "@/components/occupancy/occupancy-card";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -339,6 +340,11 @@ export default function OperationsCenterDashboard() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Card de Ocupação Interativo */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <OccupancyCard />
       </div>
 
       {/* BLOCO 2: Stats Cards Rápidos */}
