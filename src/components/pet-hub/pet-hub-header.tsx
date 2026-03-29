@@ -1,8 +1,6 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
@@ -12,10 +10,6 @@ import {
 import {
   MessageCircle,
   Phone,
-  Zap,
-  Weight,
-  Cake,
-  Star,
   Pencil,
 } from "lucide-react";
 import { PetAvatar } from "@/components/pet-avatar";
@@ -47,25 +41,17 @@ interface PetHubHeaderProps {
   role?: "admin" | "tutor";
 }
 
-function getStatusBadge(status?: string | null) {
-  switch (status) {
-    case "active":
-      return <Badge variant="success">Ativo</Badge>;
-    case "at_daycare":
-      return <Badge variant="info">Na creche</Badge>;
-    case "checked-out":
-      return <Badge variant="warning">Fora da Creche</Badge>;
-    case "inactive":
-      return <Badge variant="secondary">Inativo</Badge>;
-    default:
-      return <Badge variant="success">Ativo</Badge>;
-  }
-}
+const STATUS_MAP: Record<string, { label: string; color: string }> = {
+  active: { label: "Ativo", color: "bg-emerald-500" },
+  at_daycare: { label: "Na creche", color: "bg-sky-500" },
+  "checked-out": { label: "Fora da Creche", color: "bg-amber-500" },
+  inactive: { label: "Inativo", color: "bg-zinc-500" },
+};
 
 function formatWeight(weight: number | null | undefined): string {
   if (!weight) return "";
   const kg = weight > 100 ? weight / 1000 : weight;
-  return `${kg.toFixed(1)} kg`;
+  return `${kg.toFixed(1)}kg`;
 }
 
 function calculateAge(birthDate: Date | string | null | undefined): string {
@@ -83,28 +69,23 @@ function calculateAge(birthDate: Date | string | null | undefined): string {
   return m > 0 ? `${y}a ${m}m` : `${y}a`;
 }
 
-const ENERGY_LABELS: Record<string, { label: string; color: string }> = {
-  hyperactive: { label: "Hiperativo", color: "text-red-400" },
-  very_high: { label: "Muito Alta", color: "text-orange-400" },
-  high: { label: "Alta", color: "text-emerald-400" },
-  moderate: { label: "Moderada", color: "text-sky-400" },
-  medium: { label: "Moderada", color: "text-sky-400" },
-  normal: { label: "Normal", color: "text-sky-400" },
-  low: { label: "Baixa", color: "text-amber-400" },
-  very_low: { label: "Muito Baixa", color: "text-blue-400" },
-};
+function formatPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 11) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  }
+  return phone;
+}
 
 export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
   const primaryTutor = pet.tutors.find((t) => t.isPrimary) ?? pet.tutors[0];
   const weight = formatWeight(pet.weight);
   const age = calculateAge(pet.birthDate);
-  const energyInfo = pet.energyLevel
-    ? ENERGY_LABELS[pet.energyLevel] ?? { label: pet.energyLevel, color: "text-muted-foreground" }
-    : null;
+  const statusInfo = STATUS_MAP[pet.status ?? "active"] ?? STATUS_MAP.active;
 
   const whatsappUrl = primaryTutor?.phone
     ? `https://wa.me/55${primaryTutor.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
-        `Olá ${primaryTutor.name}, sobre ${pet.name}...`
+        `Ola ${primaryTutor.name}, sobre ${pet.name}...`
       )}`
     : null;
 
@@ -112,34 +93,43 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
     ? `tel:+55${primaryTutor.phone.replace(/\D/g, "")}`
     : null;
 
+  // Build stats string: "1a 2m · 12.0kg · 10 creditos"
+  const statParts: string[] = [];
+  if (age) statParts.push(age);
+  if (weight) statParts.push(weight);
+  if (typeof pet.credits === "number") statParts.push(`${pet.credits} cred.`);
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {/* Top row: Avatar + Info + Actions */}
-      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-        {/* Large Avatar */}
-        <div className="relative shrink-0">
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+        {/* Avatar */}
+        <div className="shrink-0">
           <PetAvatar
             photoUrl={pet.photoUrl}
             breed={pet.breed}
             name={pet.name}
-            size={96}
-            rounded="full"
-            className="ring-2 ring-border ring-offset-2 ring-offset-background"
+            size={80}
+            rounded="xl"
+            className="shadow-lg shadow-black/20 ring-1 ring-white/10"
           />
-          <div className="absolute -bottom-1 -right-1">
-            {getStatusBadge(pet.status)}
-          </div>
         </div>
 
-        {/* Name + breed */}
+        {/* Name + breed + stats */}
         <div className="flex-1 min-w-0 text-center sm:text-left">
-          <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
-            <h1 className="text-2xl font-bold tracking-tight truncate">{pet.name}</h1>
+          <div className="flex items-center gap-2.5 flex-wrap justify-center sm:justify-start">
+            <h1 className="text-3xl font-bold tracking-tight truncate">
+              {pet.name}
+            </h1>
             {role === "admin" && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-foreground"
+                    >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                   </TooltipTrigger>
@@ -148,37 +138,55 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
               </TooltipProvider>
             )}
           </div>
-          {pet.breed && (
-            <p className="text-sm text-muted-foreground mt-0.5">{pet.breed}</p>
-          )}
 
-          {/* Quick stats row */}
-          <div className="flex items-center gap-2 mt-3 flex-wrap justify-center sm:justify-start">
-            {age && (
-              <div className="flex items-center gap-1.5 rounded-md bg-muted/50 border border-border/50 px-2.5 py-1 text-xs">
-                <Cake className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="font-medium">{age}</span>
-              </div>
+          {/* Breed + inline stats */}
+          <div className="flex items-center gap-2 mt-1 flex-wrap justify-center sm:justify-start">
+            {pet.breed && (
+              <span className="text-sm text-muted-foreground">{pet.breed}</span>
             )}
-            {weight && (
-              <div className="flex items-center gap-1.5 rounded-md bg-muted/50 border border-border/50 px-2.5 py-1 text-xs">
-                <Weight className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="font-medium">{weight}</span>
-              </div>
+            {pet.breed && statParts.length > 0 && (
+              <span className="text-muted-foreground/40">|</span>
             )}
-            {energyInfo && (
-              <div className="flex items-center gap-1.5 rounded-md bg-muted/50 border border-border/50 px-2.5 py-1 text-xs">
-                <Zap className={`h-3.5 w-3.5 ${energyInfo.color}`} />
-                <span className="font-medium">{energyInfo.label}</span>
-              </div>
-            )}
-            {typeof pet.credits === "number" && (
-              <div className="flex items-center gap-1.5 rounded-md bg-muted/50 border border-border/50 px-2.5 py-1 text-xs">
-                <Star className="h-3.5 w-3.5 text-amber-400" />
-                <span className="font-medium">{pet.credits}</span>
-              </div>
+            {statParts.length > 0 && (
+              <span className="text-sm text-muted-foreground/70">
+                {statParts.join(" \u00b7 ")}
+              </span>
             )}
           </div>
+
+          {/* Status dot + text */}
+          <div className="flex items-center gap-1.5 mt-2.5 justify-center sm:justify-start">
+            <span className={`h-2 w-2 rounded-full ${statusInfo.color}`} />
+            <span className="text-xs text-muted-foreground">
+              {statusInfo.label}
+            </span>
+          </div>
+
+          {/* Tutor inline */}
+          {primaryTutor && (
+            <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground/70 justify-center sm:justify-start">
+              <span>Tutor:</span>
+              <span className="text-foreground/80 font-medium">
+                {primaryTutor.name}
+              </span>
+              {primaryTutor.phone && (
+                <>
+                  <span className="text-muted-foreground/30">&middot;</span>
+                  <a
+                    href={`tel:+55${primaryTutor.phone.replace(/\D/g, "")}`}
+                    className="hover:text-foreground transition-colors"
+                  >
+                    {formatPhone(primaryTutor.phone)}
+                  </a>
+                </>
+              )}
+              {pet.tutors.length > 1 && (
+                <span className="text-muted-foreground/40">
+                  +{pet.tutors.length - 1}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Actions */}
@@ -187,7 +195,12 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button asChild variant="outline" size="sm" className="h-9 w-9 p-0">
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="h-9 w-9 p-0 border-zinc-700 hover:border-zinc-600"
+                  >
                     <a href={phoneUrl}>
                       <Phone className="h-4 w-4" />
                     </a>
@@ -198,7 +211,11 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
             </TooltipProvider>
           )}
           {whatsappUrl && (
-            <Button asChild size="sm" className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
+            <Button
+              asChild
+              size="sm"
+              className="gap-2 bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/30"
+            >
               <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="h-4 w-4" />
                 WhatsApp
@@ -207,30 +224,6 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
           )}
         </div>
       </div>
-
-      {/* Tutor section */}
-      {primaryTutor && (
-        <>
-          <Separator />
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Tutor:</span>
-            <span className="font-medium text-foreground">{primaryTutor.name}</span>
-            {primaryTutor.phone && (
-              <a
-                href={`tel:+55${primaryTutor.phone.replace(/\D/g, "")}`}
-                className="hover:text-foreground transition-colors"
-              >
-                {primaryTutor.phone}
-              </a>
-            )}
-            {pet.tutors.length > 1 && (
-              <Badge variant="secondary" className="text-[10px]">
-                +{pet.tutors.length - 1} tutor{pet.tutors.length > 2 ? "es" : ""}
-              </Badge>
-            )}
-          </div>
-        </>
-      )}
     </div>
   );
 }
