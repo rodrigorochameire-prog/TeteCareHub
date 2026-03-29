@@ -118,6 +118,7 @@ const menuGroups = [
       { icon: Building2, label: "Creche", path: "/admin/daycare" },
       { icon: BarChart3, label: "Relatórios", path: "/admin/reports" },
       { icon: Settings, label: "Configurações", path: "/admin/settings" },
+      { icon: Bell, label: "Notificações", path: "/admin/settings/notifications" },
     ],
   },
   {
