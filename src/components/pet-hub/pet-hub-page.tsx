@@ -138,7 +138,7 @@ export function PetHubPage({ petId, role }: PetHubPageProps) {
           <PetTimelineTab petId={petId} role={role} />
         </TabsContent>
         <TabsContent value="geral" className="mt-5 animate-in fade-in-50 duration-300">
-          <PetGeneralTab pet={pet} role={role} />
+          <PetGeneralTab pet={pet} role={role} isEditMode={isEditMode} />
         </TabsContent>
         <TabsContent value="saude" className="mt-5 animate-in fade-in-50 duration-300">
           <PetHealthTab petId={petId} role={role} />
