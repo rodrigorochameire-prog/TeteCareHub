@@ -113,7 +113,39 @@ const LABELS: Record<string, string> = {
   fetch: "Buscar",
   tug: "Cabo de Guerra",
   independent: "Independente",
+  observer: "Observador",
 };
+
+const ENERGY_OPTIONS = [
+  { value: "very_low", label: "Muito Baixo" },
+  { value: "low", label: "Baixo" },
+  { value: "moderate", label: "Moderado" },
+  { value: "high", label: "Alto" },
+  { value: "hyperactive", label: "Hiperativo" },
+];
+
+const DOG_SOCIABILITY_OPTIONS = [
+  { value: "antisocial", label: "Antissocial" },
+  { value: "reactive", label: "Reativo" },
+  { value: "selective", label: "Seletivo" },
+  { value: "social", label: "Sociável" },
+];
+
+const HUMAN_SOCIABILITY_OPTIONS = [
+  { value: "reactive", label: "Reativo" },
+  { value: "fearful", label: "Medroso" },
+  { value: "cautious", label: "Cauteloso" },
+  { value: "friendly", label: "Amigável" },
+];
+
+const PLAY_STYLE_OPTIONS = [
+  { value: "wrestling", label: "Luta Romana" },
+  { value: "chase", label: "Perseguição" },
+  { value: "fetch", label: "Buscar" },
+  { value: "tug", label: "Cabo de Guerra" },
+  { value: "independent", label: "Independente" },
+  { value: "observer", label: "Observador" },
+];
 
 function label(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -381,11 +413,19 @@ export function PetGeneralTab({ pet, role, isEditMode = false }: PetGeneralTabPr
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {hasHealthData ? (
+            {hasHealthData || isEditMode ? (
               <div className="space-y-1">
                 <InfoRow>
                   <span className="text-xs text-muted-foreground">Alergias alimentares</span>
-                  {pet.hasFoodAllergy ? (
+                  {isEditMode ? (
+                    <InlineEdit
+                      petId={pet.id}
+                      field="hasFoodAllergy"
+                      value={pet.hasFoodAllergy}
+                      editable
+                      type="boolean"
+                    />
+                  ) : pet.hasFoodAllergy ? (
                     <div className="flex items-center gap-2 text-right">
                       <Badge variant="destructive" className="text-[10px]">Sim</Badge>
                       {pet.foodAllergyDetails && (
@@ -401,7 +441,15 @@ export function PetGeneralTab({ pet, role, isEditMode = false }: PetGeneralTabPr
 
                 <InfoRow>
                   <span className="text-xs text-muted-foreground">Alergias a medicamentos</span>
-                  {pet.hasMedicationAllergy ? (
+                  {isEditMode ? (
+                    <InlineEdit
+                      petId={pet.id}
+                      field="hasMedicationAllergy"
+                      value={pet.hasMedicationAllergy}
+                      editable
+                      type="boolean"
+                    />
+                  ) : pet.hasMedicationAllergy ? (
                     <div className="flex items-center gap-2 text-right">
                       <Badge variant="destructive" className="text-[10px]">Sim</Badge>
                       {pet.medicationAllergyDetails && (
@@ -417,7 +465,15 @@ export function PetGeneralTab({ pet, role, isEditMode = false }: PetGeneralTabPr
 
                 <InfoRow>
                   <span className="text-xs text-muted-foreground">Condição crônica</span>
-                  {pet.hasChronicCondition ? (
+                  {isEditMode ? (
+                    <InlineEdit
+                      petId={pet.id}
+                      field="hasChronicCondition"
+                      value={pet.hasChronicCondition}
+                      editable
+                      type="boolean"
+                    />
+                  ) : pet.hasChronicCondition ? (
                     <div className="flex items-center gap-2 text-right">
                       <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-700">Sim</Badge>
                       {pet.chronicConditionDetails && (
@@ -634,32 +690,76 @@ export function PetGeneralTab({ pet, role, isEditMode = false }: PetGeneralTabPr
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {hasBehaviorData ? (
+            {hasBehaviorData || isEditMode ? (
               <div className="space-y-3">
-                {pet.energyLevel && (
+                {(pet.energyLevel || isEditMode) && (
                   <div className="space-y-1">
                     <span className="text-xs text-muted-foreground">Energia</span>
-                    <LevelBar value={pet.energyLevel} levels={["very_low", "low", "moderate", "high", "hyperactive"]} />
+                    {isEditMode ? (
+                      <InlineEdit
+                        petId={pet.id}
+                        field="energyLevel"
+                        value={pet.energyLevel}
+                        editable
+                        type="select"
+                        options={ENERGY_OPTIONS}
+                      />
+                    ) : (
+                      <LevelBar value={pet.energyLevel} levels={["very_low", "low", "moderate", "high", "hyperactive"]} />
+                    )}
                   </div>
                 )}
-                {pet.dogSociability && (
+                {(pet.dogSociability || isEditMode) && (
                   <div className="space-y-1">
                     <span className="text-xs text-muted-foreground">Sociabilidade (cães)</span>
-                    <LevelBar value={pet.dogSociability} levels={["antisocial", "reactive", "selective", "social"]} />
+                    {isEditMode ? (
+                      <InlineEdit
+                        petId={pet.id}
+                        field="dogSociability"
+                        value={pet.dogSociability}
+                        editable
+                        type="select"
+                        options={DOG_SOCIABILITY_OPTIONS}
+                      />
+                    ) : (
+                      <LevelBar value={pet.dogSociability} levels={["antisocial", "reactive", "selective", "social"]} />
+                    )}
                   </div>
                 )}
-                {pet.humanSociability && (
+                {(pet.humanSociability || isEditMode) && (
                   <div className="space-y-1">
                     <span className="text-xs text-muted-foreground">Sociabilidade (humanos)</span>
-                    <LevelBar value={pet.humanSociability} levels={["reactive", "fearful", "cautious", "friendly"]} />
+                    {isEditMode ? (
+                      <InlineEdit
+                        petId={pet.id}
+                        field="humanSociability"
+                        value={pet.humanSociability}
+                        editable
+                        type="select"
+                        options={HUMAN_SOCIABILITY_OPTIONS}
+                      />
+                    ) : (
+                      <LevelBar value={pet.humanSociability} levels={["reactive", "fearful", "cautious", "friendly"]} />
+                    )}
                   </div>
                 )}
-                {pet.playStyle && (
+                {(pet.playStyle || isEditMode) && (
                   <>
                     <Separator />
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-muted-foreground">Estilo de brincadeira</span>
-                      <span className="text-xs text-foreground font-medium">{label(pet.playStyle)}</span>
+                      {isEditMode ? (
+                        <InlineEdit
+                          petId={pet.id}
+                          field="playStyle"
+                          value={pet.playStyle}
+                          editable
+                          type="select"
+                          options={PLAY_STYLE_OPTIONS}
+                        />
+                      ) : (
+                        <span className="text-xs text-foreground font-medium">{label(pet.playStyle)}</span>
+                      )}
                     </div>
                   </>
                 )}
@@ -674,38 +774,32 @@ export function PetGeneralTab({ pet, role, isEditMode = false }: PetGeneralTabPr
         </Card>
 
         {/* Observações */}
-        {pet.notes ? (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                Observações
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ClipboardList className="h-4 w-4 text-muted-foreground" />
+              Observações
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {pet.notes || isEditMode ? (
               <div className="rounded-md bg-muted/30 p-3">
-                <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
-                  {pet.notes}
-                </p>
+                <InlineEdit
+                  petId={pet.id}
+                  field="notes"
+                  value={pet.notes}
+                  editable={isEditMode}
+                  className="text-sm text-foreground leading-relaxed whitespace-pre-line"
+                />
               </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                Observações
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+            ) : (
               <div className="flex flex-col items-center justify-center py-6 text-center">
                 <ClipboardList className="h-8 w-8 text-muted-foreground/30 mb-2" />
                 <p className="text-xs text-muted-foreground">Nenhuma observação cadastrada.</p>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

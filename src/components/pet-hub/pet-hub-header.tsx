@@ -89,7 +89,7 @@ export function PetHubHeader({ pet, role, isEditMode = false }: PetHubHeaderProp
   const stats: { icon: typeof Weight; label: string; value: string; editableField?: string; rawValue?: number | null }[] = [];
   if (weight || isEditMode) stats.push({ icon: Weight, label: "Peso", value: weight || "—", editableField: "weight", rawValue: pet.weight });
   if (birthDateFormatted) stats.push({ icon: Cake, label: "Nascimento", value: `${birthDateFormatted} (${age})` });
-  if (typeof pet.credits === "number") stats.push({ icon: Star, label: "Créditos", value: `${pet.credits} diária${pet.credits !== 1 ? "s" : ""}` });
+  if (typeof pet.credits === "number" || isEditMode) stats.push({ icon: Star, label: "Créditos", value: `${pet.credits ?? 0} diária${pet.credits !== 1 ? "s" : ""}`, editableField: "credits", rawValue: pet.credits ?? 0 });
   stats.push({ icon: Tag, label: "Plano", value: getPlanLabel(pet.credits) });
 
   return (
@@ -156,8 +156,14 @@ export function PetHubHeader({ pet, role, isEditMode = false }: PetHubHeaderProp
 
           {/* Breed + inline stat pills */}
           <div className="flex flex-wrap items-center gap-1.5 mt-1">
-            {pet.breed && (
-              <span className="text-sm text-muted-foreground">{pet.breed}</span>
+            {(pet.breed || isEditMode) && (
+              <InlineEdit
+                petId={pet.id}
+                field="breed"
+                value={pet.breed}
+                editable={isEditMode}
+                className="text-sm text-muted-foreground"
+              />
             )}
             {stats.map((stat, i) => (
               <span key={stat.label} className="inline-flex items-center gap-1 text-xs">
@@ -177,6 +183,18 @@ export function PetHubHeader({ pet, role, isEditMode = false }: PetHubHeaderProp
                       editable={isEditMode}
                       type="number"
                       format={(v) => formatWeight(v as number | null | undefined)}
+                    />
+                  ) : stat.editableField === "credits" ? (
+                    <InlineEdit
+                      petId={pet.id}
+                      field="credits"
+                      value={stat.rawValue}
+                      editable={isEditMode}
+                      type="number"
+                      format={(v) => {
+                        const n = v != null ? Number(v) : 0;
+                        return `${n} diária${n !== 1 ? "s" : ""}`;
+                      }}
                     />
                   ) : (
                     stat.value

@@ -2,6 +2,14 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -10,10 +18,11 @@ import { cn } from "@/lib/utils";
 interface InlineEditProps {
   petId: number;
   field: string;
-  value: string | number | null | undefined;
+  value: string | number | boolean | null | undefined;
   editable: boolean;
-  type?: "text" | "number";
-  format?: (v: string | number | null | undefined) => string;
+  type?: "text" | "number" | "select" | "boolean";
+  options?: Array<{ value: string; label: string }>;
+  format?: (v: string | number | boolean | null | undefined) => string;
   className?: string;
   onSaved?: () => void;
 }
@@ -24,6 +33,7 @@ export function InlineEdit({
   value,
   editable,
   type = "text",
+  options,
   format,
   className,
   onSaved,
@@ -48,11 +58,34 @@ export function InlineEdit({
     },
   });
 
+  // Unified save for all types
+  const saveValue = useCallback(
+    (newValue: string | number | boolean) => {
+      const currentStr = value != null ? String(value) : "";
+      if (String(newValue) === currentStr) {
+        setIsEditing(false);
+        return;
+      }
+
+      updateMutation.mutate({
+        id: petId,
+        [field]: newValue,
+      });
+    },
+    [value, petId, field, updateMutation],
+  );
+
   const displayValue = format
     ? format(value)
-    : value != null
-      ? String(value)
-      : "—";
+    : type === "boolean"
+      ? value
+        ? "Sim"
+        : "Não"
+      : type === "select" && options
+        ? options.find((o) => o.value === value)?.label ?? String(value ?? "—")
+        : value != null
+          ? String(value)
+          : "—";
 
   const startEditing = useCallback(() => {
     if (!editable) return;
@@ -70,7 +103,6 @@ export function InlineEdit({
   const save = useCallback(() => {
     const trimmed = draft.trim();
 
-    // Se nao mudou, cancela
     const currentStr = value != null ? String(value) : "";
     if (trimmed === currentStr) {
       setIsEditing(false);
@@ -80,7 +112,7 @@ export function InlineEdit({
     const parsed = type === "number" ? Number(trimmed) : trimmed;
 
     if (type === "number" && (isNaN(parsed as number) || trimmed === "")) {
-      toast.error("Valor numerico invalido");
+      toast.error("Valor numérico inválido");
       setIsEditing(false);
       return;
     }
@@ -105,18 +137,81 @@ export function InlineEdit({
         cancel();
       }
     },
-    [save, cancel]
+    [save, cancel],
   );
 
   if (updateMutation.isPending) {
     return (
-      <span className={cn("inline-flex items-center gap-1.5 text-muted-foreground", className)}>
+      <span
+        className={cn(
+          "inline-flex items-center gap-1.5 text-muted-foreground",
+          className,
+        )}
+      >
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
         <span className="text-sm">Salvando...</span>
       </span>
     );
   }
 
+  // ── Boolean toggle ──
+  if (type === "boolean") {
+    const boolValue = !!value;
+    return (
+      <Badge
+        variant={boolValue ? "destructive" : "secondary"}
+        className={cn(
+          "text-[10px]",
+          editable && "cursor-pointer hover:opacity-80 transition-opacity",
+          className,
+        )}
+        onClick={() => {
+          if (!editable) return;
+          saveValue(!boolValue);
+        }}
+        title={editable ? "Clique para alternar" : undefined}
+      >
+        {boolValue ? "Sim" : "Não"}
+      </Badge>
+    );
+  }
+
+  // ── Select dropdown ──
+  if (type === "select" && editable) {
+    return (
+      <Select
+        value={value != null ? String(value) : undefined}
+        onValueChange={(v) => saveValue(v)}
+      >
+        <SelectTrigger
+          className={cn(
+            "h-7 w-auto min-w-[100px] text-xs border-dashed",
+            className,
+          )}
+        >
+          <SelectValue placeholder="Selecionar..." />
+        </SelectTrigger>
+        <SelectContent>
+          {options?.map((o) => (
+            <SelectItem key={o.value} value={o.value}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  // ── Select (read-only) ──
+  if (type === "select" && !editable) {
+    return (
+      <span className={cn(className)}>
+        {displayValue}
+      </span>
+    );
+  }
+
+  // ── Text / Number editing ──
   if (isEditing) {
     return (
       <Input
@@ -128,7 +223,7 @@ export function InlineEdit({
         onKeyDown={handleKeyDown}
         className={cn(
           "h-auto px-1.5 py-0.5 text-inherit font-inherit border-primary",
-          className
+          className,
         )}
       />
     );
@@ -140,7 +235,7 @@ export function InlineEdit({
       className={cn(
         editable &&
           "cursor-pointer border-b border-dashed border-transparent hover:border-muted-foreground/50 transition-colors",
-        className
+        className,
       )}
       title={editable ? "Clique para editar" : undefined}
     >
