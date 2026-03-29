@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -219,12 +218,6 @@ function TutorContactCard({ tutor }: { tutor: Tutor }) {
 }
 
 export function PetGeneralTab({ pet, role, isEditMode = false }: PetGeneralTabProps) {
-  // Dialog states
-  const [assignPlanOpen, setAssignPlanOpen] = useState(false);
-  const [registerPaymentOpen, setRegisterPaymentOpen] = useState(false);
-  const [markAbsenceOpen, setMarkAbsenceOpen] = useState(false);
-  const [requestCreditsOpen, setRequestCreditsOpen] = useState(false);
-
   // Fetch real plan data
   const { data: petPlanData } = trpc.plansManagement.getPetPlan.useQuery(
     { petId: pet.id },
@@ -515,70 +508,52 @@ export function PetGeneralTab({ pet, role, isEditMode = false }: PetGeneralTabPr
           <div className="flex flex-wrap gap-2">
             {role === "admin" ? (
               <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 text-xs"
-                  onClick={() => setAssignPlanOpen(true)}
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  Alterar plano
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 text-xs"
-                  onClick={() => setRegisterPaymentOpen(true)}
-                >
-                  <CreditCard className="h-3.5 w-3.5" />
-                  Registrar pagamento
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 text-xs"
-                  onClick={() => setMarkAbsenceOpen(true)}
-                >
-                  <CalendarX className="h-3.5 w-3.5" />
-                  Marcar falta
-                </Button>
+                <AssignPlanDialog petId={pet.id}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Alterar plano
+                  </Button>
+                </AssignPlanDialog>
+                <RegisterPaymentDialog petId={pet.id}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                  >
+                    <CreditCard className="h-3.5 w-3.5" />
+                    Registrar pagamento
+                  </Button>
+                </RegisterPaymentDialog>
+                <MarkAbsenceDialog petId={pet.id}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                  >
+                    <CalendarX className="h-3.5 w-3.5" />
+                    Marcar falta
+                  </Button>
+                </MarkAbsenceDialog>
               </>
             ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs"
-                onClick={() => setRequestCreditsOpen(true)}
-              >
-                <PlusCircle className="h-3.5 w-3.5" />
-                Adicionar créditos
-              </Button>
+              <RequestCreditsDialog petId={pet.id}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs"
+                >
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  Adicionar créditos
+                </Button>
+              </RequestCreditsDialog>
             )}
           </div>
         </CardContent>
       </Card>
-
-      {/* Plan & Credits Dialogs */}
-      <AssignPlanDialog
-        petId={pet.id}
-        open={assignPlanOpen}
-        onOpenChange={setAssignPlanOpen}
-      />
-      <RegisterPaymentDialog
-        petId={pet.id}
-        open={registerPaymentOpen}
-        onOpenChange={setRegisterPaymentOpen}
-      />
-      <MarkAbsenceDialog
-        petId={pet.id}
-        open={markAbsenceOpen}
-        onOpenChange={setMarkAbsenceOpen}
-      />
-      <RequestCreditsDialog
-        petId={pet.id}
-        open={requestCreditsOpen}
-        onOpenChange={setRequestCreditsOpen}
-      />
 
       {/* ── Linha 3: Comportamento + Observações ── */}
       <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
