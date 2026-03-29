@@ -15,17 +15,43 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   LayoutGrid,
   Users,
   DoorOpen,
   Hotel,
   Settings2,
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  CalendarDays,
 } from "lucide-react";
 import { OccupancyGrid } from "@/components/occupancy/occupancy-grid";
 import {
   CalendarCheckinDialog,
   CalendarCheckoutDialog,
 } from "@/components/calendar";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+  Cell,
+} from "recharts";
+
+const MONTH_NAMES = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
 
 export default function OccupancyPage() {
   const utils = trpc.useUtils();
@@ -38,6 +64,17 @@ export default function OccupancyPage() {
   // Dialog de capacidade
   const [capacityDialogOpen, setCapacityDialogOpen] = useState(false);
   const [newCapacity, setNewCapacity] = useState("");
+
+  // Relatório mensal
+  const now = new Date();
+  const [reportMonth, setReportMonth] = useState(now.getMonth());
+  const [reportYear, setReportYear] = useState(now.getFullYear());
+
+  const { data: reportData, isLoading: loadingReport } =
+    trpc.occupancy.monthlyReport.useQuery(
+      { month: reportMonth, year: reportYear },
+      { staleTime: 60 * 1000 }
+    );
 
   // Dialog de checkout
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -233,6 +270,268 @@ export default function OccupancyPage() {
             }}
             onCheckout={handleCheckoutTrigger}
           />
+        </CardContent>
+      </Card>
+
+      {/* ============================================ */}
+      {/* Relatório Mensal de Ocupação               */}
+      {/* ============================================ */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <BarChart3 className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-semibold text-foreground">
+                  Relatório Mensal
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Ocupação diária e ranking de pets
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Select
+                value={String(reportMonth)}
+                onValueChange={(v) => setReportMonth(Number(v))}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTH_NAMES.map((name, idx) => (
+                    <SelectItem key={idx} value={String(idx)}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={String(reportYear)}
+                onValueChange={(v) => setReportYear(Number(v))}
+              >
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i).map(
+                    (y) => (
+                      <SelectItem key={y} value={String(y)}>
+                        {y}
+                      </SelectItem>
+                    )
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {loadingReport ? (
+            <div className="h-[320px] flex items-center justify-center text-muted-foreground">
+              Carregando relatório...
+            </div>
+          ) : !reportData ? (
+            <div className="h-[320px] flex items-center justify-center text-muted-foreground">
+              Nenhum dado disponível
+            </div>
+          ) : (
+            <>
+              {/* Cards de resumo */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card className="bg-card border-border">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground text-xs font-medium uppercase">
+                        Média diária
+                      </span>
+                      <CalendarDays className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="text-2xl font-bold text-foreground mt-2">
+                      {reportData.averageOccupancy}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      pets/dia
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-card border-border">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground text-xs font-medium uppercase">
+                        Taxa de ocupação
+                      </span>
+                      <Users className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="text-2xl font-bold text-foreground mt-2">
+                      {reportData.occupancyRate}%
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      do mês
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-card border-border">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground text-xs font-medium uppercase">
+                        Dia de pico
+                      </span>
+                      <TrendingUp className="h-4 w-4 text-emerald-500" />
+                    </div>
+                    <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">
+                      {reportData.peakDay ? reportData.peakDay.count : 0}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {reportData.peakDay
+                        ? `dia ${reportData.peakDay.day}`
+                        : "sem dados"}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-card border-border">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground text-xs font-medium uppercase">
+                        Dia mais vazio
+                      </span>
+                      <TrendingDown className="h-4 w-4 text-destructive" />
+                    </div>
+                    <div className="text-2xl font-bold text-foreground mt-2">
+                      {reportData.lowestDay ? reportData.lowestDay.count : 0}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {reportData.lowestDay
+                        ? `dia ${reportData.lowestDay.day}`
+                        : "sem dados"}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Gráfico de barras */}
+              <div className="h-[320px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={reportData.dailyBreakdown}
+                    margin={{ top: 10, right: 10, bottom: 10, left: 0 }}
+                  >
+                    <XAxis
+                      dataKey="day"
+                      className="text-muted-foreground"
+                      fontSize={11}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis
+                      className="text-muted-foreground"
+                      fontSize={11}
+                      tickLine={false}
+                      axisLine={false}
+                      allowDecimals={false}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--popover))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                        fontSize: "12px",
+                        color: "hsl(var(--popover-foreground))",
+                      }}
+                      formatter={(value, _name, props) => [
+                        `${value} pets (${(props.payload as { rate?: number })?.rate ?? 0}%)`,
+                        "Ocupação",
+                      ]}
+                      labelFormatter={(label: number) =>
+                        `Dia ${label} de ${MONTH_NAMES[reportMonth]}`
+                      }
+                    />
+                    <ReferenceLine
+                      y={reportData.capacity}
+                      stroke="hsl(var(--destructive))"
+                      strokeDasharray="3 3"
+                      label={{
+                        value: `Capacidade: ${reportData.capacity}`,
+                        position: "right",
+                        fill: "hsl(var(--muted-foreground))",
+                        fontSize: 11,
+                      }}
+                    />
+                    <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={24}>
+                      {reportData.dailyBreakdown.map((entry) => (
+                        <Cell
+                          key={entry.day}
+                          fill={
+                            entry.rate >= 90
+                              ? "#dc2626"
+                              : entry.rate >= 70
+                                ? "#f59e0b"
+                                : "#16a34a"
+                          }
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Ranking de pets */}
+              {reportData.petRanking.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground mb-3">
+                    Ranking de Frequência
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-2 px-3 text-muted-foreground font-medium">
+                            #
+                          </th>
+                          <th className="text-left py-2 px-3 text-muted-foreground font-medium">
+                            Pet
+                          </th>
+                          <th className="text-right py-2 px-3 text-muted-foreground font-medium">
+                            Dias presentes
+                          </th>
+                          <th className="text-right py-2 px-3 text-muted-foreground font-medium">
+                            % do mês
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {reportData.petRanking.map((pet, idx) => (
+                          <tr
+                            key={pet.petId}
+                            className="border-b border-border last:border-0"
+                          >
+                            <td className="py-2 px-3 text-muted-foreground">
+                              {idx + 1}
+                            </td>
+                            <td className="py-2 px-3 font-medium text-foreground">
+                              {pet.name}
+                            </td>
+                            <td className="py-2 px-3 text-right text-foreground">
+                              {pet.daysPresent}
+                            </td>
+                            <td className="py-2 px-3 text-right text-muted-foreground">
+                              {pet.percentOfMonth}%
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </CardContent>
       </Card>
 
