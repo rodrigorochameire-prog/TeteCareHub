@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UtensilsCrossed, Plus, Package, Cookie, Leaf } from "lucide-react";
+import { UtensilsCrossed, Plus, Package, Cookie, Leaf, AlertTriangle, Clock } from "lucide-react";
 
 interface PetFoodTabProps {
   petId: number;
@@ -31,18 +31,65 @@ function StockBar({ remaining, total }: { remaining: number; total: number }) {
           : "bg-emerald-500";
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       <div className="flex items-center justify-between text-xs">
         <span className="text-muted-foreground">
           {remaining}g de {total}g
         </span>
-        <span className="font-medium">{pct}%</span>
+        <div className="flex items-center gap-1.5">
+          {pct > 0 && pct < 20 && (
+            <AlertTriangle className="h-3 w-3 text-amber-500" />
+          )}
+          <span className="font-medium">{pct}%</span>
+        </div>
       </div>
-      <div className="h-2 w-full rounded-full bg-muted/40 overflow-hidden">
+      <div className="h-2.5 w-full rounded-full bg-muted/40 overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all ${color}`}
+          className={`h-full rounded-full transition-all duration-500 ${color}`}
           style={{ width: `${Math.max(pct, 2)}%` }}
         />
+      </div>
+      {pct > 0 && pct < 20 && (
+        <Badge variant="warning" className="text-[10px] gap-1">
+          <AlertTriangle className="h-3 w-3" />
+          Estoque baixo
+        </Badge>
+      )}
+    </div>
+  );
+}
+
+/** Generate meal schedule times based on portions per day */
+function MealSchedule({ portionsPerDay, dailyAmount }: { portionsPerDay: number; dailyAmount: number }) {
+  const times: string[] = [];
+  if (portionsPerDay === 1) times.push("08:00");
+  else if (portionsPerDay === 2) times.push("08:00", "18:00");
+  else if (portionsPerDay === 3) times.push("08:00", "13:00", "18:00");
+  else if (portionsPerDay === 4) times.push("07:00", "11:00", "15:00", "19:00");
+  else {
+    for (let i = 0; i < portionsPerDay; i++) {
+      const hour = 7 + Math.round((i * 12) / (portionsPerDay - 1 || 1));
+      times.push(`${String(hour).padStart(2, "0")}:00`);
+    }
+  }
+
+  const perMeal = Math.round(dailyAmount / portionsPerDay);
+
+  return (
+    <div className="mt-3 pt-3 border-t">
+      <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+        <Clock className="h-3 w-3" />
+        Horários sugeridos
+      </p>
+      <div className="flex items-center gap-2 overflow-x-auto">
+        {times.map((time, i) => (
+          <div key={i} className="flex flex-col items-center gap-1 min-w-[60px]">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="text-xs font-semibold text-primary">{time}</span>
+            </div>
+            <span className="text-[10px] text-muted-foreground">{perMeal}g</span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -84,7 +131,7 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               <UtensilsCrossed className="h-4 w-4" />
               Plano Alimentar
             </CardTitle>
-            <Button variant="outline" size="sm" className="gap-1">
+            <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
               <Plus className="h-3.5 w-3.5" />
               {plan.data ? "Atualizar" : "Criar Plano"}
             </Button>
@@ -121,14 +168,20 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
                   <p>{plan.data.notes}</p>
                 </div>
               )}
+              {/* Meal schedule visual */}
+              <MealSchedule
+                portionsPerDay={plan.data.portionsPerDay}
+                dailyAmount={plan.data.dailyAmount}
+              />
             </div>
           ) : (
-            <div className="text-center py-8">
-              <UtensilsCrossed className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Nenhum plano alimentar cadastrado.</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
-                Crie um plano para controlar a alimentação.
-              </p>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <UtensilsCrossed className="h-12 w-12 text-muted-foreground/30 mb-4" />
+              <p className="text-sm font-medium text-muted-foreground">Nenhum plano alimentar cadastrado</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">Crie um plano para controlar a alimentação.</p>
+              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+                <Plus className="h-3.5 w-3.5" /> Criar Plano
+              </Button>
             </div>
           )}
         </CardContent>
@@ -142,7 +195,7 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               <Package className="h-4 w-4" />
               Estoque
             </CardTitle>
-            <Button variant="outline" size="sm" className="gap-1">
+            <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
               <Plus className="h-3.5 w-3.5" />
               Adicionar
             </Button>
@@ -152,7 +205,7 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
           {inventory.data && inventory.data.length > 0 ? (
             <div className="space-y-3">
               {inventory.data.map((item) => (
-                <div key={item.id} className="p-3 rounded-lg border text-sm space-y-2">
+                <div key={item.id} className="p-3 rounded-lg border text-sm space-y-2 transition-all duration-200 hover:bg-muted/50">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">{item.brand}</p>
@@ -183,12 +236,13 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <Package className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Nenhum estoque registrado.</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
-                Controle o estoque de ração e suplementos.
-              </p>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Package className="h-12 w-12 text-muted-foreground/30 mb-4" />
+              <p className="text-sm font-medium text-muted-foreground">Nenhum estoque registrado</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">Controle o estoque de ração e suplementos.</p>
+              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+                <Plus className="h-3.5 w-3.5" /> Adicionar
+              </Button>
             </div>
           )}
         </CardContent>
@@ -202,7 +256,7 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               <Cookie className="h-4 w-4" />
               Petiscos
             </CardTitle>
-            <Button variant="outline" size="sm" className="gap-1">
+            <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
               <Plus className="h-3.5 w-3.5" />
               Adicionar
             </Button>
@@ -212,7 +266,7 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
           {treats.data && treats.data.length > 0 ? (
             <div className="space-y-3">
               {treats.data.map((treat) => (
-                <div key={treat.id} className="flex items-center justify-between p-3 rounded-lg border text-sm">
+                <div key={treat.id} className="flex items-center justify-between p-3 rounded-lg border text-sm transition-all duration-200 hover:bg-muted/50">
                   <div>
                     <p className="font-medium">{treat.name}</p>
                     {treat.brand && (
@@ -236,18 +290,19 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <Cookie className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Nenhum petisco registrado.</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
-                Registre petiscos favoritos e preferências.
-              </p>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Cookie className="h-12 w-12 text-muted-foreground/30 mb-4" />
+              <p className="text-sm font-medium text-muted-foreground">Nenhum petisco registrado</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">Registre petiscos favoritos e preferências.</p>
+              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+                <Plus className="h-3.5 w-3.5" /> Adicionar
+              </Button>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Alimentacao Natural */}
+      {/* Alimentação Natural */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
@@ -255,7 +310,7 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               <Leaf className="h-4 w-4" />
               Alimentação Natural
             </CardTitle>
-            <Button variant="outline" size="sm" className="gap-1">
+            <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
               <Plus className="h-3.5 w-3.5" />
               Adicionar
             </Button>
@@ -265,7 +320,7 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
           {naturalFood.data && naturalFood.data.length > 0 ? (
             <div className="space-y-3">
               {naturalFood.data.map((food) => (
-                <div key={food.id} className="flex items-center justify-between p-3 rounded-lg border text-sm">
+                <div key={food.id} className="flex items-center justify-between p-3 rounded-lg border text-sm transition-all duration-200 hover:bg-muted/50">
                   <div>
                     <p className="font-medium">{food.name}</p>
                     {food.proteinSource && (
@@ -291,12 +346,13 @@ export function PetFoodTab({ petId, role }: PetFoodTabProps) {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <Leaf className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Nenhuma alimentação natural registrada.</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
-                Registre dietas naturais e ingredientes.
-              </p>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Leaf className="h-12 w-12 text-muted-foreground/30 mb-4" />
+              <p className="text-sm font-medium text-muted-foreground">Nenhuma alimentação natural registrada</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">Registre dietas naturais e ingredientes.</p>
+              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+                <Plus className="h-3.5 w-3.5" /> Adicionar
+              </Button>
             </div>
           )}
         </CardContent>

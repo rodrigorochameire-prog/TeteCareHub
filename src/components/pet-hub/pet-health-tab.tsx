@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   Clock,
   CheckCircle2,
+  Activity,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -68,8 +69,59 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
     );
   }
 
+  // Summary calculations
+  const totalVaccines = vaccinations.data?.length ?? 0;
+  const activeMedications = medications.data?.filter((m) => m.medication.isActive).length ?? 0;
+
+  // Find next due date across all records
+  const allDueDates: Date[] = [];
+  vaccinations.data?.forEach((item) => {
+    if (item.vaccination.nextDueDate) allDueDates.push(new Date(item.vaccination.nextDueDate));
+  });
+  preventives.data?.forEach((item) => {
+    if (item.nextDueDate) allDueDates.push(new Date(item.nextDueDate));
+  });
+  const nextDue = allDueDates.length > 0
+    ? allDueDates.sort((a, b) => a.getTime() - b.getTime()).find((d) => d > new Date())
+    : null;
+
   return (
     <div className="space-y-4">
+      {/* Summary Header */}
+      <Card className="bg-muted/30">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Activity className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-foreground">Resumo de Saúde</span>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center">
+              <p className="text-xl font-bold text-foreground">{totalVaccines}</p>
+              <p className="text-[11px] text-muted-foreground">Vacinas</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-foreground">{activeMedications}</p>
+              <p className="text-[11px] text-muted-foreground">Medicamentos ativos</p>
+            </div>
+            <div className="text-center">
+              {nextDue ? (
+                <>
+                  <p className="text-xl font-bold text-foreground">
+                    {format(nextDue, "dd/MM", { locale: ptBR })}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">Próximo vencimento</p>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-5 w-5 text-emerald-500 mx-auto" />
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Tudo em dia</p>
+                </>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Vacinas */}
       <Card>
         <CardHeader className="pb-3">
@@ -78,7 +130,7 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               <Syringe className="h-4 w-4" />
               Vacinas
             </CardTitle>
-            <Button variant="outline" size="sm" className="gap-1">
+            <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
               <Plus className="h-3.5 w-3.5" />
               Adicionar
             </Button>
@@ -86,70 +138,80 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
         </CardHeader>
         <CardContent>
           {vaccinations.data && vaccinations.data.length > 0 ? (
-            <div className="space-y-3">
-              {vaccinations.data.map((item) => {
-                const dueStatus = getDueDateStatus(item.vaccination.nextDueDate);
-                const DueIcon = dueStatus.icon;
-                return (
-                  <div
-                    key={item.vaccination.id}
-                    className={`flex items-center justify-between p-3 rounded-lg border text-sm transition-colors ${
-                      dueStatus.variant === "destructive"
-                        ? "border-red-500/30 bg-red-500/5"
-                        : dueStatus.variant === "warning"
-                          ? "border-amber-500/30 bg-amber-500/5"
-                          : ""
-                    }`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium truncate">
-                          {item.vaccine?.name ?? "Vacina"}
-                        </p>
-                        {item.vaccination.nextDueDate && (
-                          <Badge variant={dueStatus.variant} className="text-[10px] gap-1">
-                            <DueIcon className="h-3 w-3" />
-                            {dueStatus.label}
-                          </Badge>
-                        )}
-                        {String((item.vaccination as Record<string, unknown>).source || "") !== "" && (
-                          <SourceBadge
-                            source={(item.vaccination as Record<string, unknown>).source as "admin" | "tutor"}
-                          />
+            <div className="relative">
+              {/* Timeline vertical line */}
+              <div className="absolute left-[11px] top-3 bottom-3 w-px bg-border" />
+              <div className="space-y-3">
+                {vaccinations.data.map((item) => {
+                  const dueStatus = getDueDateStatus(item.vaccination.nextDueDate);
+                  const DueIcon = dueStatus.icon;
+                  const isOverdue = dueStatus.variant === "destructive";
+                  return (
+                    <div
+                      key={item.vaccination.id}
+                      className={`relative flex items-start gap-3 p-3 pl-8 rounded-lg border text-sm transition-all duration-200 hover:bg-muted/50 ${
+                        isOverdue
+                          ? "border-l-2 border-l-red-500 border-red-500/30 bg-red-500/5"
+                          : dueStatus.variant === "warning"
+                            ? "border-amber-500/30 bg-amber-500/5"
+                            : ""
+                      }`}
+                    >
+                      {/* Timeline dot */}
+                      <div className={`absolute left-[7px] top-4 h-2.5 w-2.5 rounded-full border-2 border-background ${
+                        isOverdue ? "bg-red-500" : dueStatus.variant === "warning" ? "bg-amber-500" : "bg-emerald-500"
+                      }`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium truncate">
+                            {item.vaccine?.name ?? "Vacina"}
+                          </p>
+                          {item.vaccination.nextDueDate && (
+                            <Badge variant={dueStatus.variant} className="text-[10px] gap-1">
+                              <DueIcon className="h-3 w-3" />
+                              {dueStatus.label}
+                            </Badge>
+                          )}
+                          {String((item.vaccination as Record<string, unknown>).source || "") !== "" && (
+                            <SourceBadge
+                              source={(item.vaccination as Record<string, unknown>).source as "admin" | "tutor"}
+                            />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground text-xs mt-1">
+                          <Calendar className="h-3 w-3" />
+                          {format(new Date(item.vaccination.applicationDate), "dd/MM/yyyy", { locale: ptBR })}
+                          {item.vaccination.nextDueDate && (
+                            <span>
+                              · Próxima: {format(new Date(item.vaccination.nextDueDate), "dd/MM/yyyy", { locale: ptBR })}
+                            </span>
+                          )}
+                        </div>
+                        {item.vaccination.veterinarian && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Vet: {item.vaccination.veterinarian}
+                            {item.vaccination.clinic && ` - ${item.vaccination.clinic}`}
+                          </p>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 text-muted-foreground text-xs mt-1">
-                        <Calendar className="h-3 w-3" />
-                        {format(new Date(item.vaccination.applicationDate), "dd/MM/yyyy", { locale: ptBR })}
-                        {item.vaccination.nextDueDate && (
-                          <span>
-                            · Próxima: {format(new Date(item.vaccination.nextDueDate), "dd/MM/yyyy", { locale: ptBR })}
-                          </span>
-                        )}
-                      </div>
-                      {item.vaccination.veterinarian && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Vet: {item.vaccination.veterinarian}
-                          {item.vaccination.clinic && ` - ${item.vaccination.clinic}`}
-                        </p>
+                      {(role === "admin" || (item.vaccination as Record<string, unknown>).source === "tutor") && (
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive transition-colors duration-200">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       )}
                     </div>
-                    {(role === "admin" || (item.vaccination as Record<string, unknown>).source === "tutor") && (
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           ) : (
-            <div className="text-center py-8">
-              <Syringe className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Nenhuma vacina registrada.</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
-                Adicione vacinas para acompanhar o calendário vacinal.
-              </p>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Syringe className="h-12 w-12 text-muted-foreground/30 mb-4" />
+              <p className="text-sm font-medium text-muted-foreground">Nenhuma vacina registrada</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">Adicione vacinas para acompanhar o calendário vacinal.</p>
+              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+                <Plus className="h-3.5 w-3.5" /> Adicionar
+              </Button>
             </div>
           )}
         </CardContent>
@@ -163,7 +225,7 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               <Pill className="h-4 w-4" />
               Medicamentos
             </CardTitle>
-            <Button variant="outline" size="sm" className="gap-1">
+            <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
               <Plus className="h-3.5 w-3.5" />
               Adicionar
             </Button>
@@ -175,7 +237,7 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               {medications.data.map((item) => (
                 <div
                   key={item.medication.id}
-                  className="flex items-center justify-between p-3 rounded-lg border text-sm"
+                  className="flex items-center justify-between p-3 rounded-lg border text-sm transition-all duration-200 hover:bg-muted/50"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -208,7 +270,7 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
                     </div>
                   </div>
                   {(role === "admin" || (item.medication as Record<string, unknown>).source === "tutor") && (
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive transition-colors duration-200">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
@@ -216,12 +278,13 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <Pill className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Nenhum medicamento registrado.</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
-                Registre medicamentos em uso para controle.
-              </p>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Pill className="h-12 w-12 text-muted-foreground/30 mb-4" />
+              <p className="text-sm font-medium text-muted-foreground">Nenhum medicamento registrado</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">Registre medicamentos em uso para controle.</p>
+              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+                <Plus className="h-3.5 w-3.5" /> Adicionar
+              </Button>
             </div>
           )}
         </CardContent>
@@ -235,7 +298,7 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               <ShieldCheck className="h-4 w-4" />
               Preventivos
             </CardTitle>
-            <Button variant="outline" size="sm" className="gap-1">
+            <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
               <Plus className="h-3.5 w-3.5" />
               Adicionar
             </Button>
@@ -253,12 +316,13 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
                 };
                 const dueStatus = getDueDateStatus(treatment.nextDueDate);
                 const DueIcon = dueStatus.icon;
+                const isOverdue = dueStatus.variant === "destructive";
                 return (
                   <div
                     key={treatment.id}
-                    className={`flex items-center justify-between p-3 rounded-lg border text-sm transition-colors ${
-                      dueStatus.variant === "destructive"
-                        ? "border-red-500/30 bg-red-500/5"
+                    className={`flex items-center justify-between p-3 rounded-lg border text-sm transition-all duration-200 hover:bg-muted/50 ${
+                      isOverdue
+                        ? "border-l-2 border-l-red-500 border-red-500/30 bg-red-500/5"
                         : dueStatus.variant === "warning"
                           ? "border-amber-500/30 bg-amber-500/5"
                           : ""
@@ -298,7 +362,7 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
                       )}
                     </div>
                     {(role === "admin" || (treatment as Record<string, unknown>).source === "tutor") && (
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive">
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive transition-colors duration-200">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
@@ -307,12 +371,13 @@ export function PetHealthTab({ petId, role }: PetHealthTabProps) {
               })}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <ShieldCheck className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Nenhum preventivo registrado.</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
-                Controle antipulgas, vermifugos e outros preventivos.
-              </p>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <ShieldCheck className="h-12 w-12 text-muted-foreground/30 mb-4" />
+              <p className="text-sm font-medium text-muted-foreground">Nenhum preventivo registrado</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">Controle antipulgas, vermifugos e outros preventivos.</p>
+              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+                <Plus className="h-3.5 w-3.5" /> Adicionar
+              </Button>
             </div>
           )}
         </CardContent>

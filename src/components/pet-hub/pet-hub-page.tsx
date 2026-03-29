@@ -83,8 +83,8 @@ export function PetHubPage({ petId, role }: PetHubPageProps) {
   return (
     <div className="space-y-6">
       {/* Header Card */}
-      <Card>
-        <CardContent className="p-6">
+      <Card className="relative overflow-hidden">
+        <CardContent className="p-6 pt-4">
           <PetHubHeader pet={pet} role={role} />
         </CardContent>
       </Card>
@@ -104,25 +104,25 @@ export function PetHubPage({ petId, role }: PetHubPageProps) {
           ))}
         </TabsList>
 
-        <TabsContent value="geral" className="mt-5 animate-in fade-in-0 duration-200">
+        <TabsContent value="geral" className="mt-5 animate-in fade-in-50 duration-300">
           <PetGeneralTab pet={pet} role={role} />
         </TabsContent>
-        <TabsContent value="saude" className="mt-5 animate-in fade-in-0 duration-200">
+        <TabsContent value="saude" className="mt-5 animate-in fade-in-50 duration-300">
           <PetHealthTab petId={petId} role={role} />
         </TabsContent>
-        <TabsContent value="alimentacao" className="mt-5 animate-in fade-in-0 duration-200">
+        <TabsContent value="alimentacao" className="mt-5 animate-in fade-in-50 duration-300">
           <PetFoodTab petId={petId} role={role} />
         </TabsContent>
-        <TabsContent value="comportamento" className="mt-5 animate-in fade-in-0 duration-200">
+        <TabsContent value="comportamento" className="mt-5 animate-in fade-in-50 duration-300">
           <PetBehaviorTab petId={petId} role={role} />
         </TabsContent>
-        <TabsContent value="treinamento" className="mt-5 animate-in fade-in-0 duration-200">
+        <TabsContent value="treinamento" className="mt-5 animate-in fade-in-50 duration-300">
           <PetTrainingTab petId={petId} role={role} />
         </TabsContent>
-        <TabsContent value="calendario" className="mt-5 animate-in fade-in-0 duration-200">
+        <TabsContent value="calendario" className="mt-5 animate-in fade-in-50 duration-300">
           <PetCalendarTab petId={petId} role={role} />
         </TabsContent>
-        <TabsContent value="documentos" className="mt-5 animate-in fade-in-0 duration-200">
+        <TabsContent value="documentos" className="mt-5 animate-in fade-in-50 duration-300">
           <PetDocumentsTab petId={petId} role={role} />
         </TabsContent>
       </Tabs>

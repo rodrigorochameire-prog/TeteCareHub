@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SourceBadge } from "./source-badge";
-import { Brain, Plus, Trash2, Calendar } from "lucide-react";
+import { Brain, Plus, Trash2, Calendar, PawPrint } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -71,7 +71,7 @@ export function PetBehaviorTab({ petId, role }: PetBehaviorTabProps) {
             <Brain className="h-4 w-4" />
             Registros de Comportamento
           </CardTitle>
-          <Button variant="outline" size="sm" className="gap-1">
+          <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
             <Plus className="h-3.5 w-3.5" />
             Adicionar
           </Button>
@@ -83,7 +83,7 @@ export function PetBehaviorTab({ petId, role }: PetBehaviorTabProps) {
             {data.map((log) => (
               <div
                 key={log.id}
-                className="p-3 rounded-lg border text-sm"
+                className="p-3 rounded-lg border text-sm transition-all duration-200 hover:bg-muted/50"
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
@@ -96,7 +96,7 @@ export function PetBehaviorTab({ petId, role }: PetBehaviorTabProps) {
                     )}
                   </div>
                   {(role === "admin" || (log as Record<string, unknown>).source === "tutor") && (
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive transition-colors duration-200">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
@@ -131,12 +131,20 @@ export function PetBehaviorTab({ petId, role }: PetBehaviorTabProps) {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8">
-            <Brain className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">Nenhum registro de comportamento.</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">
-              Acompanhe socialização, energia e obediência ao longo do tempo.
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="relative mb-4">
+              <PawPrint className="h-16 w-16 text-muted-foreground/20" />
+              <Brain className="h-7 w-7 text-muted-foreground/40 absolute -bottom-1 -right-1" />
+            </div>
+            <p className="text-sm font-medium text-muted-foreground">
+              Nenhum registro de comportamento ainda
             </p>
+            <p className="text-xs text-muted-foreground/70 mt-1 max-w-[280px]">
+              Comece registrando o primeiro dia do pet na creche. Acompanhe socialização, energia e obediência ao longo do tempo.
+            </p>
+            <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+              <Plus className="h-3.5 w-3.5" /> Registrar primeiro dia
+            </Button>
           </div>
         )}
       </CardContent>

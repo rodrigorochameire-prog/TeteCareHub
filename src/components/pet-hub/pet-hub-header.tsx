@@ -11,8 +11,14 @@ import {
   MessageCircle,
   Phone,
   Pencil,
+  ArrowLeft,
+  Cake,
+  Weight,
+  Star,
+  UserX,
 } from "lucide-react";
 import { PetAvatar } from "@/components/pet-avatar";
+import Link from "next/link";
 
 interface Tutor {
   id: number;
@@ -93,25 +99,38 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
     ? `tel:+55${primaryTutor.phone.replace(/\D/g, "")}`
     : null;
 
-  // Build stats pills
-  const statParts: string[] = [];
-  if (age) statParts.push(age);
-  if (weight) statParts.push(weight);
-  if (typeof pet.credits === "number") statParts.push(`${pet.credits} cred.`);
+  // Build stats pills with icons
+  const statPills: { icon: typeof Cake; label: string }[] = [];
+  if (age) statPills.push({ icon: Cake, label: age });
+  if (weight) statPills.push({ icon: Weight, label: weight });
+  if (typeof pet.credits === "number") statPills.push({ icon: Star, label: `${pet.credits} cred.` });
 
   return (
     <div className="flex flex-col gap-5">
+      {/* Gradient accent strip */}
+      <div className="absolute inset-x-0 top-0 h-1.5 rounded-t-lg bg-primary/10" />
+
+      {/* Back button */}
+      <div className="flex items-center gap-2 -mt-1">
+        <Button asChild variant="ghost" size="sm" className="h-7 gap-1.5 text-muted-foreground hover:text-foreground -ml-2 transition-colors duration-200">
+          <Link href={role === "admin" ? "/pets" : "/portal/pets"}>
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Voltar
+          </Link>
+        </Button>
+      </div>
+
       {/* Top row: Avatar + Info + Actions */}
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-        {/* Avatar */}
-        <div className="shrink-0">
+        {/* Avatar — overlaps the top accent strip */}
+        <div className="shrink-0 -mt-3">
           <PetAvatar
             photoUrl={pet.photoUrl}
             breed={pet.breed}
             name={pet.name}
             size={80}
             rounded="xl"
-            className="shadow-lg ring-1 ring-border"
+            className="shadow-lg ring-2 ring-background"
           />
         </div>
 
@@ -128,7 +147,7 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground transition-colors duration-200"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
@@ -139,21 +158,25 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
             )}
           </div>
 
-          {/* Breed + inline stat pills */}
+          {/* Breed + inline stat pills with icons */}
           <div className="flex items-center gap-2 mt-1 flex-wrap justify-center sm:justify-start">
             {pet.breed && (
               <span className="text-sm text-muted-foreground">{pet.breed}</span>
             )}
-            {statParts.length > 0 && (
+            {statPills.length > 0 && (
               <div className="flex items-center gap-1.5">
-                {statParts.map((stat) => (
-                  <span
-                    key={stat}
-                    className="inline-flex items-center rounded-md bg-muted text-foreground px-2 py-0.5 text-xs font-medium"
-                  >
-                    {stat}
-                  </span>
-                ))}
+                {statPills.map((stat) => {
+                  const PillIcon = stat.icon;
+                  return (
+                    <span
+                      key={stat.label}
+                      className="inline-flex items-center gap-1 rounded-md bg-muted text-foreground px-2 py-0.5 text-xs font-medium"
+                    >
+                      <PillIcon className="h-3 w-3 text-muted-foreground" />
+                      {stat.label}
+                    </span>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -167,7 +190,7 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
           </div>
 
           {/* Tutor inline */}
-          {primaryTutor && (
+          {primaryTutor ? (
             <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground justify-center sm:justify-start">
               <span>Tutor:</span>
               <span className="text-foreground font-medium">
@@ -178,7 +201,7 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
                   <span className="text-muted-foreground">&middot;</span>
                   <a
                     href={`tel:+55${primaryTutor.phone.replace(/\D/g, "")}`}
-                    className="hover:text-foreground transition-colors"
+                    className="hover:text-foreground transition-colors duration-200"
                   >
                     {formatPhone(primaryTutor.phone)}
                   </a>
@@ -189,6 +212,11 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
                   +{pet.tutors.length - 1}
                 </span>
               )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground justify-center sm:justify-start">
+              <UserX className="h-3 w-3" />
+              <span>Nenhum tutor associado</span>
             </div>
           )}
         </div>
@@ -203,7 +231,7 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
                     asChild
                     variant="outline"
                     size="sm"
-                    className="h-9 w-9 p-0"
+                    className="h-9 w-9 p-0 transition-all duration-200"
                   >
                     <a href={phoneUrl}>
                       <Phone className="h-4 w-4" />
@@ -218,7 +246,7 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
             <Button
               asChild
               size="sm"
-              className="gap-2 bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20"
+              className="gap-2 bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition-all duration-200"
             >
               <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="h-4 w-4" />

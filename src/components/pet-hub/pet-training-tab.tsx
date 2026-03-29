@@ -29,6 +29,77 @@ const CATEGORY_MAP: Record<string, string> = {
   tricks: "Truques",
 };
 
+/** Visual skills matrix — colored circles per status */
+function SkillsMatrix({ data }: { data: Array<{ command: string; status: string; category: string }> }) {
+  // Group by category
+  const grouped: Record<string, Array<{ command: string; status: string }>> = {};
+  for (const item of data) {
+    const cat = CATEGORY_MAP[item.category] ?? item.category;
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push({ command: item.command, status: item.status });
+  }
+
+  // Deduplicate commands within each category, keeping the best status
+  const statusPriority: Record<string, number> = { mastered: 3, practicing: 2, learning: 1 };
+  for (const cat of Object.keys(grouped)) {
+    const seen = new Map<string, { command: string; status: string }>();
+    for (const item of grouped[cat]) {
+      const existing = seen.get(item.command);
+      if (!existing || (statusPriority[item.status] ?? 0) > (statusPriority[existing.status] ?? 0)) {
+        seen.set(item.command, item);
+      }
+    }
+    grouped[cat] = Array.from(seen.values());
+  }
+
+  const statusColor: Record<string, string> = {
+    mastered: "bg-emerald-500",
+    practicing: "bg-sky-500",
+    learning: "bg-amber-500",
+  };
+
+  const categories = Object.keys(grouped);
+  if (categories.length === 0) return null;
+
+  return (
+    <Card className="bg-muted/30">
+      <CardContent className="p-4">
+        <p className="text-xs font-medium text-muted-foreground mb-3">Matriz de Habilidades</p>
+        <div className="space-y-3">
+          {categories.map((cat) => (
+            <div key={cat}>
+              <p className="text-[11px] text-muted-foreground mb-1.5">{cat}</p>
+              <div className="flex flex-wrap gap-2">
+                {grouped[cat].map((skill) => (
+                  <div
+                    key={skill.command}
+                    className="flex items-center gap-1.5 rounded-md bg-background border px-2 py-1 text-xs transition-all duration-200 hover:bg-muted/50"
+                  >
+                    <span className={`h-2 w-2 rounded-full ${statusColor[skill.status] ?? "bg-muted-foreground"}`} />
+                    <span className="text-foreground">{skill.command}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Legend */}
+        <div className="flex items-center gap-4 mt-3 pt-3 border-t">
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" /> Dominado
+          </div>
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="h-2 w-2 rounded-full bg-sky-500" /> Praticando
+          </div>
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="h-2 w-2 rounded-full bg-amber-500" /> Aprendendo
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
   const { data, isLoading } = trpc.training.byPet.useQuery({ petId });
   const progress = trpc.training.progress.useQuery({ petId });
@@ -68,31 +139,42 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
       {/* Resumo de Progresso */}
       {progress.data && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Card>
+          <Card className="transition-all duration-200 hover:bg-muted/50">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold">{progress.data.totalCommands}</p>
               <p className="text-xs text-muted-foreground">Total</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="transition-all duration-200 hover:bg-muted/50">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-emerald-500">{progress.data.mastered}</p>
               <p className="text-xs text-muted-foreground">Dominados</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="transition-all duration-200 hover:bg-muted/50">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-sky-500">{progress.data.practicing}</p>
               <p className="text-xs text-muted-foreground">Praticando</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="transition-all duration-200 hover:bg-muted/50">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-amber-500">{progress.data.learning}</p>
               <p className="text-xs text-muted-foreground">Aprendendo</p>
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Skills Matrix */}
+      {data && data.length > 0 && (
+        <SkillsMatrix
+          data={data.map((log) => ({
+            command: log.command,
+            status: log.status,
+            category: log.category,
+          }))}
+        />
       )}
 
       {/* Sessões de Treinamento */}
@@ -103,7 +185,7 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
               <GraduationCap className="h-4 w-4" />
               Sessões de Treinamento
             </CardTitle>
-            <Button variant="outline" size="sm" className="gap-1">
+            <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
               <Plus className="h-3.5 w-3.5" />
               Adicionar
             </Button>
@@ -117,7 +199,7 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
                 return (
                   <div
                     key={log.id}
-                    className="flex items-center justify-between p-3 rounded-lg border text-sm"
+                    className="flex items-center justify-between p-3 rounded-lg border text-sm transition-all duration-200 hover:bg-muted/50"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -155,7 +237,7 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
                       )}
                     </div>
                     {(role === "admin" || (log as Record<string, unknown>).source === "tutor") && (
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive shrink-0">
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive shrink-0 transition-colors duration-200">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
@@ -164,12 +246,13 @@ export function PetTrainingTab({ petId, role }: PetTrainingTabProps) {
               })}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <GraduationCap className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Nenhum treinamento registrado.</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
-                Registre sessões de treinamento e acompanhe o progresso.
-              </p>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <GraduationCap className="h-12 w-12 text-muted-foreground/30 mb-4" />
+              <p className="text-sm font-medium text-muted-foreground">Nenhum treinamento registrado</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">Registre sessões de treinamento e acompanhe o progresso.</p>
+              <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+                <Plus className="h-3.5 w-3.5" /> Adicionar
+              </Button>
             </div>
           )}
         </CardContent>

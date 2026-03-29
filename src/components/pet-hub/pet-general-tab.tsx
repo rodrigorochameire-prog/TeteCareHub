@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   Dog,
@@ -14,6 +15,7 @@ import {
   MessageCircle,
   AlertTriangle,
   CheckCircle2,
+  Pencil,
 } from "lucide-react";
 
 interface Tutor {
@@ -80,6 +82,17 @@ function calculateAge(birthDate: Date | string | null | undefined): string | nul
   const y = Math.floor(totalMonths / 12);
   const m = totalMonths % 12;
   return m > 0 ? `${y} ano${y > 1 ? "s" : ""} e ${m} mês${m > 1 ? "es" : ""}` : `${y} ano${y > 1 ? "s" : ""}`;
+}
+
+function formatPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 11) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  }
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return phone;
 }
 
 const LABELS: Record<string, string> = {
@@ -154,10 +167,10 @@ function LevelBar({ value, levels }: { value: string | null | undefined; levels:
   );
 }
 
-// Info row - always renders, shows "Não informado" for empty values
+// Info row with hover effect
 function InfoRow({ label: rowLabel, value }: { label: string; value: string | null }) {
   return (
-    <div className="flex justify-between items-center py-2">
+    <div className="flex justify-between items-center py-2 px-2 -mx-2 rounded-md transition-colors duration-200 hover:bg-muted/50">
       <span className="text-muted-foreground text-sm">{rowLabel}</span>
       {value ? (
         <span className="text-sm text-foreground font-medium">{value}</span>
@@ -168,7 +181,7 @@ function InfoRow({ label: rowLabel, value }: { label: string; value: string | nu
   );
 }
 
-export function PetGeneralTab({ pet }: PetGeneralTabProps) {
+export function PetGeneralTab({ pet, role }: PetGeneralTabProps) {
   const age = calculateAge(pet.birthDate);
   const birthDateStr = formatBirthDate(pet.birthDate);
   const weightStr = formatWeight(pet.weight);
@@ -213,11 +226,19 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
             <InfoRow label="Pelagem" value={label(pet.coatType)} />
           </div>
           {pet.notes && (
-            <div className="mt-4 bg-muted rounded-lg p-3">
-              <p className="text-xs text-muted-foreground mb-1">Observações</p>
-              <p className="text-sm text-foreground leading-relaxed">
+            <div className="mt-4 bg-muted/50 rounded-lg p-3">
+              <p className="text-xs text-muted-foreground mb-1.5">Observações</p>
+              <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
                 {pet.notes}
               </p>
+            </div>
+          )}
+          {role === "admin" && (
+            <div className="mt-3 pt-3 border-t">
+              <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors duration-200">
+                <Pencil className="h-3 w-3" />
+                Editar informações
+              </Button>
             </div>
           )}
         </CardContent>
@@ -298,7 +319,7 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
               {pet.tutors.map((tutor) => (
                 <div
                   key={tutor.id}
-                  className="p-3 rounded-lg border bg-muted/50"
+                  className="p-3 rounded-lg border bg-muted/50 transition-all duration-200 hover:bg-muted/80"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -316,7 +337,7 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
                         href={`https://wa.me/55${tutor.phone.replace(/\D/g, "")}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="h-7 w-7 inline-flex items-center justify-center rounded-md bg-emerald-600/10 text-emerald-600 hover:bg-emerald-600/20 transition-colors"
+                        className="h-7 w-7 inline-flex items-center justify-center rounded-md bg-emerald-600/10 text-emerald-600 hover:bg-emerald-600/20 transition-colors duration-200"
                       >
                         <MessageCircle className="h-3.5 w-3.5" />
                       </a>
@@ -325,7 +346,7 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
                   <div className="flex flex-col gap-1">
                     <a
                       href={`mailto:${tutor.email}`}
-                      className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-1.5"
                     >
                       <Mail className="h-3 w-3" />
                       {tutor.email}
@@ -333,10 +354,10 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
                     {tutor.phone && (
                       <a
                         href={`tel:+55${tutor.phone.replace(/\D/g, "")}`}
-                        className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+                        className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-1.5"
                       >
                         <Phone className="h-3 w-3" />
-                        {tutor.phone}
+                        {formatPhone(tutor.phone)}
                       </a>
                     )}
                   </div>
@@ -344,9 +365,10 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <Users className="h-8 w-8 text-muted-foreground/20 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Nenhum tutor associado.</p>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
+              <p className="text-sm font-medium text-muted-foreground">Nenhum tutor associado</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">Associe um tutor para contato e acompanhamento.</p>
             </div>
           )}
         </CardContent>
@@ -362,7 +384,7 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col divide-y divide-border">
-            <div className="flex justify-between items-center py-2">
+            <div className="flex justify-between items-center py-2 px-2 -mx-2 rounded-md transition-colors duration-200 hover:bg-muted/50">
               <span className="text-sm text-muted-foreground">Alergia alimentar</span>
               {pet.hasFoodAllergy ? (
                 <Badge variant="destructive" className="gap-1 text-[11px]">
@@ -382,7 +404,7 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
               </p>
             )}
 
-            <div className="flex justify-between items-center py-2">
+            <div className="flex justify-between items-center py-2 px-2 -mx-2 rounded-md transition-colors duration-200 hover:bg-muted/50">
               <span className="text-sm text-muted-foreground">Alergia a medicamentos</span>
               {pet.hasMedicationAllergy ? (
                 <Badge variant="destructive" className="gap-1 text-[11px]">
@@ -402,7 +424,7 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
               </p>
             )}
 
-            <div className="flex justify-between items-center py-2">
+            <div className="flex justify-between items-center py-2 px-2 -mx-2 rounded-md transition-colors duration-200 hover:bg-muted/50">
               <span className="text-sm text-muted-foreground">Condição crônica</span>
               {pet.hasChronicCondition ? (
                 <Badge variant="destructive" className="gap-1 text-[11px]">
@@ -434,9 +456,9 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
               {pet.emergencyVetPhone && (
                 <a
                   href={`tel:+55${pet.emergencyVetPhone.replace(/\D/g, "")}`}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
                 >
-                  {pet.emergencyVetPhone}
+                  {formatPhone(pet.emergencyVetPhone)}
                 </a>
               )}
             </div>

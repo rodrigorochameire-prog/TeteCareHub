@@ -6,7 +6,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SourceBadge } from "./source-badge";
-import { FileText, Plus, Trash2, ExternalLink } from "lucide-react";
+import {
+  FileText,
+  Plus,
+  Trash2,
+  ExternalLink,
+  Syringe,
+  TestTube2,
+  FileHeart,
+  FileImage,
+  FileBadge,
+  FileCheck,
+  ScrollText,
+} from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -31,6 +43,21 @@ const CATEGORY_LABELS: Record<string, string> = {
   other: "Outro",
 };
 
+const CATEGORY_ICONS: Record<string, typeof FileText> = {
+  vaccination: Syringe,
+  exam: TestTube2,
+  prescription: ScrollText,
+  medical_record: FileHeart,
+  preventive: FileCheck,
+  photo: FileImage,
+  identification: FileBadge,
+  contract: FileCheck,
+};
+
+function getCategoryIcon(category: string) {
+  return CATEGORY_ICONS[category] ?? FileText;
+}
+
 export function PetDocumentsTab({ petId, role }: PetDocumentsTabProps) {
   const { data, isLoading } = trpc.documents.byPet.useQuery({ petId });
 
@@ -42,9 +69,9 @@ export function PetDocumentsTab({ petId, role }: PetDocumentsTabProps) {
             <Skeleton className="h-5 w-32" />
             <Skeleton className="h-8 w-24" />
           </div>
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-16 w-full rounded-lg" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} className="h-32 w-full rounded-lg" />
             ))}
           </div>
         </CardContent>
@@ -60,7 +87,7 @@ export function PetDocumentsTab({ petId, role }: PetDocumentsTabProps) {
             <FileText className="h-4 w-4" />
             Documentos
           </CardTitle>
-          <Button variant="outline" size="sm" className="gap-1">
+          <Button variant="outline" size="sm" className="gap-1.5 transition-all duration-200 hover:bg-primary/5">
             <Plus className="h-3.5 w-3.5" />
             Adicionar
           </Button>
@@ -68,67 +95,85 @@ export function PetDocumentsTab({ petId, role }: PetDocumentsTabProps) {
       </CardHeader>
       <CardContent>
         {data && data.length > 0 ? (
-          <div className="space-y-3">
-            {data.map((doc) => (
-              <div
-                key={doc.id}
-                className="flex items-center justify-between p-3 rounded-lg border text-sm"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-medium truncate">{doc.title}</p>
-                    <Badge variant="secondary" className="text-[10px]">
-                      {CATEGORY_LABELS[doc.category] ?? doc.category}
-                    </Badge>
-                    {String((doc as Record<string, unknown>).source || "") !== "" && (
-                      <SourceBadge
-                        source={(doc as Record<string, unknown>).source as "admin" | "tutor"}
-                      />
-                    )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {data.map((doc) => {
+              const CategoryIcon = getCategoryIcon(doc.category);
+              return (
+                <div
+                  key={doc.id}
+                  className="group p-4 rounded-lg border text-sm transition-all duration-200 hover:bg-muted/50 hover:shadow-sm flex flex-col gap-2"
+                >
+                  {/* Icon + Category */}
+                  <div className="flex items-start justify-between">
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <CategoryIcon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {doc.fileUrl && (
+                        <Button asChild variant="ghost" size="sm" className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        </Button>
+                      )}
+                      {(role === "admin" || (doc as Record<string, unknown>).source === "tutor") && (
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all duration-200">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Title + Badges */}
+                  <div>
+                    <p className="font-medium truncate text-foreground">{doc.title}</p>
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      <Badge variant="secondary" className="text-[10px]">
+                        {CATEGORY_LABELS[doc.category] ?? doc.category}
+                      </Badge>
+                      {String((doc as Record<string, unknown>).source || "") !== "" && (
+                        <SourceBadge
+                          source={(doc as Record<string, unknown>).source as "admin" | "tutor"}
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Description */}
                   {doc.description && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                    <p className="text-xs text-muted-foreground line-clamp-2">
                       {doc.description}
                     </p>
                   )}
-                  <div className="flex items-center gap-2 text-muted-foreground text-xs mt-1">
+
+                  {/* Meta */}
+                  <div className="flex items-center gap-2 text-muted-foreground text-[11px] mt-auto">
                     <span>
                       {format(new Date(doc.createdAt), "dd/MM/yyyy", { locale: ptBR })}
                     </span>
-                    {doc.fileName && <span>· {doc.fileName}</span>}
                     {doc.fileSize && (
-                      <span>
-                        · {doc.fileSize > 1048576
-                          ? `${(doc.fileSize / 1048576).toFixed(1)} MB`
-                          : `${Math.round(doc.fileSize / 1024)} KB`}
-                      </span>
+                      <>
+                        <span>&middot;</span>
+                        <span>
+                          {doc.fileSize > 1048576
+                            ? `${(doc.fileSize / 1048576).toFixed(1)} MB`
+                            : `${Math.round(doc.fileSize / 1024)} KB`}
+                        </span>
+                      </>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  {doc.fileUrl && (
-                    <Button asChild variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    </Button>
-                  )}
-                  {(role === "admin" || (doc as Record<string, unknown>).source === "tutor") && (
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
-          <div className="text-center py-8">
-            <FileText className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">Nenhum documento registrado.</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">
-              Armazene exames, receitas, e outros documentos importantes.
-            </p>
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <FileText className="h-12 w-12 text-muted-foreground/30 mb-4" />
+            <p className="text-sm font-medium text-muted-foreground">Nenhum documento registrado</p>
+            <p className="text-xs text-muted-foreground/70 mt-1">Armazene exames, receitas e outros documentos importantes.</p>
+            <Button variant="outline" size="sm" className="mt-4 gap-1.5 transition-all duration-200">
+              <Plus className="h-3.5 w-3.5" /> Adicionar
+            </Button>
           </div>
         )}
       </CardContent>
