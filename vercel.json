@@ -8,7 +8,9 @@
       "maxDuration": 30
     }
   },
-  "crons": [],
+  "crons": [
+    { "path": "/api/cron/notifications", "schedule": "0 8 * * *" }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",

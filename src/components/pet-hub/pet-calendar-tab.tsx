@@ -8,8 +8,32 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
-import { Calendar, Plus, Trash2, Clock, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isSameMonth, addMonths, subMonths } from "date-fns";
+import {
+  Calendar,
+  Plus,
+  Trash2,
+  Clock,
+  MapPin,
+  ChevronLeft,
+  ChevronRight,
+  AlertTriangle,
+  Syringe,
+  Shield,
+  DoorOpen,
+  DoorClosed,
+} from "lucide-react";
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  getDay,
+  isSameDay,
+  isSameMonth,
+  addMonths,
+  subMonths,
+  differenceInCalendarDays,
+} from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
@@ -26,6 +50,12 @@ const STATUS_LABELS: Record<string, { label: string; variant: "success" | "info"
 };
 
 const WEEKDAY_LABELS = ["D", "S", "T", "Q", "Q", "S", "S"];
+
+const URGENCY_STYLES: Record<string, { bg: string; border: string; text: string; badge: "destructive" | "warning" | "success" }> = {
+  red: { bg: "bg-destructive/10", border: "border-destructive/30", text: "text-destructive", badge: "destructive" },
+  yellow: { bg: "bg-warning/10", border: "border-warning/30", text: "text-warning", badge: "warning" },
+  green: { bg: "bg-success/10", border: "border-success/30", text: "text-success", badge: "success" },
+};
 
 function MiniCalendar({ events, currentMonth, onMonthChange }: {
   events: Array<{ eventDate: string | Date }>;
@@ -111,6 +141,230 @@ function MiniCalendar({ events, currentMonth, onMonthChange }: {
   );
 }
 
+// ── Alerts Section ─────────────────────────────────────────
+function PetAlerts({ petId }: { petId: number }) {
+  const { data: vaccinations } = trpc.vaccines.getPetVaccinations.useQuery({ petId });
+  const { data: preventives } = trpc.preventives.byPet.useQuery({ petId });
+
+  const alerts = useMemo(() => {
+    const now = new Date();
+    const items: Array<{
+      id: string;
+      type: "vaccine" | "preventive";
+      name: string;
+      dueDate: Date;
+      daysRemaining: number;
+      urgency: "green" | "yellow" | "red";
+    }> = [];
+
+    // Vaccine alerts
+    if (vaccinations) {
+      for (const row of vaccinations) {
+        const nextDue = row.vaccination.nextDueDate;
+        if (!nextDue) continue;
+        const dueDate = new Date(nextDue);
+        if (dueDate < now) continue;
+        const daysRemaining = differenceInCalendarDays(dueDate, now);
+        if (daysRemaining > 30) continue;
+        items.push({
+          id: `vax-${row.vaccination.id}`,
+          type: "vaccine",
+          name: row.vaccine.name,
+          dueDate,
+          daysRemaining,
+          urgency: daysRemaining <= 3 ? "red" : daysRemaining <= 7 ? "yellow" : "green",
+        });
+      }
+    }
+
+    // Preventive alerts
+    if (preventives) {
+      for (const row of preventives) {
+        const nextDue = row.nextDueDate;
+        if (!nextDue) continue;
+        const dueDate = new Date(nextDue);
+        if (dueDate < now) continue;
+        const daysRemaining = differenceInCalendarDays(dueDate, now);
+        if (daysRemaining > 30) continue;
+        items.push({
+          id: `prev-${row.id}`,
+          type: "preventive",
+          name: `${row.productName} (${row.type})`,
+          dueDate,
+          daysRemaining,
+          urgency: daysRemaining <= 3 ? "red" : daysRemaining <= 7 ? "yellow" : "green",
+        });
+      }
+    }
+
+    // Sort: red first, then yellow, then green
+    const urgencyOrder = { red: 0, yellow: 1, green: 2 };
+    items.sort((a, b) => {
+      const diff = urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
+      return diff !== 0 ? diff : a.daysRemaining - b.daysRemaining;
+    });
+
+    return items;
+  }, [vaccinations, preventives]);
+
+  if (alerts.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-warning" />
+          Alertas de Saúde
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {alerts.map((alert) => {
+          const style = URGENCY_STYLES[alert.urgency];
+          return (
+            <div
+              key={alert.id}
+              className={`flex items-center gap-3 p-3 rounded-lg border ${style.bg} ${style.border} transition-all duration-200`}
+            >
+              {alert.type === "vaccine" ? (
+                <Syringe className={`h-4 w-4 shrink-0 ${style.text}`} />
+              ) : (
+                <Shield className={`h-4 w-4 shrink-0 ${style.text}`} />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{alert.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  Vence em {format(alert.dueDate, "dd/MM/yyyy", { locale: ptBR })}
+                </p>
+              </div>
+              <Badge variant={style.badge} className="text-[10px] shrink-0">
+                {alert.daysRemaining === 0
+                  ? "Hoje"
+                  : alert.daysRemaining === 1
+                    ? "1 dia"
+                    : `${alert.daysRemaining} dias`}
+              </Badge>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Check-in History Section ───────────────────────────────
+function CheckInHistory({ events }: { events: Array<{
+  id: number;
+  eventType: string;
+  eventDate: string | Date;
+  endDate?: string | Date | null;
+  title: string;
+  status?: string | null;
+}> }) {
+  // Group checkin/checkout events and pair them
+  const checkinHistory = useMemo(() => {
+    const checkins = events.filter((e) => e.eventType === "checkin");
+    const checkouts = events.filter((e) => e.eventType === "checkout");
+
+    // Build map: date key -> checkout
+    const checkoutByDate = new Map<string, typeof checkouts[number]>();
+    for (const co of checkouts) {
+      const dateKey = format(new Date(co.eventDate), "yyyy-MM-dd");
+      checkoutByDate.set(dateKey, co);
+    }
+
+    const paired: Array<{
+      id: number;
+      checkinDate: Date;
+      checkoutDate: Date | null;
+      isMultiDay: boolean;
+    }> = [];
+
+    for (const ci of checkins) {
+      const ciDate = new Date(ci.eventDate);
+      const dateKey = format(ciDate, "yyyy-MM-dd");
+      const co = checkoutByDate.get(dateKey);
+
+      // Check for multi-day (hospedagem): if endDate is set and different day
+      const endDate = ci.endDate ? new Date(ci.endDate) : null;
+      const isMultiDay = endDate !== null && differenceInCalendarDays(endDate, ciDate) > 0;
+
+      paired.push({
+        id: ci.id,
+        checkinDate: ciDate,
+        checkoutDate: co ? new Date(co.eventDate) : (endDate ?? null),
+        isMultiDay,
+      });
+    }
+
+    // Sort newest first
+    paired.sort((a, b) => b.checkinDate.getTime() - a.checkinDate.getTime());
+
+    return paired.slice(0, 10); // Limit to last 10
+  }, [events]);
+
+  if (checkinHistory.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center gap-2">
+          <DoorOpen className="h-4 w-4 text-primary" />
+          Histórico de Check-ins
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {checkinHistory.map((entry) => {
+          const formatTimeStr = (d: Date) =>
+            format(d, "HH:mm", { locale: ptBR });
+          const formatDateTimeStr = (d: Date) =>
+            format(d, "dd/MM HH:mm", { locale: ptBR });
+
+          return (
+            <div
+              key={entry.id}
+              className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 text-sm transition-all duration-200 hover:bg-muted/50"
+            >
+              {entry.isMultiDay ? (
+                <DoorClosed className="h-4 w-4 text-accent shrink-0" />
+              ) : (
+                <DoorOpen className="h-4 w-4 text-primary shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground">
+                  {format(entry.checkinDate, "EEEE, dd/MM/yyyy", { locale: ptBR })}
+                </p>
+                {entry.isMultiDay ? (
+                  // Hospedagem: show full date range
+                  <p className="font-medium">
+                    {formatDateTimeStr(entry.checkinDate)}
+                    {" → "}
+                    {entry.checkoutDate
+                      ? formatDateTimeStr(entry.checkoutDate)
+                      : "em andamento"}
+                  </p>
+                ) : (
+                  // Creche: show time range
+                  <p className="font-medium">
+                    {formatTimeStr(entry.checkinDate)}
+                    {" → "}
+                    {entry.checkoutDate
+                      ? formatTimeStr(entry.checkoutDate)
+                      : "em andamento"}
+                  </p>
+                )}
+              </div>
+              <Badge variant={entry.isMultiDay ? "info" : "secondary"} className="text-[10px] shrink-0">
+                {entry.isMultiDay ? "Hospedagem" : "Creche"}
+              </Badge>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Main Component ─────────────────────────────────────────
 export function PetCalendarTab({ petId, role }: PetCalendarTabProps) {
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.calendar.byPet.useQuery({ petId });
@@ -174,6 +428,11 @@ export function PetCalendarTab({ petId, role }: PetCalendarTabProps) {
     .filter((e) => new Date(e.eventDate) >= now && e.status !== "cancelled")
     .sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
 
+  // Checkin/checkout events for history
+  const checkinEvents = (data ?? []).filter(
+    (e) => e.eventType === "checkin" || e.eventType === "checkout"
+  );
+
   return (
     <div className="space-y-4">
       {/* Confirm Dialog */}
@@ -188,12 +447,18 @@ export function PetCalendarTab({ petId, role }: PetCalendarTabProps) {
         isLoading={deleteEvent.isPending}
       />
 
+      {/* Health Alerts */}
+      <PetAlerts petId={petId} />
+
       {/* Mini Month View */}
       <MiniCalendar
         events={(data ?? []).map((e) => ({ eventDate: e.eventDate }))}
         currentMonth={currentMonth}
         onMonthChange={setCurrentMonth}
       />
+
+      {/* Check-in History */}
+      <CheckInHistory events={checkinEvents} />
 
       {/* Events List */}
       <Card>
