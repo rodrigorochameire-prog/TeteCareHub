@@ -39,6 +39,7 @@ import { invitePublicRouter } from "./invite-public";
 import { plansManagementRouter } from "./plans-management";
 import { paymentRequestsRouter } from "./payment-requests";
 import { notificationRulesRouter } from "./notification-rules";
+import { unifiedCalendarRouter } from "./unified-calendar";
 
 export const appRouter = router({
   // Autenticação
@@ -112,6 +113,9 @@ export const appRouter = router({
 
   // Regras de Notificação
   notificationRules: notificationRulesRouter,
+
+  // Calendário Unificado
+  unifiedCalendar: unifiedCalendarRouter,
 });
 
 export type AppRouter = typeof appRouter;
