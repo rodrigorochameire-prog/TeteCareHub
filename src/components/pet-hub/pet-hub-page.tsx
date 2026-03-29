@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Clock,
   Info,
   Heart,
   UtensilsCrossed,
@@ -15,6 +16,7 @@ import {
   PawPrint,
 } from "lucide-react";
 import { PetHubHeader } from "./pet-hub-header";
+import { PetTimelineTab } from "./pet-timeline-tab";
 import { PetGeneralTab } from "./pet-general-tab";
 import { PetHealthTab } from "./pet-health-tab";
 import { PetFoodTab } from "./pet-food-tab";
@@ -29,6 +31,7 @@ interface PetHubPageProps {
 }
 
 const TAB_ITEMS = [
+  { value: "timeline", label: "Timeline", icon: Clock },
   { value: "geral", label: "Geral", icon: Info },
   { value: "saude", label: "Saúde", icon: Heart },
   { value: "alimentacao", label: "Alimentação", icon: UtensilsCrossed },
@@ -90,7 +93,7 @@ export function PetHubPage({ petId, role }: PetHubPageProps) {
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="geral" className="w-full">
+      <Tabs defaultValue="timeline" className="w-full">
         <TabsList className="w-full h-auto p-1 flex overflow-x-auto scrollbar-none gap-0">
           {TAB_ITEMS.map(({ value, label, icon: Icon }) => (
             <TabsTrigger
@@ -104,6 +107,9 @@ export function PetHubPage({ petId, role }: PetHubPageProps) {
           ))}
         </TabsList>
 
+        <TabsContent value="timeline" className="mt-5 animate-in fade-in-50 duration-300">
+          <PetTimelineTab petId={petId} role={role} />
+        </TabsContent>
         <TabsContent value="geral" className="mt-5 animate-in fade-in-50 duration-300">
           <PetGeneralTab pet={pet} role={role} />
         </TabsContent>

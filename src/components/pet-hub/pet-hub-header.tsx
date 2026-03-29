@@ -15,7 +15,8 @@ import {
   Cake,
   Weight,
   Star,
-  UserX,
+  Tag,
+  User,
 } from "lucide-react";
 import { PetAvatar } from "@/components/pet-avatar";
 import Link from "next/link";
@@ -60,7 +61,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 function formatWeight(weight: number | null | undefined): string {
   if (!weight) return "";
   const kg = weight > 100 ? weight / 1000 : weight;
-  return `${kg.toFixed(1)}kg`;
+  return `${kg.toFixed(1)} kg`;
 }
 
 function calculateAge(birthDate: Date | string | null | undefined): string {
@@ -75,7 +76,7 @@ function calculateAge(birthDate: Date | string | null | undefined): string {
   if (totalMonths < 12) return `${totalMonths}m`;
   const y = Math.floor(totalMonths / 12);
   const m = totalMonths % 12;
-  return m > 0 ? `${y}a ${m}m` : `${y}a`;
+  return m > 0 ? `${y} ano${y > 1 ? "s" : ""} ${m}m` : `${y} ano${y > 1 ? "s" : ""}`;
 }
 
 function formatPhone(phone: string): string {
@@ -84,6 +85,13 @@ function formatPhone(phone: string): string {
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
   }
   return phone;
+}
+
+function getPlanLabel(credits: number | null | undefined): string {
+  if (typeof credits !== "number") return "—";
+  if (credits >= 20) return "Mensalista";
+  if (credits > 0) return "Avulso";
+  return "Sem plano";
 }
 
 export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
@@ -102,134 +110,184 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
     ? `tel:+55${primaryTutor.phone.replace(/\D/g, "")}`
     : null;
 
-  // Labels
-  const SEX_LABELS: Record<string, string> = { male: "Macho", female: "Fêmea" };
-  const SIZE_LABELS: Record<string, string> = { small: "Pequeno", medium: "Médio", large: "Grande", xlarge: "Extra grande" };
-
-  // Format birth date
   const birthDateFormatted = pet.birthDate
     ? new Date(pet.birthDate).toLocaleDateString("pt-BR")
     : null;
 
+  // Stat cards data
+  const statCards: {
+    icon: typeof Weight;
+    iconColor: string;
+    label: string;
+    value: string;
+    show: boolean;
+  }[] = [
+    {
+      icon: Weight,
+      iconColor: "text-blue-500",
+      label: "Peso",
+      value: weight || "—",
+      show: true,
+    },
+    {
+      icon: Cake,
+      iconColor: "text-pink-500",
+      label: "Nascimento",
+      value: birthDateFormatted ? `${birthDateFormatted} · ${age}` : "—",
+      show: true,
+    },
+    {
+      icon: Star,
+      iconColor: "text-amber-500",
+      label: "Créditos",
+      value: typeof pet.credits === "number" ? `${pet.credits} diária${pet.credits !== 1 ? "s" : ""}` : "—",
+      show: true,
+    },
+    {
+      icon: Tag,
+      iconColor: "text-violet-500",
+      label: "Plano",
+      value: getPlanLabel(pet.credits),
+      show: true,
+    },
+    {
+      icon: User,
+      iconColor: "text-emerald-500",
+      label: "Tutor",
+      value: primaryTutor
+        ? primaryTutor.phone
+          ? `${primaryTutor.name} · ${formatPhone(primaryTutor.phone)}`
+          : primaryTutor.name
+        : "—",
+      show: true,
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Back button */}
+      {/* Row 1: Back + Status */}
       <div className="flex items-center justify-between">
-        <Button asChild variant="ghost" size="sm" className="h-7 gap-1.5 text-muted-foreground hover:text-foreground -ml-2">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="h-7 gap-1.5 text-muted-foreground hover:text-foreground -ml-2"
+        >
           <Link href={role === "admin" ? "/admin/pets" : "/tutor/pets"}>
             <ArrowLeft className="h-3.5 w-3.5" />
             Voltar
           </Link>
         </Button>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 rounded-full bg-muted/50 px-2.5 py-1">
           <span className={`h-2 w-2 rounded-full ${statusInfo.color}`} />
-          <span className="text-xs text-muted-foreground">{statusInfo.label}</span>
+          <span className="text-xs font-medium text-muted-foreground">
+            {statusInfo.label}
+          </span>
         </div>
       </div>
 
-      {/* Main: Avatar + Info + Details + Actions */}
-      <div className="flex flex-col sm:flex-row gap-5">
-        {/* Avatar */}
-        <div className="shrink-0 self-center sm:self-start">
+      {/* Row 2: Avatar + Name/Breed/Actions */}
+      <div className="flex items-center gap-4">
+        <div className="shrink-0">
           <PetAvatar
             photoUrl={pet.photoUrl}
             breed={pet.breed}
             name={pet.name}
-            size={88}
+            size={72}
             rounded="xl"
             className="shadow-md ring-2 ring-border"
           />
         </div>
-
-        {/* Info + Details — 2 sub-columns on larger screens */}
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            {/* Left: Name + breed + actions */}
-            <div className="text-center sm:text-left">
-              <div className="flex items-center gap-2 justify-center sm:justify-start">
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">{pet.name}</h1>
-                {role === "admin" && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground">
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Editar pet</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-              </div>
-              {pet.breed && (
-                <p className="text-sm text-muted-foreground mt-0.5">{pet.breed}</p>
-              )}
-
-              {/* Actions */}
-              <div className="flex items-center gap-2 mt-3 justify-center sm:justify-start">
-                {phoneUrl && primaryTutor?.phone && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button asChild variant="outline" size="sm" className="h-8 w-8 p-0">
-                          <a href={phoneUrl}>
-                            <Phone className="h-3.5 w-3.5" />
-                          </a>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Ligar para {primaryTutor.name}</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-                {whatsappUrl && (
-                  <Button asChild size="sm" className="gap-1.5 h-8 bg-emerald-600 hover:bg-emerald-500 text-white">
-                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                      <MessageCircle className="h-3.5 w-3.5" />
-                      WhatsApp
-                    </a>
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Right: Pet details grid */}
-            <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
-              {birthDateFormatted && (
-                <DetailItem icon={Cake} label="Nascimento" value={`${birthDateFormatted} (${age})`} />
-              )}
-              {weight && (
-                <DetailItem icon={Weight} label="Peso" value={weight} />
-              )}
-              {pet.sex && SEX_LABELS[pet.sex] && (
-                <DetailItem label="Sexo" value={SEX_LABELS[pet.sex]} />
-              )}
-              {pet.size && SIZE_LABELS[pet.size] && (
-                <DetailItem label="Porte" value={SIZE_LABELS[pet.size]} />
-              )}
-              {typeof pet.credits === "number" && (
-                <DetailItem icon={Star} label="Créditos" value={String(pet.credits)} />
-              )}
-              {typeof pet.credits === "number" && (
-                <DetailItem label="Plano" value={pet.credits >= 20 ? "Mensalista" : pet.credits > 0 ? "Avulso" : "Sem plano"} />
-              )}
-              {primaryTutor && (
-                <DetailItem label="Tutor" value={primaryTutor.name} />
-              )}
-            </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold tracking-tight text-foreground truncate">
+              {pet.name}
+            </h1>
+            {role === "admin" && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Editar pet</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+          {pet.breed && (
+            <p className="text-sm text-muted-foreground mt-0.5 truncate">
+              {pet.breed}
+            </p>
+          )}
+          {/* Actions */}
+          <div className="flex items-center gap-2 mt-2">
+            {phoneUrl && primaryTutor?.phone && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                    >
+                      <a href={phoneUrl}>
+                        <Phone className="h-3.5 w-3.5" />
+                      </a>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Ligar para {primaryTutor.name}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {whatsappUrl && (
+              <Button
+                asChild
+                size="sm"
+                className="gap-1.5 h-8 bg-emerald-600 hover:bg-emerald-500 text-white"
+              >
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  WhatsApp
+                </a>
+              </Button>
+            )}
           </div>
         </div>
       </div>
-    </div>
-  );
-}
 
-function DetailItem({ icon: Icon, label, value }: { icon?: typeof Cake; label: string; value: string }) {
-  return (
-    <div className="flex items-start gap-1.5">
-      {Icon && <Icon className="h-3 w-3 text-muted-foreground mt-0.5" />}
-      <div>
-        <p className="text-muted-foreground leading-none">{label}</p>
-        <p className="font-medium text-foreground mt-0.5 leading-none">{value}</p>
+      {/* Row 3: Stat cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+        {statCards
+          .filter((s) => s.show)
+          .map((stat) => (
+            <div
+              key={stat.label}
+              className="bg-muted/50 rounded-lg p-3 flex flex-col gap-1.5"
+            >
+              <div className="flex items-center gap-1.5">
+                <stat.icon className={`h-3.5 w-3.5 ${stat.iconColor}`} />
+                <span className="text-xs text-muted-foreground">
+                  {stat.label}
+                </span>
+              </div>
+              <span className="text-sm font-semibold text-foreground leading-tight truncate">
+                {stat.value}
+              </span>
+            </div>
+          ))}
       </div>
     </div>
   );
