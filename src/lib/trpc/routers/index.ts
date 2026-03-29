@@ -36,6 +36,8 @@ import { trainingMatrixRouter } from "./trainingMatrix";
 import { compatibilityRouter } from "./compatibility";
 import { invitationsRouter } from "./invitations";
 import { invitePublicRouter } from "./invite-public";
+import { plansManagementRouter } from "./plans-management";
+import { paymentRequestsRouter } from "./payment-requests";
 
 export const appRouter = router({
   // Autenticação
@@ -74,6 +76,8 @@ export const appRouter = router({
   credits: creditsRouter,
   finances: financesRouter,
   packages: packagesRouter,
+  plansManagement: plansManagementRouter,
+  paymentRequests: paymentRequestsRouter,
   
   // Documentos
   documents: documentsRouter,
