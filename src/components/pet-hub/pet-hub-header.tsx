@@ -114,54 +114,13 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
     ? new Date(pet.birthDate).toLocaleDateString("pt-BR")
     : null;
 
-  // Stat cards data
-  const statCards: {
-    icon: typeof Weight;
-    iconColor: string;
-    label: string;
-    value: string;
-    show: boolean;
-  }[] = [
-    {
-      icon: Weight,
-      iconColor: "text-blue-500",
-      label: "Peso",
-      value: weight || "—",
-      show: true,
-    },
-    {
-      icon: Cake,
-      iconColor: "text-pink-500",
-      label: "Nascimento",
-      value: birthDateFormatted ? `${birthDateFormatted} · ${age}` : "—",
-      show: true,
-    },
-    {
-      icon: Star,
-      iconColor: "text-amber-500",
-      label: "Créditos",
-      value: typeof pet.credits === "number" ? `${pet.credits} diária${pet.credits !== 1 ? "s" : ""}` : "—",
-      show: true,
-    },
-    {
-      icon: Tag,
-      iconColor: "text-violet-500",
-      label: "Plano",
-      value: getPlanLabel(pet.credits),
-      show: true,
-    },
-    {
-      icon: User,
-      iconColor: "text-emerald-500",
-      label: "Tutor",
-      value: primaryTutor
-        ? primaryTutor.phone
-          ? `${primaryTutor.name} · ${formatPhone(primaryTutor.phone)}`
-          : primaryTutor.name
-        : "—",
-      show: true,
-    },
-  ];
+  // Stat items — icon color neutral
+  const stats: { icon: typeof Weight; label: string; value: string }[] = [];
+  if (weight) stats.push({ icon: Weight, label: "Peso", value: weight });
+  if (birthDateFormatted) stats.push({ icon: Cake, label: "Nascimento", value: `${birthDateFormatted} (${age})` });
+  if (typeof pet.credits === "number") stats.push({ icon: Star, label: "Créditos", value: `${pet.credits} diária${pet.credits !== 1 ? "s" : ""}` });
+  stats.push({ icon: Tag, label: "Plano", value: getPlanLabel(pet.credits) });
+  if (primaryTutor) stats.push({ icon: User, label: "Tutor", value: primaryTutor.phone ? `${primaryTutor.name} · ${formatPhone(primaryTutor.phone)}` : primaryTutor.name });
 
   return (
     <div className="flex flex-col gap-4">
@@ -186,9 +145,10 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
         </div>
       </div>
 
-      {/* Row 2: Avatar + Name/Breed/Actions */}
-      <div className="flex items-center gap-4">
-        <div className="shrink-0">
+      {/* Row 2: Avatar + Name/Actions (left) + Stats grid (right) */}
+      <div className="flex flex-col lg:flex-row gap-5">
+        {/* Left: Avatar + Name + Actions */}
+        <div className="flex items-center gap-4 shrink-0">
           <PetAvatar
             photoUrl={pet.photoUrl}
             breed={pet.breed}
@@ -197,97 +157,64 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
             rounded="xl"
             className="shadow-md ring-2 ring-border"
           />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-foreground truncate">
-              {pet.name}
-            </h1>
-            {role === "admin" && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Editar pet</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold tracking-tight text-foreground truncate">
+                {pet.name}
+              </h1>
+              {role === "admin" && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Editar pet</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+            {pet.breed && (
+              <p className="text-sm text-muted-foreground mt-0.5">{pet.breed}</p>
             )}
-          </div>
-          {pet.breed && (
-            <p className="text-sm text-muted-foreground mt-0.5 truncate">
-              {pet.breed}
-            </p>
-          )}
-          {/* Actions */}
-          <div className="flex items-center gap-2 mt-2">
-            {phoneUrl && primaryTutor?.phone && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                    >
-                      <a href={phoneUrl}>
-                        <Phone className="h-3.5 w-3.5" />
-                      </a>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Ligar para {primaryTutor.name}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-            {whatsappUrl && (
-              <Button
-                asChild
-                size="sm"
-                className="gap-1.5 h-8 bg-emerald-600 hover:bg-emerald-500 text-white"
-              >
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <MessageCircle className="h-3.5 w-3.5" />
-                  WhatsApp
-                </a>
-              </Button>
-            )}
+            <div className="flex items-center gap-2 mt-2">
+              {phoneUrl && primaryTutor?.phone && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button asChild variant="outline" size="sm" className="h-8 w-8 p-0">
+                        <a href={phoneUrl}><Phone className="h-3.5 w-3.5" /></a>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Ligar para {primaryTutor.name}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              {whatsappUrl && (
+                <Button asChild size="sm" className="gap-1.5 h-8 bg-emerald-600 hover:bg-emerald-500 text-white">
+                  <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    WhatsApp
+                  </a>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Row 3: Stat cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-        {statCards
-          .filter((s) => s.show)
-          .map((stat) => (
-            <div
-              key={stat.label}
-              className="bg-muted/50 rounded-lg p-3 flex flex-col gap-1.5"
-            >
-              <div className="flex items-center gap-1.5">
-                <stat.icon className={`h-3.5 w-3.5 ${stat.iconColor}`} />
-                <span className="text-xs text-muted-foreground">
-                  {stat.label}
-                </span>
+        {/* Right: Stats grid — encaixado à direita */}
+        <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-2 content-start">
+          {stats.map((stat) => (
+            <div key={stat.label} className="bg-muted/40 rounded-lg px-3 py-2 flex items-center gap-2.5">
+              <stat.icon className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground leading-none">{stat.label}</p>
+                <p className="text-xs font-semibold text-foreground mt-0.5 leading-tight truncate">{stat.value}</p>
               </div>
-              <span className="text-sm font-semibold text-foreground leading-tight truncate">
-                {stat.value}
-              </span>
             </div>
           ))}
+        </div>
       </div>
     </div>
   );

@@ -31,8 +31,8 @@ interface PetHubPageProps {
 }
 
 const TAB_ITEMS = [
-  { value: "timeline", label: "Timeline", icon: Clock },
   { value: "geral", label: "Geral", icon: Info },
+  { value: "timeline", label: "Timeline", icon: Clock },
   { value: "saude", label: "Saúde", icon: Heart },
   { value: "alimentacao", label: "Alimentação", icon: UtensilsCrossed },
   { value: "comportamento", label: "Comportamento", icon: Brain },
@@ -93,7 +93,7 @@ export function PetHubPage({ petId, role }: PetHubPageProps) {
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="timeline" className="w-full">
+      <Tabs defaultValue="geral" className="w-full">
         <TabsList className="w-full h-auto p-1 flex overflow-x-auto scrollbar-none gap-0">
           {TAB_ITEMS.map(({ value, label, icon: Icon }) => (
             <TabsTrigger
