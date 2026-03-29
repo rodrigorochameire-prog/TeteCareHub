@@ -45,7 +45,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   active: { label: "Ativo", color: "bg-emerald-500" },
   at_daycare: { label: "Na creche", color: "bg-sky-500" },
   "checked-out": { label: "Fora da Creche", color: "bg-amber-500" },
-  inactive: { label: "Inativo", color: "bg-zinc-500" },
+  inactive: { label: "Inativo", color: "bg-muted-foreground" },
 };
 
 function formatWeight(weight: number | null | undefined): string {
@@ -85,7 +85,7 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
 
   const whatsappUrl = primaryTutor?.phone
     ? `https://wa.me/55${primaryTutor.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
-        `Ola ${primaryTutor.name}, sobre ${pet.name}...`
+        `Olá ${primaryTutor.name}, sobre ${pet.name}...`
       )}`
     : null;
 
@@ -93,7 +93,7 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
     ? `tel:+55${primaryTutor.phone.replace(/\D/g, "")}`
     : null;
 
-  // Build stats string: "1a 2m · 12.0kg · 10 creditos"
+  // Build stats pills
   const statParts: string[] = [];
   if (age) statParts.push(age);
   if (weight) statParts.push(weight);
@@ -111,14 +111,14 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
             name={pet.name}
             size={80}
             rounded="xl"
-            className="shadow-lg shadow-black/20 ring-1 ring-white/10"
+            className="shadow-lg ring-1 ring-border"
           />
         </div>
 
         {/* Name + breed + stats */}
         <div className="flex-1 min-w-0 text-center sm:text-left">
           <div className="flex items-center gap-2.5 flex-wrap justify-center sm:justify-start">
-            <h1 className="text-3xl font-bold tracking-tight truncate">
+            <h1 className="text-2xl font-bold tracking-tight truncate text-foreground">
               {pet.name}
             </h1>
             {role === "admin" && (
@@ -128,7 +128,7 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-foreground"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
@@ -139,18 +139,22 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
             )}
           </div>
 
-          {/* Breed + inline stats */}
+          {/* Breed + inline stat pills */}
           <div className="flex items-center gap-2 mt-1 flex-wrap justify-center sm:justify-start">
             {pet.breed && (
               <span className="text-sm text-muted-foreground">{pet.breed}</span>
             )}
-            {pet.breed && statParts.length > 0 && (
-              <span className="text-muted-foreground/40">|</span>
-            )}
             {statParts.length > 0 && (
-              <span className="text-sm text-muted-foreground/70">
-                {statParts.join(" \u00b7 ")}
-              </span>
+              <div className="flex items-center gap-1.5">
+                {statParts.map((stat) => (
+                  <span
+                    key={stat}
+                    className="inline-flex items-center rounded-md bg-muted text-foreground px-2 py-0.5 text-xs font-medium"
+                  >
+                    {stat}
+                  </span>
+                ))}
+              </div>
             )}
           </div>
 
@@ -164,14 +168,14 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
 
           {/* Tutor inline */}
           {primaryTutor && (
-            <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground/70 justify-center sm:justify-start">
+            <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground justify-center sm:justify-start">
               <span>Tutor:</span>
-              <span className="text-foreground/80 font-medium">
+              <span className="text-foreground font-medium">
                 {primaryTutor.name}
               </span>
               {primaryTutor.phone && (
                 <>
-                  <span className="text-muted-foreground/30">&middot;</span>
+                  <span className="text-muted-foreground">&middot;</span>
                   <a
                     href={`tel:+55${primaryTutor.phone.replace(/\D/g, "")}`}
                     className="hover:text-foreground transition-colors"
@@ -181,7 +185,7 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
                 </>
               )}
               {pet.tutors.length > 1 && (
-                <span className="text-muted-foreground/40">
+                <span className="text-muted-foreground">
                   +{pet.tutors.length - 1}
                 </span>
               )}
@@ -199,7 +203,7 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
                     asChild
                     variant="outline"
                     size="sm"
-                    className="h-9 w-9 p-0 border-zinc-700 hover:border-zinc-600"
+                    className="h-9 w-9 p-0"
                   >
                     <a href={phoneUrl}>
                       <Phone className="h-4 w-4" />
@@ -214,7 +218,7 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
             <Button
               asChild
               size="sm"
-              className="gap-2 bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/30"
+              className="gap-2 bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20"
             >
               <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="h-4 w-4" />
