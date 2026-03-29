@@ -36,6 +36,7 @@ import {
   Building2,
   Receipt,
   ReceiptText,
+  FileBarChart,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -102,6 +103,7 @@ const menuGroups = [
       { icon: Package, label: "Planos e Serviços", path: "/admin/plans" },
       { icon: Receipt, label: "Pagamentos", path: "/admin/payments" },
       { icon: ReceiptText, label: "Despesas", path: "/admin/expenses" },
+      { icon: FileBarChart, label: "Relatório Financeiro", path: "/admin/reports/finance" },
     ],
   },
   {
