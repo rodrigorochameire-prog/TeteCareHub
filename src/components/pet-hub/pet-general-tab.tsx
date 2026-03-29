@@ -13,6 +13,9 @@ import {
   ClipboardList,
   UserCircle,
   HeartPulse,
+  Wallet,
+  TrendingUp,
+  TrendingDown,
 } from "lucide-react";
 
 interface Tutor {
@@ -48,6 +51,7 @@ interface Pet {
   emergencyVetName?: string | null;
   emergencyVetPhone?: string | null;
   neuteredStatus?: string | null;
+  credits: number;
   tutors: Tutor[];
 }
 
@@ -216,8 +220,82 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
     pet.emergencyVetPhone ||
     activeFearTriggers.length > 0;
 
+  // Credit status helpers
+  const credits = pet.credits;
+  const creditStatus =
+    credits <= 0 ? "empty" : credits <= 3 ? "low" : "ok";
+  const creditStatusColor = {
+    empty: "text-red-600",
+    low: "text-amber-600",
+    ok: "text-emerald-600",
+  }[creditStatus];
+  const creditBgColor = {
+    empty: "bg-red-500/10",
+    low: "bg-amber-500/10",
+    ok: "bg-emerald-500/10",
+  }[creditStatus];
+  const creditBorderColor = {
+    empty: "border-red-500/30",
+    low: "border-amber-500/30",
+    ok: "border-emerald-500/30",
+  }[creditStatus];
+  const creditLabel = {
+    empty: "Sem créditos",
+    low: "Créditos baixos",
+    ok: "Créditos disponíveis",
+  }[creditStatus];
+  const CreditIcon = creditStatus === "ok" ? TrendingUp : TrendingDown;
+
   return (
-    <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
+    <div className="space-y-5">
+      {/* ── Plano e Créditos (full-width) ── */}
+      <Card className={`border ${creditBorderColor}`}>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            {/* Left: title + status */}
+            <div className="flex items-center gap-3">
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${creditBgColor}`}>
+                <Wallet className={`h-5 w-5 ${creditStatusColor}`} />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Plano e Créditos</h3>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <CreditIcon className={`h-3.5 w-3.5 ${creditStatusColor}`} />
+                  <span className={`text-xs font-medium ${creditStatusColor}`}>
+                    {creditLabel}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Center: credit balance */}
+            <div className="flex items-baseline gap-1.5">
+              <span className={`text-3xl font-bold tabular-nums ${creditStatusColor}`}>
+                {credits}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {credits === 1 ? "diária" : "diárias"}
+              </span>
+            </div>
+
+            {/* Right: plan type indicator */}
+            <div className="text-right">
+              <Badge
+                variant="outline"
+                className={`text-xs ${creditBorderColor} ${creditStatusColor}`}
+              >
+                {credits >= 20 ? "Mensalista" : credits > 0 ? "Avulso" : "Sem plano"}
+              </Badge>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Tipo estimado pelo saldo
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── 2-column grid ── */}
+      <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
       {/* ── Column 1 ── */}
       <div className="space-y-5">
         {/* Saúde e Restrições */}
@@ -440,6 +518,7 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
             )}
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );
