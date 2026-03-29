@@ -147,115 +147,100 @@ export function PetHubHeader({ pet, role, isEditMode = false }: PetHubHeaderProp
         </div>
       </div>
 
-      {/* Row 2: Avatar + Name/Actions (left) + Stats grid (right) */}
-      <div className="flex flex-col lg:flex-row gap-5">
-        {/* Left: Avatar + Name + Actions */}
-        <div className="flex items-center gap-4 shrink-0">
-          <PetAvatar
-            photoUrl={pet.photoUrl}
-            breed={pet.breed}
-            name={pet.name}
-            size={72}
-            rounded="xl"
-            className="shadow-md ring-2 ring-border"
-          />
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold tracking-tight text-foreground truncate">
-                <InlineEdit
-                  petId={pet.id}
-                  field="name"
-                  value={pet.name}
-                  editable={isEditMode}
-                />
-              </h1>
-              {role === "admin" && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button asChild variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground">
-                        <Link href={`/admin/pets/${pet.id}/edit`}>
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Link>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Editar pet</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
-            {pet.breed && (
-              <p className="text-sm text-muted-foreground mt-0.5">{pet.breed}</p>
-            )}
-            <div className="flex items-center gap-2 mt-2">
-              {phoneUrl && primaryTutor?.phone && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button asChild variant="outline" size="sm" className="h-8 w-8 p-0">
-                        <a href={phoneUrl}><Phone className="h-3.5 w-3.5" /></a>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Ligar para {primaryTutor.name}</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              {whatsappUrl && (
-                <Button asChild size="sm" className="gap-1.5 h-8 bg-emerald-600 hover:bg-emerald-500 text-white">
-                  <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                    <MessageCircle className="h-3.5 w-3.5" />
-                    WhatsApp
-                  </a>
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
+      {/* Row 2: Avatar + Name + Inline Stats */}
+      <div className="flex items-start gap-4">
+        {/* Avatar */}
+        <PetAvatar
+          photoUrl={pet.photoUrl}
+          breed={pet.breed}
+          name={pet.name}
+          size={72}
+          rounded="xl"
+          className="shadow-md ring-2 ring-border shrink-0"
+        />
 
-        {/* Right: Stats — vertical aligned list */}
-        <div className="hidden sm:flex flex-col gap-1.5 text-xs ml-auto border-l border-border pl-5">
-          {stats.map((stat) => (
-            <div key={stat.label} className="flex items-center gap-2">
-              <stat.icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <span className="text-muted-foreground w-20">{stat.label}</span>
-              {stat.editableField === "weight" ? (
-                <span className="font-medium text-foreground">
-                  <InlineEdit
-                    petId={pet.id}
-                    field="weight"
-                    value={stat.rawValue}
-                    editable={isEditMode}
-                    type="number"
-                    format={(v) => formatWeight(v as number | null | undefined)}
-                  />
+        {/* Name + Breed + Stats pills + Actions */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold tracking-tight text-foreground truncate">
+              <InlineEdit
+                petId={pet.id}
+                field="name"
+                value={pet.name}
+                editable={isEditMode}
+              />
+            </h1>
+            {role === "admin" && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button asChild variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground">
+                      <Link href={`/admin/pets/${pet.id}/edit`}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Editar pet</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+
+          {/* Breed + inline stat pills */}
+          <div className="flex flex-wrap items-center gap-1.5 mt-1">
+            {pet.breed && (
+              <span className="text-sm text-muted-foreground">{pet.breed}</span>
+            )}
+            {stats.map((stat, i) => (
+              <span key={stat.label} className="inline-flex items-center gap-1 text-xs">
+                {(i > 0 || pet.breed) && (
+                  <span className="text-muted-foreground/50 select-none">&middot;</span>
+                )}
+                <span
+                  className="inline-flex items-center gap-1 rounded-md bg-muted/60 px-1.5 py-0.5 text-xs font-medium text-foreground hover:bg-muted transition-colors cursor-default"
+                  title={stat.label}
+                >
+                  <stat.icon className="h-3 w-3 text-muted-foreground shrink-0" />
+                  {stat.editableField === "weight" ? (
+                    <InlineEdit
+                      petId={pet.id}
+                      field="weight"
+                      value={stat.rawValue}
+                      editable={isEditMode}
+                      type="number"
+                      format={(v) => formatWeight(v as number | null | undefined)}
+                    />
+                  ) : (
+                    stat.value
+                  )}
                 </span>
-              ) : (
-                <span className="font-medium text-foreground">{stat.value}</span>
-              )}
-            </div>
-          ))}
-        </div>
-        {/* Mobile: horizontal pills */}
-        <div className="flex sm:hidden flex-wrap gap-1.5 text-xs mt-2">
-          {stats.map((stat) => (
-            <span key={stat.label} className="inline-flex items-center gap-1 bg-muted/50 rounded px-2 py-1">
-              <stat.icon className="h-3 w-3 text-muted-foreground" />
-              {stat.editableField === "weight" ? (
-                <span className="font-medium text-foreground">
-                  <InlineEdit
-                    petId={pet.id}
-                    field="weight"
-                    value={stat.rawValue}
-                    editable={isEditMode}
-                    type="number"
-                    format={(v) => formatWeight(v as number | null | undefined)}
-                  />
-                </span>
-              ) : (
-                <span className="font-medium text-foreground">{stat.value}</span>
-              )}
-            </span>
-          ))}
+              </span>
+            ))}
+          </div>
+
+          {/* Contact actions */}
+          <div className="flex items-center gap-2 mt-2">
+            {phoneUrl && primaryTutor?.phone && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button asChild variant="outline" size="sm" className="h-8 w-8 p-0">
+                      <a href={phoneUrl}><Phone className="h-3.5 w-3.5" /></a>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Ligar para {primaryTutor.name}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {whatsappUrl && (
+              <Button asChild size="sm" className="gap-1.5 h-8 bg-emerald-600 hover:bg-emerald-500 text-white">
+                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  WhatsApp
+                </a>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>

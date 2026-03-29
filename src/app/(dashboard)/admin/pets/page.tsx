@@ -16,14 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+// Table imports removed — list view now uses row cards
 import { 
   Dog, 
   Check, 
@@ -31,7 +24,6 @@ import {
   Search,
   PawPrint,
   CreditCard,
-  Eye,
   MoreVertical,
   AlertCircle,
   Plus,
@@ -74,6 +66,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
@@ -115,7 +108,7 @@ function StatusDot({ status }: { status: "green" | "yellow" | "red" | "gray" }) 
     green: "bg-emerald-500",
     yellow: "bg-amber-500",
     red: "bg-red-500",
-    gray: "bg-gray-300 dark:bg-gray-600",
+    gray: "bg-muted-foreground/30",
   };
   
   return (
@@ -123,9 +116,9 @@ function StatusDot({ status }: { status: "green" | "yellow" | "red" | "gray" }) 
   );
 }
 
-// Card de Pet - Design limpo e elegante
-function PetCard({ 
-  pet, 
+// Card de Pet - Design limpo e elegante, inteiro clicável
+function PetCard({
+  pet,
   onEdit,
   onDelete,
   onCheckIn,
@@ -133,7 +126,7 @@ function PetCard({
   onAddCredits,
   isCheckedIn,
   healthStatus,
-}: { 
+}: {
   pet: any;
   onEdit: () => void;
   onDelete: () => void;
@@ -143,72 +136,74 @@ function PetCard({
   isCheckedIn: boolean;
   healthStatus: { vaccine: "green" | "yellow" | "red" | "gray"; preventive: "green" | "yellow" | "red" | "gray" };
 }) {
+  const router = useRouter();
   const hasLowCredits = (pet.credits || 0) <= 3;
   const hasNoCredits = (pet.credits || 0) === 0;
-  
+
   return (
-    <Card className={cn(
-      "group relative transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5",
-      "bg-white/90 dark:bg-slate-900/80 backdrop-blur-sm",
-      "border border-slate-200/60 dark:border-slate-700/40",
-      isCheckedIn && "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200/50 dark:border-emerald-800/30",
-    )}>
+    <Card
+      className={cn(
+        "group relative transition-all duration-300 cursor-pointer",
+        "hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.01]",
+        "border border-border/60",
+        isCheckedIn && "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200/50 dark:border-emerald-800/30",
+      )}
+      onClick={() => router.push(`/admin/pets/${pet.id}/hub`)}
+    >
       <CardContent className="p-4">
         {/* Header */}
         <div className="flex items-start gap-3">
           {/* Avatar */}
-          <Link href={`/admin/pets/${pet.id}/hub`} className="shrink-0 relative">
+          <div className="shrink-0 relative">
             <BreedIcon breed={pet.breed} className="h-12 w-12" />
             {isCheckedIn && (
-              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-emerald-500 rounded-full border-2 border-white dark:border-gray-900" />
+              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-emerald-500 rounded-full border-2 border-background" />
             )}
-          </Link>
-          
+          </div>
+
           {/* Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <Link href={`/admin/pets/${pet.id}/hub`} className="block">
-                  <h3 className="font-semibold text-sm truncate hover:text-primary transition-colors">
-                    {pet.name}
-                  </h3>
-                </Link>
+                <h3 className="font-semibold text-sm truncate">
+                  {pet.name}
+                </h3>
                 <p className="text-xs text-muted-foreground truncate">
                   {pet.breed || "Sem raça"}
                 </p>
               </div>
-              
-              {/* Menu */}
+
+              {/* Menu — secondary actions only */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
-                  <DropdownMenuItem asChild>
-                    <Link href={`/admin/pets/${pet.id}/hub`}>
-                      <Eye className="h-4 w-4 mr-2" /> Ver perfil
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={onEdit}>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(); }}>
                     <Edit className="h-4 w-4 mr-2" /> Editar
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => onAddCredits(5)}>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAddCredits(5); }}>
                     <CreditCard className="h-4 w-4 mr-2" /> +5 créditos
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onAddCredits(10)}>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAddCredits(10); }}>
                     <CreditCard className="h-4 w-4 mr-2" /> +10 créditos
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={onDelete} className="text-red-600">
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-destructive">
                     <Trash2 className="h-4 w-4 mr-2" /> Excluir
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            
+
             {/* Meta info */}
             <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
               {pet.weight && (
@@ -225,32 +220,30 @@ function PetCard({
               {pet.energyLevel && (
                 <span className="flex items-center gap-0.5">
                   <Zap className="h-3 w-3" />
-                  {pet.energyLevel === "very_high" ? "+++" : 
-                   pet.energyLevel === "high" ? "++" : 
+                  {pet.energyLevel === "very_high" ? "+++" :
+                   pet.energyLevel === "high" ? "++" :
                    pet.energyLevel === "medium" ? "+" : "○"}
                 </span>
               )}
             </div>
           </div>
         </div>
-        
-        {/* Status indicators - linha discreta */}
+
+        {/* Status indicators */}
         <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/50">
           <div className="flex items-center gap-3">
-            {/* Health dots */}
             <div className="flex items-center gap-1.5" title="Vacinas | Preventivos">
               <StatusDot status={healthStatus.vaccine} />
               <StatusDot status={healthStatus.preventive} />
             </div>
-            
-            {/* Status badges discretos */}
+
             {isCheckedIn && (
               <Badge variant="secondary" className="h-5 text-[10px] px-2 bg-emerald-100/80 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 border-0 font-medium">
                 Na creche
               </Badge>
             )}
             {hasNoCredits && !isCheckedIn && (
-              <Badge variant="secondary" className="h-5 text-[10px] px-2 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-0 font-medium">
+              <Badge variant="secondary" className="h-5 text-[10px] px-2 bg-muted text-muted-foreground border-0 font-medium">
                 Sem créditos
               </Badge>
             )}
@@ -260,12 +253,11 @@ function PetCard({
               </Badge>
             )}
           </div>
-          
-          {/* Quick action */}
+
           {isCheckedIn ? (
-            <Button 
-              size="sm" 
-              variant="ghost" 
+            <Button
+              size="sm"
+              variant="ghost"
               className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground"
               onClick={(e) => { e.stopPropagation(); onCheckOut(); }}
             >
@@ -273,9 +265,9 @@ function PetCard({
               Sair
             </Button>
           ) : (
-            <Button 
-              size="sm" 
-              variant="ghost" 
+            <Button
+              size="sm"
+              variant="ghost"
               className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground"
               onClick={(e) => { e.stopPropagation(); onCheckIn(); }}
               disabled={hasNoCredits}
@@ -285,8 +277,7 @@ function PetCard({
             </Button>
           )}
         </div>
-        
-        {/* Barra de créditos */}
+
         <div className="mt-2">
           <CreditBar credits={pet.credits || 0} />
         </div>
@@ -296,6 +287,7 @@ function PetCard({
 }
 
 export default function AdminPetsPage() {
+  const router = useRouter();
   // View mode persistence
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [smartFilter, setSmartFilter] = useState<SmartFilter>("all");
@@ -592,33 +584,28 @@ export default function AdminPetsPage() {
         </div>
       </div>
 
-      {/* Stats Cards - Design clean e interativo */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      {/* Stats — compact inline pills */}
+      <div className="flex flex-wrap items-center gap-1.5">
         {[
-          { key: "all", label: "Total", value: stats.total, icon: Dog, bgColor: "bg-slate-50 dark:bg-slate-800/50", iconBg: "bg-slate-100 dark:bg-slate-700", iconColor: "text-slate-600 dark:text-slate-400" },
-          { key: "checkedIn", label: "Na Creche", value: stats.checkedIn, icon: Activity, bgColor: "bg-emerald-50/70 dark:bg-emerald-950/30", iconBg: "bg-emerald-100 dark:bg-emerald-900/50", iconColor: "text-emerald-600 dark:text-emerald-400" },
-          { key: "lowCredits", label: "Poucos Créd.", value: stats.lowCredits, icon: AlertTriangle, bgColor: "bg-amber-50/70 dark:bg-amber-950/30", iconBg: "bg-amber-100 dark:bg-amber-900/50", iconColor: "text-amber-600 dark:text-amber-400" },
-          { key: "noCredits", label: "Sem Créd.", value: stats.noCredits, icon: AlertCircle, bgColor: "bg-slate-50 dark:bg-slate-800/50", iconBg: "bg-slate-100 dark:bg-slate-700", iconColor: "text-slate-500 dark:text-slate-400" },
-          { key: "birthday", label: "Aniversário", value: pets?.filter(p => p.birthDate && new Date(p.birthDate).getMonth() === new Date().getMonth()).length || 0, icon: Cake, bgColor: "bg-pink-50/70 dark:bg-pink-950/30", iconBg: "bg-pink-100 dark:bg-pink-900/50", iconColor: "text-pink-600 dark:text-pink-400" },
-          { key: "lowStock", label: "Est. Baixo", value: lowStockPets?.length || 0, icon: Package, bgColor: "bg-orange-50/70 dark:bg-orange-950/30", iconBg: "bg-orange-100 dark:bg-orange-900/50", iconColor: "text-orange-600 dark:text-orange-400" },
-        ].map(({ key, label, value, icon: Icon, bgColor, iconBg, iconColor }) => (
+          { key: "all", label: "Total", value: stats.total, icon: Dog },
+          { key: "checkedIn", label: "Na Creche", value: stats.checkedIn, icon: Activity },
+          { key: "lowCredits", label: "Poucos Créd.", value: stats.lowCredits, icon: AlertTriangle },
+          { key: "noCredits", label: "Sem Créd.", value: stats.noCredits, icon: AlertCircle },
+          { key: "birthday", label: "Aniversário", value: pets?.filter(p => p.birthDate && new Date(p.birthDate).getMonth() === new Date().getMonth()).length || 0, icon: Cake },
+          { key: "lowStock", label: "Est. Baixo", value: lowStockPets?.length || 0, icon: Package },
+        ].map(({ key, label, value, icon: Icon }) => (
           <button
             key={key}
             onClick={() => setSmartFilter(key as SmartFilter)}
             className={cn(
-              "flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all duration-200",
-              "border-2 border-transparent hover:border-slate-200 dark:hover:border-slate-700",
-              bgColor,
-              smartFilter === key && "border-primary/70 shadow-sm"
+              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200",
+              "bg-muted/60 hover:bg-muted text-foreground",
+              smartFilter === key && "ring-2 ring-primary/50 bg-primary/10 text-primary"
             )}
           >
-            <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center shrink-0", iconBg)}>
-              <Icon className={cn("h-4 w-4", iconColor)} />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xl font-bold leading-none tracking-tight">{value}</p>
-              <p className="text-[11px] text-muted-foreground truncate mt-0.5">{label}</p>
-            </div>
+            <Icon className="h-3 w-3 text-muted-foreground shrink-0" />
+            <span className="font-bold tabular-nums">{value}</span>
+            <span className="text-muted-foreground">{label}</span>
           </button>
         ))}
       </div>
@@ -700,52 +687,89 @@ export default function AdminPetsPage() {
         </div>
       )}
 
-      {/* List View */}
+      {/* List View — compact row cards */}
       {viewMode === "list" && (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Pet</TableHead>
-                <TableHead>Raça</TableHead>
-                <TableHead className="text-center">Peso</TableHead>
-                <TableHead className="text-center">Créditos</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPets.map(pet => {
-                const isCheckedIn = checkedInPetIds.has(pet.id);
-                return (
-                  <TableRow key={pet.id} className={cn(isCheckedIn && "bg-emerald-50/50 dark:bg-emerald-950/10")}>
-                    <TableCell>
-                      <Link href={`/admin/pets/${pet.id}/hub`} className="flex items-center gap-2 hover:text-primary">
-                        <BreedIcon breed={pet.breed} className="h-8 w-8" />
-                        <div>
-                          <p className="font-medium text-sm">{pet.name}</p>
-                          {isCheckedIn && <Badge variant="secondary" className="text-[10px] h-4 bg-emerald-100 text-emerald-700 border-0">Na creche</Badge>}
-                        </div>
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{pet.breed || "-"}</TableCell>
-                    <TableCell className="text-center text-sm">{pet.weight ? `${(pet.weight / 1000).toFixed(1)}kg` : "-"}</TableCell>
-                    <TableCell className="text-center"><div className="w-16 mx-auto"><CreditBar credits={pet.credits || 0} maxCredits={15} /></div></TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        {isCheckedIn ? (
-                          <Button size="sm" variant="ghost" onClick={() => checkoutMutation.mutate({ petId: pet.id })} className="h-7 w-7 p-0"><LogOut className="h-3.5 w-3.5" /></Button>
-                        ) : (
-                          <Button size="sm" variant="ghost" onClick={() => checkinMutation.mutate({ petId: pet.id })} className="h-7 w-7 p-0" disabled={(pet.credits || 0) === 0}><LogIn className="h-3.5 w-3.5" /></Button>
-                        )}
-                        <Button size="sm" variant="ghost" onClick={() => { setSelectedPet(pet); setIsEditOpen(true); }} className="h-7 w-7 p-0"><Edit className="h-3.5 w-3.5" /></Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Card>
+        <div className="space-y-1.5">
+          {filteredPets.map(pet => {
+            const isCheckedIn = checkedInPetIds.has(pet.id);
+            const hasNoCredits = (pet.credits || 0) === 0;
+            return (
+              <div
+                key={pet.id}
+                onClick={() => router.push(`/admin/pets/${pet.id}/hub`)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border/60 cursor-pointer",
+                  "transition-all duration-200 hover:shadow-md hover:bg-muted/30",
+                  isCheckedIn && "bg-emerald-50/50 dark:bg-emerald-950/10 border-emerald-200/50"
+                )}
+              >
+                {/* Avatar */}
+                <div className="relative shrink-0">
+                  <BreedIcon breed={pet.breed} className="h-9 w-9" />
+                  {isCheckedIn && (
+                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-background" />
+                  )}
+                </div>
+
+                {/* Name + Breed */}
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-sm truncate">{pet.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{pet.breed || "Sem raça"}</p>
+                </div>
+
+                {/* Key stats — hidden on very small screens */}
+                <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground shrink-0">
+                  {pet.weight && (
+                    <span className="flex items-center gap-0.5">
+                      <Scale className="h-3 w-3" />
+                      {(pet.weight / 1000).toFixed(1)}kg
+                    </span>
+                  )}
+                  {pet.birthDate && (
+                    <span>
+                      {Math.floor((Date.now() - new Date(pet.birthDate).getTime()) / (1000 * 60 * 60 * 24 * 365))}a
+                    </span>
+                  )}
+                </div>
+
+                {/* Credits bar */}
+                <div className="w-14 shrink-0">
+                  <CreditBar credits={pet.credits || 0} maxCredits={15} />
+                </div>
+
+                {/* Status badge */}
+                <div className="shrink-0 w-20 text-center">
+                  {isCheckedIn && (
+                    <Badge variant="secondary" className="text-[10px] h-5 px-2 bg-emerald-100/80 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 border-0 font-medium">
+                      Na creche
+                    </Badge>
+                  )}
+                  {hasNoCredits && !isCheckedIn && (
+                    <Badge variant="secondary" className="text-[10px] h-5 px-2 bg-muted text-muted-foreground border-0 font-medium">
+                      Sem créd.
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                  {isCheckedIn ? (
+                    <Button size="sm" variant="ghost" onClick={() => checkoutMutation.mutate({ petId: pet.id })} className="h-7 w-7 p-0">
+                      <LogOut className="h-3.5 w-3.5" />
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="ghost" onClick={() => checkinMutation.mutate({ petId: pet.id })} className="h-7 w-7 p-0" disabled={hasNoCredits}>
+                      <LogIn className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                  <Button size="sm" variant="ghost" onClick={() => { setSelectedPet(pet); setIsEditOpen(true); }} className="h-7 w-7 p-0">
+                    <Edit className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
 
       {/* Status View */}

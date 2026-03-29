@@ -19,6 +19,12 @@ import {
   Pencil,
   Check,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { PetHubHeader } from "./pet-hub-header";
 import { PetTimelineTab } from "./pet-timeline-tab";
 import { PetGeneralTab } from "./pet-general-tab";
@@ -101,16 +107,22 @@ export function PetHubPage({ petId, role }: PetHubPageProps) {
       <Tabs defaultValue="geral" className="w-full">
         <div className="flex items-center gap-2">
           <TabsList className="flex-1 h-auto p-1 flex overflow-x-auto scrollbar-none gap-0">
+          <TooltipProvider delayDuration={300}>
           {TAB_ITEMS.map(({ value, label, icon: Icon }) => (
-            <TabsTrigger
-              key={value}
-              value={value}
-              className="flex-1 min-w-0 gap-1.5 px-3 py-2 text-sm"
-            >
-              <Icon className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">{label}</span>
-            </TabsTrigger>
+            <Tooltip key={value}>
+              <TooltipTrigger asChild>
+                <TabsTrigger
+                  value={value}
+                  className="shrink-0 gap-1.5 px-2 sm:px-3 py-2 text-sm"
+                >
+                  <Icon className="h-4 w-4 sm:h-3.5 sm:w-3.5 shrink-0" />
+                  <span className="hidden sm:inline">{label}</span>
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent className="sm:hidden">{label}</TooltipContent>
+            </Tooltip>
           ))}
+          </TooltipProvider>
           </TabsList>
           {role === "admin" && (
             <Button
