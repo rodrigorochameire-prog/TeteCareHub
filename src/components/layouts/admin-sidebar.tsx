@@ -35,6 +35,7 @@ import {
   BarChart3,
   Building2,
   Receipt,
+  ReceiptText,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -100,6 +101,7 @@ const menuGroups = [
       { icon: TrendingUp, label: "Finanças", path: "/admin/finances" },
       { icon: Package, label: "Planos e Serviços", path: "/admin/plans" },
       { icon: Receipt, label: "Pagamentos", path: "/admin/payments" },
+      { icon: ReceiptText, label: "Despesas", path: "/admin/expenses" },
     ],
   },
   {
