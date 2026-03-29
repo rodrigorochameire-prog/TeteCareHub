@@ -8,27 +8,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  MessageCircle,
-  Phone,
   Pencil,
   ArrowLeft,
   Cake,
   Weight,
   Star,
   Tag,
-  User,
 } from "lucide-react";
 import { PetAvatar } from "@/components/pet-avatar";
 import { InlineEdit } from "./inline-edit";
 import Link from "next/link";
-
-interface Tutor {
-  id: number;
-  name: string;
-  email: string;
-  phone?: string | null;
-  isPrimary: boolean;
-}
 
 interface Pet {
   id: number;
@@ -40,7 +29,6 @@ interface Pet {
   birthDate?: Date | string | null;
   energyLevel?: string | null;
   credits?: number | null;
-  tutors: Tutor[];
   species?: string | null;
   sex?: string | null;
   size?: string | null;
@@ -81,14 +69,6 @@ function calculateAge(birthDate: Date | string | null | undefined): string {
   return m > 0 ? `${y} ano${y > 1 ? "s" : ""} ${m}m` : `${y} ano${y > 1 ? "s" : ""}`;
 }
 
-function formatPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length === 11) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-  }
-  return phone;
-}
-
 function getPlanLabel(credits: number | null | undefined): string {
   if (typeof credits !== "number") return "—";
   if (credits >= 20) return "Mensalista";
@@ -97,20 +77,9 @@ function getPlanLabel(credits: number | null | undefined): string {
 }
 
 export function PetHubHeader({ pet, role, isEditMode = false }: PetHubHeaderProps) {
-  const primaryTutor = pet.tutors.find((t) => t.isPrimary) ?? pet.tutors[0];
   const weight = formatWeight(pet.weight);
   const age = calculateAge(pet.birthDate);
   const statusInfo = STATUS_MAP[pet.status ?? "active"] ?? STATUS_MAP.active;
-
-  const whatsappUrl = primaryTutor?.phone
-    ? `https://wa.me/55${primaryTutor.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
-        `Olá ${primaryTutor.name}, sobre ${pet.name}...`
-      )}`
-    : null;
-
-  const phoneUrl = primaryTutor?.phone
-    ? `tel:+55${primaryTutor.phone.replace(/\D/g, "")}`
-    : null;
 
   const birthDateFormatted = pet.birthDate
     ? new Date(pet.birthDate).toLocaleDateString("pt-BR")
@@ -122,7 +91,6 @@ export function PetHubHeader({ pet, role, isEditMode = false }: PetHubHeaderProp
   if (birthDateFormatted) stats.push({ icon: Cake, label: "Nascimento", value: `${birthDateFormatted} (${age})` });
   if (typeof pet.credits === "number") stats.push({ icon: Star, label: "Créditos", value: `${pet.credits} diária${pet.credits !== 1 ? "s" : ""}` });
   stats.push({ icon: Tag, label: "Plano", value: getPlanLabel(pet.credits) });
-  if (primaryTutor) stats.push({ icon: User, label: "Tutor", value: primaryTutor.phone ? `${primaryTutor.name} · ${formatPhone(primaryTutor.phone)}` : primaryTutor.name });
 
   return (
     <div className="flex flex-col gap-4">
@@ -218,29 +186,6 @@ export function PetHubHeader({ pet, role, isEditMode = false }: PetHubHeaderProp
             ))}
           </div>
 
-          {/* Contact actions */}
-          <div className="flex items-center gap-2 mt-2">
-            {phoneUrl && primaryTutor?.phone && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button asChild variant="outline" size="sm" className="h-8 w-8 p-0">
-                      <a href={phoneUrl}><Phone className="h-3.5 w-3.5" /></a>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Ligar para {primaryTutor.name}</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-            {whatsappUrl && (
-              <Button asChild size="sm" className="gap-1.5 h-8 bg-emerald-600 hover:bg-emerald-500 text-white">
-                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="h-3.5 w-3.5" />
-                  WhatsApp
-                </a>
-              </Button>
-            )}
-          </div>
         </div>
       </div>
     </div>

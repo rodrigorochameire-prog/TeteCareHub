@@ -21,6 +21,8 @@ import {
   CreditCard,
   CalendarX,
   PlusCircle,
+  Copy,
+  ExternalLink,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { InlineEdit } from "./inline-edit";
@@ -156,11 +158,12 @@ function InfoRow({ children }: { children: React.ReactNode }) {
 }
 
 // Tutor contact card
-function TutorContactCard({ tutor }: { tutor: Tutor }) {
+function TutorContactCard({ tutor, petName }: { tutor: Tutor; petName: string }) {
   const phoneDigits = tutor.phone?.replace(/\D/g, "") ?? "";
   const whatsappUrl = phoneDigits
-    ? `https://wa.me/55${phoneDigits}?text=${encodeURIComponent(`Olá ${tutor.name}...`)}`
+    ? `https://wa.me/55${phoneDigits}?text=${encodeURIComponent(`Olá ${tutor.name}, sobre ${petName}...`)}`
     : null;
+  const phoneUrl = phoneDigits ? `tel:+55${phoneDigits}` : null;
 
   return (
     <div className="space-y-2">
@@ -181,37 +184,100 @@ function TutorContactCard({ tutor }: { tutor: Tutor }) {
         </div>
       </div>
 
-      {/* Contact actions */}
-      <div className="ml-11 space-y-1">
+      {/* Contact details */}
+      <div className="ml-11 space-y-1.5">
+        {/* Phone + call button + WhatsApp button */}
         {tutor.phone && (
-          <a
-            href={`tel:+55${phoneDigits}`}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Phone className="h-3.5 w-3.5" />
-            {formatPhone(tutor.phone)}
-          </a>
+          <div className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-2">
+            <a
+              href={phoneUrl!}
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Phone className="h-3.5 w-3.5 shrink-0" />
+              {formatPhone(tutor.phone)}
+            </a>
+            <div className="flex items-center gap-1.5">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0 shrink-0"
+              >
+                <a href={phoneUrl!} aria-label={`Ligar para ${tutor.name}`}>
+                  <Phone className="h-3.5 w-3.5" />
+                </a>
+              </Button>
+              {whatsappUrl && (
+                <Button
+                  asChild
+                  size="sm"
+                  className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white shrink-0"
+                >
+                  <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    WhatsApp
+                  </a>
+                </Button>
+              )}
+            </div>
+          </div>
         )}
-        {whatsappUrl && (
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-md bg-emerald-600/10 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-600/20 transition-colors"
-          >
-            <MessageCircle className="h-3.5 w-3.5" />
-            WhatsApp
-          </a>
-        )}
+
+        {/* Email */}
         {tutor.email && (
           <a
             href={`mailto:${tutor.email}`}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            <Mail className="h-3.5 w-3.5" />
+            <Mail className="h-3.5 w-3.5 shrink-0" />
             {tutor.email}
           </a>
         )}
+      </div>
+    </div>
+  );
+}
+
+// Group link section
+function GroupLinkSection({ petName }: { petName: string }) {
+  const groupUrl = `https://wa.me/group-placeholder`;
+
+  function handleCopy() {
+    void navigator.clipboard.writeText(groupUrl);
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-md bg-muted/30 px-3 py-2">
+      <div className="flex items-center gap-2 min-w-0">
+        <MessageCircle className="h-4 w-4 text-muted-foreground shrink-0" />
+        <div className="min-w-0">
+          <span className="text-sm font-medium text-foreground truncate block">
+            Grupo do {petName}
+          </span>
+          <span className="text-[10px] text-muted-foreground">Link do grupo</span>
+        </div>
+      </div>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          onClick={handleCopy}
+          aria-label="Copiar link do grupo"
+        >
+          <Copy className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          asChild
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1.5"
+        >
+          <a href={groupUrl} target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="h-3.5 w-3.5" />
+            Abrir
+          </a>
+        </Button>
       </div>
     </div>
   );
@@ -291,9 +357,11 @@ export function PetGeneralTab({ pet, role, isEditMode = false }: PetGeneralTabPr
                 {sortedTutors.map((tutor, i) => (
                   <div key={tutor.id}>
                     {i > 0 && <Separator className="mb-4" />}
-                    <TutorContactCard tutor={tutor} />
+                    <TutorContactCard tutor={tutor} petName={pet.name} />
                   </div>
                 ))}
+                <Separator />
+                <GroupLinkSection petName={pet.name} />
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-6 text-center">
