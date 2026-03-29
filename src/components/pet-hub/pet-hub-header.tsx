@@ -40,6 +40,9 @@ interface Pet {
   credits?: number | null;
   tutors: Tutor[];
   species?: string | null;
+  sex?: string | null;
+  size?: string | null;
+  neuteredStatus?: string | null;
 }
 
 interface PetHubHeaderProps {
@@ -99,10 +102,18 @@ export function PetHubHeader({ pet, role }: PetHubHeaderProps) {
     ? `tel:+55${primaryTutor.phone.replace(/\D/g, "")}`
     : null;
 
+  // Sex / size / neutered labels
+  const SEX_LABELS: Record<string, string> = { male: "♂ Macho", female: "♀ Fêmea" };
+  const SIZE_LABELS: Record<string, string> = { small: "Pequeno", medium: "Médio", large: "Grande", xlarge: "Extra grande" };
+  const NEUTERED_LABELS: Record<string, string> = { yes: "Castrado", no: "Não castrado", scheduled: "Castração agendada" };
+
   // Build stats pills with icons
   const statPills: { icon: typeof Cake; label: string }[] = [];
   if (age) statPills.push({ icon: Cake, label: age });
   if (weight) statPills.push({ icon: Weight, label: weight });
+  if (pet.sex && SEX_LABELS[pet.sex]) statPills.push({ icon: Cake, label: SEX_LABELS[pet.sex] });
+  if (pet.size && SIZE_LABELS[pet.size]) statPills.push({ icon: Weight, label: SIZE_LABELS[pet.size] });
+  if (pet.neuteredStatus && NEUTERED_LABELS[pet.neuteredStatus]) statPills.push({ icon: Star, label: NEUTERED_LABELS[pet.neuteredStatus] });
   if (typeof pet.credits === "number") statPills.push({ icon: Star, label: `${pet.credits} cred.` });
 
   return (

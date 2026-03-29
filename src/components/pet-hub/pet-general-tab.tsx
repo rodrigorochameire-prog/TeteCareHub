@@ -6,12 +6,13 @@ import { Separator } from "@/components/ui/separator";
 import {
   Zap,
   Phone,
+  Mail,
   MessageCircle,
   AlertTriangle,
   Stethoscope,
   ClipboardList,
-  UserRound,
-  PawPrint,
+  UserCircle,
+  HeartPulse,
 } from "lucide-react";
 
 interface Tutor {
@@ -55,32 +56,6 @@ interface PetGeneralTabProps {
   role: "admin" | "tutor";
 }
 
-function formatWeight(weight: number | null | undefined): string | null {
-  if (!weight) return null;
-  const kg = weight > 100 ? weight / 1000 : weight;
-  return `${kg.toFixed(1)} kg`;
-}
-
-function formatBirthDate(birthDate: Date | string | null | undefined): string | null {
-  if (!birthDate) return null;
-  const date = new Date(birthDate);
-  return date.toLocaleDateString("pt-BR");
-}
-
-function calculateAge(birthDate: Date | string | null | undefined): string | null {
-  if (!birthDate) return null;
-  const birth = new Date(birthDate);
-  const now = new Date();
-  const years = now.getFullYear() - birth.getFullYear();
-  const months = now.getMonth() - birth.getMonth();
-  const totalMonths = years * 12 + months;
-
-  if (totalMonths < 12) return `${totalMonths} meses`;
-  const y = Math.floor(totalMonths / 12);
-  const m = totalMonths % 12;
-  return m > 0 ? `${y} ano${y > 1 ? "s" : ""} e ${m} mês${m > 1 ? "es" : ""}` : `${y} ano${y > 1 ? "s" : ""}`;
-}
-
 function formatPhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");
   if (digits.length === 11) {
@@ -93,27 +68,11 @@ function formatPhone(phone: string): string {
 }
 
 const LABELS: Record<string, string> = {
-  dog: "Cachorro",
-  cat: "Gato",
-  male: "Macho",
-  female: "Fêmea",
-  small: "Pequeno",
-  medium: "Médio",
-  large: "Grande",
-  xlarge: "Extra grande",
-  short: "Curto",
-  medium_coat: "Médio",
-  long: "Longo",
-  wire: "Arame",
-  curly: "Cacheado",
   very_low: "Muito Baixo",
   low: "Baixo",
   moderate: "Moderado",
   high: "Alto",
   hyperactive: "Hiperativo",
-  normal: "Normal",
-  medium_energy: "Moderado",
-  very_high: "Muito Alto",
   social: "Sociável",
   selective: "Seletivo",
   reactive: "Reativo",
@@ -121,17 +80,11 @@ const LABELS: Record<string, string> = {
   friendly: "Amigável",
   cautious: "Cauteloso",
   fearful: "Medroso",
-  excellent: "Excelente",
-  good: "Bom",
-  poor: "Ruim",
   wrestling: "Luta Romana",
   chase: "Perseguição",
   fetch: "Buscar",
   tug: "Cabo de Guerra",
   independent: "Independente",
-  yes: "Sim",
-  no: "Não",
-  scheduled: "Agendado",
 };
 
 function label(value: string | null | undefined): string | null {
@@ -167,79 +120,78 @@ function LevelBar({ value, levels }: { value: string | null | undefined; levels:
   );
 }
 
-// Compact info row — only renders when value is truthy
-function CompactRow({ label: rowLabel, value }: { label: string; value: string | null | undefined }) {
-  if (!value) return null;
+// Info row with hover
+function InfoRow({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex justify-between items-center py-1 text-sm">
-      <span className="text-muted-foreground text-xs">{rowLabel}</span>
-      <span className="text-foreground font-medium text-xs">{value}</span>
+    <div className="flex items-start justify-between gap-2 rounded-md px-2 py-2 transition-colors hover:bg-muted/50">
+      {children}
     </div>
   );
 }
 
-// Tutor contact block
-function TutorContact({ tutor, isPrimary }: { tutor: Tutor; isPrimary?: boolean }) {
+// Tutor contact card
+function TutorContactCard({ tutor }: { tutor: Tutor }) {
+  const phoneDigits = tutor.phone?.replace(/\D/g, "") ?? "";
+  const whatsappUrl = phoneDigits
+    ? `https://wa.me/55${phoneDigits}?text=${encodeURIComponent(`Olá ${tutor.name}...`)}`
+    : null;
+
   return (
-    <div className="flex items-start justify-between gap-2">
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-sm text-foreground truncate">{tutor.name}</span>
-          {isPrimary && (
-            <Badge variant="secondary" className="text-[10px] shrink-0">
-              Principal
-            </Badge>
-          )}
+    <div className="space-y-2">
+      {/* Name + badge */}
+      <div className="flex items-center gap-2">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
+          <UserCircle className="h-5 w-5 text-muted-foreground" />
         </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-sm text-foreground truncate">{tutor.name}</span>
+            {tutor.isPrimary && (
+              <Badge variant="secondary" className="text-[10px] shrink-0">
+                Principal
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Contact actions */}
+      <div className="ml-11 space-y-1">
         {tutor.phone && (
           <a
-            href={`tel:+55${tutor.phone.replace(/\D/g, "")}`}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            href={`tel:+55${phoneDigits}`}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
+            <Phone className="h-3.5 w-3.5" />
             {formatPhone(tutor.phone)}
           </a>
         )}
+        {whatsappUrl && (
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-md bg-emerald-600/10 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-600/20 transition-colors"
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            WhatsApp
+          </a>
+        )}
+        {tutor.email && (
+          <a
+            href={`mailto:${tutor.email}`}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Mail className="h-3.5 w-3.5" />
+            {tutor.email}
+          </a>
+        )}
       </div>
-      {tutor.phone && (
-        <a
-          href={`https://wa.me/55${tutor.phone.replace(/\D/g, "")}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`WhatsApp de ${tutor.name}`}
-          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-emerald-600 hover:bg-emerald-600/10 transition-colors"
-        >
-          <MessageCircle className="h-4 w-4" />
-        </a>
-      )}
     </div>
   );
 }
 
-export function PetGeneralTab({ pet, role }: PetGeneralTabProps) {
-  const age = calculateAge(pet.birthDate);
-  const birthDateStr = formatBirthDate(pet.birthDate);
-  const weightStr = formatWeight(pet.weight);
-
-  // Build birth display string
-  const birthDisplay = birthDateStr
-    ? age
-      ? `${birthDateStr} (${age})`
-      : birthDateStr
-    : null;
-
-  // Neutered display
-  const neuteredDisplay = pet.neuteredStatus === "yes"
-    ? "Sim"
-    : pet.neuteredStatus === "scheduled"
-      ? "Agendado"
-      : pet.neuteredStatus === "no"
-        ? "Não"
-        : null;
-
-  // Check if behavior section has any data
-  const hasBehaviorData =
-    pet.energyLevel || pet.dogSociability || pet.humanSociability || pet.playStyle;
-
+export function PetGeneralTab({ pet }: PetGeneralTabProps) {
   // Fear triggers
   const fearList = pet.fearTriggers
     ? Array.isArray(pet.fearTriggers)
@@ -248,171 +200,200 @@ export function PetGeneralTab({ pet, role }: PetGeneralTabProps) {
     : [];
   const activeFearTriggers = fearList.filter((t) => t.trim() !== "");
 
-  // Allergy flags
-  const hasAnyAllergy = pet.hasFoodAllergy || pet.hasMedicationAllergy;
-  const hasChronicCondition = pet.hasChronicCondition;
+  // Check if behavior section has any data
+  const hasBehaviorData =
+    pet.energyLevel || pet.dogSociability || pet.humanSociability || pet.playStyle;
 
   // Sort tutors: primary first
   const sortedTutors = [...pet.tutors].sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0));
 
-  // Has emergency vet
-  const hasEmergencyVet = pet.emergencyVetName || pet.emergencyVetPhone;
-
-  // Has quick-access content
-  const hasQuickAccessContent =
-    sortedTutors.length > 0 ||
-    hasEmergencyVet ||
-    hasAnyAllergy ||
-    hasChronicCondition ||
-    activeFearTriggers.length > 0 ||
-    pet.notes;
+  // Has any health/restriction data
+  const hasHealthData =
+    pet.hasFoodAllergy ||
+    pet.hasMedicationAllergy ||
+    pet.hasChronicCondition ||
+    pet.emergencyVetName ||
+    pet.emergencyVetPhone ||
+    activeFearTriggers.length > 0;
 
   return (
-    <div className="space-y-5">
-      {/* 3-column grid */}
-      <div className="grid gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {/* Column 1 — Perfil (compact) */}
+    <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
+      {/* ── Column 1 ── */}
+      <div className="space-y-5">
+        {/* Saúde e Restrições */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <PawPrint className="h-4 w-4 text-muted-foreground" />
-              Perfil
+              <HeartPulse className="h-4 w-4 text-muted-foreground" />
+              Saúde e Restrições
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col divide-y divide-border">
-              <CompactRow label="Raça" value={pet.breed} />
-              <CompactRow label="Sexo" value={label(pet.sex)} />
-              <CompactRow label="Nascimento" value={birthDisplay} />
-              <CompactRow label="Peso" value={weightStr} />
-              <CompactRow label="Porte" value={label(pet.size)} />
-              <CompactRow label="Pelagem" value={label(pet.coatType)} />
-              <CompactRow label="Castrado" value={neuteredDisplay} />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Column 2 — Acesso Rápido (KEY card) */}
-        <Card className="border-l-4 border-l-primary bg-primary/[0.02]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Phone className="h-4 w-4 text-primary" />
-              Acesso Rápido
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Tutores */}
-            {sortedTutors.length > 0 && (
-              <div className="space-y-2">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Tutores
-                </span>
-                <div className="space-y-2">
-                  {sortedTutors.map((tutor) => (
-                    <TutorContact key={tutor.id} tutor={tutor} isPrimary={tutor.isPrimary} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Veterinário de emergência */}
-            {hasEmergencyVet && (
-              <>
-                <Separator />
-                <div className="space-y-1">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                    <Stethoscope className="h-3 w-3 text-red-500" />
-                    Veterinário de emergência
-                  </span>
-                  {pet.emergencyVetName && (
-                    <p className="text-sm font-medium text-foreground">{pet.emergencyVetName}</p>
-                  )}
-                  {pet.emergencyVetPhone && (
-                    <a
-                      href={`tel:+55${pet.emergencyVetPhone.replace(/\D/g, "")}`}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
-                    >
-                      <Phone className="h-3 w-3" />
-                      {formatPhone(pet.emergencyVetPhone)}
-                    </a>
-                  )}
-                </div>
-              </>
-            )}
-
-            {/* Alergias */}
-            {(hasAnyAllergy || hasChronicCondition) && (
-              <>
-                <Separator />
-                <div className="space-y-2">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Saúde &amp; Alergias
-                  </span>
-                  {pet.hasFoodAllergy && (
-                    <div className="flex items-start gap-2">
-                      <Badge variant="destructive" className="text-[10px] shrink-0 mt-0.5">
-                        Alergia alimentar
-                      </Badge>
+            {hasHealthData ? (
+              <div className="space-y-1">
+                {/* Alergias alimentares */}
+                <InfoRow>
+                  <span className="text-xs text-muted-foreground">Alergias alimentares</span>
+                  {pet.hasFoodAllergy ? (
+                    <div className="flex items-center gap-2 text-right">
+                      <Badge variant="destructive" className="text-[10px]">Sim</Badge>
                       {pet.foodAllergyDetails && (
-                        <span className="text-xs text-muted-foreground">{pet.foodAllergyDetails}</span>
+                        <span className="text-xs text-muted-foreground max-w-[180px] truncate">
+                          {pet.foodAllergyDetails}
+                        </span>
                       )}
                     </div>
+                  ) : (
+                    <span className="text-xs text-foreground">Não</span>
                   )}
-                  {pet.hasMedicationAllergy && (
-                    <div className="flex items-start gap-2">
-                      <Badge variant="destructive" className="text-[10px] shrink-0 mt-0.5">
-                        Alergia a medicamentos
-                      </Badge>
+                </InfoRow>
+
+                {/* Alergias a medicamentos */}
+                <InfoRow>
+                  <span className="text-xs text-muted-foreground">Alergias a medicamentos</span>
+                  {pet.hasMedicationAllergy ? (
+                    <div className="flex items-center gap-2 text-right">
+                      <Badge variant="destructive" className="text-[10px]">Sim</Badge>
                       {pet.medicationAllergyDetails && (
-                        <span className="text-xs text-muted-foreground">{pet.medicationAllergyDetails}</span>
+                        <span className="text-xs text-muted-foreground max-w-[180px] truncate">
+                          {pet.medicationAllergyDetails}
+                        </span>
                       )}
                     </div>
+                  ) : (
+                    <span className="text-xs text-foreground">Não</span>
                   )}
-                  {pet.hasChronicCondition && (
-                    <div className="flex items-start gap-2">
-                      <Badge variant="outline" className="text-[10px] shrink-0 mt-0.5 border-amber-500 text-amber-700">
-                        Condição crônica
+                </InfoRow>
+
+                {/* Condição crônica */}
+                <InfoRow>
+                  <span className="text-xs text-muted-foreground">Condição crônica</span>
+                  {pet.hasChronicCondition ? (
+                    <div className="flex items-center gap-2 text-right">
+                      <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-700">
+                        Sim
                       </Badge>
                       {pet.chronicConditionDetails && (
-                        <span className="text-xs text-muted-foreground">{pet.chronicConditionDetails}</span>
+                        <span className="text-xs text-muted-foreground max-w-[180px] truncate">
+                          {pet.chronicConditionDetails}
+                        </span>
                       )}
                     </div>
+                  ) : (
+                    <span className="text-xs text-foreground">Não</span>
                   )}
-                </div>
-              </>
-            )}
+                </InfoRow>
 
-            {/* Gatilhos de medo */}
-            {activeFearTriggers.length > 0 && (
-              <>
-                <Separator />
-                <div className="space-y-1.5">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                    <AlertTriangle className="h-3 w-3 text-amber-500" />
-                    Gatilhos de medo
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {activeFearTriggers.map((trigger, i) => (
-                      <Badge key={i} variant="outline" className="text-[10px] border-amber-400 bg-amber-500/10 text-amber-700">
-                        {trigger}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
+                {/* Veterinário de emergência */}
+                {(pet.emergencyVetName || pet.emergencyVetPhone) && (
+                  <>
+                    <Separator className="my-2" />
+                    <InfoRow>
+                      <div className="flex items-center gap-1.5">
+                        <Stethoscope className="h-3.5 w-3.5 text-red-500" />
+                        <span className="text-xs text-muted-foreground">Veterinário de emergência</span>
+                      </div>
+                      <div className="text-right space-y-0.5">
+                        {pet.emergencyVetName && (
+                          <p className="text-xs font-medium text-foreground">{pet.emergencyVetName}</p>
+                        )}
+                        {pet.emergencyVetPhone && (
+                          <a
+                            href={`tel:+55${pet.emergencyVetPhone.replace(/\D/g, "")}`}
+                            className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 justify-end"
+                          >
+                            <Phone className="h-3 w-3" />
+                            {formatPhone(pet.emergencyVetPhone)}
+                          </a>
+                        )}
+                      </div>
+                    </InfoRow>
+                  </>
+                )}
 
-            {/* Empty state */}
-            {!hasQuickAccessContent && (
+                {/* Gatilhos de medo */}
+                {activeFearTriggers.length > 0 && (
+                  <>
+                    <Separator className="my-2" />
+                    <div className="px-2 py-2 space-y-1.5">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                        Gatilhos de medo
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {activeFearTriggers.map((trigger, i) => (
+                          <Badge
+                            key={i}
+                            variant="outline"
+                            className="text-[10px] border-amber-400 bg-amber-500/10 text-amber-700"
+                          >
+                            {trigger}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
               <div className="flex flex-col items-center justify-center py-6 text-center">
-                <UserRound className="h-8 w-8 text-muted-foreground/30 mb-2" />
-                <p className="text-xs text-muted-foreground">Nenhum dado de contato ou restrição cadastrado.</p>
+                <HeartPulse className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                <p className="text-xs text-muted-foreground">Nenhum dado de saúde cadastrado.</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Column 3 — Comportamento */}
+        {/* Observações — only if notes exist */}
+        {pet.notes && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                Observações
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md bg-muted/30 p-3">
+                <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+                  {pet.notes}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* ── Column 2 ── */}
+      <div className="space-y-5">
+        {/* Tutor */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <UserCircle className="h-4 w-4 text-muted-foreground" />
+              Tutor
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {sortedTutors.length > 0 ? (
+              <div className="space-y-4">
+                {sortedTutors.map((tutor, i) => (
+                  <div key={tutor.id}>
+                    {i > 0 && <Separator className="mb-4" />}
+                    <TutorContactCard tutor={tutor} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-6 text-center">
+                <UserCircle className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                <p className="text-xs text-muted-foreground">Nenhum tutor associado</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Comportamento */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
@@ -460,23 +441,6 @@ export function PetGeneralTab({ pet, role }: PetGeneralTabProps) {
           </CardContent>
         </Card>
       </div>
-
-      {/* Full-width observations */}
-      {pet.notes && (
-        <Card className="border-l-4 border-l-amber-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <ClipboardList className="h-4 w-4 text-amber-600" />
-              Observações
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
-              {pet.notes}
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
