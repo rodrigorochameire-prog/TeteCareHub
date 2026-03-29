@@ -7,6 +7,7 @@ import { useClerk } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
+  LayoutGrid,
   Dog,
   Calendar,
   Users,
@@ -78,6 +79,7 @@ const menuGroups = [
       { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
       { icon: Dog, label: "Pets", path: "/admin/pets" },
       { icon: Calendar, label: "Calendário", path: "/admin/calendar" },
+      { icon: LayoutGrid, label: "Ocupação", path: "/admin/occupancy" },
     ],
   },
   {

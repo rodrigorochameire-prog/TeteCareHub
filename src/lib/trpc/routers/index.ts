@@ -40,6 +40,8 @@ import { plansManagementRouter } from "./plans-management";
 import { paymentRequestsRouter } from "./payment-requests";
 import { notificationRulesRouter } from "./notification-rules";
 import { unifiedCalendarRouter } from "./unified-calendar";
+import { occupancyRouter } from "./occupancy";
+import { activitiesRouter } from "./activities";
 
 export const appRouter = router({
   // Autenticação
@@ -116,6 +118,12 @@ export const appRouter = router({
 
   // Calendário Unificado
   unifiedCalendar: unifiedCalendarRouter,
+
+  // Ocupação
+  occupancy: occupancyRouter,
+
+  // Atividades da Creche
+  activities: activitiesRouter,
 });
 
 export type AppRouter = typeof appRouter;
