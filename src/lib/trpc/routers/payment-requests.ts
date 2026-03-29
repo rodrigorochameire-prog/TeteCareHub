@@ -276,6 +276,33 @@ export const paymentRequestsRouter = router({
     }),
 
   /**
+   * Lista todas as solicitações (admin) - para histórico
+   */
+  listAll: adminProcedure.query(async () => {
+    return safeAsync(async () => {
+      const result = await db
+        .select({
+          request: paymentRequests,
+          tutor: {
+            id: users.id,
+            name: users.name,
+            email: users.email,
+          },
+          pet: {
+            id: pets.id,
+            name: pets.name,
+          },
+        })
+        .from(paymentRequests)
+        .innerJoin(users, eq(paymentRequests.tutorId, users.id))
+        .innerJoin(pets, eq(paymentRequests.petId, pets.id))
+        .orderBy(desc(paymentRequests.createdAt));
+
+      return result;
+    }, "Erro ao listar todas as solicitações");
+  }),
+
+  /**
    * Conta solicitações pendentes (para badge no sidebar)
    */
   pendingCount: adminProcedure.query(async () => {
