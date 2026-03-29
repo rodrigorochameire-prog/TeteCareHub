@@ -248,56 +248,35 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
 
   return (
     <div className="space-y-5">
-      {/* ── Plano e Créditos (full-width) ── */}
-      <Card className={`border ${creditBorderColor}`}>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            {/* Left: title + status */}
-            <div className="flex items-center gap-3">
-              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${creditBgColor}`}>
-                <Wallet className={`h-5 w-5 ${creditStatusColor}`} />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-foreground">Plano e Créditos</h3>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <CreditIcon className={`h-3.5 w-3.5 ${creditStatusColor}`} />
-                  <span className={`text-xs font-medium ${creditStatusColor}`}>
-                    {creditLabel}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Center: credit balance */}
-            <div className="flex items-baseline gap-1.5">
-              <span className={`text-3xl font-bold tabular-nums ${creditStatusColor}`}>
-                {credits}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {credits === 1 ? "diária" : "diárias"}
-              </span>
-            </div>
-
-            {/* Right: plan type indicator */}
-            <div className="text-right">
-              <Badge
-                variant="outline"
-                className={`text-xs ${creditBorderColor} ${creditStatusColor}`}
-              >
-                {credits >= 20 ? "Mensalista" : credits > 0 ? "Avulso" : "Sem plano"}
-              </Badge>
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Tipo estimado pelo saldo
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ── 2-column grid ── */}
+      {/* ── Linha 1: Tutor + Saúde e Restrições ── */}
       <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
-      {/* ── Column 1 ── */}
-      <div className="space-y-5">
+        {/* Tutor (primeiro — acesso rápido) */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <UserCircle className="h-4 w-4 text-muted-foreground" />
+              Tutor
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {sortedTutors.length > 0 ? (
+              <div className="space-y-4">
+                {sortedTutors.map((tutor, i) => (
+                  <div key={tutor.id}>
+                    {i > 0 && <Separator className="mb-4" />}
+                    <TutorContactCard tutor={tutor} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-6 text-center">
+                <UserCircle className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                <p className="text-xs text-muted-foreground">Nenhum tutor associado</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Saúde e Restrições */}
         <Card>
           <CardHeader className="pb-2">
@@ -309,7 +288,6 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
           <CardContent>
             {hasHealthData ? (
               <div className="space-y-1">
-                {/* Alergias alimentares */}
                 <InfoRow>
                   <span className="text-xs text-muted-foreground">Alergias alimentares</span>
                   {pet.hasFoodAllergy ? (
@@ -326,7 +304,6 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
                   )}
                 </InfoRow>
 
-                {/* Alergias a medicamentos */}
                 <InfoRow>
                   <span className="text-xs text-muted-foreground">Alergias a medicamentos</span>
                   {pet.hasMedicationAllergy ? (
@@ -343,14 +320,11 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
                   )}
                 </InfoRow>
 
-                {/* Condição crônica */}
                 <InfoRow>
                   <span className="text-xs text-muted-foreground">Condição crônica</span>
                   {pet.hasChronicCondition ? (
                     <div className="flex items-center gap-2 text-right">
-                      <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-700">
-                        Sim
-                      </Badge>
+                      <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-700">Sim</Badge>
                       {pet.chronicConditionDetails && (
                         <span className="text-xs text-muted-foreground max-w-[180px] truncate">
                           {pet.chronicConditionDetails}
@@ -362,14 +336,13 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
                   )}
                 </InfoRow>
 
-                {/* Veterinário de emergência */}
                 {(pet.emergencyVetName || pet.emergencyVetPhone) && (
                   <>
                     <Separator className="my-2" />
                     <InfoRow>
                       <div className="flex items-center gap-1.5">
                         <Stethoscope className="h-3.5 w-3.5 text-red-500" />
-                        <span className="text-xs text-muted-foreground">Veterinário de emergência</span>
+                        <span className="text-xs text-muted-foreground">Vet. emergência</span>
                       </div>
                       <div className="text-right space-y-0.5">
                         {pet.emergencyVetName && (
@@ -389,7 +362,6 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
                   </>
                 )}
 
-                {/* Gatilhos de medo */}
                 {activeFearTriggers.length > 0 && (
                   <>
                     <Separator className="my-2" />
@@ -421,56 +393,53 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
             )}
           </CardContent>
         </Card>
-
-        {/* Observações — only if notes exist */}
-        {pet.notes && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                Observações
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-md bg-muted/30 p-3">
-                <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
-                  {pet.notes}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
 
-      {/* ── Column 2 ── */}
-      <div className="space-y-5">
-        {/* Tutor */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <UserCircle className="h-4 w-4 text-muted-foreground" />
-              Tutor
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {sortedTutors.length > 0 ? (
-              <div className="space-y-4">
-                {sortedTutors.map((tutor, i) => (
-                  <div key={tutor.id}>
-                    {i > 0 && <Separator className="mb-4" />}
-                    <TutorContactCard tutor={tutor} />
-                  </div>
-                ))}
+      {/* ── Linha 2: Plano e Créditos (largura total) ── */}
+      <Card className={`border ${creditBorderColor}`}>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${creditBgColor}`}>
+                <Wallet className={`h-5 w-5 ${creditStatusColor}`} />
               </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-6 text-center">
-                <UserCircle className="h-8 w-8 text-muted-foreground/30 mb-2" />
-                <p className="text-xs text-muted-foreground">Nenhum tutor associado</p>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Plano e Créditos</h3>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <CreditIcon className={`h-3.5 w-3.5 ${creditStatusColor}`} />
+                  <span className={`text-xs font-medium ${creditStatusColor}`}>
+                    {creditLabel}
+                  </span>
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
 
+            <div className="flex items-baseline gap-1.5">
+              <span className={`text-3xl font-bold tabular-nums ${creditStatusColor}`}>
+                {credits}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {credits === 1 ? "diária" : "diárias"}
+              </span>
+            </div>
+
+            <div className="text-right">
+              <Badge
+                variant="outline"
+                className={`text-xs ${creditBorderColor} ${creditStatusColor}`}
+              >
+                {credits >= 20 ? "Mensalista" : credits > 0 ? "Avulso" : "Sem plano"}
+              </Badge>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Tipo estimado pelo saldo
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Linha 3: Comportamento + Observações ── */}
+      <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
         {/* Comportamento */}
         <Card>
           <CardHeader className="pb-2">
@@ -518,7 +487,40 @@ export function PetGeneralTab({ pet }: PetGeneralTabProps) {
             )}
           </CardContent>
         </Card>
-      </div>
+
+        {/* Observações */}
+        {pet.notes ? (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                Observações
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md bg-muted/30 p-3">
+                <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+                  {pet.notes}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                Observações
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center justify-center py-6 text-center">
+                <ClipboardList className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                <p className="text-xs text-muted-foreground">Nenhuma observação cadastrada.</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
